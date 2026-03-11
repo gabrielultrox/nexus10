@@ -2,7 +2,6 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -11,11 +10,6 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
-import {
-  isSaleCancelled,
-  isSalePosted,
-  isSaleReversed,
-} from './commerce';
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
@@ -301,52 +295,6 @@ export async function adjustInventoryManually({ storeId, tenantId, values }) {
     ...payload,
     source: 'manual',
   });
-}
-
-export async function syncSaleInventory({ storeId, tenantId, sale, previousStatus = null }) {
-  const items = Array.isArray(sale?.items) ? sale.items.filter((item) => item?.productId) : [];
-
-  if (items.length === 0) {
-    return;
-  }
-
-  if (isSalePosted(sale.status) && !isSalePosted(previousStatus)) {
-    for (const item of items) {
-      await applyInventoryMovement({
-        storeId,
-        tenantId,
-        productId: item.productId,
-        movementType: 'sale',
-        quantity: Number(item.quantity ?? 0),
-        reason: `Baixa automatica da venda ${sale.id}`,
-        source: 'sale',
-        relatedSaleId: sale.id,
-        movementId: `sale-${sale.id}-${item.productId}-out`,
-        productSnapshot: {
-          name: item.productSnapshot?.name ?? item.name,
-        },
-      });
-    }
-  }
-
-  if ((isSaleCancelled(sale.status) || isSaleReversed(sale.status)) && isSalePosted(previousStatus)) {
-    for (const item of items) {
-      await applyInventoryMovement({
-        storeId,
-        tenantId,
-        productId: item.productId,
-        movementType: 'sale_reversal',
-        quantity: Number(item.quantity ?? 0),
-        reason: `Reversao automatica da venda ${sale.id}`,
-        source: 'sale',
-        relatedSaleId: sale.id,
-        movementId: `sale-${sale.id}-${item.productId}-reversal`,
-        productSnapshot: {
-          name: item.productSnapshot?.name ?? item.name,
-        },
-      });
-    }
-  }
 }
 
 function normalizeCsvHeader(header) {

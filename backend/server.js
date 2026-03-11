@@ -3,6 +3,8 @@ import express from 'express';
 import { backendEnv } from './config/env.js';
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js';
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js';
+import { registerOrderRoutes } from './modules/orders/orderController.js';
+import { registerSaleRoutes } from './modules/sales/saleController.js';
 import {
   getIntegrationMerchant,
   listIntegrationMerchants,
@@ -26,6 +28,9 @@ app.get('/api/health', (_request, response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+registerOrderRoutes(app);
+registerSaleRoutes(app);
 
 app.get('/api/integrations/ifood/merchants/:storeId', async (request, response) => {
   try {

@@ -1,19 +1,12 @@
 import {
   addDoc,
   collection,
-  doc,
-  getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
 } from 'firebase/firestore';
 
-import {
-  normalizePaymentMethod,
-  normalizeSaleDomainStatus,
-} from './commerce';
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
@@ -46,33 +39,6 @@ function getFinancialEntriesCollectionRef(storeId) {
 function getFinancialClosuresCollectionRef(storeId) {
   assertFirebaseReady();
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.financialClosures);
-}
-
-function getFinancialEntryRef(storeId, entryId) {
-  assertFirebaseReady();
-  return doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.financialEntries, entryId);
-}
-
-function buildSaleEntryId(saleId) {
-  return `sale-${saleId}`;
-}
-
-function getSaleFinancialStatus(saleStatus) {
-  switch (normalizeSaleDomainStatus(saleStatus)) {
-    case 'CANCELLED':
-      return 'cancelada';
-    case 'REVERSED':
-      return 'estornada';
-    default:
-      return 'ativa';
-  }
-}
-
-function buildSaleFinanceDescription(sale) {
-  const customerName = sale.customerSnapshot?.name?.trim();
-  return customerName
-    ? `Venda ${sale.code ?? sale.id} - ${customerName}`
-    : `Venda ${sale.code ?? sale.id}`;
 }
 
 export function subscribeToFinancialEntries(storeId, onData, onError) {
@@ -136,45 +102,6 @@ export async function createManualExpense({ storeId, tenantId, values }) {
   });
 
   return entryRef.id;
-}
-
-export async function syncSaleToFinancialEntry({ storeId, tenantId, sale }) {
-  assertFirebaseReady();
-
-  if (!sale?.id) {
-    throw new Error('Venda invalida para sincronizacao financeira.');
-  }
-
-  const entryRef = getFinancialEntryRef(storeId, buildSaleEntryId(sale.id));
-  const existingSnapshot = await getDoc(entryRef);
-  const currentCreatedAt = existingSnapshot.exists() ? existingSnapshot.data().createdAt ?? null : null;
-  const normalizedCreatedAt = typeof sale.createdAt?.toDate === 'function'
-    ? sale.createdAt
-    : serverTimestamp();
-
-  await setDoc(entryRef, {
-    type: 'entrada',
-    source: 'venda',
-    relatedSaleId: sale.id,
-    description: buildSaleFinanceDescription(sale),
-    amount: Number(sale.totals?.total ?? sale.total ?? 0),
-    paymentMethod: normalizePaymentMethod(sale.payment?.method ?? sale.paymentMethod, null) ?? '',
-    status: getSaleFinancialStatus(sale.status ?? 'POSTED'),
-    storeId,
-    tenantId: tenantId ?? sale.tenantId ?? null,
-    createdAt: currentCreatedAt ?? normalizedCreatedAt,
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
-}
-
-export async function reconcileSalesToFinancialEntries({ storeId, tenantId, sales }) {
-  const validSales = Array.isArray(sales) ? sales.filter((sale) => sale?.id) : [];
-
-  await Promise.all(validSales.map((sale) => syncSaleToFinancialEntry({
-    storeId,
-    tenantId,
-    sale,
-  })));
 }
 
 export async function createFinancialClosure({ storeId, tenantId, values }) {

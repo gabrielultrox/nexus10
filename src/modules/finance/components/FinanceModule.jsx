@@ -11,11 +11,9 @@ import {
   createManualExpense,
   getFinanceEntryDirection,
   isFinanceEntryActive,
-  reconcileSalesToFinancialEntries,
   subscribeToFinancialClosures,
   subscribeToFinancialEntries,
 } from '../../../services/finance';
-import { subscribeToSales } from '../../../services/sales';
 import { playError, playSuccess } from '../../../services/soundManager';
 import { storeUserOptions } from '../../../services/localUsers';
 import FinanceIndicators from './FinanceIndicators';
@@ -102,7 +100,6 @@ function FinanceModule() {
   const { currentStoreId, tenantId } = useStore();
   const [entries, setEntries] = useState([]);
   const [closures, setClosures] = useState([]);
-  const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingExpense, setSavingExpense] = useState(false);
   const [savingClosure, setSavingClosure] = useState(false);
@@ -148,30 +145,9 @@ function FinanceModule() {
       },
     );
 
-    const unsubSales = subscribeToSales(
-      currentStoreId,
-      async (nextSales) => {
-        setSales(nextSales);
-
-        try {
-          await reconcileSalesToFinancialEntries({
-            storeId: currentStoreId,
-            tenantId,
-            sales: nextSales,
-          });
-        } catch (error) {
-          setErrorMessage(error.message);
-        }
-      },
-      (error) => {
-        setErrorMessage(error.message);
-      },
-    );
-
     return () => {
       unsubEntries();
       unsubClosures();
-      unsubSales();
     };
   }, [currentStoreId, tenantId]);
 
