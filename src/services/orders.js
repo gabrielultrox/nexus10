@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -10,7 +9,8 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { requestBackend } from './backendApi';
+import { assertFirebaseReady, canUseRemoteSync, createRemoteSyncError, firebaseDb, guardRemoteSubscription } from './firebase';
 import { subscribeToExternalOrders } from './externalOrders';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import {
@@ -23,7 +23,6 @@ import {
   normalizeOrderSaleStatus,
   normalizePaymentMethod,
 } from './commerce';
-import { validateOrderInput } from './orderDomain';
 
 const orderStatusSequence = ['received', 'preparing', 'out_for_delivery', 'delivered'];
 
@@ -112,7 +111,7 @@ function buildItemsSummary(items) {
       const name = item?.productSnapshot?.name?.trim() || item?.name?.trim() || 'Item';
       return quantity > 0 ? `${quantity}x ${name}` : name;
     })
-    .join(' · ');
+    .join(' | ');
 
   return items.length > 3 ? `${summary} +${items.length - 3}` : summary;
 }
@@ -128,14 +127,6 @@ function mergeOrdersBySource(internalOrders, externalOrders) {
 function getOrdersCollectionRef(storeId) {
   assertFirebaseReady();
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders);
-}
-
-function buildCreatedBy(createdBy) {
-  return {
-    id: createdBy?.id ?? createdBy?.uid ?? null,
-    name: createdBy?.name ?? createdBy?.operatorName ?? createdBy?.displayName ?? 'Operador local',
-    role: createdBy?.role ?? 'operator',
-  };
 }
 
 function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
@@ -230,6 +221,11 @@ function normalizeExternalOrder(order) {
 }
 
 export function subscribeToOrders(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const ordersQuery = query(getOrdersCollectionRef(storeId), orderBy('createdAt', 'desc'));
   let internalOrders = [];
   let externalOrders = [];
@@ -238,13 +234,23 @@ export function subscribeToOrders(storeId, onData, onError) {
     onData(mergeOrdersBySource(internalOrders, externalOrders));
   }
 
-  const unsubscribeInternal = onSnapshot(
-    ordersQuery,
-    (snapshot) => {
-      internalOrders = snapshot.docs.map(normalizeOrder);
-      emitMergedOrders();
+  const unsubscribeInternal = guardRemoteSubscription(
+    () => onSnapshot(
+      ordersQuery,
+      (snapshot) => {
+        internalOrders = snapshot.docs.map(normalizeOrder);
+        emitMergedOrders();
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        internalOrders = [];
+        externalOrders = [];
+        emitMergedOrders();
+      },
+      onError,
     },
-    onError,
   );
 
   const unsubscribeExternal = subscribeToExternalOrders(
@@ -273,6 +279,10 @@ export function getNextOrderStatus(currentStatus) {
 }
 
 export async function getOrderById({ storeId, orderId }) {
+  if (!canUseRemoteSync()) {
+    throw createRemoteSyncError();
+  }
+
   assertFirebaseReady();
 
   const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
@@ -286,40 +296,66 @@ export async function getOrderById({ storeId, orderId }) {
 }
 
 export async function createOrder({ storeId, tenantId, values, createdBy = null }) {
-  assertFirebaseReady();
-
-  const payload = validateOrderInput(values);
-  const documentRef = await addDoc(getOrdersCollectionRef(storeId), {
-    ...payload,
-    storeId,
-    tenantId: tenantId ?? null,
-    createdBy: buildCreatedBy(createdBy),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  const data = await requestBackend(`/stores/${storeId}/orders`, {
+    method: 'POST',
+    body: {
+      tenantId: tenantId ?? null,
+      values,
+      createdBy,
+    },
   });
 
-  return documentRef.id;
+  return data.id;
+}
+
+export async function updateOrder({ storeId, orderId, values }) {
+  const data = await requestBackend(`/stores/${storeId}/orders/${orderId}`, {
+    method: 'PATCH',
+    body: {
+      values,
+    },
+  });
+
+  return data.id;
 }
 
 export async function markOrderAsDispatched({ storeId, orderId }) {
-  assertFirebaseReady();
-
-  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
-  await updateDoc(orderRef, {
-    status: 'DISPATCHED',
-    updatedAt: serverTimestamp(),
+  await requestBackend(`/stores/${storeId}/orders/${orderId}/dispatch`, {
+    method: 'POST',
   });
 }
 
-export async function updateOrderStatus({ storeId, orderId, status }) {
-  assertFirebaseReady();
+export async function convertOrderToSale({
+  storeId,
+  tenantId,
+  orderId,
+  values = {},
+  createdBy = null,
+}) {
+  const data = await requestBackend(`/stores/${storeId}/orders/${orderId}/convert-to-sale`, {
+    method: 'POST',
+    body: {
+      tenantId: tenantId ?? null,
+      values,
+      createdBy,
+    },
+  });
 
+  return data.saleId;
+}
+
+export async function updateOrderStatus({ storeId, orderId, status }) {
   const allowedStatuses = new Set([...orderStatusSequence, 'cancelled', 'OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']);
 
   if (!allowedStatuses.has(status)) {
     throw new Error('Status de pedido invalido.');
   }
 
+  if (!canUseRemoteSync()) {
+    throw createRemoteSyncError();
+  }
+
+  assertFirebaseReady();
   const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
 
   await updateDoc(orderRef, {
