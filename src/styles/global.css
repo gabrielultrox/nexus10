@@ -44,18 +44,35 @@ body::after {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 296px minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .app-shell__main {
+  display: grid;
+  min-width: 0;
+}
+
+.app-shell__frame {
   display: grid;
   grid-template-rows: auto 1fr;
   min-width: 0;
 }
 
 .app-shell__content {
-  padding: var(--space-6) var(--space-7) var(--space-8);
+  padding: var(--space-5) var(--space-6) var(--space-7);
+}
+
+.app-shell__content,
+.app-header {
+  width: 100%;
+}
+
+.app-shell__content-inner,
+.app-header__inner {
+  width: min(100%, 1520px);
+  margin: 0 auto;
+  min-width: 0;
 }
 
 .sidebar {
@@ -65,7 +82,7 @@ body::after {
   flex-direction: column;
   gap: var(--space-5);
   min-height: 100vh;
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-5) var(--space-4);
   background: var(--gradient-sidebar);
   border-right: 1px solid var(--color-border-default);
   backdrop-filter: blur(18px);
@@ -120,17 +137,17 @@ body::after {
 .sidebar__title {
   display: block;
   font-family: var(--font-title);
-  font-size: 2rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 1.45rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .sidebar__subtitle {
   margin-top: 2px;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -292,16 +309,20 @@ body::after {
 }
 
 .app-header {
+  padding: var(--space-5) var(--space-6) 0;
+}
+
+.app-header__inner {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: var(--space-6) var(--space-7) 0;
 }
 
 .app-header__intro {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .app-header__eyebrow,
@@ -309,15 +330,15 @@ body::after {
   margin-bottom: 6px;
   color: var(--color-accent-cyan);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .app-header__title,
 .page-intro__title {
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
-  line-height: 0.96;
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  line-height: 1.08;
 }
 
 .app-header__actions {
@@ -326,13 +347,14 @@ body::after {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  min-width: 0;
 }
 
 .app-header__status {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   background: var(--surface-panel);
   border: 1px solid var(--color-border-default);
   border-radius: 18px;
@@ -539,11 +561,14 @@ body::after {
 .page-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .page-stack > * {
   animation: rise-in 540ms both;
+  min-width: 0;
 }
 
 .page-stack > *:nth-child(2) {
@@ -557,8 +582,9 @@ body::after {
 .page-intro {
   position: relative;
   display: grid;
-  gap: 10px;
-  padding: var(--space-5) var(--space-6);
+  gap: 8px;
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
   background: var(--surface-panel);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
@@ -575,17 +601,21 @@ body::after {
 }
 
 .page-intro__description {
-  max-width: 820px;
+  max-width: 760px;
   color: var(--color-text-secondary);
+  font-size: 0.94rem;
+  line-height: 1.6;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
 }
 
 .surface-card {
+  display: grid;
+  min-width: 0;
   background: var(--gradient-card);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
@@ -596,10 +626,13 @@ body::after {
 .surface-card__title {
   padding: 18px 20px 0;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.98rem;
 }
 
 .surface-card__content {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
   padding: 16px 20px 20px;
   color: var(--color-text-secondary);
 }
@@ -654,12 +687,11 @@ body::after {
 
 @media (max-width: 760px) {
   .app-shell__content {
-    padding: var(--space-5) var(--space-4) var(--space-6);
+    padding: var(--space-4) var(--space-4) var(--space-5);
   }
 
   .app-header {
-    padding: var(--space-5) var(--space-4) 0;
-    flex-direction: column;
+    padding: var(--space-4) var(--space-4) 0;
   }
 
   .sidebar {
@@ -673,6 +705,10 @@ body::after {
 
   .sidebar__nav {
     grid-auto-columns: minmax(180px, 78vw);
+  }
+
+  .app-header__inner {
+    flex-direction: column;
   }
 
   .app-header__actions {

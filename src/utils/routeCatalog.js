@@ -195,8 +195,8 @@ export const routeDefinitions = [
     icon: '19',
     section: 'PDV',
     eyebrow: 'PDV',
-    title: 'Kanban de pedidos',
-    description: 'Quadro operacional organizado por status para leitura rapida e acao imediata.',
+    title: 'Dominio de pedidos',
+    description: 'Pedidos comerciais e operacionais sem impacto definitivo em estoque ou financeiro.',
     requiredRoles: ['atendente'],
   },
   {
@@ -205,8 +205,8 @@ export const routeDefinitions = [
     icon: '20',
     section: 'PDV',
     eyebrow: 'PDV',
-    title: 'Gestao de vendas',
-    description: 'Base de vendas, filtros, status e operacao comercial consolidada.',
+    title: 'Dominio de vendas',
+    description: 'Vendas reais com postagem de estoque, financeiro e auditoria centralizada.',
     requiredRoles: ['operador'],
   },
   {

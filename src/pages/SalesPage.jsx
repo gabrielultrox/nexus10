@@ -7,7 +7,7 @@ function SalesPage() {
       <PageIntro
         eyebrow="PDV"
         title="Vendas"
-        description="Modulo operacional de vendas com leitura real, filtros por periodo e status, e detalhe pronto para financeiro e relatorios."
+        description="Dominio definitivo de vendas com lancamento real, impacto em estoque, financeiro e leitura operacional clara."
       />
 
       <SalesModule />

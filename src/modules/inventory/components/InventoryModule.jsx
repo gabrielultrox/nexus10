@@ -364,15 +364,14 @@ function InventoryModule() {
         ))}
       </div>
 
-      <div className="inventory-layout">
-        <SurfaceCard title="Movimentar estoque">
+      <SurfaceCard title="Movimentar estoque">
           <div className="entity-form-shell">
             <div className="entity-form-shell__header">
               <div className="entity-form-hero">
                 <span className="entity-form-hero__eyebrow">Ajuste operacional</span>
-                <h4 className="entity-form-hero__title">Movimente estoque com leitura mais clara</h4>
+                <h4 className="entity-form-hero__title">Ajuste o estoque com um fluxo mais simples</h4>
                 <p className="entity-form-hero__description">
-                  O ajuste manual e a importacao CSV agora ficam em uma composicao mais legivel, pensada para conferencia rapida durante o turno.
+                  Registre entradas, saidas e ajustes absolutos em uma estrutura direta, feita para conferencia rapida.
                 </p>
                 <div className="entity-form-hero__chips">
                   <span className="ui-badge ui-badge--warning">Ajuste imediato</span>
@@ -493,7 +492,7 @@ function InventoryModule() {
           <div className="entity-toolbar-shell">
             <div className="entity-toolbar-copy">
               <p className="text-section-title">Consulta do saldo</p>
-              <p className="text-body">Acompanhe o estoque atual com menos ruído visual e filtros mais claros.</p>
+              <p className="text-body">Acompanhe o estoque atual com filtros mais claros e leitura mais limpa.</p>
             </div>
 
             <div className="entity-toolbar inventory-toolbar">
@@ -570,13 +569,12 @@ function InventoryModule() {
             </div>
           )}
         </SurfaceCard>
-      </div>
 
       <SurfaceCard title="Historico de movimentacao">
         <div className="entity-toolbar-shell">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Timeline do estoque</p>
-            <p className="text-body">Filtre o historico por periodo ou texto para encontrar cada ajuste com mais rapidez.</p>
+            <p className="text-body">Filtre o historico por periodo ou texto para localizar cada ajuste sem perder contexto.</p>
           </div>
 
           <div className="entity-toolbar inventory-toolbar inventory-toolbar--movements">

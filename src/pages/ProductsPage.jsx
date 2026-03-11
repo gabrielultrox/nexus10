@@ -7,7 +7,7 @@ function ProductsPage() {
       <PageIntro
         eyebrow="Catalogo"
         title="Produtos"
-        description="Base real de produtos da store, pronta para alimentar o PDV com cadastro, estoque e preco."
+        description="Cadastre produtos, organize categorias e acompanhe preco e estoque com uma leitura mais simples."
       />
 
       <ProductsModule />

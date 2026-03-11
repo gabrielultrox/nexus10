@@ -40,26 +40,29 @@
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-md);
   overflow: hidden;
-  table-layout: fixed;
+  table-layout: auto;
+  min-width: max(100%, 760px);
 }
 
 .ui-table th {
-  padding: var(--space-4);
+  padding: 13px 14px;
   background: var(--color-bg-card-alt);
   border-bottom: var(--border-thin) solid var(--color-border-default);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: left;
   color: var(--color-accent-cyan);
+  white-space: nowrap;
 }
 
 .ui-table td {
-  padding: var(--space-4);
+  padding: 13px 14px;
   border-top: var(--border-thin) solid var(--color-border-subtle);
   color: var(--color-text-secondary);
   vertical-align: middle;
+  line-height: 1.45;
 }
 
 .ui-table tbody tr {
@@ -70,23 +73,27 @@
   background: var(--surface-panel-highlight);
 }
 
+.entity-table__row--selected {
+  background: color-mix(in srgb, var(--surface-panel-highlight) 72%, transparent);
+}
+
 .ui-input,
 .ui-select,
 .ui-textarea {
   width: 100%;
-  min-height: 52px;
-  padding: 14px 16px;
+  min-height: 48px;
+  padding: 12px 14px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 62%, transparent), transparent 42%),
     var(--color-bg-input);
   border: var(--border-thin) solid var(--color-border-default);
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--color-text-primary);
-  font-size: 0.96rem;
+  font-size: 0.94rem;
   outline: none;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 20px color-mix(in srgb, var(--color-bg-body) 18%, transparent);
+    0 8px 20px color-mix(in srgb, var(--color-bg-page) 18%, transparent);
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base),
@@ -94,10 +101,15 @@
     background var(--transition-base);
 }
 
+.ui-textarea {
+  min-height: 124px;
+  resize: vertical;
+}
+
 .ui-select {
   appearance: none;
   cursor: pointer;
-  padding-right: 46px;
+  padding-right: 42px;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-cyan) 50%),
     linear-gradient(135deg, var(--color-accent-cyan) 50%, transparent 50%),
@@ -131,13 +143,13 @@
 
 .ui-field {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ui-label {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
@@ -148,16 +160,17 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 46px;
+  padding: 0 16px;
   border: var(--border-thin) solid transparent;
-  border-radius: 18px;
+  border-radius: 16px;
   font-family: var(--font-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.16em;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
   overflow: hidden;
+  white-space: normal;
   transition:
     transform var(--transition-fast),
     border-color var(--transition-base),
@@ -239,14 +252,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 26px;
+  padding: 0 9px;
   border: var(--border-thin) solid transparent;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  line-height: 1;
+  font-weight: 700;
+  max-width: 100%;
 }
 
 .ui-badge--info {
@@ -281,7 +297,7 @@
 
 .ui-kpi-card {
   position: relative;
-  padding: var(--space-5);
+  padding: var(--space-4);
   background:
     linear-gradient(180deg, var(--surface-card-gloss), transparent 24%),
     var(--gradient-card);
@@ -311,17 +327,17 @@
 .ui-kpi-card__label {
   margin-bottom: var(--space-3);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
 .ui-kpi-card__value {
   font-family: var(--font-display);
-  font-size: 2.3rem;
+  font-size: clamp(1.7rem, 2.4vw, 2.2rem);
   font-weight: 800;
-  line-height: 0.94;
+  line-height: 1.04;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -329,7 +345,7 @@
 .ui-kpi-card__meta {
   margin-top: var(--space-2);
   color: var(--color-text-secondary);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .ui-table__cell--strong {
@@ -355,7 +371,10 @@
 }
 
 .ui-modal {
-  width: min(680px, calc(100vw - 32px));
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--gradient-card);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg);
@@ -378,13 +397,31 @@
 .ui-modal__body {
   padding-top: var(--space-5);
   padding-bottom: var(--space-5);
+  overflow: auto;
 }
 
 .ui-modal__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
   padding-top: var(--space-4);
   padding-bottom: var(--space-6);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+@media (max-width: 760px) {
+  .ui-table {
+    min-width: 680px;
+  }
+
+  .ui-modal__header,
+  .ui-modal__body,
+  .ui-modal__footer {
+    padding-inline: var(--space-4);
+  }
+
+  .ui-modal__footer {
+    justify-content: flex-start;
+  }
 }

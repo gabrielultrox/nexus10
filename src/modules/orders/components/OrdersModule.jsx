@@ -1,315 +1,819 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
-import IFoodWidgetBridge from '../../../components/integrations/IFoodWidgetBridge';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
+import { formatCurrencyBRL, getOrderDomainStatusLabel } from '../../../services/commerce';
+import { subscribeToCustomers } from '../../../services/customerService';
+import { firebaseReady } from '../../../services/firebase';
 import {
-  subscribeToExternalOrderEvents,
-  subscribeToExternalOrderTracking,
-  subscribeToIntegrationLogs,
-  subscribeToIntegrationMerchants,
-} from '../../../services/externalOrders';
-import { getNextOrderStatus, subscribeToOrders, updateOrderStatus } from '../../../services/orders';
+  convertOrderToSale,
+  createOrder,
+  getOrderById,
+  markOrderAsDispatched,
+  subscribeToOrders,
+  updateOrder,
+} from '../../../services/orders';
+import { subscribeToProducts } from '../../../services/productService';
 import { playError, playSuccess } from '../../../services/soundManager';
-import { orderStatusMap } from '../schemas/orderSchema';
-import { countOrdersByStatus, filterOrders, groupOrdersByStatus } from '../utils/orderFilters';
-import OrdersBoard from './OrdersBoard';
-import OrdersFilters from './OrdersFilters';
-import OrdersStats from './OrdersStats';
+import OrderDetailPanel from './OrderDetailPanel';
+import OrderFormPanel from './OrderFormPanel';
 
-const initialFilters = {
-  search: '',
-  status: 'all',
-  origin: 'all',
-  highPriorityOnly: false,
-};
+const statusOptions = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED'];
+const sourceOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD'];
+const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX'];
+
+function createEmptyItem() {
+  return {
+    productId: '',
+    quantity: '1',
+    unitPrice: '',
+  };
+}
+
+function createInitialFormState() {
+  return {
+    source: 'BALCAO',
+    customerId: '',
+    paymentMethod: 'PIX',
+    notes: '',
+    address: {
+      neighborhood: '',
+      addressLine: '',
+      reference: '',
+      complement: '',
+    },
+    totals: {
+      freight: '0',
+      extraAmount: '0',
+      discountPercent: '0',
+      discountValue: '0',
+    },
+    items: [createEmptyItem()],
+  };
+}
+
+function asDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+}
+
+function formatDateTime(value) {
+  const dateValue = asDate(value);
+
+  if (!dateValue || Number.isNaN(dateValue.getTime())) {
+    return '--';
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateValue);
+}
+
+function parseDecimal(value) {
+  const normalized = String(value ?? '')
+    .replace(/\s+/g, '')
+    .replace(',', '.');
+  const parsed = Number(normalized);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function mapOrderToForm(order) {
+  return {
+    source: order.sourceChannel ?? 'BALCAO',
+    customerId: order.customerId ?? order.customerSnapshot?.id ?? '',
+    paymentMethod: order.paymentPreview?.method ?? order.paymentMethod ?? 'PIX',
+    notes: order.notes ?? '',
+    address: {
+      neighborhood: order.address?.neighborhood ?? '',
+      addressLine: order.address?.addressLine ?? '',
+      reference: order.address?.reference ?? '',
+      complement: order.address?.complement ?? '',
+    },
+    totals: {
+      freight: String(order.totals?.freight ?? 0),
+      extraAmount: String(order.totals?.extraAmount ?? 0),
+      discountPercent: String(order.totals?.discountPercent ?? 0),
+      discountValue: String(order.totals?.discountValue ?? 0),
+    },
+    items: Array.isArray(order.items) && order.items.length > 0
+      ? order.items.map((item) => ({
+        productId: item.productId ?? item.productSnapshot?.id ?? '',
+        quantity: String(item.quantity ?? 1),
+        unitPrice: String(item.unitPrice ?? 0),
+      }))
+      : [createEmptyItem()],
+  };
+}
 
 function OrdersModule() {
-  const { session } = useAuth();
-  const { currentStoreId } = useStore();
-  const [filters, setFilters] = useState(initialFilters);
+  const { can, session } = useAuth();
+  const { currentStoreId, tenantId } = useStore();
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [acting, setActing] = useState(false);
+  const [formState, setFormState] = useState(() => createInitialFormState());
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [activeScreen, setActiveScreen] = useState('list');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [errorMessage, setErrorMessage] = useState('');
-  const [selectedOrderEvents, setSelectedOrderEvents] = useState([]);
-  const [selectedOrderTracking, setSelectedOrderTracking] = useState([]);
-  const [integrationErrors, setIntegrationErrors] = useState([]);
-  const [ifoodMerchants, setIfoodMerchants] = useState([]);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
 
   useEffect(() => {
-    if (!currentStoreId) {
-      setOrders([]);
+    if (!firebaseReady || !currentStoreId) {
+      setLoading(false);
       return undefined;
     }
 
+    setLoading(true);
     setErrorMessage('');
 
-    return subscribeToOrders(
+    const unsubscribe = subscribeToOrders(
       currentStoreId,
-      setOrders,
+      (nextOrders) => {
+        setOrders(nextOrders);
+        setLoading(false);
+      },
       (error) => {
         setErrorMessage(error.message ?? 'Nao foi possivel carregar os pedidos.');
+        setLoading(false);
       },
     );
+
+    return unsubscribe;
   }, [currentStoreId]);
 
   useEffect(() => {
-    if (!currentStoreId) {
-      setIfoodMerchants([]);
+    if (!firebaseReady || !currentStoreId) {
       return undefined;
     }
 
-    return subscribeToIntegrationMerchants(currentStoreId, 'ifood', setIfoodMerchants, () => {});
-  }, [currentStoreId]);
-
-  const filteredOrders = useMemo(() => filterOrders(orders, filters), [filters, orders]);
-  const groupedOrders = useMemo(() => groupOrdersByStatus(filteredOrders), [filteredOrders]);
-  const selectedOrder = useMemo(
-    () => orders.find((order) => order.id === selectedOrderId) ?? null,
-    [orders, selectedOrderId],
-  );
-  const selectedMerchantConfig = useMemo(
-    () => ifoodMerchants.find((merchant) => merchant.merchantId === selectedOrder?.merchantId) ?? null,
-    [ifoodMerchants, selectedOrder?.merchantId],
-  );
-
-  useEffect(() => {
-    if (!currentStoreId || !selectedOrder?.isExternal || !selectedOrder.externalOrderId) {
-      setSelectedOrderEvents([]);
-      setSelectedOrderTracking([]);
-      setIntegrationErrors([]);
-      return undefined;
-    }
-
-    const unsubscribeEvents = subscribeToExternalOrderEvents(
-      currentStoreId,
-      selectedOrder.externalOrderId,
-      setSelectedOrderEvents,
-      () => {},
-    );
-    const unsubscribeTracking = subscribeToExternalOrderTracking(
-      currentStoreId,
-      selectedOrder.externalOrderId,
-      setSelectedOrderTracking,
-      () => {},
-    );
-    const unsubscribeLogs = subscribeToIntegrationLogs(
-      currentStoreId,
-      'ifood',
-      (logs) => {
-        setIntegrationErrors(
-          logs.filter((log) => log.externalOrderId === selectedOrder.externalOrderId && log.level !== 'info').slice(0, 5),
-        );
-      },
-      () => {},
-    );
+    const unsubscribeCustomers = subscribeToCustomers(currentStoreId, setCustomers, () => {});
+    const unsubscribeProducts = subscribeToProducts(currentStoreId, setProducts, () => {});
 
     return () => {
-      unsubscribeEvents?.();
-      unsubscribeTracking?.();
-      unsubscribeLogs?.();
+      unsubscribeCustomers?.();
+      unsubscribeProducts?.();
     };
-  }, [currentStoreId, selectedOrder?.externalOrderId, selectedOrder?.isExternal]);
+  }, [currentStoreId]);
 
-  const stats = useMemo(
-    () => [
-      {
-        id: 'all',
-        label: 'Pedidos ativos',
-        value: orders.filter((order) => order.status !== 'delivered').length,
-        meta: 'visao operacional da fila em tempo real',
-      },
-      {
-        id: 'received',
-        label: orderStatusMap.received.label,
-        value: countOrdersByStatus(orders, 'received'),
-        meta: 'entrada recente do fluxo',
-      },
-      {
-        id: 'preparing',
-        label: orderStatusMap.preparing.label,
-        value: countOrdersByStatus(orders, 'preparing'),
-        meta: 'em producao agora',
-      },
-      {
-        id: 'out',
-        label: orderStatusMap.out_for_delivery.label,
-        value: countOrdersByStatus(orders, 'out_for_delivery'),
-        meta: 'em deslocamento',
-      },
-    ],
-    [orders],
+  const internalOrders = useMemo(() => orders.filter((order) => !order.isExternal), [orders]);
+
+  useEffect(() => {
+    if (!selectedOrderId && internalOrders.length > 0) {
+      setSelectedOrderId(internalOrders[0].id);
+    }
+
+    if (selectedOrderId && !internalOrders.some((order) => order.id === selectedOrderId)) {
+      setSelectedOrderId(internalOrders[0]?.id ?? null);
+    }
+  }, [internalOrders, selectedOrderId]);
+
+  const visibleOrders = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return internalOrders.filter((order) => {
+      const matchesSearch = normalizedSearch.length === 0 || [
+        order.number,
+        order.code,
+        order.customerName,
+        order.customerSnapshot?.phone,
+        order.source,
+        order.notes,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch);
+      const matchesStatus = statusFilter === 'all' || order.domainStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [internalOrders, searchTerm, statusFilter]);
+
+  const selectedOrder = useMemo(
+    () => internalOrders.find((order) => order.id === selectedOrderId) ?? null,
+    [internalOrders, selectedOrderId],
   );
 
-  async function handleAdvanceOrder(order) {
-    if (order.isExternal) {
+  const selectedCustomer = useMemo(
+    () => customers.find((customer) => customer.id === formState.customerId) ?? null,
+    [customers, formState.customerId],
+  );
+
+  const draftItems = useMemo(
+    () => formState.items.map((item, index) => {
+      const product = products.find((entry) => entry.id === item.productId) ?? null;
+      const quantity = parseDecimal(item.quantity);
+      const fallbackUnitPrice = product ? Number(product.price ?? 0) : 0;
+      const unitPrice = item.unitPrice === '' ? fallbackUnitPrice : parseDecimal(item.unitPrice);
+
+      return {
+        key: `${item.productId || 'item'}-${index}`,
+        product,
+        productId: item.productId,
+        quantity,
+        unitPrice,
+        totalPrice: Number((quantity * unitPrice).toFixed(2)),
+      };
+    }),
+    [formState.items, products],
+  );
+
+  const calculatedTotals = useMemo(() => {
+    const subtotal = Number(
+      draftItems.reduce((total, item) => total + Number(item.totalPrice ?? 0), 0).toFixed(2),
+    );
+    const freight = parseDecimal(formState.totals.freight);
+    const extraAmount = parseDecimal(formState.totals.extraAmount);
+    const discountPercent = parseDecimal(formState.totals.discountPercent);
+    const explicitDiscountValue = parseDecimal(formState.totals.discountValue);
+    const discountValue = explicitDiscountValue > 0
+      ? explicitDiscountValue
+      : Number((subtotal * (discountPercent / 100)).toFixed(2));
+    const total = Number((subtotal + freight + extraAmount - discountValue).toFixed(2));
+
+    return {
+      subtotal,
+      freight,
+      extraAmount,
+      discountPercent,
+      discountValue,
+      total: Math.max(0, total),
+    };
+  }, [draftItems, formState.totals]);
+
+  const metrics = useMemo(() => {
+    const open = internalOrders.filter((order) => order.domainStatus === 'OPEN').length;
+    const dispatched = internalOrders.filter((order) => order.domainStatus === 'DISPATCHED').length;
+    const converted = internalOrders.filter((order) => order.domainStatus === 'CONVERTED_TO_SALE').length;
+
+    return [
+      {
+        label: 'Pedidos',
+        value: String(internalOrders.length).padStart(2, '0'),
+        meta: 'registros comerciais e operacionais da loja',
+        badgeText: 'dominio',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Abertos',
+        value: String(open).padStart(2, '0'),
+        meta: 'prontos para expedicao ou ajuste',
+        badgeText: 'fila',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Despachados',
+        value: String(dispatched).padStart(2, '0'),
+        meta: 'pedidos com operacao concluida',
+        badgeText: 'envio',
+        badgeClass: 'ui-badge--special',
+      },
+      {
+        label: 'Viraram venda',
+        value: String(converted).padStart(2, '0'),
+        meta: 'conversoes sem impacto em estoque ou financeiro',
+        badgeText: 'venda',
+        badgeClass: 'ui-badge--success',
+      },
+    ];
+  }, [internalOrders]);
+
+  function resetForm() {
+    setFormState(createInitialFormState());
+    setEditingOrderId(null);
+  }
+
+  function handleStartCreate() {
+    resetForm();
+    setErrorMessage('');
+    setFeedbackMessage('');
+    setActiveScreen('create');
+  }
+
+  function handleCancelForm() {
+    resetForm();
+    setErrorMessage('');
+    setFeedbackMessage('');
+    setActiveScreen(selectedOrderId ? 'detail' : 'list');
+  }
+
+  function handleSelectOrder(orderId) {
+    setSelectedOrderId(orderId);
+    setActiveScreen('detail');
+    setErrorMessage('');
+    setFeedbackMessage('');
+  }
+
+  function handleStartEdit(order) {
+    setEditingOrderId(order.id);
+    setSelectedOrderId(order.id);
+    setFormState(mapOrderToForm(order));
+    setErrorMessage('');
+    setFeedbackMessage('');
+    setActiveScreen('create');
+  }
+
+  function updateAddressField(field, value) {
+    setFormState((current) => ({
+      ...current,
+      address: {
+        ...current.address,
+        [field]: value,
+      },
+    }));
+  }
+
+  function updateTotalsField(field, value) {
+    setFormState((current) => ({
+      ...current,
+      totals: {
+        ...current.totals,
+        [field]: value,
+      },
+    }));
+  }
+
+  function updateItem(index, field, value) {
+    setFormState((current) => ({
+      ...current,
+      items: current.items.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+
+        if (field === 'productId') {
+          const product = products.find((entry) => entry.id === value);
+
+          return {
+            ...item,
+            productId: value,
+            unitPrice: product ? String(product.price ?? 0) : '',
+          };
+        }
+
+        return {
+          ...item,
+          [field]: value,
+        };
+      }),
+    }));
+  }
+
+  function addItem() {
+    setFormState((current) => ({
+      ...current,
+      items: [...current.items, createEmptyItem()],
+    }));
+  }
+
+  function removeItem(index) {
+    setFormState((current) => ({
+      ...current,
+      items: current.items.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function handleCustomerChange(customerId) {
+    const customer = customers.find((entry) => entry.id === customerId) ?? null;
+
+    setFormState((current) => ({
+      ...current,
+      customerId,
+      address: {
+        ...current.address,
+        neighborhood: current.address.neighborhood || customer?.neighborhood || '',
+        addressLine: current.address.addressLine || customer?.addressLine || '',
+        reference: current.address.reference || customer?.reference || '',
+      },
+    }));
+  }
+
+  function buildPayload() {
+    if (draftItems.some((item) => !item.productId || !item.product)) {
+      throw new Error('Selecione um produto valido para todos os itens.');
+    }
+
+    return {
+      source: formState.source,
+      customerId: selectedCustomer?.id ?? null,
+      customerSnapshot: selectedCustomer
+        ? {
+          id: selectedCustomer.id,
+          name: selectedCustomer.name,
+          phone: selectedCustomer.phoneDisplay ?? selectedCustomer.phone ?? '',
+          neighborhood: selectedCustomer.neighborhood ?? '',
+        }
+        : undefined,
+      items: draftItems.map((item) => ({
+        productId: item.productId,
+        productSnapshot: {
+          id: item.product?.id ?? item.productId,
+          name: item.product?.name ?? 'Produto',
+          category: item.product?.category ?? '',
+          sku: item.product?.sku ?? '',
+        },
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+      })),
+      totals: calculatedTotals,
+      paymentMethod: formState.paymentMethod,
+      paymentPreview: {
+        method: formState.paymentMethod,
+        label: getPaymentMethodLabel(formState.paymentMethod),
+        amount: calculatedTotals.total,
+      },
+      address: {
+        neighborhood: formState.address.neighborhood || selectedCustomer?.neighborhood || '',
+        addressLine: formState.address.addressLine || selectedCustomer?.addressLine || '',
+        reference: formState.address.reference || selectedCustomer?.reference || '',
+        complement: formState.address.complement,
+      },
+      notes: formState.notes,
+    };
+  }
+
+  async function refreshSelectedOrder(orderId) {
+    if (!currentStoreId || !orderId) {
+      return null;
+    }
+
+    const order = await getOrderById({
+      storeId: currentStoreId,
+      orderId,
+    });
+
+    if (order) {
+      setSelectedOrderId(order.id);
+    }
+
+    return order;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!can('orders:write')) {
+      setErrorMessage('Seu perfil nao pode alterar pedidos.');
+      playError();
       return;
     }
 
-    const nextStatus = getNextOrderStatus(order.status);
-
-    if (!currentStoreId || !nextStatus) {
+    if (!currentStoreId) {
+      setErrorMessage('Nenhuma loja ativa disponivel para salvar pedidos.');
+      playError();
       return;
     }
+
+    setSaving(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
 
     try {
-      setUpdatingOrderId(order.id);
-      setErrorMessage('');
-      await updateOrderStatus({
-        storeId: currentStoreId,
-        orderId: order.id,
-        status: nextStatus,
-      });
-      await recordAuditLog({
-        storeId: currentStoreId,
-        tenantId: order.tenantId ?? null,
-        actor: buildAuditActor(session),
-        action: 'order.status_changed',
-        entityType: 'order',
-        entityId: order.id,
-        description: `Pedido ${order.number} alterado de ${order.status} para ${nextStatus}.`,
-      });
+      const values = buildPayload();
+
+      if (editingOrderId) {
+        await updateOrder({
+          storeId: currentStoreId,
+          orderId: editingOrderId,
+          values,
+        });
+        await recordAuditLog({
+          storeId: currentStoreId,
+          tenantId,
+          actor: buildAuditActor(session),
+          action: 'order.updated',
+          entityType: 'order',
+          entityId: editingOrderId,
+          description: `Pedido ${selectedOrder?.number ?? editingOrderId} atualizado.`,
+        });
+        await refreshSelectedOrder(editingOrderId);
+        setFeedbackMessage('Pedido atualizado com sucesso.');
+      } else {
+        const orderId = await createOrder({
+          storeId: currentStoreId,
+          tenantId,
+          values,
+          createdBy: session,
+        });
+        await recordAuditLog({
+          storeId: currentStoreId,
+          tenantId,
+          actor: buildAuditActor(session),
+          action: 'order.created',
+          entityType: 'order',
+          entityId: orderId,
+          description: `Novo pedido ${values.source} criado com total ${formatCurrencyBRL(calculatedTotals.total)}.`,
+        });
+        await refreshSelectedOrder(orderId);
+        setFeedbackMessage('Pedido cadastrado com sucesso.');
+      }
+
       playSuccess();
+      resetForm();
+      setActiveScreen('detail');
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel atualizar o pedido.');
+      setErrorMessage(error.message ?? 'Nao foi possivel salvar o pedido.');
       playError();
     } finally {
-      setUpdatingOrderId(null);
+      setSaving(false);
     }
   }
 
-  return (
-    <section className="orders-module">
-      <OrdersStats items={stats} />
+  async function handleDispatch() {
+    if (!selectedOrder || !currentStoreId) {
+      return;
+    }
 
-      {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+    if (!can('orders:write')) {
+      setErrorMessage('Seu perfil nao pode alterar pedidos.');
+      playError();
+      return;
+    }
 
-      <SurfaceCard title="Leitura Rapida de Fila">
-        <OrdersFilters filters={filters} onChange={setFilters} />
+    setActing(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      await markOrderAsDispatched({
+        storeId: currentStoreId,
+        orderId: selectedOrder.id,
+      });
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'order.dispatched',
+        entityType: 'order',
+        entityId: selectedOrder.id,
+        description: `Pedido ${selectedOrder.number} marcado como despachado.`,
+      });
+      await refreshSelectedOrder(selectedOrder.id);
+      setFeedbackMessage('Pedido marcado como despachado.');
+      playSuccess();
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel despachar o pedido.');
+      playError();
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function handleConvertToSale() {
+    if (!selectedOrder || !currentStoreId) {
+      return;
+    }
+
+    if (!can('orders:write')) {
+      setErrorMessage('Seu perfil nao pode alterar pedidos.');
+      playError();
+      return;
+    }
+
+    setActing(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      const saleId = await convertOrderToSale({
+        storeId: currentStoreId,
+        tenantId,
+        orderId: selectedOrder.id,
+        createdBy: session,
+      });
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'order.converted_to_sale',
+        entityType: 'order',
+        entityId: selectedOrder.id,
+        description: `Pedido ${selectedOrder.number} gerou a venda ${saleId}.`,
+      });
+      await refreshSelectedOrder(selectedOrder.id);
+      setFeedbackMessage(`Venda ${saleId} gerada com sucesso.`);
+      playSuccess();
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel gerar a venda.');
+      playError();
+    } finally {
+      setActing(false);
+    }
+  }
+
+  if (!firebaseReady) {
+    return (
+      <SurfaceCard title="Pedidos">
+        <div className="entity-empty-state">
+          <p className="text-section-title">Firebase nao configurado</p>
+          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
+        </div>
       </SurfaceCard>
+    );
+  }
 
-      <OrdersBoard
-        groupedOrders={groupedOrders}
-        onAdvanceOrder={handleAdvanceOrder}
-        onOpenDetails={(order) => setSelectedOrderId(order.id)}
-        updatingOrderId={updatingOrderId}
-      />
+  if (!currentStoreId) {
+    return (
+      <SurfaceCard title="Pedidos">
+        <div className="entity-empty-state">
+          <p className="text-section-title">Nenhuma loja ativa</p>
+          <p className="text-body">Selecione uma loja antes de operar o dominio de pedidos.</p>
+        </div>
+      </SurfaceCard>
+    );
+  }
 
-      {selectedOrder ? (
-        <SurfaceCard title="Detalhes do pedido">
-          <div className="orders-detail">
-            <div className="orders-detail__grid">
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Pedido</span>
-                <strong>{selectedOrder.number}</strong>
+  return (
+    <section className="entity-module orders-domain">
+      <div className="card-grid">
+        {metrics.map((metric) => (
+          <MetricCard
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            meta={metric.meta}
+            badgeText={metric.badgeText}
+            badgeClass={metric.badgeClass}
+          />
+        ))}
+      </div>
+
+      <SurfaceCard title="Area de trabalho de pedidos">
+        <div className="orders-domain__header">
+          <div className="orders-domain__copy">
+            <p className="text-section-title">Lista de Pedidos</p>
+            <p className="text-body">
+              Controle pedidos comerciais sem disparar impacto em estoque ou financeiro.
+            </p>
+          </div>
+
+          <div className="orders-domain__actions">
+            <button
+              type="button"
+              className={`ui-button ${activeScreen === 'list' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
+              onClick={() => setActiveScreen('list')}
+            >
+              Lista de Pedidos
+            </button>
+            <button
+              type="button"
+              className={`ui-button ${activeScreen === 'create' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
+              onClick={handleStartCreate}
+              disabled={!can('orders:write')}
+            >
+              Novo pedido
+            </button>
+            <button
+              type="button"
+              className={`ui-button ${activeScreen === 'detail' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
+              onClick={() => setActiveScreen('detail')}
+              disabled={!selectedOrder}
+            >
+              Detalhe do Pedido
+            </button>
+          </div>
+        </div>
+
+        {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+        {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+        <div className="orders-domain__layout">
+          <div className="orders-domain__column">
+            <div className="entity-toolbar-shell">
+              <div className="entity-toolbar-copy">
+                <p className="text-section-title">Busca e acompanhamento</p>
+                <p className="text-body">Filtre por cliente, codigo ou status para chegar no pedido certo mais rapido.</p>
               </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Cliente</span>
-                <strong>{selectedOrder.customerName}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Bairro</span>
-                <strong>{selectedOrder.neighborhood}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Entregador</span>
-                <strong>{selectedOrder.courierName}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Origem</span>
-                <strong>{selectedOrder.origin || 'Nao informada'}</strong>
-              </div>
-              {selectedOrder.isExternal ? (
-                <div className="orders-detail__item">
-                  <span className="orders-detail__label">Status iFood</span>
-                  <strong>{selectedOrder.externalStatus || 'Nao informado'}</strong>
+
+              <div className="entity-toolbar">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="orders-search">Buscar</label>
+                  <input
+                    id="orders-search"
+                    className="ui-input"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Codigo, cliente ou observacao"
+                  />
                 </div>
-              ) : null}
-              {selectedOrder.isExternal ? (
-                <div className="orders-detail__item">
-                  <span className="orders-detail__label">Merchant</span>
-                  <strong>{selectedOrder.merchantId || 'Nao informado'}</strong>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="orders-status-filter">Status</label>
+                  <select
+                    id="orders-status-filter"
+                    className="ui-select"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="all">Todos</option>
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>{getOrderDomainStatusLabel(status)}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : null}
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Pagamento</span>
-                <strong>{selectedOrder.paymentMethod || 'Nao informado'}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Criado em</span>
-                <strong>{selectedOrder.createdAtLabel}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Ultima atualizacao</span>
-                <strong>{selectedOrder.updatedAtLabel}</strong>
-              </div>
-              <div className="orders-detail__item">
-                <span className="orders-detail__label">Total</span>
-                <strong>{selectedOrder.total}</strong>
-              </div>
-              {selectedOrder.isExternal ? (
-                <>
-                  <div className="orders-detail__item">
-                    <span className="orders-detail__label">Subtotal</span>
-                    <strong>{selectedOrder.subtotal?.toFixed?.(2) ?? '0.00'}</strong>
-                  </div>
-                  <div className="orders-detail__item">
-                    <span className="orders-detail__label">Entrega</span>
-                    <strong>{selectedOrder.shipping?.toFixed?.(2) ?? '0.00'}</strong>
-                  </div>
-                  <div className="orders-detail__item">
-                    <span className="orders-detail__label">Desconto</span>
-                    <strong>{selectedOrder.discount?.toFixed?.(2) ?? '0.00'}</strong>
-                  </div>
-                </>
-              ) : null}
-              <div className="orders-detail__item orders-detail__item--full">
-                <span className="orders-detail__label">Itens</span>
-                <strong>{selectedOrder.itemsSummary}</strong>
               </div>
             </div>
 
-            {selectedOrder.isExternal ? (
-              <>
-                <div className="orders-detail__grid" style={{ marginTop: '1rem' }}>
-                  <div className="orders-detail__item orders-detail__item--full">
-                    <span className="orders-detail__label">Timeline de eventos</span>
-                    <strong>
-                      {selectedOrderEvents.length > 0
-                        ? selectedOrderEvents.map((event) => `${event.eventCode || event.eventFullCode} · ${event.createdAt}`).join(' | ')
-                        : 'Nenhum evento sincronizado ainda.'}
-                    </strong>
+            <div className="orders-domain__list-shell">
+              <div className="entity-table-wrap">
+                {loading ? (
+                  <div className="entity-empty-state">
+                    <p className="text-section-title">Carregando pedidos...</p>
                   </div>
-                  <div className="orders-detail__item orders-detail__item--full">
-                    <span className="orders-detail__label">Tracking</span>
-                    <strong>
-                      {selectedOrderTracking.length > 0
-                        ? selectedOrderTracking.map((entry) => `${entry.label} · ${entry.happenedAt}`).join(' | ')
-                        : 'Nenhum tracking recebido ainda.'}
-                    </strong>
+                ) : visibleOrders.length === 0 ? (
+                  <div className="entity-empty-state">
+                    <p className="text-section-title">Nenhum pedido encontrado</p>
+                    <p className="text-body">Crie um novo pedido ou ajuste os filtros para continuar.</p>
                   </div>
-                  <div className="orders-detail__item orders-detail__item--full">
-                    <span className="orders-detail__label">Erros de sincronizacao</span>
-                    <strong>
-                      {integrationErrors.length > 0
-                        ? integrationErrors.map((entry) => entry.message).join(' | ')
-                        : selectedOrder.syncErrorMessage || 'Nenhum erro registrado.'}
-                    </strong>
-                  </div>
-                </div>
-
-                <IFoodWidgetBridge
-                  merchantConfig={selectedMerchantConfig}
-                  externalOrderId={selectedOrder.externalOrderId}
-                />
-              </>
-            ) : null}
+                ) : (
+                  <table className="ui-table">
+                    <thead>
+                      <tr>
+                        <th>Pedido</th>
+                        <th>Canal</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Venda</th>
+                        <th>Criado em</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleOrders.map((order) => (
+                        <tr
+                          key={order.id}
+                          className={order.id === selectedOrderId ? 'entity-table__row--selected' : undefined}
+                          onClick={() => handleSelectOrder(order.id)}
+                        >
+                          <td className="ui-table__cell--strong">{order.number}</td>
+                          <td>{order.origin}</td>
+                          <td>{order.customerName}</td>
+                          <td className="ui-table__cell--numeric">{order.total}</td>
+                          <td>{getOrderDomainStatusLabel(order.domainStatus)}</td>
+                          <td>{order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}</td>
+                          <td>{formatDateTime(order.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
           </div>
-        </SurfaceCard>
-      ) : null}
+
+          <div className="orders-domain__column">
+            {activeScreen === 'create' ? (
+              <OrderFormPanel
+                canWrite={can('orders:write')}
+                editingOrderId={editingOrderId}
+                customers={customers}
+                products={products}
+                formState={formState}
+                saving={saving}
+                draftItems={draftItems}
+                calculatedTotals={calculatedTotals}
+                sourceOptions={sourceOptions}
+                paymentOptions={paymentOptions}
+                onCancel={handleCancelForm}
+                onSubmit={handleSubmit}
+                onCustomerChange={handleCustomerChange}
+                onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
+                onAddressChange={updateAddressField}
+                onTotalsChange={updateTotalsField}
+                onItemChange={updateItem}
+                onAddItem={addItem}
+                onRemoveItem={removeItem}
+              />
+            ) : (
+              <OrderDetailPanel
+                selectedOrder={selectedOrder}
+                canWrite={can('orders:write')}
+                acting={acting}
+                onEdit={() => handleStartEdit(selectedOrder)}
+                onDispatch={handleDispatch}
+                onConvertToSale={handleConvertToSale}
+                formatDateTime={formatDateTime}
+              />
+            )}
+          </div>
+        </div>
+      </SurfaceCard>
     </section>
   );
 }

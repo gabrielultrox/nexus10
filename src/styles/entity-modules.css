@@ -10,26 +10,29 @@
 
 .entity-form-shell {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .entity-form-shell__header {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
   gap: var(--space-4);
+  align-items: start;
+  min-width: 0;
 }
 
 .entity-form-hero {
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-5);
+  gap: var(--space-2);
+  padding: var(--space-4);
   border: 1px solid var(--color-border-default);
-  border-radius: 28px;
+  border-radius: 24px;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-amber) 12%, transparent), transparent 42%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel) 76%, transparent), var(--surface-panel-soft-alt));
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-amber) 9%, transparent), transparent 42%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel) 82%, transparent), var(--surface-panel-soft-alt));
 }
 
 .entity-form-hero::after {
@@ -44,22 +47,23 @@
 .entity-form-hero__eyebrow {
   color: var(--color-accent-cyan);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.22em;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .entity-form-hero__title {
-  max-width: 12ch;
+  max-width: 16ch;
   font-family: var(--font-display);
-  font-size: clamp(1.7rem, 2.8vw, 2.6rem);
-  line-height: 0.94;
+  font-size: clamp(1.45rem, 2.3vw, 2rem);
+  line-height: 1.04;
 }
 
 .entity-form-hero__description {
   max-width: 62ch;
   color: var(--color-text-secondary);
-  font-size: 0.98rem;
+  font-size: 0.92rem;
+  line-height: 1.58;
 }
 
 .entity-form-hero__chips {
@@ -75,10 +79,10 @@
 
 .entity-form-aside__card {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 24px;
+  border-radius: 20px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 56%, transparent), transparent 36%),
     var(--surface-panel-soft-alt);
@@ -87,26 +91,27 @@
 .entity-form-aside__card strong {
   color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: 1.35rem;
-  line-height: 0.94;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .entity-form-aside__label {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .entity-form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-3);
   align-items: start;
-  padding: var(--space-5);
+  min-width: 0;
+  padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 28px;
+  border-radius: 24px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 30%),
     var(--surface-panel-soft-alt);
@@ -115,10 +120,11 @@
 .entity-form-section {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
+  min-width: 0;
+  padding: var(--space-3);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--surface-panel) 72%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
 }
 
 .entity-form-section__header {
@@ -129,21 +135,22 @@
 .entity-form-section__eyebrow {
   color: var(--color-accent-cyan);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .entity-form-section__title {
   color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: 1.2rem;
-  line-height: 0.96;
+  font-size: 1.05rem;
+  line-height: 1.08;
 }
 
 .entity-form-section__description {
   color: var(--color-text-secondary);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .entity-form-section--span-2 {
@@ -160,7 +167,7 @@
 
 .entity-field-hint {
   color: var(--color-text-muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   line-height: 1.5;
 }
 
@@ -168,6 +175,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
   padding-top: var(--space-2);
 }
@@ -175,6 +183,7 @@
 .entity-toolbar-shell {
   display: grid;
   gap: var(--space-4);
+  min-width: 0;
 }
 
 .entity-toolbar-copy {
@@ -184,39 +193,73 @@
 
 .entity-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 220px) minmax(180px, 220px);
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-  padding: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 22px;
+  border-radius: 18px;
   background: var(--surface-panel-soft-alt);
 }
 
 .entity-table-wrap {
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 20px;
+  background: var(--surface-panel-soft-alt);
 }
 
 .entity-table__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+}
+
+.entity-table__actions .ui-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 0.68rem;
+}
+
+.entity-table-wrap .ui-table {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .entity-empty-state {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-5);
+  min-width: 0;
+  padding: var(--space-4);
   border: 1px dashed var(--color-border-default);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--surface-panel-soft-alt);
 }
 
+.entity-form-grid > *,
+.entity-toolbar > * {
+  min-width: 0;
+}
+
+@media (max-width: 1440px) {
+  .entity-form-shell__header {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1180px) {
-  .entity-form-shell__header,
   .entity-form-grid,
   .entity-toolbar {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .entity-form-shell__header {
+    grid-template-columns: 1fr;
   }
 
   .entity-form-section--span-2 {
@@ -237,6 +280,5 @@
 
   .entity-form-actions {
     justify-content: flex-start;
-    flex-wrap: wrap;
   }
 }

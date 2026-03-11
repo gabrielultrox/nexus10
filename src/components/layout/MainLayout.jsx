@@ -8,10 +8,14 @@ function MainLayout() {
     <div className="app-shell">
       <Sidebar />
       <div className="app-shell__main">
-        <AppHeader />
-        <main className="app-shell__content">
-          <Outlet />
-        </main>
+        <div className="app-shell__frame">
+          <AppHeader />
+          <main className="app-shell__content">
+            <div className="app-shell__content-inner">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

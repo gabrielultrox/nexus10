@@ -319,10 +319,10 @@ function ProductsModule() {
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">Catalogo ativo</span>
               <h4 className="entity-form-hero__title">
-                {editingProductId ? 'Atualize o produto em foco' : 'Cadastre itens com cara de cardapio profissional'}
+                {editingProductId ? 'Atualize o produto em foco' : 'Cadastre produtos com um fluxo mais direto'}
               </h4>
               <p className="entity-form-hero__description">
-                Organize preco, custo, estoque e classificacao em um fluxo mais claro para a operacao nao perder tempo no cadastro.
+                Organize preco, custo, estoque e classificacao em um fluxo claro para a operacao ganhar velocidade no cadastro.
               </p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">SKU pronto para PDV</span>

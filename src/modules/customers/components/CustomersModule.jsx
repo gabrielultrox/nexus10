@@ -299,10 +299,10 @@ function CustomersModule() {
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">CRM local</span>
               <h4 className="entity-form-hero__title">
-                {editingCustomerId ? 'Ajuste o cadastro do cliente' : 'Cadastros mais limpos para atendimento e entrega'}
+                {editingCustomerId ? 'Ajuste o cadastro do cliente' : 'Cadastros mais simples para atendimento e entrega'}
               </h4>
               <p className="entity-form-hero__description">
-                Centralize contato, endereco e observacoes em um fluxo mais amigavel para quem cadastra no balcão ou durante o pedido.
+                Centralize contato, endereco e observacoes em um fluxo mais amigavel para quem cadastra no balcao ou durante o pedido.
               </p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">Telefone rapido</span>
@@ -415,7 +415,7 @@ function CustomersModule() {
       <SurfaceCard title="Base de clientes">
         <div className="entity-toolbar-shell">
           <div className="entity-toolbar-copy">
-            <p className="text-section-title">Busca com menos ruido</p>
+            <p className="text-section-title">Busca mais clara</p>
             <p className="text-body">Filtre por contato ou status para encontrar o cadastro certo sem varrer a tabela toda.</p>
           </div>
 

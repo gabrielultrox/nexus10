@@ -7,7 +7,7 @@ function CustomersPage() {
       <PageIntro
         eyebrow="CRM"
         title="Clientes"
-        description="Base real de clientes da store com dados essenciais para atendimento, entrega e uso futuro no PDV."
+        description="Mantenha a base de clientes organizada para atendimento, entrega e reaproveitamento rapido no pedido."
       />
 
       <CustomersModule />

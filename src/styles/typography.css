@@ -1,7 +1,7 @@
 body {
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 h1,
@@ -17,23 +17,23 @@ h4,
 
 .text-display {
   font-family: var(--font-title);
-  font-size: clamp(3.6rem, 8vw, 5.8rem);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  line-height: 0.9;
-  text-transform: uppercase;
+  font-size: clamp(2.8rem, 6vw, 4.4rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 0.96;
+  text-transform: none;
 }
 
 .text-page-title {
-  font-size: clamp(2rem, 3vw, 3rem);
+  font-size: clamp(1.9rem, 3vw, 2.7rem);
   font-weight: 800;
-  line-height: 0.96;
+  line-height: 1;
 }
 
 .text-section-title {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  line-height: 1.04;
+  line-height: 1.15;
 }
 
 .text-card-title {
@@ -44,9 +44,9 @@ h4,
 
 .text-kpi,
 .text-metric-value {
-  font-size: clamp(2.2rem, 3vw, 3rem);
+  font-size: clamp(2rem, 2.8vw, 2.7rem);
   font-weight: 800;
-  line-height: 0.94;
+  line-height: 1;
 }
 
 .text-body {
@@ -71,7 +71,7 @@ h4,
 .text-label {
   font-size: 0.78rem;
   font-weight: 400;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
@@ -79,7 +79,7 @@ h4,
 .text-overline {
   font-size: 0.7rem;
   font-weight: 400;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-accent-cyan);
 }

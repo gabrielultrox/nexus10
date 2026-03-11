@@ -15,25 +15,27 @@ function AppHeader() {
 
   return (
     <header className="app-header">
-      <div className="app-header__intro">
-        <p className="app-header__eyebrow">{route.eyebrow} // nexus core</p>
-        <h1 className="app-header__title">{route.title}</h1>
-      </div>
-
-      <div className="app-header__actions">
-        <div className="app-header__status">
-          <span className="status-dot" />
-          <div>
-            <strong>{operatorLabel}</strong>
-            <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
-          </div>
+      <div className="app-header__inner">
+        <div className="app-header__intro">
+          <p className="app-header__eyebrow">{route.eyebrow}</p>
+          <h1 className="app-header__title">{route.title}</h1>
         </div>
-        <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
-        <NotificationCenter />
-        <button type="button" className="ui-button ui-button--ghost" onClick={signOut}>
-          Lock / logout
-        </button>
-        <ThemeToggle />
+
+        <div className="app-header__actions">
+          <div className="app-header__status">
+            <span className="status-dot" />
+            <div>
+              <strong>{operatorLabel}</strong>
+              <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
+            </div>
+          </div>
+          <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
+          <NotificationCenter />
+          <button type="button" className="ui-button ui-button--ghost" onClick={signOut}>
+            Sair
+          </button>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

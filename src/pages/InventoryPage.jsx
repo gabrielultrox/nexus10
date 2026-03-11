@@ -7,7 +7,7 @@ function InventoryPage() {
       <PageIntro
         eyebrow="Estoque"
         title="Controle de estoque"
-        description="Saldo atual, ajustes manuais, baixas automaticas por venda e historico de movimentacao com importacao CSV."
+        description="Consulte saldo, registre ajustes manuais e acompanhe o historico do estoque em uma tela mais direta."
       />
 
       <InventoryModule />
