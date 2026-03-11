@@ -12,45 +12,40 @@ function CourierCard({ courier, onDelete }) {
         <div className="courier-card__identity">
           <div className="courier-card__avatar">{initial}</div>
           <div>
-            <p className="text-overline">Entregador</p>
             <h2 className="courier-card__title">{courier.name}</h2>
-            <p className="courier-card__meta">{courier.vehicle}</p>
+            <p className="courier-card__meta">{courier.phone}</p>
           </div>
         </div>
 
-        <div className="courier-card__top-actions">
-          <div className="courier-card__badges">
-            <span className={`ui-badge ${status.badgeClass}`}>{status.label}</span>
-            {courier.isFixed ? <span className="ui-badge ui-badge--warning">Fixo</span> : null}
-          </div>
-          <span className="courier-card__machine-chip">{courier.machine}</span>
+        <span className="courier-card__machine-chip">{courier.machine}</span>
+      </div>
+
+      <div className="courier-card__badges">
+        <span className={`ui-badge ${status.badgeClass}`}>{status.label}</span>
+        <span className="ui-badge ui-badge--info">{courierShiftMap[courier.shift]}</span>
+        {courier.isFixed ? <span className="ui-badge ui-badge--warning">Fixo</span> : null}
+      </div>
+
+      <div className="courier-card__details">
+        <div className="courier-card__detail">
+          <span>Veiculo</span>
+          <strong>{courier.vehicle}</strong>
+        </div>
+        <div className="courier-card__detail">
+          <span>Hoje</span>
+          <strong>{courier.deliveriesToday} entregas</strong>
+        </div>
+        <div className="courier-card__detail">
+          <span>Semana</span>
+          <strong>{courier.weeklyDeliveries}</strong>
+        </div>
+        <div className="courier-card__detail">
+          <span>Avaliacao</span>
+          <strong>{courier.rating.toFixed(1)}</strong>
         </div>
       </div>
 
-      <div className="courier-card__body">
-        <div className="courier-card__status-line">
-          <span>{courier.phone}</span>
-          <span>{courierShiftMap[courier.shift]}</span>
-          <span>{courier.deliveriesToday} entregas</span>
-        </div>
-
-        <div className="courier-card__metrics">
-          <div className="courier-card__metric">
-            <span className="courier-card__metric-label">Hoje</span>
-            <strong>{courier.deliveriesToday}</strong>
-          </div>
-          <div className="courier-card__metric">
-            <span className="courier-card__metric-label">Semana</span>
-            <strong>{courier.weeklyDeliveries}</strong>
-          </div>
-          <div className="courier-card__metric">
-            <span className="courier-card__metric-label">Avaliacao</span>
-            <strong>{courier.rating.toFixed(1)}</strong>
-          </div>
-        </div>
-
-        <p className="courier-card__notes">{courier.notes}</p>
-      </div>
+      <p className="courier-card__notes">{courier.notes}</p>
 
       <div className="courier-card__actions">
         <Link to={`/couriers/${courier.id}`} className="ui-button ui-button--secondary">

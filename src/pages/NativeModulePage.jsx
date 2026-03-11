@@ -563,10 +563,12 @@ function NativeModulePage({ route }) {
     }
 
     return machineChecklistRecords.filter((record) => {
+      const matchesStatus = statusFilter === 'all' || record.machineStatus === statusFilter;
       const rawText = [record.device, record.holder, record.model, record.status, record.machineStatus].join(' ').toLowerCase();
-      return searchTerm.trim().length === 0 || rawText.includes(searchTerm.trim().toLowerCase());
+      const matchesSearch = searchTerm.trim().length === 0 || rawText.includes(searchTerm.trim().toLowerCase());
+      return matchesStatus && matchesSearch;
     });
-  }, [machineChecklistRecords, route.path, searchTerm]);
+  }, [machineChecklistRecords, route.path, searchTerm, statusFilter]);
   const visibleOpenDeliveryRecords = useMemo(
     () => (route.path === 'delivery-reading'
       ? visibleRecords.filter((record) => !record.closed)
@@ -1109,6 +1111,8 @@ function NativeModulePage({ route }) {
   const isDeliveryReading = route.path === 'delivery-reading';
   const isMachineChecklist = route.path === 'machines';
   const isMachineHistory = route.path === 'machine-history';
+  const visibleCount = isMachineChecklist ? visibleMachineChecklistRecords.length : tableRows.length;
+  const tableTitle = isMachineChecklist ? 'Maquininhas cadastradas' : content.table.title;
 
   return (
     <div className={`page-stack native-module-page native-module-page--${route.path}`}>
@@ -1228,22 +1232,22 @@ function NativeModulePage({ route }) {
       ) : null}
 
       <div>
-        <SurfaceCard title={content.table.title}>
+        <SurfaceCard title={tableTitle}>
         {manager && !manager.hideToolbar ? (
           <div className="native-module__toolbar">
             <div className="ui-field">
               <label className="ui-label" htmlFor={`${route.path}-search`}>
                 Buscar
               </label>
-              <input
-                id={`${route.path}-search`}
-                className="ui-input"
-                type="text"
-                value={searchTerm}
-                placeholder="Buscar nos registros"
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </div>
+                <input
+                  id={`${route.path}-search`}
+                  className="ui-input"
+                  type="text"
+                  value={searchTerm}
+                  placeholder={isMachineChecklist ? 'Dispositivo, entregador ou modelo' : 'Buscar nos registros'}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
 
             {statusField ? (
               <div className="ui-field">
@@ -1267,7 +1271,7 @@ function NativeModulePage({ route }) {
             ) : null}
 
             <div className="native-module__toolbar-actions">
-              <span className="ui-badge ui-badge--special">{tableRows.length} visiveis</span>
+              <span className="ui-badge ui-badge--special">{visibleCount} visiveis</span>
               {route.path === 'schedule' ? (
                 <button type="button" className="ui-button ui-button--secondary" onClick={handleExportScheduleImage}>
                   Exportar imagem
@@ -1351,7 +1355,7 @@ function NativeModulePage({ route }) {
               </div>
             </div>
           </div>
-        ) : tableRows.length === 0 && manager ? (
+        ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : tableRows.length === 0) && manager) ? (
           <div className="native-module__empty-state">
             <p className="text-section-title">{records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}</p>
             <p className="text-body">
@@ -1563,12 +1567,24 @@ function NativeModulePage({ route }) {
             </div>
           </div>
         ) : isMachineChecklist ? (
-          <div className="machine-checklist">
-            <div className="machine-checklist__header">
-              <span className="machine-checklist__eyebrow">Checklist - {formatChecklistDate()}</span>
+          <div className="machine-operations">
+            <div className="machine-operations__header">
+              <div>
+                <span className="machine-operations__eyebrow">Checklist do dia - {formatChecklistDate()}</span>
+                <h3 className="machine-operations__title">Parque operacional leve e direto</h3>
+                <p className="machine-operations__description">
+                  Confira presenca, entregador vinculado e situacao da maquininha no mesmo card, sem precisar abrir tabela.
+                </p>
+              </div>
+              <div className="machine-operations__summary">
+                <span className="ui-badge ui-badge--success">
+                  {visibleMachineChecklistRecords.filter((record) => record.status === 'Presente').length} presentes
+                </span>
+                <span className="ui-badge ui-badge--info">{visibleMachineChecklistRecords.length} dispositivos</span>
+              </div>
             </div>
 
-            <div className="machine-checklist__grid">
+            <div className="machine-operations__grid">
               {visibleMachineChecklistRecords.map((record) => {
                 const isPresent = record.status === 'Presente';
                 const hasProblem = ['Manutencao', 'Carga'].includes(record.machineStatus);
@@ -1576,56 +1592,74 @@ function NativeModulePage({ route }) {
                 return (
                   <article
                     key={record.id}
-                    className={`machine-checklist__card ${isPresent ? 'machine-checklist__card--present' : 'machine-checklist__card--absent'}`}
+                    className={`machine-operations__card ${isPresent ? 'machine-operations__card--present' : 'machine-operations__card--absent'}`}
                   >
-                    <div className="machine-checklist__card-top">
-                      <div className="machine-checklist__identity">
-                        <strong className="machine-checklist__device">{record.device}</strong>
-                        <div>
-                          <p className="machine-checklist__model">{record.model}</p>
-                          <p className="machine-checklist__holder">{record.holder || 'Nenhum'}</p>
-                        </div>
+                    <div className="machine-operations__card-top">
+                      <div className="machine-operations__identity">
+                        <span className="machine-operations__device-label">Maquininha</span>
+                        <strong className="machine-operations__device">{record.device}</strong>
                       </div>
 
-                      <button
-                        type="button"
-                        className={`machine-checklist__toggle ${isPresent ? 'is-on' : ''}`}
-                        onClick={() => handleMachineChecklistToggle(record.id)}
-                        aria-pressed={isPresent}
-                        aria-label={isPresent ? 'Presente ate o reset do dia' : 'Marcar presente'}
-                        disabled={isPresent}
-                      >
-                        <span className="machine-checklist__toggle-thumb" />
-                      </button>
-                    </div>
-
-                    <div className="machine-checklist__badges">
-                      <span className={`ui-badge ${isPresent ? 'ui-badge--success' : 'ui-badge--warning'}`}>
-                        {isPresent ? 'Presente' : 'Ausente'}
-                      </span>
-                      <span className={`ui-badge ${hasProblem ? 'ui-badge--danger' : 'ui-badge--info'}`}>
-                        {record.machineStatus}
-                      </span>
-                    </div>
-
-                      <div className="machine-checklist__footer">
-                        <span className="machine-checklist__updated">
-                          {record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem conferencia hoje'}
+                      <div className="machine-operations__badges">
+                        <span className={`ui-badge ${isPresent ? 'ui-badge--success' : 'ui-badge--warning'}`}>
+                          {isPresent ? 'Presente' : 'Ausente'}
                         </span>
-                        <label className={`machine-checklist__presence-check ${isPresent ? 'is-checked' : ''}`} htmlFor={`machine-check-${record.id}`}>
+                        <span className={`ui-badge ${hasProblem ? 'ui-badge--danger' : 'ui-badge--info'}`}>
+                          {record.machineStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="machine-operations__meta-grid">
+                      <div className="machine-operations__meta-item">
+                        <span>Entregador</span>
+                        <strong>{record.holder || 'Sem entregador'}</strong>
+                      </div>
+                      <div className="machine-operations__meta-item">
+                        <span>Modelo</span>
+                        <strong>{record.model}</strong>
+                      </div>
+                    </div>
+
+                    <div className="machine-operations__footer">
+                      <span className="machine-operations__updated">
+                        {record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem conferencia hoje'}
+                      </span>
+
+                      <div className="machine-operations__actions">
+                        <label className={`machine-operations__presence-check ${isPresent ? 'is-checked' : ''}`} htmlFor={`machine-check-${record.id}`}>
                           <input
                             id={`machine-check-${record.id}`}
                             type="checkbox"
                             checked={isPresent}
                             onChange={() => handleMachineChecklistToggle(record.id)}
                           />
-                          <span className="machine-checklist__presence-box" aria-hidden="true" />
-                          <span>{isPresent ? 'Presente no dia' : 'Confirmar presenca hoje'}</span>
+                          <span className="machine-operations__presence-box" aria-hidden="true" />
+                          <span>{isPresent ? 'Presente hoje' : 'Confirmar presenca'}</span>
                         </label>
+
+                        {record.machineStatus !== 'Ativa' ? (
+                          <button
+                            type="button"
+                            className="ui-button ui-button--secondary"
+                            onClick={() => handleApplyAction(record.id)}
+                          >
+                            Marcar ativa
+                          </button>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          className="ui-button ui-button--danger"
+                          onClick={() => handleDelete(record.id)}
+                        >
+                          Excluir
+                        </button>
                       </div>
-                    </article>
-                  );
-                })}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         ) : (

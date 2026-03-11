@@ -197,48 +197,43 @@ function CouriersModule() {
     <section className="couriers-module">
       <CouriersStats items={stats} />
 
-      <SurfaceCard title="Cadastro rapido de entregadores">
-        <div className="entity-form-shell">
-          <div className="entity-form-shell__header">
-            <div className="entity-form-hero">
-              <span className="entity-form-hero__eyebrow">Operacao de pista</span>
-              <h4 className="entity-form-hero__title">Cadastro rapido sem cara de planilha</h4>
-              <p className="entity-form-hero__description">
-                Adicione entregadores com mais contexto visual para a escala, o turno e a leitura operacional ficarem mais agradaveis no dia a dia.
-              </p>
-              <div className="entity-form-hero__chips">
-                <span className="ui-badge ui-badge--success">Escala de turno</span>
-                <span className="ui-badge ui-badge--warning">Maquininha vinculada</span>
-                <span className="ui-badge ui-badge--special">Base compartilhada</span>
+      {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+      <div className="couriers-layout">
+        <div className="couriers-layout__main">
+          <SurfaceCard title="Base de entregadores">
+            <div className="couriers-panel">
+              <div className="couriers-panel__header">
+                <div>
+                  <p className="text-overline">Operacao de pista</p>
+                  <h3 className="text-section-title">Consulta rapida do time</h3>
+                  <p className="text-body">
+                    Busque por nome, turno, status ou maquininha e mantenha a leitura do time leve durante o turno.
+                  </p>
+                </div>
+                <span className="ui-badge ui-badge--special">
+                  {filteredCouriers.length} de {couriers.length}
+                </span>
               </div>
+
+              <CouriersFilters filters={filters} onChange={setFilters} />
+              <CouriersGrid couriers={filteredCouriers} onDelete={handleDelete} />
             </div>
+          </SurfaceCard>
+        </div>
 
-            <div className="entity-form-aside">
-              <div className="entity-form-aside__card">
-                <span className="entity-form-aside__label">Total na base</span>
-                <strong>{stats[0]?.value ?? 0}</strong>
-                <p className="text-body">Entregadores monitorados na operacao atual.</p>
-              </div>
-              <div className="entity-form-aside__card">
-                <span className="entity-form-aside__label">Ativos hoje</span>
-                <strong>{stats[1]?.value ?? 0}</strong>
-                <p className="text-body">Nomes em rota ou disponiveis para a escala do turno.</p>
-              </div>
-            </div>
-          </div>
-
-          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
-
-          <form className="couriers-form-grid" onSubmit={handleSubmit}>
-            <div className="entity-form-section entity-form-section--span-2">
-              <div className="entity-form-section__header">
-                <span className="entity-form-section__eyebrow">Perfil</span>
-                <h4 className="entity-form-section__title">Identidade do entregador</h4>
-                <p className="entity-form-section__description">Dados essenciais para localizar e reconhecer rapidamente quem esta na operacao.</p>
+        <aside className="couriers-layout__aside">
+          <SurfaceCard title="Novo entregador">
+            <div className="couriers-register">
+              <div className="couriers-register__intro">
+                <p className="text-overline">Cadastro rapido</p>
+                <p className="text-body">
+                  Um bloco simples para incluir nome, turno, status e maquininha sem pesar a tela.
+                </p>
               </div>
 
-              <div className="entity-stack">
-                <div className="ui-field">
+              <form className="couriers-register__form" onSubmit={handleSubmit}>
+                <div className="ui-field couriers-register__field--wide">
                   <label className="ui-label" htmlFor="courier-name">
                     Nome
                   </label>
@@ -276,21 +271,11 @@ function CouriersModule() {
                     className="ui-input"
                     type="text"
                     value={form.vehicle}
-                    placeholder="Honda Pop 110"
+                    placeholder="Moto"
                     onChange={(event) => updateField('vehicle', event.target.value)}
                   />
                 </div>
-              </div>
-            </div>
 
-            <div className="entity-form-section entity-form-section--span-2">
-              <div className="entity-form-section__header">
-                <span className="entity-form-section__eyebrow">Operacao</span>
-                <h4 className="entity-form-section__title">Escala e equipamento</h4>
-                <p className="entity-form-section__description">Vincule turno, status e maquininha no mesmo bloco de decisao.</p>
-              </div>
-
-              <div className="entity-stack">
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="courier-machine-register">
                     Maquininha
@@ -300,7 +285,7 @@ function CouriersModule() {
                     className="ui-input"
                     type="text"
                     value={form.machine}
-                    placeholder="Maq. 03"
+                    placeholder="017"
                     onChange={(event) => updateField('machine', event.target.value)}
                   />
                 </div>
@@ -345,7 +330,21 @@ function CouriersModule() {
                   </select>
                 </div>
 
-                <label className="couriers-filters__checkbox couriers-form-grid__checkbox">
+                <div className="ui-field couriers-register__field--wide">
+                  <label className="ui-label" htmlFor="courier-notes">
+                    Observacoes
+                  </label>
+                  <textarea
+                    id="courier-notes"
+                    className="ui-textarea"
+                    rows={4}
+                    value={form.notes}
+                    placeholder="Detalhes curtos sobre disponibilidade, preferencia de rota ou observacao do turno."
+                    onChange={(event) => updateField('notes', event.target.value)}
+                  />
+                </div>
+
+                <label className="couriers-filters__checkbox couriers-register__checkbox couriers-register__field--wide">
                   <input
                     type="checkbox"
                     checked={form.isFixed}
@@ -353,45 +352,34 @@ function CouriersModule() {
                   />
                   <span>Entregador fixo</span>
                 </label>
+
+                <div className="couriers-register__actions couriers-register__field--wide">
+                  <button type="submit" className="ui-button ui-button--primary">
+                    Cadastrar entregador
+                  </button>
+                </div>
+              </form>
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard title="Resumo de turno">
+            <div className="couriers-aside-list">
+              <div className="couriers-aside-list__item">
+                <span>Em leitura</span>
+                <strong>{stats[1]?.value ?? 0} ativos hoje</strong>
+              </div>
+              <div className="couriers-aside-list__item">
+                <span>Base fixa</span>
+                <strong>{stats[2]?.value ?? 0} entregadores permanentes</strong>
+              </div>
+              <div className="couriers-aside-list__item">
+                <span>Persistencia</span>
+                <strong>{canSyncCouriers ? 'Base compartilhada' : 'Base local'}</strong>
               </div>
             </div>
-
-            <div className="entity-form-section entity-form-section--span-2">
-              <div className="entity-form-section__header">
-                <span className="entity-form-section__eyebrow">Observacoes</span>
-                <h4 className="entity-form-section__title">Contexto operacional</h4>
-                <p className="entity-form-section__description">Anote detalhes importantes para escala, comportamento ou preferencia do turno.</p>
-              </div>
-
-              <div className="ui-field">
-                <label className="ui-label" htmlFor="courier-notes">
-                  Observacoes
-                </label>
-                <textarea
-                  id="courier-notes"
-                  className="ui-textarea"
-                  rows={4}
-                  value={form.notes}
-                  placeholder="Detalhes rapidos do perfil operacional"
-                  onChange={(event) => updateField('notes', event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="couriers-form-grid__actions entity-form-grid__wide">
-              <button type="submit" className="ui-button ui-button--primary">
-                Cadastrar entregador
-              </button>
-            </div>
-          </form>
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard title="Filtro operacional">
-        <CouriersFilters filters={filters} onChange={setFilters} />
-      </SurfaceCard>
-
-      <CouriersGrid couriers={filteredCouriers} onDelete={handleDelete} />
+          </SurfaceCard>
+        </aside>
+      </div>
     </section>
   );
 }
