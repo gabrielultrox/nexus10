@@ -294,75 +294,145 @@ function CustomersModule() {
       </div>
 
       <SurfaceCard title={editingCustomerId ? 'Editar cliente' : 'Cadastrar cliente'}>
-        <form className="entity-form-grid" onSubmit={handleSubmit}>
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customer-name">Nome</label>
-            <input id="customer-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
+        <div className="entity-form-shell">
+          <div className="entity-form-shell__header">
+            <div className="entity-form-hero">
+              <span className="entity-form-hero__eyebrow">CRM local</span>
+              <h4 className="entity-form-hero__title">
+                {editingCustomerId ? 'Ajuste o cadastro do cliente' : 'Cadastros mais limpos para atendimento e entrega'}
+              </h4>
+              <p className="entity-form-hero__description">
+                Centralize contato, endereco e observacoes em um fluxo mais amigavel para quem cadastra no balcão ou durante o pedido.
+              </p>
+              <div className="entity-form-hero__chips">
+                <span className="ui-badge ui-badge--info">Telefone rapido</span>
+                <span className="ui-badge ui-badge--success">Entrega preparada</span>
+                <span className="ui-badge ui-badge--special">Historico por loja</span>
+              </div>
+            </div>
+
+            <div className="entity-form-aside">
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Clientes ativos</span>
+                <strong>{String(metrics[1]?.value ?? '00')}</strong>
+                <p className="text-body">Base pronta para reaproveitar nos proximos pedidos do dia.</p>
+              </div>
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Com endereco</span>
+                <strong>{String(metrics[2]?.value ?? '00')}</strong>
+                <p className="text-body">Cadastros com entrega mais agil e menos retrabalho.</p>
+              </div>
+            </div>
           </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customer-phone">Telefone</label>
-            <input id="customer-phone" className="ui-input" value={formState.phone} onChange={(event) => updateField('phone', event.target.value)} placeholder="(37) 99999-0000" />
-          </div>
+          <form className="entity-form-grid" onSubmit={handleSubmit}>
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Contato</span>
+                <h4 className="entity-form-section__title">Identificacao rapida</h4>
+                <p className="entity-form-section__description">Nome e telefone para encontrar o cliente sem hesitacao.</p>
+              </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customer-neighborhood">Bairro</label>
-            <input id="customer-neighborhood" className="ui-input" value={formState.neighborhood} onChange={(event) => updateField('neighborhood', event.target.value)} />
-          </div>
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-name">Nome</label>
+                  <input id="customer-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
+                  <span className="entity-field-hint">Prefira o nome como o cliente costuma se apresentar no pedido.</span>
+                </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customer-status">Status</label>
-            <select id="customer-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-phone">Telefone</label>
+                  <input id="customer-phone" className="ui-input" value={formState.phone} onChange={(event) => updateField('phone', event.target.value)} placeholder="(37) 99999-0000" />
+                  <span className="entity-field-hint">Use o numero principal para confirmar pedido e acionar entregador.</span>
+                </div>
 
-          <div className="ui-field entity-form-grid__wide">
-            <label className="ui-label" htmlFor="customer-address">Endereco</label>
-            <input id="customer-address" className="ui-input" value={formState.addressLine} onChange={(event) => updateField('addressLine', event.target.value)} />
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-status">Status</label>
+                  <select id="customer-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
-          <div className="ui-field entity-form-grid__wide">
-            <label className="ui-label" htmlFor="customer-reference">Referencia</label>
-            <input id="customer-reference" className="ui-input" value={formState.reference} onChange={(event) => updateField('reference', event.target.value)} />
-          </div>
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Entrega</span>
+                <h4 className="entity-form-section__title">Endereco e referencia</h4>
+                <p className="entity-form-section__description">Bloco pensado para reduzir erro de rota e perguntas repetidas.</p>
+              </div>
 
-          <div className="ui-field entity-form-grid__wide">
-            <label className="ui-label" htmlFor="customer-notes">Observacoes</label>
-            <textarea id="customer-notes" className="ui-textarea" rows={4} value={formState.notes} onChange={(event) => updateField('notes', event.target.value)} />
-          </div>
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-neighborhood">Bairro</label>
+                  <input id="customer-neighborhood" className="ui-input" value={formState.neighborhood} onChange={(event) => updateField('neighborhood', event.target.value)} />
+                </div>
 
-          <div className="entity-form-actions">
-            {editingCustomerId ? (
-              <button type="button" className="ui-button ui-button--ghost" onClick={resetForm}>
-                Cancelar edicao
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-address">Endereco</label>
+                  <input id="customer-address" className="ui-input" value={formState.addressLine} onChange={(event) => updateField('addressLine', event.target.value)} />
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="customer-reference">Referencia</label>
+                  <input id="customer-reference" className="ui-input" value={formState.reference} onChange={(event) => updateField('reference', event.target.value)} />
+                  <span className="entity-field-hint">Exemplo: portao preto, esquina da farmacia, casa 2.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Observacoes</span>
+                <h4 className="entity-form-section__title">Contexto de atendimento</h4>
+                <p className="entity-form-section__description">Notas que ajudam o time em recorrencia, preferencia ou cuidado especial.</p>
+              </div>
+
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="customer-notes">Observacoes</label>
+                <textarea id="customer-notes" className="ui-textarea" rows={4} value={formState.notes} onChange={(event) => updateField('notes', event.target.value)} />
+              </div>
+            </div>
+
+            <div className="entity-form-actions entity-form-grid__wide">
+              {editingCustomerId ? (
+                <button type="button" className="ui-button ui-button--ghost" onClick={resetForm}>
+                  Cancelar edicao
+                </button>
+              ) : null}
+              <button type="submit" className="ui-button ui-button--primary" disabled={saving || !can('customers:write')}>
+                {saving ? 'Salvando...' : editingCustomerId ? 'Salvar cliente' : 'Cadastrar cliente'}
               </button>
-            ) : null}
-            <button type="submit" className="ui-button ui-button--secondary" disabled={saving || !can('customers:write')}>
-              {saving ? 'Salvando...' : editingCustomerId ? 'Salvar cliente' : 'Cadastrar cliente'}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
 
         {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       </SurfaceCard>
 
       <SurfaceCard title="Base de clientes">
-        <div className="entity-toolbar">
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customers-search">Buscar</label>
-            <input id="customers-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome ou telefone" />
+        <div className="entity-toolbar-shell">
+          <div className="entity-toolbar-copy">
+            <p className="text-section-title">Busca com menos ruido</p>
+            <p className="text-body">Filtre por contato ou status para encontrar o cadastro certo sem varrer a tabela toda.</p>
           </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="customers-status-filter">Status</label>
-            <select id="customers-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="all">Todos</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
+          <div className="entity-toolbar">
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="customers-search">Buscar</label>
+              <input id="customers-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome ou telefone" />
+            </div>
+
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="customers-status-filter">Status</label>
+              <select id="customers-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">Todos</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+            </div>
           </div>
         </div>
 

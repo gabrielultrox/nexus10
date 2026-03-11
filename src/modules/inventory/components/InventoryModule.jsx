@@ -366,75 +366,123 @@ function InventoryModule() {
 
       <div className="inventory-layout">
         <SurfaceCard title="Movimentar estoque">
-          <form className="entity-form-grid inventory-form-grid" onSubmit={handleAdjustmentSubmit}>
-            <div className="ui-field entity-form-grid__wide">
-              <label className="ui-label" htmlFor="inventory-product">Produto</label>
-              <select
-                id="inventory-product"
-                className="ui-select"
-                value={adjustmentState.productId}
-                onChange={(event) => updateAdjustmentField('productId', event.target.value)}
-              >
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>{product.name}</option>
-                ))}
-              </select>
+          <div className="entity-form-shell">
+            <div className="entity-form-shell__header">
+              <div className="entity-form-hero">
+                <span className="entity-form-hero__eyebrow">Ajuste operacional</span>
+                <h4 className="entity-form-hero__title">Movimente estoque com leitura mais clara</h4>
+                <p className="entity-form-hero__description">
+                  O ajuste manual e a importacao CSV agora ficam em uma composicao mais legivel, pensada para conferencia rapida durante o turno.
+                </p>
+                <div className="entity-form-hero__chips">
+                  <span className="ui-badge ui-badge--warning">Ajuste imediato</span>
+                  <span className="ui-badge ui-badge--info">Historico por data</span>
+                  <span className="ui-badge ui-badge--special">CSV pronto</span>
+                </div>
+              </div>
+
+              <div className="entity-form-aside">
+                <div className="entity-form-aside__card">
+                  <span className="entity-form-aside__label">Itens monitorados</span>
+                  <strong>{String(metrics[0]?.value ?? '00')}</strong>
+                  <p className="text-body">Produtos acompanhados pelo controle de estoque atual.</p>
+                </div>
+                <div className="entity-form-aside__card">
+                  <span className="entity-form-aside__label">Saldo critico</span>
+                  <strong>{String(metrics[2]?.value ?? '00')}</strong>
+                  <p className="text-body">Itens que merecem atencao antes de impactar a operacao.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="inventory-movement-type">Tipo</label>
-              <select
-                id="inventory-movement-type"
-                className="ui-select"
-                value={adjustmentState.movementType}
-                onChange={(event) => updateAdjustmentField('movementType', event.target.value)}
-              >
-                <option value="manual_in">Entrada manual</option>
-                <option value="manual_out">Saida manual</option>
-                <option value="manual_set">Ajuste absoluto</option>
-              </select>
-            </div>
+            <form className="entity-form-grid inventory-form-grid" onSubmit={handleAdjustmentSubmit}>
+              <div className="entity-form-section entity-form-section--span-2">
+                <div className="entity-form-section__header">
+                  <span className="entity-form-section__eyebrow">Movimentacao</span>
+                  <h4 className="entity-form-section__title">Registro manual</h4>
+                  <p className="entity-form-section__description">Selecione o item, o tipo de ajuste e o motivo da alteracao.</p>
+                </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="inventory-quantity">Quantidade</label>
-              <input
-                id="inventory-quantity"
-                className="ui-input"
-                value={adjustmentState.quantity}
-                onChange={(event) => updateAdjustmentField('quantity', event.target.value)}
-                placeholder="0"
-              />
-            </div>
+                <div className="entity-stack">
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="inventory-product">Produto</label>
+                    <select
+                      id="inventory-product"
+                      className="ui-select"
+                      value={adjustmentState.productId}
+                      onChange={(event) => updateAdjustmentField('productId', event.target.value)}
+                    >
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>{product.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="ui-field entity-form-grid__wide">
-              <label className="ui-label" htmlFor="inventory-reason">Motivo</label>
-              <input
-                id="inventory-reason"
-                className="ui-input"
-                value={adjustmentState.reason}
-                onChange={(event) => updateAdjustmentField('reason', event.target.value)}
-                placeholder="Reposicao, perda, conferencia, inventario..."
-              />
-            </div>
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="inventory-movement-type">Tipo</label>
+                    <select
+                      id="inventory-movement-type"
+                      className="ui-select"
+                      value={adjustmentState.movementType}
+                      onChange={(event) => updateAdjustmentField('movementType', event.target.value)}
+                    >
+                      <option value="manual_in">Entrada manual</option>
+                      <option value="manual_out">Saida manual</option>
+                      <option value="manual_set">Ajuste absoluto</option>
+                    </select>
+                  </div>
 
-            <div className="entity-form-actions">
-              <button type="submit" className="ui-button ui-button--secondary" disabled={saving || !can('inventory:write')}>
-                {saving ? 'Salvando...' : 'Registrar ajuste'}
-              </button>
-            </div>
-          </form>
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="inventory-quantity">Quantidade</label>
+                    <input
+                      id="inventory-quantity"
+                      className="ui-input"
+                      value={adjustmentState.quantity}
+                      onChange={(event) => updateAdjustmentField('quantity', event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
 
-          <div className="inventory-import">
-            <div className="inventory-import__copy">
-              <p className="text-section-title">Importar CSV</p>
-              <p className="text-body">Aceita colunas como `sku`, `produto/nome`, `estoque/currentStock` e `minimo/minimumStock`.</p>
-            </div>
-            <div className="inventory-import__actions">
-              <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} />
-              <button type="button" className="ui-button ui-button--ghost" onClick={handleCsvImport} disabled={saving || !csvFile || !can('inventory:write')}>
-                Importar estoque
-              </button>
-            </div>
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="inventory-reason">Motivo</label>
+                    <input
+                      id="inventory-reason"
+                      className="ui-input"
+                      value={adjustmentState.reason}
+                      onChange={(event) => updateAdjustmentField('reason', event.target.value)}
+                      placeholder="Reposicao, perda, conferencia, inventario..."
+                    />
+                    <span className="entity-field-hint">Descreva a origem do ajuste para facilitar auditoria e rastreio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="entity-form-section">
+                <div className="entity-form-section__header">
+                  <span className="entity-form-section__eyebrow">Importacao</span>
+                  <h4 className="entity-form-section__title">Carga por CSV</h4>
+                  <p className="entity-form-section__description">Ideal para conciliacao em lote ou migracao da base.</p>
+                </div>
+
+                <div className="inventory-import">
+                  <div className="inventory-import__copy">
+                    <p className="text-body">Aceita colunas como `sku`, `produto/nome`, `estoque/currentStock` e `minimo/minimumStock`.</p>
+                  </div>
+                  <div className="inventory-import__actions">
+                    <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} />
+                    <button type="button" className="ui-button ui-button--ghost" onClick={handleCsvImport} disabled={saving || !csvFile || !can('inventory:write')}>
+                      Importar estoque
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="entity-form-actions entity-form-grid__wide">
+                <button type="submit" className="ui-button ui-button--primary" disabled={saving || !can('inventory:write')}>
+                  {saving ? 'Salvando...' : 'Registrar ajuste'}
+                </button>
+              </div>
+            </form>
           </div>
 
           {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
@@ -442,30 +490,37 @@ function InventoryModule() {
         </SurfaceCard>
 
         <SurfaceCard title="Saldo atual">
-          <div className="entity-toolbar inventory-toolbar">
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="inventory-search">Buscar</label>
-              <input
-                id="inventory-search"
-                className="ui-input"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Produto, categoria ou SKU"
-              />
+          <div className="entity-toolbar-shell">
+            <div className="entity-toolbar-copy">
+              <p className="text-section-title">Consulta do saldo</p>
+              <p className="text-body">Acompanhe o estoque atual com menos ruído visual e filtros mais claros.</p>
             </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="inventory-status-filter">Status</label>
-              <select
-                id="inventory-status-filter"
-                className="ui-select"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="all">Todos</option>
-                <option value="low">Estoque baixo</option>
-                <option value="ok">Normal</option>
-              </select>
+            <div className="entity-toolbar inventory-toolbar">
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="inventory-search">Buscar</label>
+                <input
+                  id="inventory-search"
+                  className="ui-input"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Produto, categoria ou SKU"
+                />
+              </div>
+
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="inventory-status-filter">Status</label>
+                <select
+                  id="inventory-status-filter"
+                  className="ui-select"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  <option value="low">Estoque baixo</option>
+                  <option value="ok">Normal</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -518,38 +573,45 @@ function InventoryModule() {
       </div>
 
       <SurfaceCard title="Historico de movimentacao">
-        <div className="entity-toolbar inventory-toolbar inventory-toolbar--movements">
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="inventory-movement-search">Buscar</label>
-            <input
-              id="inventory-movement-search"
-              className="ui-input"
-              value={movementSearchTerm}
-              onChange={(event) => setMovementSearchTerm(event.target.value)}
-              placeholder="Produto ou motivo"
-            />
+        <div className="entity-toolbar-shell">
+          <div className="entity-toolbar-copy">
+            <p className="text-section-title">Timeline do estoque</p>
+            <p className="text-body">Filtre o historico por periodo ou texto para encontrar cada ajuste com mais rapidez.</p>
           </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="inventory-movement-start">Inicio</label>
-            <input
-              id="inventory-movement-start"
-              className="ui-input"
-              type="date"
-              value={movementStartDate}
-              onChange={(event) => setMovementStartDate(event.target.value)}
-            />
-          </div>
+          <div className="entity-toolbar inventory-toolbar inventory-toolbar--movements">
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="inventory-movement-search">Buscar</label>
+              <input
+                id="inventory-movement-search"
+                className="ui-input"
+                value={movementSearchTerm}
+                onChange={(event) => setMovementSearchTerm(event.target.value)}
+                placeholder="Produto ou motivo"
+              />
+            </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="inventory-movement-end">Fim</label>
-            <input
-              id="inventory-movement-end"
-              className="ui-input"
-              type="date"
-              value={movementEndDate}
-              onChange={(event) => setMovementEndDate(event.target.value)}
-            />
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="inventory-movement-start">Inicio</label>
+              <input
+                id="inventory-movement-start"
+                className="ui-input"
+                type="date"
+                value={movementStartDate}
+                onChange={(event) => setMovementStartDate(event.target.value)}
+              />
+            </div>
+
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="inventory-movement-end">Fim</label>
+              <input
+                id="inventory-movement-end"
+                className="ui-input"
+                type="date"
+                value={movementEndDate}
+                onChange={(event) => setMovementEndDate(event.target.value)}
+              />
+            </div>
           </div>
         </div>
 

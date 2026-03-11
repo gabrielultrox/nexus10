@@ -18,21 +18,17 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
-  align-items: end;
-}
-
-.couriers-form-grid__notes {
-  grid-column: span 2;
+  align-items: start;
 }
 
 .couriers-form-grid__checkbox {
-  align-self: end;
+  align-self: start;
 }
 
 .couriers-form-grid__actions {
   display: flex;
   justify-content: flex-end;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .couriers-stats-grid {
@@ -309,8 +305,7 @@
   .couriers-grid,
   .courier-profile-layout__secondary,
   .courier-profile-hero__metrics,
-  .courier-card__metrics,
-  .couriers-form-grid {
+  .courier-card__metrics {
     grid-template-columns: 1fr;
   }
 
@@ -327,10 +322,6 @@
   .courier-card__badges,
   .courier-profile-hero__badges {
     justify-content: flex-start;
-  }
-
-  .couriers-form-grid__notes {
-    grid-column: auto;
   }
 
   .couriers-form-grid__actions {

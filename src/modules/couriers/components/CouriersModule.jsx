@@ -197,135 +197,188 @@ function CouriersModule() {
       <CouriersStats items={stats} />
 
       <SurfaceCard title="Cadastro rapido de entregadores">
-        <div className="couriers-form-shell">
-          <p className="text-body">
-            Adicione entregadores manualmente para usar no turno, na escala e nos registros operacionais.
-          </p>
+        <div className="entity-form-shell">
+          <div className="entity-form-shell__header">
+            <div className="entity-form-hero">
+              <span className="entity-form-hero__eyebrow">Operacao de pista</span>
+              <h4 className="entity-form-hero__title">Cadastro rapido sem cara de planilha</h4>
+              <p className="entity-form-hero__description">
+                Adicione entregadores com mais contexto visual para a escala, o turno e a leitura operacional ficarem mais agradaveis no dia a dia.
+              </p>
+              <div className="entity-form-hero__chips">
+                <span className="ui-badge ui-badge--success">Escala de turno</span>
+                <span className="ui-badge ui-badge--warning">Maquininha vinculada</span>
+                <span className="ui-badge ui-badge--special">Base compartilhada</span>
+              </div>
+            </div>
+
+            <div className="entity-form-aside">
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Total na base</span>
+                <strong>{stats[0]?.value ?? 0}</strong>
+                <p className="text-body">Entregadores monitorados na operacao atual.</p>
+              </div>
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Ativos hoje</span>
+                <strong>{stats[1]?.value ?? 0}</strong>
+                <p className="text-body">Nomes em rota ou disponiveis para a escala do turno.</p>
+              </div>
+            </div>
+          </div>
+
           {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
           <form className="couriers-form-grid" onSubmit={handleSubmit}>
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-name">
-                Nome
-              </label>
-              <input
-                id="courier-name"
-                className="ui-input"
-                type="text"
-                value={form.name}
-                placeholder="Nome do entregador"
-                required
-                onChange={(event) => updateField('name', event.target.value)}
-              />
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Perfil</span>
+                <h4 className="entity-form-section__title">Identidade do entregador</h4>
+                <p className="entity-form-section__description">Dados essenciais para localizar e reconhecer rapidamente quem esta na operacao.</p>
+              </div>
+
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-name">
+                    Nome
+                  </label>
+                  <input
+                    id="courier-name"
+                    className="ui-input"
+                    type="text"
+                    value={form.name}
+                    placeholder="Nome do entregador"
+                    required
+                    onChange={(event) => updateField('name', event.target.value)}
+                  />
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-phone-register">
+                    Telefone
+                  </label>
+                  <input
+                    id="courier-phone-register"
+                    className="ui-input"
+                    type="text"
+                    value={form.phone}
+                    placeholder="(37) 99999-0000"
+                    onChange={(event) => updateField('phone', event.target.value)}
+                  />
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-vehicle">
+                    Veiculo
+                  </label>
+                  <input
+                    id="courier-vehicle"
+                    className="ui-input"
+                    type="text"
+                    value={form.vehicle}
+                    placeholder="Honda Pop 110"
+                    onChange={(event) => updateField('vehicle', event.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-phone-register">
-                Telefone
-              </label>
-              <input
-                id="courier-phone-register"
-                className="ui-input"
-                type="text"
-                value={form.phone}
-                placeholder="(37) 99999-0000"
-                onChange={(event) => updateField('phone', event.target.value)}
-              />
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Operacao</span>
+                <h4 className="entity-form-section__title">Escala e equipamento</h4>
+                <p className="entity-form-section__description">Vincule turno, status e maquininha no mesmo bloco de decisao.</p>
+              </div>
+
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-machine-register">
+                    Maquininha
+                  </label>
+                  <input
+                    id="courier-machine-register"
+                    className="ui-input"
+                    type="text"
+                    value={form.machine}
+                    placeholder="Maq. 03"
+                    onChange={(event) => updateField('machine', event.target.value)}
+                  />
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-shift-register">
+                    Turno
+                  </label>
+                  <select
+                    id="courier-shift-register"
+                    className="ui-select"
+                    value={form.shift}
+                    onChange={(event) => updateField('shift', event.target.value)}
+                  >
+                    {courierShiftOptions
+                      .filter((option) => option.value !== 'all')
+                      .map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="courier-status-register">
+                    Status
+                  </label>
+                  <select
+                    id="courier-status-register"
+                    className="ui-select"
+                    value={form.status}
+                    onChange={(event) => updateField('status', event.target.value)}
+                  >
+                    {courierStatusOptions
+                      .filter((option) => option.value !== 'all')
+                      .map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <label className="couriers-filters__checkbox couriers-form-grid__checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.isFixed}
+                    onChange={(event) => updateField('isFixed', event.target.checked)}
+                  />
+                  <span>Entregador fixo</span>
+                </label>
+              </div>
             </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-vehicle">
-                Veiculo
-              </label>
-              <input
-                id="courier-vehicle"
-                className="ui-input"
-                type="text"
-                value={form.vehicle}
-                placeholder="Honda Pop 110"
-                onChange={(event) => updateField('vehicle', event.target.value)}
-              />
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Observacoes</span>
+                <h4 className="entity-form-section__title">Contexto operacional</h4>
+                <p className="entity-form-section__description">Anote detalhes importantes para escala, comportamento ou preferencia do turno.</p>
+              </div>
+
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="courier-notes">
+                  Observacoes
+                </label>
+                <textarea
+                  id="courier-notes"
+                  className="ui-textarea"
+                  rows={4}
+                  value={form.notes}
+                  placeholder="Detalhes rapidos do perfil operacional"
+                  onChange={(event) => updateField('notes', event.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-machine-register">
-                Maquininha
-              </label>
-              <input
-                id="courier-machine-register"
-                className="ui-input"
-                type="text"
-                value={form.machine}
-                placeholder="Maq. 03"
-                onChange={(event) => updateField('machine', event.target.value)}
-              />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-shift-register">
-                Turno
-              </label>
-              <select
-                id="courier-shift-register"
-                className="ui-select"
-                value={form.shift}
-                onChange={(event) => updateField('shift', event.target.value)}
-              >
-                {courierShiftOptions
-                  .filter((option) => option.value !== 'all')
-                  .map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="courier-status-register">
-                Status
-              </label>
-              <select
-                id="courier-status-register"
-                className="ui-select"
-                value={form.status}
-                onChange={(event) => updateField('status', event.target.value)}
-              >
-                {courierStatusOptions
-                  .filter((option) => option.value !== 'all')
-                  .map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <div className="ui-field couriers-form-grid__notes">
-              <label className="ui-label" htmlFor="courier-notes">
-                Observacoes
-              </label>
-              <textarea
-                id="courier-notes"
-                className="ui-textarea"
-                rows={4}
-                value={form.notes}
-                placeholder="Detalhes rapidos do perfil operacional"
-                onChange={(event) => updateField('notes', event.target.value)}
-              />
-            </div>
-
-            <label className="couriers-filters__checkbox couriers-form-grid__checkbox">
-              <input
-                type="checkbox"
-                checked={form.isFixed}
-                onChange={(event) => updateField('isFixed', event.target.checked)}
-              />
-              <span>Entregador fixo</span>
-            </label>
-
-            <div className="couriers-form-grid__actions">
-              <button type="submit" className="ui-button ui-button--secondary">
+            <div className="couriers-form-grid__actions entity-form-grid__wide">
+              <button type="submit" className="ui-button ui-button--primary">
                 Cadastrar entregador
               </button>
             </div>

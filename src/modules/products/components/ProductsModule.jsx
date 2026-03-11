@@ -314,95 +314,165 @@ function ProductsModule() {
       </div>
 
       <SurfaceCard title={editingProductId ? 'Editar produto' : 'Cadastrar produto'}>
-        <form className="entity-form-grid" onSubmit={handleSubmit}>
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-name">Nome</label>
-            <input id="product-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
+        <div className="entity-form-shell">
+          <div className="entity-form-shell__header">
+            <div className="entity-form-hero">
+              <span className="entity-form-hero__eyebrow">Catalogo ativo</span>
+              <h4 className="entity-form-hero__title">
+                {editingProductId ? 'Atualize o produto em foco' : 'Cadastre itens com cara de cardapio profissional'}
+              </h4>
+              <p className="entity-form-hero__description">
+                Organize preco, custo, estoque e classificacao em um fluxo mais claro para a operacao nao perder tempo no cadastro.
+              </p>
+              <div className="entity-form-hero__chips">
+                <span className="ui-badge ui-badge--info">SKU pronto para PDV</span>
+                <span className="ui-badge ui-badge--warning">Controle de minimo</span>
+                <span className="ui-badge ui-badge--special">Base por loja</span>
+              </div>
+            </div>
+
+            <div className="entity-form-aside">
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Produtos ativos</span>
+                <strong>{String(metrics[1]?.value ?? '00')}</strong>
+                <p className="text-body">Itens disponiveis agora para uso no PDV e nos pedidos.</p>
+              </div>
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Estoque baixo</span>
+                <strong>{String(metrics[2]?.value ?? '00')}</strong>
+                <p className="text-body">Produtos que merecem revisao antes de faltar no turno.</p>
+              </div>
+            </div>
           </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-category">Categoria</label>
-            <input id="product-category" className="ui-input" value={formState.category} onChange={(event) => updateField('category', event.target.value)} />
-          </div>
+          <form className="entity-form-grid" onSubmit={handleSubmit}>
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Identidade</span>
+                <h4 className="entity-form-section__title">Informacoes principais</h4>
+                <p className="entity-form-section__description">Esses campos aparecem primeiro na busca e na rotina do caixa.</p>
+              </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-price">Preco</label>
-            <input id="product-price" className="ui-input" value={formState.price} onChange={(event) => updateField('price', event.target.value)} placeholder="0.00" />
-          </div>
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-name">Nome</label>
+                  <input id="product-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
+                  <span className="entity-field-hint">Use um nome curto e facil de reconhecer durante a venda.</span>
+                </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-cost">Custo</label>
-            <input id="product-cost" className="ui-input" value={formState.cost} onChange={(event) => updateField('cost', event.target.value)} placeholder="0.00" />
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-category">Categoria</label>
+                  <input id="product-category" className="ui-input" value={formState.category} onChange={(event) => updateField('category', event.target.value)} />
+                  <span className="entity-field-hint">Ajuda na organizacao da base e nos filtros da operacao.</span>
+                </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-stock">Estoque</label>
-            <input id="product-stock" className="ui-input" value={formState.stock} onChange={(event) => updateField('stock', event.target.value)} placeholder="0" />
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-sku">SKU</label>
+                  <input id="product-sku" className="ui-input" value={formState.sku} onChange={(event) => updateField('sku', event.target.value)} />
+                  <span className="entity-field-hint">Codigo interno para consulta rapida, importacoes e conferencia.</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-minimum-stock">Estoque minimo</label>
-            <input id="product-minimum-stock" className="ui-input" value={formState.minimumStock} onChange={(event) => updateField('minimumStock', event.target.value)} placeholder="0" />
-          </div>
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Preco e saldo</span>
+                <h4 className="entity-form-section__title">Camada comercial</h4>
+                <p className="entity-form-section__description">Defina margem e controle de estoque no mesmo bloco.</p>
+              </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-sku">SKU</label>
-            <input id="product-sku" className="ui-input" value={formState.sku} onChange={(event) => updateField('sku', event.target.value)} />
-          </div>
+              <div className="entity-stack">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-price">Preco</label>
+                  <input id="product-price" className="ui-input" value={formState.price} onChange={(event) => updateField('price', event.target.value)} placeholder="0.00" />
+                </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="product-status">Status</label>
-            <select id="product-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-cost">Custo</label>
+                  <input id="product-cost" className="ui-input" value={formState.cost} onChange={(event) => updateField('cost', event.target.value)} placeholder="0.00" />
+                </div>
 
-          <div className="ui-field entity-form-grid__wide">
-            <label className="ui-label" htmlFor="product-description">Descricao</label>
-            <textarea id="product-description" className="ui-textarea" rows={4} value={formState.description} onChange={(event) => updateField('description', event.target.value)} />
-          </div>
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-stock">Estoque</label>
+                  <input id="product-stock" className="ui-input" value={formState.stock} onChange={(event) => updateField('stock', event.target.value)} placeholder="0" />
+                </div>
 
-          <div className="entity-form-actions">
-            {editingProductId ? (
-              <button type="button" className="ui-button ui-button--ghost" onClick={resetForm}>
-                Cancelar edicao
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-minimum-stock">Estoque minimo</label>
+                  <input id="product-minimum-stock" className="ui-input" value={formState.minimumStock} onChange={(event) => updateField('minimumStock', event.target.value)} placeholder="0" />
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="product-status">Status</label>
+                  <select id="product-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="entity-form-section entity-form-section--span-2">
+              <div className="entity-form-section__header">
+                <span className="entity-form-section__eyebrow">Apoio</span>
+                <h4 className="entity-form-section__title">Descricao operacional</h4>
+                <p className="entity-form-section__description">Detalhes para preparo, conferencia ou padrao interno da loja.</p>
+              </div>
+
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="product-description">Descricao</label>
+                <textarea id="product-description" className="ui-textarea" rows={4} value={formState.description} onChange={(event) => updateField('description', event.target.value)} />
+              </div>
+            </div>
+
+            <div className="entity-form-actions entity-form-grid__wide">
+              {editingProductId ? (
+                <button type="button" className="ui-button ui-button--ghost" onClick={resetForm}>
+                  Cancelar edicao
+                </button>
+              ) : null}
+              <button type="submit" className="ui-button ui-button--primary" disabled={saving || !can('catalog:write')}>
+                {saving ? 'Salvando...' : editingProductId ? 'Salvar produto' : 'Cadastrar produto'}
               </button>
-            ) : null}
-            <button type="submit" className="ui-button ui-button--secondary" disabled={saving || !can('catalog:write')}>
-              {saving ? 'Salvando...' : editingProductId ? 'Salvar produto' : 'Cadastrar produto'}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
 
         {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       </SurfaceCard>
 
       <SurfaceCard title="Base de produtos">
-        <div className="entity-toolbar">
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="products-search">Buscar</label>
-            <input id="products-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome, categoria ou SKU" />
+        <div className="entity-toolbar-shell">
+          <div className="entity-toolbar-copy">
+            <p className="text-section-title">Consulta refinada</p>
+            <p className="text-body">Localize itens por nome, categoria, SKU ou recorte de status sem poluir a tela principal.</p>
           </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="products-category-filter">Categoria</label>
-            <select id="products-category-filter" className="ui-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-              <option value="all">Todas</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
+          <div className="entity-toolbar">
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="products-search">Buscar</label>
+              <input id="products-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome, categoria ou SKU" />
+            </div>
 
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="products-status-filter">Status</label>
-            <select id="products-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="all">Todos</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="products-category-filter">Categoria</label>
+              <select id="products-category-filter" className="ui-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                <option value="all">Todas</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="products-status-filter">Status</label>
+              <select id="products-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">Todos</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+            </div>
           </div>
         </div>
 

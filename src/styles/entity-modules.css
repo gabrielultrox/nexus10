@@ -3,21 +3,165 @@
   gap: var(--space-5);
 }
 
+.entity-stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.entity-form-shell {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.entity-form-shell__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: var(--space-4);
+}
+
+.entity-form-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-default);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-amber) 12%, transparent), transparent 42%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel) 76%, transparent), var(--surface-panel-soft-alt));
+}
+
+.entity-form-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 220px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-accent-amber), var(--color-accent-cyan), transparent);
+}
+
+.entity-form-hero__eyebrow {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.entity-form-hero__title {
+  max-width: 12ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.8vw, 2.6rem);
+  line-height: 0.94;
+}
+
+.entity-form-hero__description {
+  max-width: 62ch;
+  color: var(--color-text-secondary);
+  font-size: 0.98rem;
+}
+
+.entity-form-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.entity-form-aside {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.entity-form-aside__card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 56%, transparent), transparent 36%),
+    var(--surface-panel-soft-alt);
+}
+
+.entity-form-aside__card strong {
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 0.94;
+}
+
+.entity-form-aside__label {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .entity-form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
-  align-items: end;
-  padding: var(--space-4);
+  align-items: start;
+  padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 24px;
+  border-radius: 28px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 30%),
     var(--surface-panel-soft-alt);
 }
 
+.entity-form-section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-panel) 72%, transparent);
+}
+
+.entity-form-section__header {
+  display: grid;
+  gap: 6px;
+}
+
+.entity-form-section__eyebrow {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.entity-form-section__title {
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 0.96;
+}
+
+.entity-form-section__description {
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+}
+
+.entity-form-section--span-2 {
+  grid-column: span 2;
+}
+
+.entity-form-grid {
+  align-items: start;
+}
+
 .entity-form-grid__wide {
   grid-column: span 2;
+}
+
+.entity-field-hint {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .entity-form-actions {
@@ -25,6 +169,17 @@
   justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.entity-toolbar-shell {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.entity-toolbar-copy {
+  display: grid;
+  gap: 6px;
 }
 
 .entity-toolbar {
@@ -58,13 +213,19 @@
 }
 
 @media (max-width: 1180px) {
+  .entity-form-shell__header,
   .entity-form-grid,
   .entity-toolbar {
     grid-template-columns: 1fr 1fr;
   }
+
+  .entity-form-section--span-2 {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 780px) {
+  .entity-form-shell__header,
   .entity-form-grid,
   .entity-toolbar {
     grid-template-columns: 1fr;
