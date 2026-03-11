@@ -1,61 +1,29 @@
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
-  updateDoc,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { requestBackend } from './backendApi';
+import { assertFirebaseReady, canUseRemoteSync, createRemoteSyncError, firebaseDb, guardRemoteSubscription } from './firebase';
 import {
   getChannelLabel,
   getPaymentMethodLabel,
-  isSalePosted,
   mapSaleDomainStatusToLegacyStatus,
   normalizeChannel,
-  normalizeOrderDomainStatus,
   normalizePaymentMethod,
   normalizeSaleDomainStatus,
   normalizeSaleSource,
 } from './commerce';
-import { syncSaleToFinancialEntry } from './finance';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
-import { syncSaleInventory } from './inventory';
 import { validateSaleInput as validateSaleDomainInput } from './saleDomain';
-
-const refundableStatuses = new Set(['POSTED']);
-const cancelableStatuses = new Set(['POSTED']);
 
 function getSalesCollectionRef(storeId) {
   assertFirebaseReady();
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.sales);
-}
-
-function buildCreatedBy(createdBy) {
-  return {
-    id: createdBy?.id ?? createdBy?.uid ?? null,
-    name: createdBy?.name ?? createdBy?.operatorName ?? createdBy?.displayName ?? 'Operador local',
-    role: createdBy?.role ?? 'operator',
-  };
-}
-
-function buildOrderSnapshot(orderSnapshot) {
-  if (!orderSnapshot) {
-    return null;
-  }
-
-  return {
-    id: orderSnapshot.id,
-    code: orderSnapshot.code ?? orderSnapshot.number ?? '',
-    status: orderSnapshot.status ?? '',
-    domainStatus: normalizeOrderDomainStatus(orderSnapshot.status),
-    total: orderSnapshot.totals?.total ?? orderSnapshot.total ?? null,
-  };
 }
 
 function resolveSaleTotals(data) {
@@ -77,16 +45,38 @@ function resolveSaleTotals(data) {
   };
 }
 
+function parseDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value?.toDate === 'function') {
+    return value.toDate();
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function mapSnapshot(snapshot) {
   const data = snapshot.data();
   const domainStatus = normalizeSaleDomainStatus(data.status);
   const paymentMethod = normalizePaymentMethod(data.payment?.method ?? data.paymentMethod, null);
   const channel = normalizeChannel(data.channel ?? data.origin ?? data.sourceChannel, null);
   const totals = resolveSaleTotals(data);
+  const items = Array.isArray(data.items)
+    ? data.items.map((item) => ({
+      ...item,
+      name: item.productSnapshot?.name ?? item.name ?? 'Item',
+      total: Number(item.totalPrice ?? item.total ?? 0),
+    }))
+    : [];
 
   return {
     id: snapshot.id,
     ...data,
+    code: data.code ?? snapshot.id,
+    number: data.code?.trim() || `#${snapshot.id.slice(0, 6).toUpperCase()}`,
     source: normalizeSaleSource(data.source, data.orderId ? 'ORDER' : 'DIRECT'),
     channel,
     channelLabel: channel ? getChannelLabel(channel) : 'Canal nao informado',
@@ -96,7 +86,7 @@ function mapSnapshot(snapshot) {
       phone: data.customerSnapshot?.phone ?? '',
       neighborhood: data.customerSnapshot?.neighborhood ?? '',
     },
-    items: Array.isArray(data.items) ? data.items : [],
+    items,
     totals,
     payment: paymentMethod
       ? {
@@ -115,25 +105,9 @@ function mapSnapshot(snapshot) {
     status: mapSaleDomainStatusToLegacyStatus(domainStatus),
     stockPosted: Boolean(data.stockPosted),
     financialPosted: Boolean(data.financialPosted),
-  };
-}
-
-async function loadOrderSnapshot(storeId, orderId) {
-  if (!orderId) {
-    return null;
-  }
-
-  assertFirebaseReady();
-  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
-  const orderSnapshot = await getDoc(orderRef);
-
-  if (!orderSnapshot.exists()) {
-    throw new Error('Pedido de origem nao encontrado.');
-  }
-
-  return {
-    id: orderSnapshot.id,
-    ...orderSnapshot.data(),
+    createdAtDate: parseDate(data.createdAt),
+    updatedAtDate: parseDate(data.updatedAt),
+    launchedAtDate: parseDate(data.launchedAt),
   };
 }
 
@@ -155,18 +129,35 @@ export function validateSaleInput(values) {
 }
 
 export function subscribeToSales(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const salesQuery = query(getSalesCollectionRef(storeId), orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    salesQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      salesQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export async function getSaleById({ storeId, saleId }) {
+  if (!canUseRemoteSync()) {
+    throw createRemoteSyncError();
+  }
+
   assertFirebaseReady();
   const saleRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.sales, saleId);
   const snapshot = await getDoc(saleRef);
@@ -179,66 +170,18 @@ export async function getSaleById({ storeId, saleId }) {
 }
 
 export async function createSale({ storeId, tenantId, values, createdBy = null }) {
-  const payload = validateSaleDomainInput(values);
-  const orderSnapshot = await loadOrderSnapshot(storeId, payload.orderId);
+  validateSaleDomainInput(values);
 
-  if (orderSnapshot?.saleId) {
-    throw new Error('Este pedido ja possui uma venda vinculada.');
-  }
-
-  if (orderSnapshot && payload.customerId && orderSnapshot.customerId && orderSnapshot.customerId !== payload.customerId) {
-    throw new Error('Cliente inconsistente com o pedido de origem.');
-  }
-
-  const actor = buildCreatedBy(createdBy);
-  const saleRef = await addDoc(getSalesCollectionRef(storeId), {
-    ...payload,
-    orderSnapshot: buildOrderSnapshot(orderSnapshot),
-    stockPosted: false,
-    financialPosted: false,
-    reportingReady: true,
-    storeId,
-    tenantId: tenantId ?? null,
-    createdBy: actor,
-    launchedAt: serverTimestamp(),
-    launchedBy: actor,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  const data = await requestBackend(`/stores/${storeId}/sales`, {
+    method: 'POST',
+    body: {
+      tenantId: tenantId ?? null,
+      values,
+      createdBy,
+    },
   });
 
-  const persistedSale = {
-    id: saleRef.id,
-    ...payload,
-    storeId,
-    tenantId: tenantId ?? null,
-    createdBy: actor,
-  };
-
-  try {
-    await syncSaleInventory({
-      storeId,
-      tenantId,
-      sale: persistedSale,
-      previousStatus: null,
-    });
-
-    await syncSaleToFinancialEntry({
-      storeId,
-      tenantId,
-      sale: persistedSale,
-    });
-
-    await updateDoc(saleRef, {
-      stockPosted: true,
-      financialPosted: true,
-      updatedAt: serverTimestamp(),
-    });
-
-    return saleRef.id;
-  } catch (error) {
-    await deleteDoc(saleRef);
-    throw error;
-  }
+  return data.id;
 }
 
 export async function createDirectSale({ storeId, tenantId, values, createdBy = null }) {
@@ -254,122 +197,27 @@ export async function createDirectSale({ storeId, tenantId, values, createdBy = 
 }
 
 export async function createSaleFromOrder({ storeId, tenantId, orderId, values = {}, createdBy = null }) {
-  const orderSnapshot = await loadOrderSnapshot(storeId, orderId);
-
-  if (!orderSnapshot) {
-    throw new Error('Pedido nao encontrado para gerar venda.');
-  }
-
-  if (orderSnapshot.saleId || String(orderSnapshot.saleStatus ?? '').toUpperCase() === 'LAUNCHED') {
-    throw new Error('Este pedido ja gerou uma venda.');
-  }
-
-  const saleId = await createSale({
-    storeId,
-    tenantId,
-    createdBy,
-    values: {
-      ...values,
-      orderId,
-      source: 'ORDER',
-      channel: values.channel ?? orderSnapshot.source ?? orderSnapshot.origin,
-      customerId: values.customerId ?? orderSnapshot.customerId ?? orderSnapshot.customerSnapshot?.id ?? null,
-      customerSnapshot: values.customerSnapshot ?? orderSnapshot.customerSnapshot,
-      items: values.items ?? orderSnapshot.items,
-      totals: values.totals ?? orderSnapshot.totals ?? {
-        subtotal: Number(orderSnapshot.subtotal ?? 0),
-        freight: Number(orderSnapshot.shipping ?? 0),
-        extraAmount: Number(orderSnapshot.extraAmount ?? 0),
-        discountPercent: Number(orderSnapshot.discountPercent ?? 0),
-        discountValue: Number(orderSnapshot.discount ?? 0),
-        total: Number(orderSnapshot.total ?? 0),
-      },
-      payment: values.payment ?? orderSnapshot.paymentPreview ?? null,
-      paymentMethod: values.paymentMethod ?? orderSnapshot.paymentPreview?.method ?? orderSnapshot.paymentMethod ?? null,
-      address: values.address ?? orderSnapshot.address ?? {
-        neighborhood: orderSnapshot.neighborhood ?? '',
-        addressLine: orderSnapshot.addressLine ?? '',
-        reference: orderSnapshot.reference ?? '',
-        complement: orderSnapshot.complement ?? '',
-      },
-      notes: values.notes ?? orderSnapshot.notes ?? '',
+  const data = await requestBackend(`/stores/${storeId}/orders/${orderId}/sales`, {
+    method: 'POST',
+    body: {
+      tenantId: tenantId ?? null,
+      values,
+      createdBy,
     },
   });
 
-  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
-  await updateDoc(orderRef, {
-    status: 'CONVERTED_TO_SALE',
-    saleStatus: 'LAUNCHED',
-    saleId,
-    updatedAt: serverTimestamp(),
-  });
-
-  return saleId;
+  return data.saleId;
 }
 
-export async function updateSaleStatus({ storeId, saleId, status }) {
-  assertFirebaseReady();
-
-  const nextStatus = normalizeSaleDomainStatus(status);
-
-  if (!nextStatus) {
-    throw new Error('Status de venda invalido.');
-  }
-
-  const saleRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.sales, saleId);
-  const snapshot = await getDoc(saleRef);
-
-  if (!snapshot.exists()) {
-    throw new Error('Venda nao encontrada.');
-  }
-
-  const currentSale = snapshot.data();
-  const currentStatus = normalizeSaleDomainStatus(currentSale.status);
-
-  if (nextStatus === 'CANCELLED' && !cancelableStatuses.has(currentStatus)) {
-    throw new Error('Esta venda nao pode mais ser cancelada.');
-  }
-
-  if (nextStatus === 'REVERSED' && !refundableStatuses.has(currentStatus)) {
-    throw new Error('Esta venda nao pode ser estornada.');
-  }
-
-  await updateDoc(saleRef, {
-    status: nextStatus,
-    updatedAt: serverTimestamp(),
+export async function updateSaleStatus({ storeId, saleId, status, actor = null }) {
+  const data = await requestBackend(`/stores/${storeId}/sales/${saleId}/status`, {
+    method: 'PATCH',
+    body: {
+      status,
+      actor,
+      createdBy: actor,
+    },
   });
 
-  const salePayload = {
-    id: saleId,
-    ...currentSale,
-    status: nextStatus,
-    totals: resolveSaleTotals(currentSale),
-    payment: currentSale.payment ?? null,
-    items: Array.isArray(currentSale.items) ? currentSale.items : [],
-  };
-
-  await syncSaleInventory({
-    storeId,
-    tenantId: currentSale.tenantId ?? null,
-    sale: salePayload,
-    previousStatus: currentStatus,
-  });
-
-  await syncSaleToFinancialEntry({
-    storeId,
-    tenantId: currentSale.tenantId ?? null,
-    sale: salePayload,
-  });
-}
-
-export async function linkSaleToOrder({ storeId, saleId, orderId }) {
-  const orderSnapshot = await loadOrderSnapshot(storeId, orderId);
-  assertFirebaseReady();
-
-  const saleRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.sales, saleId);
-  await updateDoc(saleRef, {
-    orderId: orderSnapshot.id,
-    orderSnapshot: buildOrderSnapshot(orderSnapshot),
-    updatedAt: serverTimestamp(),
-  });
+  return data.id;
 }

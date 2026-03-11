@@ -10,7 +10,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 const decrementTypes = new Set(['sale', 'manual_out']);
@@ -119,26 +119,52 @@ function buildMovementPayload({
 }
 
 export function subscribeToInventoryItems(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const inventoryQuery = query(getInventoryItemsCollectionRef(storeId), orderBy('productName'));
 
-  return onSnapshot(
-    inventoryQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      inventoryQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToInventoryMovements(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const movementsQuery = query(getInventoryMovementsCollectionRef(storeId), orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    movementsQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      movementsQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
