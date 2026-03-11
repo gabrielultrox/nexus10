@@ -3,23 +3,23 @@
   right: 28px;
   bottom: 28px;
   z-index: 70;
-  min-width: 88px;
-  min-height: 56px;
-  padding: 0 18px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 0 12px;
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 34%, var(--color-border-default));
   border-radius: 18px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--color-accent-cyan) 18%, transparent), transparent 45%),
-    linear-gradient(180deg, color-mix(in srgb, #09131f 94%, transparent), color-mix(in srgb, #0d1723 96%, transparent));
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 94%, transparent), color-mix(in srgb, var(--surface-panel) 96%, transparent));
   box-shadow:
-    0 18px 48px color-mix(in srgb, #06101b 72%, transparent),
+    0 18px 48px color-mix(in srgb, var(--color-shadow-rgb) 20%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 .assistant-fab__label {
-  color: #f4f8ff;
+  color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   letter-spacing: 0.08em;
 }
 
@@ -34,12 +34,14 @@
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--space-3);
   padding: var(--space-4);
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   border-radius: 28px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 42%, transparent), transparent 22%),
-    linear-gradient(180deg, color-mix(in srgb, #08131f 96%, transparent), color-mix(in srgb, #0d1723 98%, transparent));
-  box-shadow: 0 26px 72px color-mix(in srgb, #040b15 78%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 26%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 99%, transparent), color-mix(in srgb, var(--surface-panel) 100%, transparent));
+  box-shadow: 0 26px 72px color-mix(in srgb, var(--color-shadow-rgb) 26%, transparent);
+  backdrop-filter: blur(18px);
   transform: translateX(calc(100% + 30px));
   opacity: 0;
   pointer-events: none;
@@ -59,7 +61,7 @@
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
   border-radius: 22px;
-  background: color-mix(in srgb, #0c1622 94%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel-strong));
 }
 
 .assistant-panel__header {
@@ -78,14 +80,16 @@
 }
 
 .assistant-panel__title {
-  color: #f4f8ff;
+  color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
 .assistant-panel__context {
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
+  margin-top: 6px;
+  font-size: 0.92rem;
 }
 
 .assistant-panel__body {
@@ -93,6 +97,27 @@
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-3);
   min-height: 0;
+  overflow: hidden;
+}
+
+.assistant-panel__quick-actions,
+.assistant-panel__conversation {
+  min-height: 0;
+}
+
+.assistant-panel__quick-actions {
+  padding: 2px;
+}
+
+.assistant-panel__conversation {
+  display: grid;
+  min-height: 0;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 22%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
 
 .assistant-quick-actions {
@@ -104,13 +129,24 @@
 .assistant-quick-actions__item {
   display: grid;
   gap: 6px;
-  padding: 14px;
+  min-height: 92px;
+  padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-border-subtle));
   border-radius: 18px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 8%, transparent), transparent 26%),
-    color-mix(in srgb, #12101f 94%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 8%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
   text-align: left;
+  align-content: start;
+  transition:
+    transform var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    background-color var(--duration-normal) var(--ease-standard);
+}
+
+.assistant-quick-actions__item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 22%, var(--color-border-default));
 }
 
 .assistant-quick-actions__eyebrow,
@@ -127,7 +163,25 @@
   gap: var(--space-3);
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 16px 12px 16px 16px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-accent-cyan) 32%, transparent) transparent;
+}
+
+.assistant-messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.assistant-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.assistant-messages::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent-cyan) 28%, transparent);
+  background-clip: padding-box;
 }
 
 .assistant-message {
@@ -139,14 +193,14 @@
 
 .assistant-message--assistant {
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
-  background: color-mix(in srgb, #0b141f 94%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 99%, var(--surface-panel));
 }
 
 .assistant-message--user {
   justify-self: end;
   max-width: 88%;
   border: 1px solid color-mix(in srgb, var(--color-accent-primary) 18%, var(--color-border-subtle));
-  background: color-mix(in srgb, #161225 94%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, var(--surface-panel));
 }
 
 .assistant-message__badge {
@@ -158,7 +212,7 @@
 }
 
 .assistant-message__content {
-  color: #edf4ff;
+  color: var(--color-text-primary);
   line-height: 1.6;
 }
 
@@ -173,7 +227,7 @@
   padding: 14px;
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 12%, var(--color-border-subtle));
   border-radius: 16px;
-  background: color-mix(in srgb, #101a27 94%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
   text-align: left;
 }
 
@@ -193,8 +247,8 @@
   padding: 10px 14px;
   border: 1px solid color-mix(in srgb, var(--color-accent-amber) 20%, var(--color-border-default));
   border-radius: 14px;
-  color: #f6fbff;
-  background: color-mix(in srgb, var(--color-accent-amber) 14%, #111722);
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-accent-amber) 14%, var(--surface-panel));
 }
 
 .assistant-message__suggestions {
@@ -207,6 +261,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-2);
+  align-items: center;
 }
 
 .assistant-input__field {
@@ -215,12 +270,16 @@
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   border-radius: 16px;
-  color: #eff6ff;
-  background: color-mix(in srgb, #0a1623 92%, transparent);
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, var(--color-bg-input));
 }
 
 .assistant-input__field::placeholder {
   color: var(--color-text-muted);
+}
+
+.assistant-panel .ui-button--primary {
+  color: var(--color-text-inverse);
 }
 
 @media (max-width: 960px) {
@@ -239,8 +298,26 @@
     grid-template-columns: 1fr;
   }
 
+  .assistant-panel {
+    padding: 12px;
+    border-radius: 24px;
+  }
+
+  .assistant-panel__header,
+  .assistant-panel__footer,
+  .assistant-panel__conversation {
+    border-radius: 18px;
+  }
+
+  .assistant-quick-actions__item {
+    min-height: 78px;
+  }
+
   .assistant-fab {
     right: 16px;
     bottom: 16px;
+    min-width: 58px;
+    min-height: 46px;
+    padding-inline: 10px;
   }
 }

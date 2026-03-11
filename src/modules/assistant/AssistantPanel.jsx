@@ -43,8 +43,12 @@ function AssistantPanel() {
         </header>
 
         <div className="assistant-panel__body">
-          <AssistantQuickActions actions={quickActions} onAction={handleQuickAction} />
-          <AssistantMessageList messages={messages} onNavigate={navigateTo} />
+          <section className="assistant-panel__quick-actions">
+            <AssistantQuickActions actions={quickActions} onAction={handleQuickAction} />
+          </section>
+          <section className="assistant-panel__conversation">
+            <AssistantMessageList messages={messages} onNavigate={navigateTo} />
+          </section>
         </div>
 
         <footer className="assistant-panel__footer">
