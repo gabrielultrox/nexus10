@@ -1856,7 +1856,7 @@ function NativeModulePage({ route }) {
           <div ref={scheduleImageRef} className="schedule-export-image__canvas">
             <header className="schedule-export-image__header">
               <div>
-                <span className="schedule-export-image__eyebrow">Nexus-10 Operations</span>
+                <span className="schedule-export-image__eyebrow">Nexus 10 ERP</span>
                 <h2 className="schedule-export-image__title">Escala do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -1898,7 +1898,7 @@ function NativeModulePage({ route }) {
             </div>
 
             <footer className="schedule-export-image__footer">
-              <span>Gerado automaticamente pelo shell operacional</span>
+              <span>Gerado automaticamente pelo ERP operacional</span>
               <strong>{session?.operatorName ?? session?.displayName ?? 'Operador local'}</strong>
             </footer>
           </div>
@@ -1910,7 +1910,7 @@ function NativeModulePage({ route }) {
           <div ref={machineChecklistImageRef} className="schedule-export-image__canvas schedule-export-image__canvas--machines">
             <header className="schedule-export-image__header">
               <div>
-                <span className="schedule-export-image__eyebrow">Nexus-10 Hardware</span>
+                <span className="schedule-export-image__eyebrow">Nexus 10 ERP</span>
                 <h2 className="schedule-export-image__title">Maquininhas presentes do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -1944,7 +1944,7 @@ function NativeModulePage({ route }) {
             </div>
 
             <footer className="schedule-export-image__footer">
-              <span>Gerado automaticamente pelo shell operacional</span>
+              <span>Gerado automaticamente pelo ERP operacional</span>
               <strong>{session?.operatorName ?? session?.displayName ?? 'Operador local'}</strong>
             </footer>
           </div>

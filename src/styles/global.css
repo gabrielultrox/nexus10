@@ -75,6 +75,10 @@ body::after {
   min-width: 0;
 }
 
+.app-shell__content-inner {
+  padding-bottom: calc(var(--space-8) + 72px);
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -319,6 +323,50 @@ body::after {
   gap: 18px;
 }
 
+.app-header__intro-wrap {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-header__brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 18px;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header__brand-mark {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(214, 35, 46, 0.22));
+}
+
+.app-header__brand-chip strong,
+.app-header__brand-chip small {
+  display: block;
+}
+
+.app-header__brand-chip strong {
+  font-size: 0.92rem;
+  line-height: 1.1;
+}
+
+.app-header__brand-chip small {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .commerce-shell {
   position: relative;
   min-height: 100vh;
@@ -464,6 +512,7 @@ body::after {
 
 .commerce-shell__content-inner {
   min-width: 0;
+  padding-bottom: calc(var(--space-8) + 72px);
 }
 
 .app-header__intro {
@@ -866,6 +915,11 @@ body::after {
 
   .app-header__inner {
     flex-direction: column;
+  }
+
+  .app-header__intro-wrap,
+  .app-header__brand-chip {
+    width: 100%;
   }
 
   .app-header__actions {

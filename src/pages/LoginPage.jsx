@@ -121,8 +121,8 @@ function LoginPage() {
         <div className="auth-sequence__chrome-brand">
           <img src="/brand-bolt-red.svg" alt="" />
           <div>
-            <strong>Nexus-10</strong>
-            <small>Local operations shell</small>
+            <strong>Nexus 10 ERP</strong>
+            <small>Operacao em tempo real</small>
           </div>
         </div>
         <ThemeToggle />
@@ -137,10 +137,10 @@ function LoginPage() {
         <section className={`auth-stage auth-pin${pinUnlocked ? ' auth-pin--unlocked' : ''}`}>
           <div className="auth-pin__shell">
             <div className="auth-pin__hero">
-              <p className="text-overline">Access gate</p>
+              <p className="text-overline">Acesso local</p>
               <h1 className="text-display">Confirmar PIN local</h1>
               <p className="text-body">
-                O shell operacional exige validacao rapida antes da identificacao do operador.
+                Confirme o PIN da loja para liberar o acesso rapido ao ambiente operacional.
               </p>
 
               <div className="auth-pin__signal">
@@ -148,19 +148,19 @@ function LoginPage() {
                   <img src="/brand-bolt-red.svg" alt="" className="auth-pin__signal-bolt" />
                 </div>
                 <div>
-                  <strong>Neural lock engaged</strong>
-                  <span>Digite o PIN local para liberar a camada de login.</span>
+                  <strong>Seguranca local ativa</strong>
+                  <span>Digite o PIN para seguir para a identificacao do operador.</span>
                 </div>
               </div>
 
               <div className="auth-pin__intel-grid">
                 <div className="auth-pin__intel-card">
-                  <span>Security lane</span>
-                  <strong>{customPinEnabled ? 'Custom PIN' : 'Fallback PIN'}</strong>
+                  <span>Modo de acesso</span>
+                  <strong>{customPinEnabled ? 'PIN personalizado' : 'PIN padrao'}</strong>
                 </div>
                 <div className="auth-pin__intel-card">
-                  <span>Session handoff</span>
-                  <strong>Awaiting validation</strong>
+                  <span>Proxima etapa</span>
+                  <strong>Aguardando validacao</strong>
                 </div>
               </div>
 
@@ -175,8 +175,8 @@ function LoginPage() {
 
             <div className="auth-pin__panel">
               <div className="auth-pin__panel-head">
-                <span>Secure input</span>
-                <strong>{pinUnlocked ? 'Access granted' : 'Awaiting digits'}</strong>
+                <span>Entrada segura</span>
+                <strong>{pinUnlocked ? 'Acesso liberado' : 'Aguardando PIN'}</strong>
               </div>
 
               <div className="auth-pin__dots" aria-label={`PIN com ${pinValue.length} digitos preenchidos`}>
@@ -215,28 +215,28 @@ function LoginPage() {
         <section className="auth-stage auth-login">
           <div className="auth-login__shell">
             <div className="auth-login__hero">
-              <p className="text-overline">Local access</p>
+              <p className="text-overline">Acesso operacional</p>
               <h1 className="text-display">Identificacao operacional</h1>
               <p className="text-body">
-                Sequencia local React-first: boot global, PIN e autenticacao curta para entrar na pista.
+                Entre com o operador para acessar pedidos, vendas, entregas e a operacao da loja.
               </p>
 
               <div className="auth-login__hero-panels">
                 <div className="auth-login__hero-card">
-                  <span>Auth mode</span>
+                  <span>Entrada</span>
                   <strong>Operador + senha curta</strong>
                 </div>
                 <div className="auth-login__hero-card">
-                  <span>Session rail</span>
-                  <strong>Sem dependencia de Firebase</strong>
+                  <span>Ambiente</span>
+                  <strong>ERP operacional da loja</strong>
                 </div>
               </div>
             </div>
 
             <form className="auth-card auth-card--immersive auth-form" onSubmit={handleSubmit}>
               <div className="auth-card__hero">
-                <p className="text-overline">Operator login</p>
-                <h2 className="text-display">Liberar console</h2>
+                <p className="text-overline">Login do operador</p>
+                <h2 className="text-display">Entrar no ERP</h2>
                 <p className="text-body">
                   Entre com o operador local. A senha padrao atual continua sendo <strong>01</strong>.
                 </p>

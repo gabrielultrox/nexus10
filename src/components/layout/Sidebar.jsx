@@ -22,15 +22,15 @@ function Sidebar() {
           </div>
         </div>
         <div>
-          <strong className="sidebar__title">Nexus-10</strong>
-          <p className="sidebar__subtitle">Shell operacional</p>
+          <strong className="sidebar__title">Nexus 10 ERP</strong>
+          <p className="sidebar__subtitle">Operacao em tempo real</p>
         </div>
       </div>
 
       <div className="sidebar__status-panel">
-        <span className="sidebar__status-line">Ambiente principal</span>
-        <strong className="sidebar__status-title">Operacao pronta</strong>
-        <p className="sidebar__status-copy">Acesso rapido aos modulos operacionais da loja.</p>
+        <span className="sidebar__status-line">Centro operacional</span>
+        <strong className="sidebar__status-title">Loja pronta para rodar</strong>
+        <p className="sidebar__status-copy">Acesse pedidos, vendas, operacao e controles diários em um so lugar.</p>
       </div>
 
       <nav className="sidebar__nav" aria-label="Navegacao principal">
@@ -60,7 +60,7 @@ function Sidebar() {
 
       <div className="sidebar__footer">
         <span className="sidebar__footer-line" />
-        <p>Nexus-10 // shell operacional</p>
+        <p>Nexus 10 ERP // operacao da loja</p>
       </div>
     </aside>
   );

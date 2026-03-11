@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const BOOT_SEQUENCE = [
-  { id: 'boot-1', label: 'INITIALIZING NEXUS SYSTEM', accent: 'danger' },
-  { id: 'boot-2', label: 'LOADING OPERATIONAL MODULES', accent: 'info' },
-  { id: 'boot-3', label: 'AUTH SERVICE READY', accent: 'success' },
-  { id: 'boot-4', label: 'DASHBOARD ENGINE STARTED', accent: 'special' },
+  { id: 'boot-1', label: 'INICIALIZANDO NEXUS 10 ERP', accent: 'danger' },
+  { id: 'boot-2', label: 'CARREGANDO MODULOS OPERACIONAIS', accent: 'info' },
+  { id: 'boot-3', label: 'SERVICO DE ACESSO PRONTO', accent: 'success' },
+  { id: 'boot-4', label: 'PAINEL PRINCIPAL LIBERADO', accent: 'special' },
 ];
 
 const SUBSYSTEMS = [
-  { id: 'sub-1', label: 'Dispatch mesh', value: 'Synced', tone: 'success' },
-  { id: 'sub-2', label: 'Finance bus', value: 'Live', tone: 'info' },
-  { id: 'sub-3', label: 'Threat floor', value: 'Low', tone: 'special' },
-  { id: 'sub-4', label: 'Access lane', value: 'Armed', tone: 'danger' },
+  { id: 'sub-1', label: 'Entregas', value: 'Sincronizado', tone: 'success' },
+  { id: 'sub-2', label: 'Financeiro', value: 'Ao vivo', tone: 'info' },
+  { id: 'sub-3', label: 'Estabilidade', value: 'Alta', tone: 'special' },
+  { id: 'sub-4', label: 'Acesso', value: 'Protegido', tone: 'danger' },
 ];
 
 const PARTICLE_COUNT = 18;
@@ -31,18 +31,18 @@ function createParticles() {
 
 function getCoreLabel(progress) {
   if (progress < 28) {
-    return 'Boot lattice';
+    return 'Inicializacao';
   }
 
   if (progress < 56) {
-    return 'Signal mesh';
+    return 'Sincronizacao';
   }
 
   if (progress < 82) {
-    return 'Runtime gate';
+    return 'Validacao';
   }
 
-  return 'App handoff';
+  return 'Liberacao final';
 }
 
 function SystemBoot({ onComplete }) {
@@ -115,14 +115,14 @@ function SystemBoot({ onComplete }) {
           <div className="system-boot__brand">
             <img src="/brand-bolt-red.svg" alt="" className="system-boot__brand-mark" />
             <div>
-              <strong>Nexus-10 OS</strong>
-              <span>Industrial cybernetic runtime</span>
+              <strong>Nexus 10 ERP</strong>
+              <span>ERP operacional em tempo real</span>
             </div>
           </div>
 
           <div className="system-boot__header-rail">
-            <span className="system-boot__status-chip">BOOT SEQUENCE / LIVE</span>
-            <span className="system-boot__status-chip system-boot__status-chip--dim">CORE {coreLabel.toUpperCase()}</span>
+            <span className="system-boot__status-chip">SEQUENCIA DE INICIALIZACAO</span>
+            <span className="system-boot__status-chip system-boot__status-chip--dim">ETAPA {coreLabel.toUpperCase()}</span>
           </div>
         </header>
 
@@ -138,16 +138,16 @@ function SystemBoot({ onComplete }) {
         <div className="system-boot__content">
           <aside className="system-boot__telemetry">
             <div className="system-boot__telemetry-card">
-              <span>Signal</span>
-              <strong>Stable</strong>
+              <span>Sinal</span>
+              <strong>Estavel</strong>
             </div>
             <div className="system-boot__telemetry-card">
-              <span>Latency</span>
+              <span>Latencia</span>
               <strong>12ms</strong>
             </div>
             <div className="system-boot__telemetry-card">
-              <span>Core mesh</span>
-              <strong>Synced</strong>
+              <span>Nucleo</span>
+              <strong>Sincronizado</strong>
             </div>
           </aside>
 
@@ -157,33 +157,33 @@ function SystemBoot({ onComplete }) {
                 <img src="/brand-bolt-red.svg" alt="" className="system-boot__copy-mark-icon" />
                 <span className="system-boot__copy-mark-line" />
               </div>
-              <p className="system-boot__eyebrow">System startup</p>
-              <h1 className="system-boot__title">Booting nexus operational shell</h1>
+              <p className="system-boot__eyebrow">Inicializacao do sistema</p>
+              <h1 className="system-boot__title">Preparando o ambiente operacional</h1>
               <p className="system-boot__description">
-                Carregando malha visual, autenticacao local e estrutura operacional antes do dashboard assumir a sessao.
+                Carregando interface, acesso local e modulos principais antes de liberar o painel da operacao.
               </p>
             </div>
 
             <div className="system-boot__metrics">
               <div>
-                <span>Runtime stage</span>
+                <span>Etapa atual</span>
                 <strong>{coreLabel}</strong>
               </div>
               <div>
-                <span>Frame sync</span>
-                <strong>{progress < 100 ? 'Tracking' : 'Locked'}</strong>
+                <span>Sincronizacao</span>
+                <strong>{progress < 100 ? 'Em andamento' : 'Concluida'}</strong>
               </div>
               <div>
-                <span>Visual bridge</span>
-                <strong>Primed</strong>
+                <span>Interface</span>
+                <strong>Pronta</strong>
               </div>
             </div>
           </section>
 
           <section className="system-boot__console">
             <div className="system-boot__console-head">
-              <span>Runtime log</span>
-              <span>{progress}% complete</span>
+              <span>Log da inicializacao</span>
+              <span>{progress}% concluido</span>
             </div>
             <div className="system-boot__console-body">
               {visibleLines.map((line, index) => (
@@ -204,8 +204,8 @@ function SystemBoot({ onComplete }) {
             <span className="system-boot__progress-bar" style={{ width: `${progress}%` }} />
           </div>
           <div className="system-boot__footer-meta">
-            <span>Sequence integrity 100%</span>
-            <span>Preparing transition to app shell</span>
+            <span>Integridade da sequencia 100%</span>
+            <span>Preparando entrada no ERP</span>
           </div>
         </footer>
       </div>
