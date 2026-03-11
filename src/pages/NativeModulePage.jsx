@@ -202,6 +202,51 @@ function formatChecklistDate() {
     .toUpperCase();
 }
 
+function resolveDisplayText(value, fallback = 'Nao informado') {
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim();
+    return trimmedValue.length > 0 ? trimmedValue : fallback;
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const joinedValue = value
+      .map((entry) => resolveDisplayText(entry, ''))
+      .filter(Boolean)
+      .join(' / ');
+
+    return joinedValue || fallback;
+  }
+
+  if (value && typeof value === 'object') {
+    const candidateKeys = ['operatorName', 'displayName', 'name', 'label', 'value', 'title', 'text'];
+
+    for (const key of candidateKeys) {
+      const resolvedValue = resolveDisplayText(value[key], '');
+
+      if (resolvedValue) {
+        return resolvedValue;
+      }
+    }
+  }
+
+  return fallback;
+}
+
+function formatAuditText(record, fallback = 'Sem atualizacao') {
+  const actorLabel = resolveDisplayText(record?.updatedBy, '');
+  const timeLabel = resolveDisplayText(record?.updatedAt, '');
+
+  if (actorLabel && timeLabel) {
+    return `${actorLabel} - ${timeLabel}`;
+  }
+
+  return actorLabel || timeLabel || fallback;
+}
+
 function buildMachineChecklistRecords(machineRecords, checklist = [], currentRecords = []) {
   return machineRecords.map((machine) => {
     const savedState = checklist.find((item) => item.id === machine.id);
@@ -1498,7 +1543,7 @@ function NativeModulePage({ route }) {
                           </div>
                           <div className="delivery-reading__meta-item">
                             <span>Leitura</span>
-                            <strong>{record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem atualizacao'}</strong>
+                            <strong>{formatAuditText(record)}</strong>
                           </div>
                         </div>
 
@@ -1567,7 +1612,7 @@ function NativeModulePage({ route }) {
                           </div>
                           <div className="delivery-reading__meta-item">
                             <span>Fechamento</span>
-                            <strong>{record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem atualizacao'}</strong>
+                            <strong>{formatAuditText(record)}</strong>
                           </div>
                         </div>
 

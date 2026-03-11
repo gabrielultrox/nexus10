@@ -59,6 +59,108 @@ function sortRecords(records) {
   });
 }
 
+function formatAuditTime(value) {
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function resolveTextValue(value) {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => resolveTextValue(entry)).filter(Boolean).join(' / ');
+  }
+
+  if (!value || typeof value !== 'object') {
+    return '';
+  }
+
+  const knownKeys = ['operatorName', 'displayName', 'name', 'label', 'value', 'title', 'text'];
+
+  for (const key of knownKeys) {
+    const resolved = resolveTextValue(value[key]);
+
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return '';
+}
+
+function resolveAuditLabel(record) {
+  const directValue = resolveTextValue(record.updatedAt);
+
+  if (directValue && directValue !== '[object Object]') {
+    return directValue;
+  }
+
+  if (record.updatedAt?.toDate instanceof Function) {
+    return formatAuditTime(record.updatedAt.toDate());
+  }
+
+  if (typeof record.updatedAt?.seconds === 'number') {
+    return formatAuditTime(record.updatedAt.seconds * 1000);
+  }
+
+  return formatAuditTime(record.updatedAtClient);
+}
+
+function normalizeRecord(record) {
+  const textFields = [
+    'courier',
+    'updatedBy',
+    'holder',
+    'device',
+    'model',
+    'status',
+    'machineStatus',
+    'deliveryCode',
+    'code',
+    'order',
+    'origin',
+    'destination',
+    'window',
+    'machine',
+    'recipient',
+    'owner',
+    'type',
+    'reason',
+    'districts',
+    'confirmed',
+    'value',
+    'date',
+    'zone',
+  ];
+
+  const normalizedRecord = { ...record };
+
+  textFields.forEach((field) => {
+    if (field in normalizedRecord) {
+      normalizedRecord[field] = resolveTextValue(normalizedRecord[field]);
+    }
+  });
+
+  normalizedRecord.updatedAt = resolveAuditLabel(record);
+  normalizedRecord.updatedBy = resolveTextValue(record.updatedBy);
+
+  return normalizedRecord;
+}
+
 function getModuleRecordsCollectionRef(storeId, modulePath) {
   return collection(
     firebaseDb,
@@ -92,7 +194,7 @@ export function subscribeToManualModuleRecords({
         const remoteRecords = snapshot.docs.map((documentSnapshot) => ({
           id: documentSnapshot.id,
           ...documentSnapshot.data(),
-        }));
+        })).map(normalizeRecord);
         const filteredRecords = currentOperationalDay
           ? remoteRecords.filter((record) => record.operationalDay === currentOperationalDay)
           : remoteRecords;
@@ -138,8 +240,8 @@ export async function saveManualModuleRecord({
     operationalDay: dailyResetHour != null ? getOperationalDay(dailyResetHour) : null,
     createdAtClient: record.createdAtClient ?? timestamp,
     updatedAtClient: timestamp,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAtServer: serverTimestamp(),
+    updatedAtServer: serverTimestamp(),
   }, { merge: true });
 
   return true;
