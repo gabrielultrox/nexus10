@@ -14,9 +14,9 @@ export default defineConfig({
         'icons/apple-touch-icon.svg',
       ],
       manifest: {
-        name: 'Nexus 10 Seguro',
+        name: 'Nexus 10 ERP',
         short_name: 'Nexus10',
-        description: 'Painel operacional delivery multi-loja com suporte PWA.',
+        description: 'ERP operacional delivery com pedidos, vendas e operacao em tempo real.',
         theme_color: '#050816',
         background_color: '#050816',
         display: 'standalone',

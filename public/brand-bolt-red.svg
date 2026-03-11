@@ -1,33 +1,36 @@
 <svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Nexus 10 Bolt</title>
-  <desc id="desc">Rounded square badge with a red lightning bolt.</desc>
+  <title id="title">Nexus 10 ERP</title>
+  <desc id="desc">Emblema operacional com monograma N e paineis modulares.</desc>
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0e1016"/>
-      <stop offset="100%" stop-color="#05060a"/>
+      <stop offset="0%" stop-color="#08111f"/>
+      <stop offset="100%" stop-color="#101d33"/>
     </linearGradient>
     <linearGradient id="edge" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff8a3d"/>
-      <stop offset="100%" stop-color="#d32929"/>
+      <stop offset="0%" stop-color="#25d8ff"/>
+      <stop offset="100%" stop-color="#0b89d0"/>
     </linearGradient>
-    <linearGradient id="bolt" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff8b4a"/>
-      <stop offset="55%" stop-color="#ff4538"/>
-      <stop offset="100%" stop-color="#a80017"/>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffbf47"/>
+      <stop offset="100%" stop-color="#d98608"/>
     </linearGradient>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#140000" flood-opacity="0.38"/>
-    </filter>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#ff4d3d" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#06101e" flood-opacity="0.32"/>
     </filter>
   </defs>
 
-  <rect x="14" y="14" width="228" height="228" rx="46" fill="url(#bg)" stroke="url(#edge)" stroke-width="8" filter="url(#shadow)"/>
-  <rect x="28" y="28" width="200" height="200" rx="34" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
-  <path
-    d="M137 36 L78 132 H118 L101 220 L178 106 H137 Z"
-    fill="url(#bolt)"
-    filter="url(#glow)"
-  />
+  <rect x="12" y="12" width="232" height="232" rx="54" fill="url(#bg)" stroke="url(#edge)" stroke-width="6" filter="url(#shadow)"/>
+  <rect x="28" y="28" width="200" height="200" rx="38" fill="none" stroke="#7ddfff" stroke-opacity=".16" stroke-width="2"/>
+
+  <rect x="44" y="54" width="52" height="148" rx="18" fill="#0d2038" stroke="#63ddff" stroke-opacity=".28"/>
+  <rect x="160" y="54" width="52" height="148" rx="18" fill="#0d2038" stroke="#63ddff" stroke-opacity=".28"/>
+  <path d="M84 176V80h18l52 65V80h18v96h-18l-52-65v65Z" fill="#f4f8ff"/>
+
+  <rect x="54" y="68" width="32" height="12" rx="6" fill="#1ce197"/>
+  <rect x="54" y="92" width="32" height="12" rx="6" fill="#1ce197" opacity=".68"/>
+  <rect x="54" y="116" width="24" height="12" rx="6" fill="#1ce197" opacity=".42"/>
+
+  <rect x="170" y="68" width="30" height="30" rx="10" fill="url(#accent)"/>
+  <rect x="170" y="112" width="30" height="30" rx="10" fill="#112742" stroke="#63ddff" stroke-opacity=".28"/>
+  <rect x="170" y="156" width="30" height="30" rx="10" fill="#112742" stroke="#63ddff" stroke-opacity=".28"/>
 </svg>

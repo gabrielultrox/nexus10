@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" rx="42" fill="#07101d"/>
-  <rect x="18" y="18" width="144" height="144" rx="32" fill="#0d1628" stroke="#33d9ff" stroke-opacity=".28"/>
-  <path d="M52 124V56h24l24 39V56h28v68h-24L80 84v40Z" fill="#f3f7ff"/>
-  <path d="M127 45h18l-16 20h-13Z" fill="#f6a81a"/>
+  <rect width="180" height="180" rx="42" fill="#08111f"/>
+  <rect x="14" y="14" width="152" height="152" rx="34" fill="#102039" stroke="#2fd7ff" stroke-opacity=".28"/>
+  <rect x="30" y="36" width="32" height="108" rx="13" fill="#102541" stroke="#74e3ff" stroke-opacity=".22"/>
+  <rect x="118" y="36" width="32" height="108" rx="13" fill="#102541" stroke="#74e3ff" stroke-opacity=".22"/>
+  <path d="M54 126V55h11l33 41V55h12v71H99L66 85v41Z" fill="#f4f8ff"/>
+  <rect x="36" y="46" width="19" height="8" rx="4" fill="#1de29a"/>
+  <rect x="36" y="61" width="19" height="8" rx="4" fill="#1de29a" opacity=".68"/>
+  <rect x="36" y="76" width="15" height="8" rx="4" fill="#1de29a" opacity=".42"/>
+  <rect x="124" y="45" width="19" height="19" rx="6.5" fill="#f1a81d"/>
+  <rect x="124" y="75" width="19" height="19" rx="6.5" fill="#18304f"/>
+  <rect x="124" y="105" width="19" height="19" rx="6.5" fill="#18304f"/>
 </svg>
