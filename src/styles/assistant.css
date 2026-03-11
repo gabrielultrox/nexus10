@@ -1,0 +1,246 @@
+.assistant-fab {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 70;
+  min-width: 88px;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 34%, var(--color-border-default));
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-accent-cyan) 18%, transparent), transparent 45%),
+    linear-gradient(180deg, color-mix(in srgb, #09131f 94%, transparent), color-mix(in srgb, #0d1723 96%, transparent));
+  box-shadow:
+    0 18px 48px color-mix(in srgb, #06101b 72%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
+}
+
+.assistant-fab__label {
+  color: #f4f8ff;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.assistant-panel {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  bottom: 18px;
+  width: min(420px, calc(100vw - 24px));
+  z-index: 75;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 42%, transparent), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, #08131f 96%, transparent), color-mix(in srgb, #0d1723 98%, transparent));
+  box-shadow: 0 26px 72px color-mix(in srgb, #040b15 78%, transparent);
+  transform: translateX(calc(100% + 30px));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--duration-slow) var(--ease-standard),
+    opacity var(--duration-normal) var(--ease-standard);
+}
+
+.assistant-panel--open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.assistant-panel__header,
+.assistant-panel__footer {
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
+  border-radius: 22px;
+  background: color-mix(in srgb, #0c1622 94%, transparent);
+}
+
+.assistant-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.assistant-panel__eyebrow {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.assistant-panel__title {
+  color: #f4f8ff;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.assistant-panel__context {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.assistant-panel__body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.assistant-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.assistant-quick-actions__item {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-border-subtle));
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 8%, transparent), transparent 26%),
+    color-mix(in srgb, #12101f 94%, transparent);
+  text-align: left;
+}
+
+.assistant-quick-actions__eyebrow,
+.assistant-result-card__type {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.assistant-messages {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.assistant-message {
+  display: grid;
+  gap: var(--space-2);
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+.assistant-message--assistant {
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
+  background: color-mix(in srgb, #0b141f 94%, transparent);
+}
+
+.assistant-message--user {
+  justify-self: end;
+  max-width: 88%;
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 18%, var(--color-border-subtle));
+  background: color-mix(in srgb, #161225 94%, transparent);
+}
+
+.assistant-message__badge {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.assistant-message__content {
+  color: #edf4ff;
+  line-height: 1.6;
+}
+
+.assistant-message__cards {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.assistant-result-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 12%, var(--color-border-subtle));
+  border-radius: 16px;
+  background: color-mix(in srgb, #101a27 94%, transparent);
+  text-align: left;
+}
+
+.assistant-result-card strong,
+.assistant-result-card small,
+.assistant-result-card span {
+  color: var(--color-text-primary);
+}
+
+.assistant-result-card small,
+.assistant-result-card span {
+  color: var(--color-text-secondary);
+}
+
+.assistant-message__nav {
+  justify-self: start;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-amber) 20%, var(--color-border-default));
+  border-radius: 14px;
+  color: #f6fbff;
+  background: color-mix(in srgb, var(--color-accent-amber) 14%, #111722);
+}
+
+.assistant-message__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.assistant-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.assistant-input__field {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+  border-radius: 16px;
+  color: #eff6ff;
+  background: color-mix(in srgb, #0a1623 92%, transparent);
+}
+
+.assistant-input__field::placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 960px) {
+  .assistant-panel {
+    left: 12px;
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .assistant-quick-actions,
+  .assistant-input {
+    grid-template-columns: 1fr;
+  }
+
+  .assistant-fab {
+    right: 16px;
+    bottom: 16px;
+  }
+}
