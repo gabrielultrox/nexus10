@@ -21,15 +21,15 @@ export const manualModuleConfigs = {
     dailyResetHour: 3,
     manualResetLabel: 'Resetar escala',
     formTitle: 'Adicionar entregador na escala',
-    formDescription: 'Monte a escala do dia por entregador, janela e maquininha de apoio.',
+    formDescription: 'Monte a escala do dia por entregador, janela e maquininha do dia.',
     submitLabel: 'Adicionar na escala',
     emptyTitle: 'Nenhum entregador escalado',
     emptyDescription: 'Cadastre os entregadores da escala do dia para organizar o turno manualmente.',
-    columns: ['Entregador', 'Janela', 'Maquininha', 'Status', 'Ultima atualizacao'],
+    columns: ['Entregador', 'Janela', 'Maquininha do dia', 'Status', 'Ultima atualizacao'],
     fields: [
       { name: 'courier', label: 'Entregador', type: 'select', options: [] },
       { name: 'window', label: 'Janela', placeholder: '18:00 - 22:00' },
-      { name: 'machine', label: 'Maquininha', type: 'select', options: [] },
+      { name: 'machine', label: 'Maquininha do dia', type: 'select', options: [] },
       {
         name: 'status',
         label: 'Status',
@@ -59,6 +59,7 @@ export const manualModuleConfigs = {
   },
   'delivery-reading': {
     storageKey: 'nexus-module-delivery-reading',
+    dailyResetHour: 3,
     formTitle: 'Registrar leitura de entrega',
     formDescription: 'Lance o codigo, selecione o entregador e marque se a entrega e turbo ou ja foi fechada.',
     submitLabel: 'Registrar leitura',

@@ -8,7 +8,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
-import { firebaseDb, firebaseReady } from './firebase';
+import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import {
   loadLocalRecords,
@@ -84,26 +84,33 @@ export function subscribeToManualModuleRecords({
     return () => {};
   }
 
-  const currentOperationalDay = dailyResetHour != null ? getOperationalDay(dailyResetHour) : null;
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      getModuleRecordsCollectionRef(storeId, modulePath),
+      (snapshot) => {
+        const currentOperationalDay = dailyResetHour != null ? getOperationalDay(dailyResetHour) : null;
+        const remoteRecords = snapshot.docs.map((documentSnapshot) => ({
+          id: documentSnapshot.id,
+          ...documentSnapshot.data(),
+        }));
+        const filteredRecords = currentOperationalDay
+          ? remoteRecords.filter((record) => record.operationalDay === currentOperationalDay)
+          : remoteRecords;
+        const sortedRecords = sortRecords(filteredRecords);
 
-  return onSnapshot(
-    getModuleRecordsCollectionRef(storeId, modulePath),
-    (snapshot) => {
-      const remoteRecords = snapshot.docs.map((documentSnapshot) => ({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data(),
-      }));
-      const filteredRecords = currentOperationalDay
-        ? remoteRecords.filter((record) => record.operationalDay === currentOperationalDay)
-        : remoteRecords;
-      const sortedRecords = sortRecords(filteredRecords);
-
-      saveFallbackRecords(storageKey, sortedRecords, dailyResetHour);
-      onData(sortedRecords);
-    },
-    (error) => {
-      onData(getFallbackRecords(storageKey, initialRecords, dailyResetHour));
-      onError?.(error);
+        saveFallbackRecords(storageKey, sortedRecords, dailyResetHour);
+        onData(sortedRecords);
+      },
+      (error) => {
+        onData(getFallbackRecords(storageKey, initialRecords, dailyResetHour));
+        onError?.(error);
+      },
+    ),
+    {
+      onFallback() {
+        onData(getFallbackRecords(storageKey, initialRecords, dailyResetHour));
+      },
+      onError,
     },
   );
 }

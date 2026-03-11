@@ -1408,6 +1408,84 @@
   color: rgba(208, 220, 235, 0.74);
  }
 
+.schedule-export-image__canvas--light {
+  background:
+    radial-gradient(circle at top left, rgba(0, 150, 220, 0.08), transparent 34%),
+    radial-gradient(circle at top right, rgba(255, 145, 0, 0.08), transparent 30%),
+    linear-gradient(180deg, #ffffff, #f3f7fb);
+  color: #162235;
+  box-shadow: 0 28px 70px rgba(13, 24, 40, 0.16);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__header,
+.schedule-export-image__canvas--light .schedule-export-image__footer {
+  border-color: rgba(128, 154, 186, 0.24);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__eyebrow {
+  color: #0d8bd8;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__title,
+.schedule-export-image__canvas--light .schedule-export-image__stamp strong,
+.schedule-export-image__canvas--light .schedule-export-image__metric strong,
+.schedule-export-image__canvas--light .schedule-export-image__card-top strong,
+.schedule-export-image__canvas--light .schedule-export-image__card-body strong,
+.schedule-export-image__canvas--light .schedule-export-image__machine-number {
+  color: #162235;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__meta,
+.schedule-export-image__canvas--light .schedule-export-image__metric small,
+.schedule-export-image__canvas--light .schedule-export-image__footer {
+  color: rgba(22, 34, 53, 0.74);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__stamp,
+.schedule-export-image__canvas--light .schedule-export-image__metric,
+.schedule-export-image__canvas--light .schedule-export-image__card,
+.schedule-export-image__canvas--light .schedule-export-image__machine-card {
+  border-color: rgba(128, 154, 186, 0.24);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 34px rgba(18, 31, 49, 0.08);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__stamp span,
+.schedule-export-image__canvas--light .schedule-export-image__metric span,
+.schedule-export-image__canvas--light .schedule-export-image__card-body span {
+  color: rgba(66, 85, 110, 0.84);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__card-top span {
+  background: rgba(23, 160, 120, 0.12);
+  color: #168561;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__status--absent {
+  background: rgba(255, 91, 110, 0.12);
+  color: #c84a5a;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__tag {
+  background: rgba(13, 139, 216, 0.1);
+  color: #0f75b6;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__tag--problem {
+  background: rgba(255, 145, 0, 0.12);
+  color: #b67207;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__machine-badge--present {
+  background: rgba(23, 160, 120, 0.12);
+  color: #168561;
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__machine-badge--absent {
+  background: rgba(255, 91, 110, 0.12);
+  color: #c84a5a;
+}
+
 @media (max-width: 880px) {
   .native-module__form-grid,
   .native-module__toolbar,

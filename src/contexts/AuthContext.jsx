@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { userHasRequiredRole } from '../services/auth';
+import { clearRemoteSession, ensureRemoteSession, firebaseReady } from '../services/firebase';
 import { buildRolePermissionFlags, getRoleLabel, hasPermission } from '../services/permissions';
 import {
   getDefaultUserProfile,
@@ -52,6 +53,9 @@ export function AuthProvider({ children }) {
         const refreshedProfile = await refreshSessionProfile(parsedSession).catch(() => (
           getDefaultUserProfile(parsedSession.operatorName ?? parsedSession.displayName ?? 'Operador local')
         ));
+        if (firebaseReady) {
+          await ensureRemoteSession().catch(() => null);
+        }
         const nextSession = buildLocalSession(refreshedProfile);
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
         setSession(nextSession);
@@ -89,6 +93,9 @@ export function AuthProvider({ children }) {
 
         const profile = await resolveUserProfileByOperator(operatorName)
           .catch(() => getDefaultUserProfile(operatorName));
+        if (firebaseReady) {
+          await ensureRemoteSession();
+        }
         const nextSession = buildLocalSession(profile);
 
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
@@ -97,6 +104,9 @@ export function AuthProvider({ children }) {
       },
       async signOut() {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
+        if (firebaseReady) {
+          await clearRemoteSession().catch(() => null);
+        }
         setSession(null);
       },
       hasRole(requiredRoles = []) {

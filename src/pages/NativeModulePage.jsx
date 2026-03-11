@@ -202,21 +202,26 @@ function formatChecklistDate() {
     .toUpperCase();
 }
 
-function buildMachineChecklistRecords(machineRecords, checklist = []) {
+function buildMachineChecklistRecords(machineRecords, checklist = [], currentRecords = []) {
   return machineRecords.map((machine) => {
     const savedState = checklist.find((item) => item.id === machine.id);
+    const currentState = currentRecords.find((item) => item.id === machine.id);
 
     return {
       id: machine.id,
       device: machine.device,
       holder: machine.holder,
       model: machine.model,
-      status: savedState?.status ?? 'Ausente',
+      status: savedState?.status ?? currentState?.status ?? 'Ausente',
       machineStatus: machine.status ?? 'Ativa',
-      updatedAt: savedState?.updatedAt ?? '',
-      updatedBy: savedState?.updatedBy ?? '',
+      updatedAt: savedState?.updatedAt ?? currentState?.updatedAt ?? '',
+      updatedBy: savedState?.updatedBy ?? currentState?.updatedBy ?? '',
     };
   });
+}
+
+function loadMachineChecklistState() {
+  return loadResettableLocalRecords('nexus-module-machine-history', [], 3);
 }
 
 function shouldUseLocalFallback(error) {
@@ -252,9 +257,9 @@ function NativeModulePage({ route }) {
     manager ? buildRouteRecords(route.path, manager) : []
   ));
   const [machineChecklistRecords, setMachineChecklistRecords] = useState(() => (
-    route.path === 'machines' ? buildMachineChecklistRecords(buildRouteRecords('machines', manager), loadResettableLocalRecords('nexus-module-machine-history', [], 3)) : []
+    route.path === 'machines' ? buildMachineChecklistRecords(buildRouteRecords('machines', manager), loadMachineChecklistState()) : []
   ));
-  const [machineChecklistState, setMachineChecklistState] = useState(() => loadResettableLocalRecords('nexus-module-machine-history', [], 3));
+  const [machineChecklistState, setMachineChecklistState] = useState(() => loadMachineChecklistState());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [errorMessage, setErrorMessage] = useState('');
@@ -301,6 +306,17 @@ function NativeModulePage({ route }) {
       setMachineChecklistState(checklistRecords);
     },
   }), [currentStoreId]);
+
+  useEffect(() => {
+    const refreshChecklistState = () => {
+      setMachineChecklistState(loadMachineChecklistState());
+    };
+
+    refreshChecklistState();
+    const intervalId = window.setInterval(refreshChecklistState, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (!managerWithResolvedFields) {
@@ -360,7 +376,7 @@ function NativeModulePage({ route }) {
       return;
     }
 
-    setMachineChecklistRecords(buildMachineChecklistRecords(records, machineChecklistState));
+    setMachineChecklistRecords((current) => buildMachineChecklistRecords(records, machineChecklistState, current));
   }, [machineChecklistState, records, route.path]);
 
   useEffect(() => {
@@ -732,13 +748,17 @@ function NativeModulePage({ route }) {
     const record = records.find((item) => item.id === recordId);
 
     try {
-      await deleteRecordWithFallback({
-        modulePath: route.path,
-        recordId,
-        onLocalApply: () => {
-          setRecords((current) => current.filter((item) => item.id !== recordId));
-        },
-      });
+        await deleteRecordWithFallback({
+          modulePath: route.path,
+          recordId,
+          onLocalApply: () => {
+            setRecords((current) => current.filter((item) => item.id !== recordId));
+            if (route.path === 'machines') {
+              setMachineChecklistRecords((current) => current.filter((item) => item.id !== recordId));
+              setMachineChecklistState((current) => current.filter((item) => item.id !== recordId));
+            }
+          },
+        });
 
       setErrorMessage('');
       playSuccess();
@@ -814,12 +834,12 @@ function NativeModulePage({ route }) {
         module: route.title,
         modulePath: route.path,
         actor: auditContext.updatedBy,
-        action: 'Alterou maquininha da escala',
+        action: 'Alterou maquininha do dia na escala',
         target: record.courier ?? 'entregador',
-        details: `Maquininha atualizada para ${nextMachine}`,
+        details: `Maquininha do dia atualizada para ${nextMachine}`,
       });
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel atualizar a maquininha da escala.');
+        setErrorMessage(error.message ?? 'Nao foi possivel atualizar a maquininha do dia na escala.');
       playError();
     }
   }
@@ -897,7 +917,17 @@ function NativeModulePage({ route }) {
     }
   }
 
-  async function exportImageFromRef(targetRef, filePrefix, failureMessage) {
+  function buildExportFileName(fileLabel, extension = 'png') {
+    const today = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date()).replace(/\//g, '-');
+
+    return `${fileLabel} (${today}).${extension}`;
+  }
+
+  async function exportImageFromRef(targetRef, fileLabel, failureMessage) {
     if (!targetRef?.current) {
       setErrorMessage(failureMessage);
       playError();
@@ -907,7 +937,9 @@ function NativeModulePage({ route }) {
     const exportNode = targetRef.current.cloneNode(true);
     const exportSandbox = document.createElement('div');
 
-    exportSandbox.setAttribute('data-export-sandbox', filePrefix);
+    exportNode.classList.add('schedule-export-image__canvas--light');
+
+    exportSandbox.setAttribute('data-export-sandbox', fileLabel);
     exportSandbox.style.position = 'fixed';
     exportSandbox.style.left = '0';
     exportSandbox.style.top = '0';
@@ -936,20 +968,20 @@ function NativeModulePage({ route }) {
       const dataUrl = await toPng(exportNode, {
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: '#08111f',
+        backgroundColor: '#f7fafc',
         skipFonts: true,
       });
 
       const link = document.createElement('a');
-      const today = new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(new Date()).replace(/\//g, '-');
+      const filename = buildExportFileName(fileLabel, 'png');
 
       link.href = dataUrl;
-      link.download = `${filePrefix}-${today}.png`;
+      link.download = filename;
+      link.rel = 'noopener';
+      link.target = '_self';
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       playNotification();
     } catch (error) {
       playError();
@@ -971,7 +1003,7 @@ function NativeModulePage({ route }) {
       return;
     }
 
-    await exportImageFromRef(scheduleImageRef, 'escala', 'Nao foi possivel exportar a escala como imagem.');
+    await exportImageFromRef(scheduleImageRef, 'escala do dia', 'Nao foi possivel exportar a escala como imagem.');
   }
 
   async function handleExportMachineChecklistImage() {
@@ -988,7 +1020,7 @@ function NativeModulePage({ route }) {
 
     await exportImageFromRef(
       machineChecklistImageRef,
-      'maquininhas-presentes',
+      'maquininhas do dia',
       'Nao foi possivel exportar as maquininhas presentes como imagem.',
     );
   }
@@ -1079,17 +1111,28 @@ function NativeModulePage({ route }) {
     };
 
     try {
-      await saveRecordWithFallback({
-        modulePath: 'machine-history',
-        storageKey: 'nexus-module-machine-history',
-        dailyResetHour: 3,
-        record: nextRecord,
-        onLocalApply: () => {
-          setMachineChecklistRecords((current) => current.map((item) => (
-            item.id === recordId ? nextRecord : item
-          )));
-        },
-      });
+        await saveRecordWithFallback({
+          modulePath: 'machine-history',
+          storageKey: 'nexus-module-machine-history',
+          dailyResetHour: 3,
+          record: nextRecord,
+          onLocalApply: () => {
+            setMachineChecklistRecords((current) => current.map((item) => (
+              item.id === recordId ? nextRecord : item
+            )));
+            setMachineChecklistState((current) => {
+              const existingRecord = current.find((item) => item.id === recordId);
+
+              if (existingRecord) {
+                return current.map((item) => (
+                  item.id === recordId ? nextRecord : item
+                ));
+              }
+
+              return [nextRecord, ...current];
+            });
+          },
+        });
 
       setErrorMessage('');
       playSuccess();
@@ -1576,7 +1619,7 @@ function NativeModulePage({ route }) {
 
                   <div className="schedule-records__editor">
                     <div className="ui-field">
-                      <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>Maquininha</label>
+                      <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>Maquininha do dia</label>
                       <select
                         id={`schedule-machine-${record.id}`}
                         className="ui-select"
@@ -1597,8 +1640,8 @@ function NativeModulePage({ route }) {
                         className="ui-button ui-button--secondary"
                         onClick={() => handleScheduleMachineUpdate(record.id)}
                         disabled={(scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha') === (record.machine ?? 'Sem maquininha')}
-                      >
-                        Salvar maquininha
+                        >
+                          Salvar maquininha do dia
                       </button>
                       <button
                         type="button"
@@ -1845,10 +1888,10 @@ function NativeModulePage({ route }) {
                       <span>Janela</span>
                       <strong>{record.window}</strong>
                     </p>
-                    <p>
-                      <span>Maquininha</span>
-                      <strong>{record.machine}</strong>
-                    </p>
+                      <p>
+                        <span>Maquininha do dia</span>
+                        <strong>{record.machine}</strong>
+                      </p>
                   </div>
                 </article>
               ))}
