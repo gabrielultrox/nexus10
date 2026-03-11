@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import { courierShiftMap, courierStatusMap } from '../schemas/courierSchema';
 
 function CourierProfilePanel({ courier }) {
@@ -38,9 +40,9 @@ function CourierProfilePanel({ courier }) {
         </div>
 
         <div className="courier-profile-hero__actions">
-          <button type="button" className="ui-button ui-button--secondary">
+          <Link to={`/couriers/cadastro?edit=${courier.id}`} className="ui-button ui-button--secondary">
             Editar cadastro
-          </button>
+          </Link>
           <button type="button" className="ui-button ui-button--ghost">
             Acionar escala
           </button>

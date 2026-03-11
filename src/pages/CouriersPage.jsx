@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
 
 import '../styles/couriers.css';
 
@@ -7,16 +7,32 @@ import CouriersModule from '../modules/couriers/components/CouriersModule';
 
 function CouriersPage() {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isRegisterMode = location.pathname.endsWith('/cadastro');
+  const editingCourierId = searchParams.get('edit');
+
+  function clearEditingCourier() {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('edit');
+    setSearchParams(nextParams, { replace: true });
+  }
 
   return (
     <div className="page-stack">
       <PageIntro
         eyebrow="Entregadores"
-        title={isRegisterMode ? 'Cadastro de entregadores' : 'Consulta de entregadores'}
+        title={
+          isRegisterMode
+            ? editingCourierId
+              ? 'Editar entregador'
+              : 'Cadastro de entregadores'
+            : 'Consulta de entregadores'
+        }
         description={
           isRegisterMode
-            ? 'Cadastre nome, status, turno e maquininha em uma tela dedicada, sem disputar espaco com a consulta.'
+            ? editingCourierId
+              ? 'Ajuste os dados do entregador e atualize a maquininha vinculada sem misturar com a tela de consulta.'
+              : 'Cadastre nome, status, turno e maquininha em uma tela dedicada, sem disputar espaco com a consulta.'
             : 'Consulte a base de entregadores com filtros, leitura rapida de status e acesso direto ao perfil.'
         }
       />
@@ -36,7 +52,11 @@ function CouriersPage() {
         </NavLink>
       </div>
 
-      <CouriersModule mode={isRegisterMode ? 'register' : 'lookup'} />
+      <CouriersModule
+        mode={isRegisterMode ? 'register' : 'lookup'}
+        editingCourierId={isRegisterMode ? editingCourierId : null}
+        onFinishEditing={clearEditingCourier}
+      />
     </div>
   );
 }

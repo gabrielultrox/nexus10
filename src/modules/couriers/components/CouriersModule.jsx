@@ -12,11 +12,13 @@ import {
 } from '../../../services/courierService';
 import { appendAuditEvent } from '../../../services/localAudit';
 import { loadLocalRecords, saveLocalRecords } from '../../../services/localRecords';
-import { courierSeedRecords } from '../../../services/operationsSeedData';
+import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
+import { saveManualModuleRecord, subscribeToManualModuleRecords } from '../../../services/manualModuleService';
 import {
   courierShiftOptions,
   courierStatusOptions,
 } from '../schemas/courierSchema';
+import { findCourierById } from '../utils/courierFilters';
 import { countCouriersByStatus, filterCouriers } from '../utils/courierFilters';
 import CouriersFilters from './CouriersFilters';
 import CouriersGrid from './CouriersGrid';
@@ -33,18 +35,29 @@ const initialCourierForm = {
   name: '',
   phone: '',
   vehicle: '',
-  machine: '',
+  machine: 'Sem maquininha',
   shift: 'night',
   status: 'available',
   isFixed: false,
   notes: '',
 };
 
-function CouriersModule({ mode = 'lookup' }) {
+function buildMachineOptions(machineRecords) {
+  return Array.from(
+    new Set(
+      machineRecords
+        .map((machine) => machine?.device?.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEditing }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const [filters, setFilters] = useState(initialFilters);
   const [manualCouriers, setManualCouriers] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
+  const [machineRecords, setMachineRecords] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords));
   const [form, setForm] = useState(initialCourierForm);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -61,6 +74,19 @@ function CouriersModule({ mode = 'lookup' }) {
     },
   ), [currentStoreId]);
 
+  useEffect(() => subscribeToManualModuleRecords({
+    storeId: currentStoreId,
+    modulePath: 'machines',
+    storageKey: 'nexus-module-machines',
+    initialRecords: machineSeedRecords,
+    onData: (records) => {
+      setMachineRecords(records);
+    },
+    onError: () => {
+      setErrorMessage((current) => current || 'Nao foi possivel sincronizar as maquininhas da operacao.');
+    },
+  }), [currentStoreId]);
+
   useEffect(() => {
     saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, manualCouriers);
   }, [manualCouriers]);
@@ -73,6 +99,14 @@ function CouriersModule({ mode = 'lookup' }) {
   const filteredCouriers = useMemo(
     () => filterCouriers(couriers, filters),
     [couriers, filters],
+  );
+  const machineOptions = useMemo(
+    () => buildMachineOptions(machineRecords),
+    [machineRecords],
+  );
+  const editingCourier = useMemo(
+    () => (editingCourierId ? findCourierById(couriers, editingCourierId) : null),
+    [couriers, editingCourierId],
   );
 
   const stats = useMemo(
@@ -105,6 +139,30 @@ function CouriersModule({ mode = 'lookup' }) {
     [couriers],
   );
 
+  useEffect(() => {
+    if (mode !== 'register') {
+      return;
+    }
+
+    if (editingCourierId && editingCourier) {
+      setForm({
+        name: editingCourier.name ?? '',
+        phone: editingCourier.phone ?? '',
+        vehicle: editingCourier.vehicle ?? '',
+        machine: editingCourier.machine ?? 'Sem maquininha',
+        shift: editingCourier.shift ?? 'night',
+        status: editingCourier.status ?? 'available',
+        isFixed: Boolean(editingCourier.isFixed),
+        notes: editingCourier.notes ?? '',
+      });
+      return;
+    }
+
+    if (!editingCourierId) {
+      setForm(initialCourierForm);
+    }
+  }, [editingCourier, editingCourierId, mode]);
+
   function updateField(field, value) {
     setForm((current) => ({
       ...current,
@@ -112,11 +170,99 @@ function CouriersModule({ mode = 'lookup' }) {
     }));
   }
 
+  async function persistCourierRecord(nextCourier, isEditing) {
+    try {
+      if (canSyncCouriers) {
+        await saveCourier({
+          storeId: currentStoreId,
+          tenantId,
+          courier: nextCourier,
+        });
+        return 'remote';
+      }
+    } catch (error) {
+      // Fall back to local persistence when the shared base is unavailable.
+    }
+
+    setManualCouriers((current) => (
+      isEditing
+        ? current.map((courier) => (courier.id === nextCourier.id ? nextCourier : courier))
+        : [nextCourier, ...current]
+    ));
+    return 'local';
+  }
+
+  async function syncMachineAssignments(previousCourier, nextCourier) {
+    if (!nextCourier?.name) {
+      return;
+    }
+
+    const previousMachine = previousCourier?.machine ?? 'Sem maquininha';
+    const nextMachine = nextCourier.machine ?? 'Sem maquininha';
+    const nextAssignments = machineRecords.map((machine) => {
+      if (previousMachine !== 'Sem maquininha' && machine.device === previousMachine && machine.holder === (previousCourier?.name ?? nextCourier.name)) {
+        return {
+          ...machine,
+          holder: 'Sem entregador',
+        };
+      }
+
+      if (nextMachine !== 'Sem maquininha' && machine.device === nextMachine) {
+        return {
+          ...machine,
+          holder: nextCourier.name,
+        };
+      }
+
+      return machine;
+    });
+
+    setMachineRecords(nextAssignments);
+    saveLocalRecords('nexus-module-machines', nextAssignments);
+
+    if (!firebaseReady || !currentStoreId) {
+      return;
+    }
+
+    const changedRecords = nextAssignments.filter((machine, index) => {
+      const currentMachine = machineRecords[index];
+
+      return currentMachine
+        && (currentMachine.holder !== machine.holder || currentMachine.status !== machine.status || currentMachine.model !== machine.model);
+    });
+
+    try {
+      await Promise.all(changedRecords.map((machine) => saveManualModuleRecord({
+        storeId: currentStoreId,
+        tenantId,
+        modulePath: 'machines',
+        storageKey: 'nexus-module-machines',
+        record: {
+          ...machine,
+          updatedAt: new Intl.DateTimeFormat('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }).format(new Date()),
+          updatedBy: session?.operatorName ?? session?.displayName ?? 'Operador local',
+        },
+      })));
+    } catch (error) {
+      // Keep the local assignment when shared sync is unavailable.
+    }
+  }
+
+  function handleCancelEditing() {
+    setForm(initialCourierForm);
+    onFinishEditing?.();
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
+    const timestamp = new Date().toISOString();
+    const isEditing = Boolean(editingCourierId && editingCourier);
 
     const newCourier = {
-      id: `manual-${Date.now()}`,
+      id: isEditing ? editingCourier.id : `manual-${Date.now()}`,
       name: form.name.trim(),
       phone: form.phone.trim() || 'Nao informado',
       vehicle: form.vehicle.trim() || 'Moto',
@@ -124,43 +270,42 @@ function CouriersModule({ mode = 'lookup' }) {
       status: form.status,
       shift: form.shift,
       isFixed: form.isFixed,
-      rating: 5.0,
-      deliveriesToday: 0,
-      weeklyDeliveries: 0,
+      rating: editingCourier?.rating ?? 5.0,
+      deliveriesToday: editingCourier?.deliveriesToday ?? 0,
+      weeklyDeliveries: editingCourier?.weeklyDeliveries ?? 0,
       notes: form.notes.trim() || 'Cadastro manual realizado pela operacao.',
       timeline: [
         {
           id: `timeline-${Date.now()}`,
           time: 'Agora',
-          label: 'Cadastro manual concluido no modulo de entregadores',
+          label: isEditing
+            ? 'Cadastro atualizado no modulo de entregadores'
+            : 'Cadastro manual concluido no modulo de entregadores',
         },
-      ],
-      createdAtClient: new Date().toISOString(),
+        ...(editingCourier?.timeline ?? []),
+      ].slice(0, 8),
+      createdAtClient: editingCourier?.createdAtClient ?? timestamp,
+      updatedAtClient: timestamp,
     };
 
     try {
-      if (canSyncCouriers) {
-        await saveCourier({
-          storeId: currentStoreId,
-          tenantId,
-          courier: newCourier,
-        });
-      } else {
-        setManualCouriers((current) => [newCourier, ...current]);
-      }
-
+      const persistenceMode = await persistCourierRecord(newCourier, isEditing);
+      await syncMachineAssignments(editingCourier, newCourier);
       setForm(initialCourierForm);
       setErrorMessage('');
       appendAuditEvent({
         module: 'Entregadores',
         modulePath: 'couriers',
         actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
-        action: 'Cadastrou entregador',
+        action: isEditing ? 'Atualizou entregador' : 'Cadastrou entregador',
         target: newCourier.name,
-        details: canSyncCouriers
-          ? 'Cadastro sincronizado com a base compartilhada'
-          : 'Cadastro manual realizado no modulo de entregadores',
+        details: isEditing
+          ? `Cadastro atualizado com maquininha ${newCourier.machine}`
+          : persistenceMode === 'remote'
+            ? 'Cadastro sincronizado com a base compartilhada'
+            : 'Cadastro manual realizado no modulo de entregadores',
       });
+      onFinishEditing?.();
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel salvar o entregador.');
     }
@@ -175,10 +320,13 @@ function CouriersModule({ mode = 'lookup' }) {
           storeId: currentStoreId,
           courierId,
         });
-      } else {
-        setManualCouriers((current) => current.filter((item) => item.id !== courierId));
       }
+    } catch (error) {
+      // Fall back to local deletion when the shared base is unavailable.
+    }
 
+    try {
+      setManualCouriers((current) => current.filter((item) => item.id !== courierId));
       setErrorMessage('');
       appendAuditEvent({
         module: 'Entregadores',
@@ -244,13 +392,17 @@ function CouriersModule({ mode = 'lookup' }) {
     return (
       <div className="couriers-layout">
         <div className="couriers-layout__main">
-          <SurfaceCard title="Cadastrar entregador">
+          <SurfaceCard title={editingCourier ? 'Editar entregador' : 'Cadastrar entregador'}>
             <div className="couriers-register">
               <div className="couriers-register__intro">
-                <p className="text-overline">Cadastro dedicado</p>
-                <h3 className="text-section-title">Entrada limpa para novos nomes</h3>
+                <p className="text-overline">{editingCourier ? 'Edicao dedicada' : 'Cadastro dedicado'}</p>
+                <h3 className="text-section-title">
+                  {editingCourier ? `Ajustes de ${editingCourier.name}` : 'Entrada limpa para novos nomes'}
+                </h3>
                 <p className="text-body">
-                  Preencha os dados operacionais em uma tela focada, sem cards de consulta competindo com o formulario.
+                  {editingCourier
+                    ? 'Atualize telefone, turno, status e maquininha sem sair da tela de cadastro.'
+                    : 'Preencha os dados operacionais em uma tela focada, sem cards de consulta competindo com o formulario.'}
                 </p>
               </div>
 
@@ -302,14 +454,19 @@ function CouriersModule({ mode = 'lookup' }) {
                   <label className="ui-label" htmlFor="courier-machine-register">
                     Maquininha
                   </label>
-                  <input
+                  <select
                     id="courier-machine-register"
-                    className="ui-input"
-                    type="text"
+                    className="ui-select"
                     value={form.machine}
-                    placeholder="017"
                     onChange={(event) => updateField('machine', event.target.value)}
-                  />
+                  >
+                    <option value="Sem maquininha">Sem maquininha</option>
+                    {machineOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="ui-field">
@@ -376,8 +533,13 @@ function CouriersModule({ mode = 'lookup' }) {
                 </label>
 
                 <div className="couriers-register__actions couriers-register__field--wide">
+                  {editingCourier ? (
+                    <button type="button" className="ui-button ui-button--ghost" onClick={handleCancelEditing}>
+                      Cancelar edicao
+                    </button>
+                  ) : null}
                   <button type="submit" className="ui-button ui-button--primary">
-                    Cadastrar entregador
+                    {editingCourier ? 'Salvar alteracoes' : 'Cadastrar entregador'}
                   </button>
                 </div>
               </form>

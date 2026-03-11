@@ -569,6 +569,10 @@ function NativeModulePage({ route }) {
       return matchesStatus && matchesSearch;
     });
   }, [machineChecklistRecords, route.path, searchTerm, statusFilter]);
+  const presentMachineChecklistRecords = useMemo(
+    () => visibleMachineChecklistRecords.filter((record) => record.status === 'Presente'),
+    [visibleMachineChecklistRecords],
+  );
   const visibleOpenDeliveryRecords = useMemo(
     () => (route.path === 'delivery-reading'
       ? visibleRecords.filter((record) => !record.closed)
@@ -895,16 +899,45 @@ function NativeModulePage({ route }) {
 
   async function exportImageFromRef(targetRef, filePrefix, failureMessage) {
     if (!targetRef?.current) {
+      setErrorMessage(failureMessage);
       playError();
       return;
     }
 
+    const exportNode = targetRef.current.cloneNode(true);
+    const exportSandbox = document.createElement('div');
+
+    exportSandbox.setAttribute('data-export-sandbox', filePrefix);
+    exportSandbox.style.position = 'fixed';
+    exportSandbox.style.left = '0';
+    exportSandbox.style.top = '0';
+    exportSandbox.style.width = '0';
+    exportSandbox.style.height = '0';
+    exportSandbox.style.overflow = 'visible';
+    exportSandbox.style.opacity = '0.01';
+    exportSandbox.style.pointerEvents = 'none';
+    exportSandbox.style.zIndex = '2147483647';
+
+    exportNode.style.position = 'relative';
+    exportNode.style.left = '24px';
+    exportNode.style.top = '24px';
+    exportNode.style.inset = 'auto';
+    exportNode.style.transform = 'none';
+    exportNode.style.opacity = '1';
+    exportNode.style.pointerEvents = 'none';
+
+    exportSandbox.appendChild(exportNode);
+    document.body.appendChild(exportSandbox);
+
     try {
       setErrorMessage('');
-      const dataUrl = await toPng(targetRef.current, {
+      await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+
+      const dataUrl = await toPng(exportNode, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: '#08111f',
+        skipFonts: true,
       });
 
       const link = document.createElement('a');
@@ -921,11 +954,19 @@ function NativeModulePage({ route }) {
     } catch (error) {
       playError();
       setErrorMessage(failureMessage);
+    } finally {
+      exportSandbox.remove();
     }
   }
 
   async function handleExportScheduleImage() {
     if (route.path !== 'schedule') {
+      playError();
+      return;
+    }
+
+    if (visibleRecords.length === 0) {
+      setErrorMessage('Nao ha entregadores na escala para exportar.');
       playError();
       return;
     }
@@ -939,10 +980,16 @@ function NativeModulePage({ route }) {
       return;
     }
 
+    if (presentMachineChecklistRecords.length === 0) {
+      setErrorMessage('Nao ha maquininhas presentes hoje para exportar.');
+      playError();
+      return;
+    }
+
     await exportImageFromRef(
       machineChecklistImageRef,
-      'checklist-maquininhas',
-      'Nao foi possivel exportar a checklist de maquininhas como imagem.',
+      'maquininhas-presentes',
+      'Nao foi possivel exportar as maquininhas presentes como imagem.',
     );
   }
 
@@ -1279,7 +1326,7 @@ function NativeModulePage({ route }) {
               ) : null}
               {route.path === 'machines' ? (
                 <button type="button" className="ui-button ui-button--secondary" onClick={handleExportMachineChecklistImage}>
-                  Exportar imagem
+                  Exportar presentes
                 </button>
               ) : null}
               {manager?.manualResetLabel ? (
@@ -1821,12 +1868,12 @@ function NativeModulePage({ route }) {
             <header className="schedule-export-image__header">
               <div>
                 <span className="schedule-export-image__eyebrow">Nexus-10 Hardware</span>
-                <h2 className="schedule-export-image__title">Checklist de maquininhas</h2>
+                <h2 className="schedule-export-image__title">Maquininhas presentes do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
               <div className="schedule-export-image__stamp">
-                <span>Checklist do dia</span>
-                <strong>{visibleMachineChecklistRecords.length} dispositivos</strong>
+                <span>Presentes hoje</span>
+                <strong>{presentMachineChecklistRecords.length} dispositivos</strong>
               </div>
             </header>
 
@@ -1840,21 +1887,17 @@ function NativeModulePage({ route }) {
             </div>
 
             <div className="schedule-export-image__machine-grid">
-              {visibleMachineChecklistRecords.map((record) => {
-                const isPresent = record.status === 'Presente';
-
-                return (
-                  <article
-                    key={record.id}
-                    className={`schedule-export-image__machine-card ${isPresent ? 'schedule-export-image__machine-card--present' : 'schedule-export-image__machine-card--absent'}`}
-                  >
-                    <strong className="schedule-export-image__machine-number">{record.device}</strong>
-                    <span className={`schedule-export-image__machine-badge ${isPresent ? 'schedule-export-image__machine-badge--present' : 'schedule-export-image__machine-badge--absent'}`}>
-                      {isPresent ? 'Presente' : 'Ausente'}
-                    </span>
-                  </article>
-                );
-              })}
+              {presentMachineChecklistRecords.map((record) => (
+                <article
+                  key={record.id}
+                  className="schedule-export-image__machine-card schedule-export-image__machine-card--present"
+                >
+                  <strong className="schedule-export-image__machine-number">{record.device}</strong>
+                  <span className="schedule-export-image__machine-badge schedule-export-image__machine-badge--present">
+                    Presente
+                  </span>
+                </article>
+              ))}
             </div>
 
             <footer className="schedule-export-image__footer">
