@@ -7,6 +7,7 @@ import { routeDefinitions } from '../utils/routeCatalog';
 
 const MainLayout = lazy(() => import('../components/layout/MainLayout'));
 const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
+const CommerceWorkspaceLayout = lazy(() => import('../components/layout/CommerceWorkspaceLayout'));
 const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'));
 const CouriersPage = lazy(() => import('../pages/CouriersPage'));
 const CustomersPage = lazy(() => import('../pages/CustomersPage'));
@@ -21,6 +22,8 @@ const ProductsPage = lazy(() => import('../pages/ProductsPage'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const SalesPage = lazy(() => import('../pages/SalesPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const ordersRoute = routeDefinitions.find((route) => route.path === 'orders');
+const salesRoute = routeDefinitions.find((route) => route.path === 'sales');
 
 function RouteLoader() {
   return (
@@ -72,10 +75,12 @@ function getRouteElement(route) {
   return <ProtectedRoute requiredRoles={route.requiredRoles}>{pageElement}</ProtectedRoute>;
 }
 
-const appChildren = routeDefinitions.map((route) => ({
-  path: route.path,
-  element: getRouteElement(route),
-}));
+const appChildren = routeDefinitions
+  .filter((route) => !['orders', 'sales'].includes(route.path))
+  .map((route) => ({
+    path: route.path,
+    element: getRouteElement(route),
+  }));
 
 const routes = [
   {
@@ -92,6 +97,19 @@ const routes = [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: 'couriers/:courierId', element: withRouteSuspense(<CourierProfilePage />) },
           ...appChildren,
+        ],
+      },
+      {
+        path: '/',
+        element: withRouteSuspense(<CommerceWorkspaceLayout />),
+        children: [
+          { path: 'orders', element: getRouteElement(ordersRoute) },
+          { path: 'orders/new', element: getRouteElement(ordersRoute) },
+          { path: 'orders/:orderId', element: getRouteElement(ordersRoute) },
+          { path: 'orders/:orderId/edit', element: getRouteElement(ordersRoute) },
+          { path: 'sales', element: getRouteElement(salesRoute) },
+          { path: 'sales/new', element: getRouteElement(salesRoute) },
+          { path: 'sales/:saleId', element: getRouteElement(salesRoute) },
         ],
       },
     ],

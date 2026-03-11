@@ -319,6 +319,153 @@ body::after {
   gap: 18px;
 }
 
+.commerce-shell {
+  position: relative;
+  min-height: 100vh;
+  padding: var(--space-5);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent-cyan) 14%, transparent), transparent 28%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-amber) 12%, transparent), transparent 24%),
+    var(--gradient-app);
+}
+
+.commerce-shell__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--surface-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--surface-grid-line) 1px, transparent 1px);
+  background-size: 100% 34px, 34px 100%;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.52), transparent 92%);
+  opacity: 0.34;
+}
+
+.commerce-shell__header,
+.commerce-shell__rail,
+.commerce-shell__content-inner {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1720px);
+  margin: 0 auto;
+}
+
+.commerce-shell__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) auto;
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 40%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel) 92%, transparent), color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent));
+  box-shadow: 0 28px 80px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
+}
+
+.commerce-shell__header-copy {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.commerce-shell__eyebrow,
+.commerce-shell__rail-kicker {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.commerce-shell__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 4vw, 3.4rem);
+  line-height: 0.96;
+}
+
+.commerce-shell__description {
+  max-width: 72ch;
+  color: var(--color-text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.commerce-shell__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.commerce-shell__status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 88%, transparent);
+}
+
+.commerce-shell__status small {
+  display: block;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.commerce-shell__rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-accent-amber) 16%, var(--color-border-subtle));
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
+}
+
+.commerce-shell__rail-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.commerce-shell__rail-copy strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.04;
+}
+
+.commerce-shell__rail-copy p {
+  color: var(--color-text-secondary);
+}
+
+.commerce-shell__rail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.commerce-shell__content {
+  position: relative;
+  z-index: 1;
+}
+
+.commerce-shell__content-inner {
+  min-width: 0;
+}
+
 .app-header__intro {
   display: grid;
   gap: 4px;
@@ -683,6 +830,16 @@ body::after {
   .sidebar__section {
     align-content: start;
   }
+
+  .commerce-shell__header,
+  .commerce-shell__rail {
+    grid-template-columns: 1fr;
+  }
+
+  .commerce-shell__header-actions,
+  .commerce-shell__rail-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 760px) {
@@ -722,5 +879,20 @@ body::after {
 
   .page-intro {
     padding-inline: var(--space-4);
+  }
+
+  .commerce-shell {
+    padding: var(--space-4);
+  }
+
+  .commerce-shell__header,
+  .commerce-shell__rail {
+    padding: var(--space-4);
+    border-radius: 24px;
+  }
+
+  .commerce-shell__header-actions > *,
+  .commerce-shell__rail-actions > * {
+    width: 100%;
   }
 }

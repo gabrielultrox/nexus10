@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
-import { formatCurrencyBRL, getOrderDomainStatusLabel } from '../../../services/commerce';
+import { formatCurrencyBRL, getOrderDomainStatusLabel, getPaymentMethodLabel } from '../../../services/commerce';
 import { subscribeToCustomers } from '../../../services/customerService';
+import { getFriendlyErrorMessage } from '../../../services/errorMessages';
 import { firebaseReady } from '../../../services/firebase';
 import {
   convertOrderToSale,
@@ -116,7 +117,14 @@ function mapOrderToForm(order) {
   };
 }
 
-function OrdersModule() {
+function OrdersModule({
+  orderId,
+  viewMode,
+  onOpenCreate,
+  onOpenDetail,
+  onOpenEdit,
+  onOpenList,
+}) {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const [orders, setOrders] = useState([]);
@@ -126,13 +134,11 @@ function OrdersModule() {
   const [saving, setSaving] = useState(false);
   const [acting, setActing] = useState(false);
   const [formState, setFormState] = useState(() => createInitialFormState());
-  const [editingOrderId, setEditingOrderId] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [activeScreen, setActiveScreen] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const initializedViewRef = useRef('');
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -150,7 +156,7 @@ function OrdersModule() {
         setLoading(false);
       },
       (error) => {
-        setErrorMessage(error.message ?? 'Nao foi possivel carregar os pedidos.');
+        setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel carregar os pedidos.'));
         setLoading(false);
       },
     );
@@ -174,16 +180,6 @@ function OrdersModule() {
 
   const internalOrders = useMemo(() => orders.filter((order) => !order.isExternal), [orders]);
 
-  useEffect(() => {
-    if (!selectedOrderId && internalOrders.length > 0) {
-      setSelectedOrderId(internalOrders[0].id);
-    }
-
-    if (selectedOrderId && !internalOrders.some((order) => order.id === selectedOrderId)) {
-      setSelectedOrderId(internalOrders[0]?.id ?? null);
-    }
-  }, [internalOrders, selectedOrderId]);
-
   const visibleOrders = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -205,9 +201,30 @@ function OrdersModule() {
   }, [internalOrders, searchTerm, statusFilter]);
 
   const selectedOrder = useMemo(
-    () => internalOrders.find((order) => order.id === selectedOrderId) ?? null,
-    [internalOrders, selectedOrderId],
+    () => internalOrders.find((order) => order.id === orderId) ?? null,
+    [internalOrders, orderId],
   );
+
+  const editingOrderId = viewMode === 'edit' ? selectedOrder?.id ?? orderId ?? null : null;
+
+  useEffect(() => {
+    const nextViewKey = `${viewMode}:${orderId ?? 'new'}`;
+
+    if (initializedViewRef.current === nextViewKey) {
+      return;
+    }
+
+    if (viewMode === 'create') {
+      setFormState(createInitialFormState());
+      initializedViewRef.current = nextViewKey;
+      return;
+    }
+
+    if (viewMode === 'edit' && selectedOrder) {
+      setFormState(mapOrderToForm(selectedOrder));
+      initializedViewRef.current = nextViewKey;
+    }
+  }, [orderId, selectedOrder, viewMode]);
 
   const selectedCustomer = useMemo(
     () => customers.find((customer) => customer.id === formState.customerId) ?? null,
@@ -295,37 +312,6 @@ function OrdersModule() {
 
   function resetForm() {
     setFormState(createInitialFormState());
-    setEditingOrderId(null);
-  }
-
-  function handleStartCreate() {
-    resetForm();
-    setErrorMessage('');
-    setFeedbackMessage('');
-    setActiveScreen('create');
-  }
-
-  function handleCancelForm() {
-    resetForm();
-    setErrorMessage('');
-    setFeedbackMessage('');
-    setActiveScreen(selectedOrderId ? 'detail' : 'list');
-  }
-
-  function handleSelectOrder(orderId) {
-    setSelectedOrderId(orderId);
-    setActiveScreen('detail');
-    setErrorMessage('');
-    setFeedbackMessage('');
-  }
-
-  function handleStartEdit(order) {
-    setEditingOrderId(order.id);
-    setSelectedOrderId(order.id);
-    setFormState(mapOrderToForm(order));
-    setErrorMessage('');
-    setFeedbackMessage('');
-    setActiveScreen('create');
   }
 
   function updateAddressField(field, value) {
@@ -458,81 +444,7 @@ function OrdersModule() {
       orderId,
     });
 
-    if (order) {
-      setSelectedOrderId(order.id);
-    }
-
     return order;
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    if (!can('orders:write')) {
-      setErrorMessage('Seu perfil nao pode alterar pedidos.');
-      playError();
-      return;
-    }
-
-    if (!currentStoreId) {
-      setErrorMessage('Nenhuma loja ativa disponivel para salvar pedidos.');
-      playError();
-      return;
-    }
-
-    setSaving(true);
-    setErrorMessage('');
-    setFeedbackMessage('');
-
-    try {
-      const values = buildPayload();
-
-      if (editingOrderId) {
-        await updateOrder({
-          storeId: currentStoreId,
-          orderId: editingOrderId,
-          values,
-        });
-        await recordAuditLog({
-          storeId: currentStoreId,
-          tenantId,
-          actor: buildAuditActor(session),
-          action: 'order.updated',
-          entityType: 'order',
-          entityId: editingOrderId,
-          description: `Pedido ${selectedOrder?.number ?? editingOrderId} atualizado.`,
-        });
-        await refreshSelectedOrder(editingOrderId);
-        setFeedbackMessage('Pedido atualizado com sucesso.');
-      } else {
-        const orderId = await createOrder({
-          storeId: currentStoreId,
-          tenantId,
-          values,
-          createdBy: session,
-        });
-        await recordAuditLog({
-          storeId: currentStoreId,
-          tenantId,
-          actor: buildAuditActor(session),
-          action: 'order.created',
-          entityType: 'order',
-          entityId: orderId,
-          description: `Novo pedido ${values.source} criado com total ${formatCurrencyBRL(calculatedTotals.total)}.`,
-        });
-        await refreshSelectedOrder(orderId);
-        setFeedbackMessage('Pedido cadastrado com sucesso.');
-      }
-
-      playSuccess();
-      resetForm();
-      setActiveScreen('detail');
-    } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel salvar o pedido.');
-      playError();
-    } finally {
-      setSaving(false);
-    }
   }
 
   async function handleDispatch() {
@@ -568,7 +480,7 @@ function OrdersModule() {
       setFeedbackMessage('Pedido marcado como despachado.');
       playSuccess();
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel despachar o pedido.');
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel despachar o pedido.'));
       playError();
     } finally {
       setActing(false);
@@ -610,7 +522,7 @@ function OrdersModule() {
       setFeedbackMessage(`Venda ${saleId} gerada com sucesso.`);
       playSuccess();
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel gerar a venda.');
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel gerar a venda.'));
       playError();
     } finally {
       setActing(false);
@@ -639,66 +551,104 @@ function OrdersModule() {
     );
   }
 
+  async function handleSubmitAndNavigate(event) {
+    event.preventDefault();
+
+    if (!can('orders:write')) {
+      setErrorMessage('Seu perfil nao pode alterar pedidos.');
+      playError();
+      return;
+    }
+
+    if (!currentStoreId) {
+      setErrorMessage('Nenhuma loja ativa disponivel para salvar pedidos.');
+      playError();
+      return;
+    }
+
+    setSaving(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      const values = buildPayload();
+      let nextOrderId = editingOrderId;
+
+      if (editingOrderId) {
+        await updateOrder({
+          storeId: currentStoreId,
+          orderId: editingOrderId,
+          values,
+        });
+        await recordAuditLog({
+          storeId: currentStoreId,
+          tenantId,
+          actor: buildAuditActor(session),
+          action: 'order.updated',
+          entityType: 'order',
+          entityId: editingOrderId,
+          description: `Pedido ${selectedOrder?.number ?? editingOrderId} atualizado.`,
+        });
+        setFeedbackMessage('Pedido atualizado com sucesso.');
+      } else {
+        nextOrderId = await createOrder({
+          storeId: currentStoreId,
+          tenantId,
+          values,
+          createdBy: session,
+        });
+        await recordAuditLog({
+          storeId: currentStoreId,
+          tenantId,
+          actor: buildAuditActor(session),
+          action: 'order.created',
+          entityType: 'order',
+          entityId: nextOrderId,
+          description: `Novo pedido ${values.source} criado com total ${formatCurrencyBRL(calculatedTotals.total)}.`,
+        });
+        setFeedbackMessage('Pedido cadastrado com sucesso.');
+      }
+
+      playSuccess();
+      resetForm();
+      if (nextOrderId) {
+        onOpenDetail(nextOrderId);
+      } else {
+        onOpenList();
+      }
+    } catch (error) {
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel salvar o pedido.'));
+      playError();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <section className="entity-module orders-domain">
-      <div className="card-grid">
-        {metrics.map((metric) => (
-          <MetricCard
-            key={metric.label}
-            label={metric.label}
-            value={metric.value}
-            meta={metric.meta}
-            badgeText={metric.badgeText}
-            badgeClass={metric.badgeClass}
-          />
-        ))}
-      </div>
-
-      <SurfaceCard title="Area de trabalho de pedidos">
-        <div className="orders-domain__header">
-          <div className="orders-domain__copy">
-            <p className="text-section-title">Lista de Pedidos</p>
-            <p className="text-body">
-              Controle pedidos comerciais sem disparar impacto em estoque ou financeiro.
-            </p>
+    <section className="entity-module orders-domain orders-domain--screen">
+      {viewMode === 'list' ? (
+        <>
+          <div className="card-grid">
+            {metrics.map((metric) => (
+              <MetricCard
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                meta={metric.meta}
+                badgeText={metric.badgeText}
+                badgeClass={metric.badgeClass}
+              />
+            ))}
           </div>
 
-          <div className="orders-domain__actions">
-            <button
-              type="button"
-              className={`ui-button ${activeScreen === 'list' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-              onClick={() => setActiveScreen('list')}
-            >
-              Lista de Pedidos
-            </button>
-            <button
-              type="button"
-              className={`ui-button ${activeScreen === 'create' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-              onClick={handleStartCreate}
-              disabled={!can('orders:write')}
-            >
-              Novo pedido
-            </button>
-            <button
-              type="button"
-              className={`ui-button ${activeScreen === 'detail' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-              onClick={() => setActiveScreen('detail')}
-              disabled={!selectedOrder}
-            >
-              Detalhe do Pedido
-            </button>
-          </div>
-        </div>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-        {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
-        {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
-
-        <div className="orders-domain__layout">
-          <div className="orders-domain__column">
+          <SurfaceCard title="Pedidos comerciais e operacionais">
             <div className="entity-toolbar-shell">
               <div className="entity-toolbar-copy">
                 <p className="text-section-title">Busca e acompanhamento</p>
-                <p className="text-body">Filtre por cliente, codigo ou status para chegar no pedido certo mais rapido.</p>
+                <p className="text-body">Filtre por cliente, codigo ou status para localizar o pedido certo com rapidez.</p>
               </div>
 
               <div className="entity-toolbar">
@@ -730,18 +680,18 @@ function OrdersModule() {
               </div>
             </div>
 
-            <div className="orders-domain__list-shell">
-              <div className="entity-table-wrap">
-                {loading ? (
-                  <div className="entity-empty-state">
-                    <p className="text-section-title">Carregando pedidos...</p>
-                  </div>
-                ) : visibleOrders.length === 0 ? (
-                  <div className="entity-empty-state">
-                    <p className="text-section-title">Nenhum pedido encontrado</p>
-                    <p className="text-body">Crie um novo pedido ou ajuste os filtros para continuar.</p>
-                  </div>
-                ) : (
+            <div className="orders-domain__list-shell orders-domain__list-shell--full">
+              {loading ? (
+                <div className="entity-empty-state">
+                  <p className="text-section-title">Carregando pedidos...</p>
+                </div>
+              ) : visibleOrders.length === 0 ? (
+                <div className="entity-empty-state">
+                  <p className="text-section-title">Nenhum pedido encontrado</p>
+                  <p className="text-body">Crie um novo pedido ou ajuste os filtros para continuar.</p>
+                </div>
+              ) : (
+                <div className="entity-table-wrap">
                   <table className="ui-table">
                     <thead>
                       <tr>
@@ -758,8 +708,8 @@ function OrdersModule() {
                       {visibleOrders.map((order) => (
                         <tr
                           key={order.id}
-                          className={order.id === selectedOrderId ? 'entity-table__row--selected' : undefined}
-                          onClick={() => handleSelectOrder(order.id)}
+                          className={order.id === orderId ? 'entity-table__row--selected' : undefined}
+                          onClick={() => onOpenDetail(order.id)}
                         >
                           <td className="ui-table__cell--strong">{order.number}</td>
                           <td>{order.origin}</td>
@@ -772,48 +722,58 @@ function OrdersModule() {
                       ))}
                     </tbody>
                   </table>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          </div>
+          </SurfaceCard>
+        </>
+      ) : null}
 
-          <div className="orders-domain__column">
-            {activeScreen === 'create' ? (
-              <OrderFormPanel
-                canWrite={can('orders:write')}
-                editingOrderId={editingOrderId}
-                customers={customers}
-                products={products}
-                formState={formState}
-                saving={saving}
-                draftItems={draftItems}
-                calculatedTotals={calculatedTotals}
-                sourceOptions={sourceOptions}
-                paymentOptions={paymentOptions}
-                onCancel={handleCancelForm}
-                onSubmit={handleSubmit}
-                onCustomerChange={handleCustomerChange}
-                onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
-                onAddressChange={updateAddressField}
-                onTotalsChange={updateTotalsField}
-                onItemChange={updateItem}
-                onAddItem={addItem}
-                onRemoveItem={removeItem}
-              />
-            ) : (
-              <OrderDetailPanel
-                selectedOrder={selectedOrder}
-                canWrite={can('orders:write')}
-                acting={acting}
-                onEdit={() => handleStartEdit(selectedOrder)}
-                onDispatch={handleDispatch}
-                onConvertToSale={handleConvertToSale}
-                formatDateTime={formatDateTime}
-              />
-            )}
-          </div>
-        </div>
-      </SurfaceCard>
+      {viewMode === 'create' || viewMode === 'edit' ? (
+        <>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+          <OrderFormPanel
+            canWrite={can('orders:write')}
+            editingOrderId={editingOrderId}
+            customers={customers}
+            products={products}
+            formState={formState}
+            saving={saving}
+            draftItems={draftItems}
+            calculatedTotals={calculatedTotals}
+            sourceOptions={sourceOptions}
+            paymentOptions={paymentOptions}
+            onCancel={() => (editingOrderId ? onOpenDetail(editingOrderId) : onOpenList())}
+            onSubmit={handleSubmitAndNavigate}
+            onCustomerChange={handleCustomerChange}
+            onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
+            onAddressChange={updateAddressField}
+            onTotalsChange={updateTotalsField}
+            onItemChange={updateItem}
+            onAddItem={addItem}
+            onRemoveItem={removeItem}
+          />
+        </>
+      ) : null}
+
+      {viewMode === 'detail' ? (
+        <>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+          <OrderDetailPanel
+            selectedOrder={selectedOrder}
+            canWrite={can('orders:write')}
+            acting={acting}
+            onEdit={() => selectedOrder && onOpenEdit(selectedOrder.id)}
+            onDispatch={handleDispatch}
+            onConvertToSale={handleConvertToSale}
+            formatDateTime={formatDateTime}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

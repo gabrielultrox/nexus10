@@ -6,6 +6,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { formatCurrencyBRL, getPaymentMethodLabel } from '../../../services/commerce';
 import { subscribeToCustomers } from '../../../services/customerService';
+import { getFriendlyErrorMessage } from '../../../services/errorMessages';
 import { firebaseReady } from '../../../services/firebase';
 import { subscribeToProducts } from '../../../services/productService';
 import {
@@ -26,7 +27,13 @@ import {
   parseDecimal,
 } from './salesModuleHelpers';
 
-function SalesModule() {
+function SalesModule({
+  saleId,
+  viewMode,
+  onOpenCreate,
+  onOpenDetail,
+  onOpenList,
+}) {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const [sales, setSales] = useState([]);
@@ -35,8 +42,6 @@ function SalesModule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [acting, setActing] = useState(false);
-  const [activeScreen, setActiveScreen] = useState('detail');
-  const [selectedSaleId, setSelectedSaleId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
@@ -61,7 +66,7 @@ function SalesModule() {
         setLoading(false);
       },
       (error) => {
-        setErrorMessage(error.message ?? 'Nao foi possivel carregar as vendas.');
+        setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel carregar as vendas.'));
         setLoading(false);
       },
     );
@@ -82,16 +87,6 @@ function SalesModule() {
       unsubscribeProducts?.();
     };
   }, [currentStoreId]);
-
-  useEffect(() => {
-    if (!selectedSaleId && sales.length > 0) {
-      setSelectedSaleId(sales[0].id);
-    }
-
-    if (selectedSaleId && !sales.some((sale) => sale.id === selectedSaleId)) {
-      setSelectedSaleId(sales[0]?.id ?? null);
-    }
-  }, [sales, selectedSaleId]);
 
   const selectedCustomer = useMemo(
     () => customers.find((customer) => customer.id === formState.customerId) ?? null,
@@ -150,8 +145,8 @@ function SalesModule() {
   }, [endDate, sales, searchTerm, startDate, statusFilter]);
 
   const selectedSale = useMemo(
-    () => sales.find((sale) => sale.id === selectedSaleId) ?? null,
-    [sales, selectedSaleId],
+    () => sales.find((sale) => sale.id === saleId) ?? null,
+    [sales, saleId],
   );
 
   const metrics = useMemo(() => {
@@ -171,6 +166,12 @@ function SalesModule() {
   function resetForm() {
     setFormState(createInitialFormState());
   }
+
+  useEffect(() => {
+    if (viewMode === 'create') {
+      setFormState(createInitialFormState());
+    }
+  }, [viewMode]);
 
   function handleCustomerChange(customerId) {
     const customer = customers.find((entry) => entry.id === customerId) ?? null;
@@ -210,9 +211,6 @@ function SalesModule() {
     }
 
     const sale = await getSaleById({ storeId: currentStoreId, saleId });
-    if (sale) {
-      setSelectedSaleId(sale.id);
-    }
     return sale;
   }
 
@@ -234,9 +232,9 @@ function SalesModule() {
       setFeedbackMessage(`Venda ${saleId} lancada com sucesso.`);
       playSuccess();
       resetForm();
-      setActiveScreen('detail');
+      onOpenDetail(saleId);
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel lancar a venda.');
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel lancar a venda.'));
       playError();
     } finally {
       setSaving(false);
@@ -258,7 +256,7 @@ function SalesModule() {
       setFeedbackMessage(`Venda ${selectedSale.code ?? selectedSale.id} atualizada para ${getSaleStatusMeta(nextStatus).label}.`);
       playSuccess();
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel atualizar a venda.');
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel atualizar a venda.'));
       playError();
     } finally {
       setActing(false);
@@ -277,34 +275,40 @@ function SalesModule() {
   }
 
   return (
-    <section className="entity-module sales-domain">
-      <div className="card-grid">{metrics.map((metric) => <MetricCard key={metric.label} {...metric} />)}</div>
+    <section className="entity-module sales-domain sales-domain--screen">
+      {viewMode === 'list' ? (
+        <>
+          <div className="card-grid">{metrics.map((metric) => <MetricCard key={metric.label} {...metric} />)}</div>
 
-      <SurfaceCard title="Area de trabalho de vendas">
-        <div className="sales-domain__header">
-          <div className="sales-domain__copy">
-            <p className="text-section-title">Lista de Vendas</p>
-            <p className="text-body">Toda venda postada aqui derruba estoque, cria financeiro e registra auditoria.</p>
-          </div>
-          <div className="sales-domain__actions">
-            <button type="button" className="ui-button ui-button--ghost" onClick={() => setActiveScreen('detail')}>Detalhe da venda</button>
-            <button type="button" className="ui-button ui-button--primary" onClick={() => { resetForm(); setActiveScreen('create'); }} disabled={!can('sales:write')}>Nova venda</button>
-          </div>
-        </div>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-        <div className="sales-domain__toolbar">
-          <div className="ui-field"><label className="ui-label" htmlFor="sales-search">Buscar</label><input id="sales-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Venda, pedido, cliente, pagamento ou canal" /></div>
-          <div className="ui-field"><label className="ui-label" htmlFor="sales-status">Status</label><select id="sales-status" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">Todos</option><option value="POSTED">Lancadas</option><option value="REVERSED">Estornadas</option><option value="CANCELLED">Canceladas</option></select></div>
-          <div className="ui-field"><label className="ui-label" htmlFor="sales-start-date">Inicio</label><input id="sales-start-date" className="ui-input" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></div>
-          <div className="ui-field"><label className="ui-label" htmlFor="sales-end-date">Fim</label><input id="sales-end-date" className="ui-input" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></div>
-        </div>
+          <SurfaceCard title="Vendas postadas">
+            <div className="sales-domain__toolbar">
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="sales-search">Buscar</label>
+                <input id="sales-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Venda, pedido, cliente, pagamento ou canal" />
+              </div>
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="sales-status">Status</label>
+                <select id="sales-status" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="all">Todos</option>
+                  <option value="POSTED">Lancadas</option>
+                  <option value="REVERSED">Estornadas</option>
+                  <option value="CANCELLED">Canceladas</option>
+                </select>
+              </div>
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="sales-start-date">Inicio</label>
+                <input id="sales-start-date" className="ui-input" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+              </div>
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="sales-end-date">Fim</label>
+                <input id="sales-end-date" className="ui-input" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+              </div>
+            </div>
 
-        {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
-        {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
-
-        <div className="sales-domain__layout">
-          <div className="sales-domain__column">
-            <div className="sales-domain__list-shell">
+            <div className="sales-domain__list-shell sales-domain__list-shell--full">
               {loading ? (
                 <div className="entity-empty-state"><p className="text-section-title">Carregando vendas...</p></div>
               ) : visibleSales.length === 0 ? (
@@ -317,7 +321,7 @@ function SalesModule() {
                       {visibleSales.map((sale) => {
                         const statusMeta = getSaleStatusMeta(sale.domainStatus);
                         return (
-                          <tr key={sale.id} className={sale.id === selectedSale?.id ? 'entity-table__row--selected' : undefined} onClick={() => { setSelectedSaleId(sale.id); setActiveScreen('detail'); }}>
+                          <tr key={sale.id} className={sale.id === saleId ? 'entity-table__row--selected' : undefined} onClick={() => onOpenDetail(sale.id)}>
                             <td className="ui-table__cell--strong">{sale.number}</td>
                             <td>{sale.source === 'ORDER' ? `Pedido ${sale.orderId ?? '-'}` : 'Venda direta'}</td>
                             <td>{sale.customerSnapshot?.name || 'Cliente avulso'}</td>
@@ -333,40 +337,50 @@ function SalesModule() {
                 </div>
               )}
             </div>
-          </div>
+          </SurfaceCard>
+        </>
+      ) : null}
 
-          <div className="sales-domain__column">
-            {activeScreen === 'create' ? (
-              <SalesFormPanel
-                canWrite={can('sales:write')}
-                customers={customers}
-                products={products}
-                formState={formState}
-                saving={saving}
-                draftItems={draftItems}
-                calculatedTotals={calculatedTotals}
-                onCancel={() => setActiveScreen('detail')}
-                onSubmit={handleSubmit}
-                onCustomerChange={handleCustomerChange}
-                onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
-                onAddressChange={(field, value) => setFormState((current) => ({ ...current, address: { ...current.address, [field]: value } }))}
-                onTotalsChange={(field, value) => setFormState((current) => ({ ...current, totals: { ...current.totals, [field]: value } }))}
-                onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex !== index ? item : field === 'productId' ? { ...item, productId: value, unitPrice: String(products.find((entry) => entry.id === value)?.price ?? '') } : { ...item, [field]: value }) }))}
-                onAddItem={() => setFormState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
-                onRemoveItem={(index) => setFormState((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }))}
-              />
-            ) : (
-              <SalesDetailPanel
-                selectedSale={selectedSale}
-                canWrite={can('sales:write')}
-                acting={acting}
-                onReverse={() => handleStatusChange('REVERSED')}
-                onCancel={() => handleStatusChange('CANCELLED')}
-              />
-            )}
-          </div>
-        </div>
-      </SurfaceCard>
+      {viewMode === 'create' ? (
+        <>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+          <SalesFormPanel
+            canWrite={can('sales:write')}
+            customers={customers}
+            products={products}
+            formState={formState}
+            saving={saving}
+            draftItems={draftItems}
+            calculatedTotals={calculatedTotals}
+            onCancel={onOpenList}
+            onSubmit={handleSubmit}
+            onCustomerChange={handleCustomerChange}
+            onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
+            onAddressChange={(field, value) => setFormState((current) => ({ ...current, address: { ...current.address, [field]: value } }))}
+            onTotalsChange={(field, value) => setFormState((current) => ({ ...current, totals: { ...current.totals, [field]: value } }))}
+            onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex !== index ? item : field === 'productId' ? { ...item, productId: value, unitPrice: String(products.find((entry) => entry.id === value)?.price ?? '') } : { ...item, [field]: value }) }))}
+            onAddItem={() => setFormState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
+            onRemoveItem={(index) => setFormState((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }))}
+          />
+        </>
+      ) : null}
+
+      {viewMode === 'detail' ? (
+        <>
+          {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+          {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+          <SalesDetailPanel
+            selectedSale={selectedSale}
+            canWrite={can('sales:write')}
+            acting={acting}
+            onReverse={() => handleStatusChange('REVERSED')}
+            onCancel={() => handleStatusChange('CANCELLED')}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

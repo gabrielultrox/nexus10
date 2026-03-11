@@ -1,6 +1,68 @@
+.workspace-shell {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.workspace-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) auto;
+  gap: var(--space-4);
+  align-items: end;
+  padding: var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel) 86%, transparent), var(--surface-panel-soft-alt));
+}
+
+.workspace-header__copy {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.workspace-header__eyebrow {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.workspace-header__title {
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.02;
+}
+
+.workspace-header__description {
+  max-width: 64ch;
+  color: var(--color-text-secondary);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.workspace-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.workspace-nav .ui-button {
+  min-width: 170px;
+}
+
 .orders-domain {
   display: grid;
   gap: var(--space-5);
+}
+
+.orders-domain--screen,
+.sales-domain--screen {
+  gap: var(--space-4);
 }
 
 .orders-domain__header,
@@ -47,6 +109,11 @@
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 44%),
     var(--surface-panel-soft-alt);
+}
+
+.orders-domain__list-shell--full,
+.sales-domain__list-shell--full {
+  padding: var(--space-2);
 }
 
 .orders-domain__items {
@@ -320,6 +387,15 @@
 }
 
 @media (max-width: 1080px) {
+  .workspace-header {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .workspace-nav {
+    justify-content: flex-start;
+  }
+
   .orders-domain__layout,
   .sales-domain__layout {
     grid-template-columns: 1fr;
@@ -332,6 +408,11 @@
   .sales-domain__header,
   .sales-domain__detail-header {
     flex-direction: column;
+  }
+
+  .workspace-nav .ui-button {
+    min-width: 0;
+    width: 100%;
   }
 
   .orders-domain__layout,
