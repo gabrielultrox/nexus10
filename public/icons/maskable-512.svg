@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#08111f"/>
-  <rect x="58" y="58" width="396" height="396" rx="108" fill="#101f35" stroke="#2fd7ff" stroke-opacity=".3" stroke-width="5"/>
-  <rect x="110" y="122" width="88" height="268" rx="30" fill="#102541" stroke="#74e3ff" stroke-opacity=".24" stroke-width="4"/>
-  <rect x="314" y="122" width="88" height="268" rx="30" fill="#102541" stroke="#74e3ff" stroke-opacity=".24" stroke-width="4"/>
-  <path d="M177 336V176h31l89 100V176h31v160h-31l-89-100v100Z" fill="#f4f8ff"/>
-  <rect x="129" y="146" width="50" height="18" rx="9" fill="#1de29a"/>
-  <rect x="129" y="182" width="50" height="18" rx="9" fill="#1de29a" opacity=".68"/>
-  <rect x="129" y="218" width="38" height="18" rx="9" fill="#1de29a" opacity=".42"/>
-  <rect x="334" y="142" width="48" height="48" rx="16" fill="#f1a81d"/>
-  <rect x="334" y="220" width="48" height="48" rx="16" fill="#18304f"/>
-  <rect x="334" y="298" width="48" height="48" rx="16" fill="#18304f"/>
+  <defs>
+    <linearGradient id="shellMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060b16"/>
+      <stop offset="100%" stop-color="#0e1830"/>
+    </linearGradient>
+    <linearGradient id="lineMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58e4ff"/>
+      <stop offset="100%" stop-color="#14a4ff"/>
+    </linearGradient>
+    <linearGradient id="accentMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc24b"/>
+      <stop offset="100%" stop-color="#ff8a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#shellMask)"/>
+  <rect x="60" y="60" width="392" height="392" rx="108" fill="none" stroke="url(#lineMask)" stroke-opacity=".5" stroke-width="7"/>
+  <path d="M168 360V152h38l100 134V152h38v208h-38L206 226v134Z" fill="#f7fbff"/>
+  <path d="M132 132h72" stroke="#31dbff" stroke-width="16" stroke-linecap="round"/>
+  <path d="M308 380h72" stroke="url(#accentMask)" stroke-width="16" stroke-linecap="round"/>
 </svg>

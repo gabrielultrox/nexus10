@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" rx="42" fill="#08111f"/>
-  <rect x="14" y="14" width="152" height="152" rx="34" fill="#102039" stroke="#2fd7ff" stroke-opacity=".28"/>
-  <rect x="30" y="36" width="32" height="108" rx="13" fill="#102541" stroke="#74e3ff" stroke-opacity=".22"/>
-  <rect x="118" y="36" width="32" height="108" rx="13" fill="#102541" stroke="#74e3ff" stroke-opacity=".22"/>
-  <path d="M54 126V55h11l33 41V55h12v71H99L66 85v41Z" fill="#f4f8ff"/>
-  <rect x="36" y="46" width="19" height="8" rx="4" fill="#1de29a"/>
-  <rect x="36" y="61" width="19" height="8" rx="4" fill="#1de29a" opacity=".68"/>
-  <rect x="36" y="76" width="15" height="8" rx="4" fill="#1de29a" opacity=".42"/>
-  <rect x="124" y="45" width="19" height="19" rx="6.5" fill="#f1a81d"/>
-  <rect x="124" y="75" width="19" height="19" rx="6.5" fill="#18304f"/>
-  <rect x="124" y="105" width="19" height="19" rx="6.5" fill="#18304f"/>
+  <defs>
+    <linearGradient id="shellApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060b16"/>
+      <stop offset="100%" stop-color="#0e1830"/>
+    </linearGradient>
+    <linearGradient id="lineApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58e4ff"/>
+      <stop offset="100%" stop-color="#14a4ff"/>
+    </linearGradient>
+    <linearGradient id="accentApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc24b"/>
+      <stop offset="100%" stop-color="#ff8a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="42" fill="url(#shellApple)"/>
+  <rect x="18" y="18" width="144" height="144" rx="32" fill="none" stroke="url(#lineApple)" stroke-opacity=".5" stroke-width="2.5"/>
+  <path d="M58 129V51h14l31 47V51h15v78h-14L73 82v47Z" fill="#f7fbff"/>
+  <path d="M44 44h26" stroke="#31dbff" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M111 136h26" stroke="url(#accentApple)" stroke-width="5.5" stroke-linecap="round"/>
 </svg>

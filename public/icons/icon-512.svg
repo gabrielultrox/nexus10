@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="120" fill="#08111f"/>
-  <rect x="38" y="38" width="436" height="436" rx="96" fill="#101f35" stroke="#2fd7ff" stroke-opacity=".3" stroke-width="5"/>
-  <rect x="86" y="112" width="92" height="288" rx="34" fill="#102541" stroke="#74e3ff" stroke-opacity=".24" stroke-width="4"/>
-  <rect x="334" y="112" width="92" height="288" rx="34" fill="#102541" stroke="#74e3ff" stroke-opacity=".24" stroke-width="4"/>
-  <path d="M154 346V166h34l94 108V166h34v180h-34l-94-108v108Z" fill="#f4f8ff"/>
-  <rect x="106" y="140" width="54" height="20" rx="10" fill="#1de29a"/>
-  <rect x="106" y="180" width="54" height="20" rx="10" fill="#1de29a" opacity=".68"/>
-  <rect x="106" y="220" width="42" height="20" rx="10" fill="#1de29a" opacity=".42"/>
-  <rect x="352" y="136" width="56" height="56" rx="18" fill="#f1a81d"/>
-  <rect x="352" y="226" width="56" height="56" rx="18" fill="#18304f"/>
-  <rect x="352" y="316" width="56" height="56" rx="18" fill="#18304f"/>
+  <defs>
+    <linearGradient id="shell512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060b16"/>
+      <stop offset="100%" stop-color="#0e1830"/>
+    </linearGradient>
+    <linearGradient id="line512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58e4ff"/>
+      <stop offset="100%" stop-color="#14a4ff"/>
+    </linearGradient>
+    <linearGradient id="accent512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc24b"/>
+      <stop offset="100%" stop-color="#ff8a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#shell512)"/>
+  <rect x="52" y="52" width="408" height="408" rx="96" fill="none" stroke="url(#line512)" stroke-opacity=".5" stroke-width="7"/>
+  <path d="M165 364V148h40l102 138V148h40v216h-40L205 226v138Z" fill="#f7fbff"/>
+  <path d="M126 126h74" stroke="#31dbff" stroke-width="16" stroke-linecap="round"/>
+  <path d="M311 386h74" stroke="url(#accent512)" stroke-width="16" stroke-linecap="round"/>
 </svg>
