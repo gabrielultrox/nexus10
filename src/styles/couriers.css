@@ -149,19 +149,19 @@
 .couriers-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: 18px;
 }
 
 .courier-card {
   display: grid;
-  gap: var(--space-3);
-  padding: 20px;
-  border-radius: 22px;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 20px;
   border: 1px solid color-mix(in srgb, var(--color-border-subtle) 95%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 30%, transparent), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 34%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
-  box-shadow: 0 18px 42px color-mix(in srgb, var(--color-shadow-rgb) 12%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
   transition:
     transform var(--duration-normal) var(--ease-standard),
     border-color var(--duration-normal) var(--ease-standard),
@@ -171,99 +171,105 @@
 .courier-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 28%, var(--color-border-default));
-  box-shadow: 0 24px 52px color-mix(in srgb, var(--color-shadow-rgb) 16%, transparent);
+  box-shadow: 0 18px 36px color-mix(in srgb, var(--color-shadow-rgb) 14%, transparent);
 }
 
 .courier-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: 12px;
 }
 
 .courier-card__identity {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: center;
+  min-width: 0;
+}
+
+.courier-card__identity-copy {
+  min-width: 0;
 }
 
 .courier-card__avatar {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-warning-strong) 86%, #d97706), color-mix(in srgb, var(--color-warning-strong) 64%, #92400e));
   color: #10131d;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .courier-card__title {
   font-family: var(--font-display);
-  font-size: 1.24rem;
-  line-height: 0.94;
-}
-
-.courier-card__meta,
-.courier-card__notes {
-  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
 .courier-card__meta {
-  margin-top: 4px;
-  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .courier-card__machine-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
-  min-height: 38px;
-  padding: 0 12px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 10px;
   border-radius: 12px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-warning-strong) 88%, #d97706), color-mix(in srgb, var(--color-warning-strong) 68%, #92400e));
   color: #10131d;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .courier-card__badges,
 .courier-profile-hero__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
-.courier-card__details {
+.courier-card__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
-.courier-card__detail,
+.courier-card__metric,
 .courier-profile-hero__metric {
   display: grid;
-  gap: 4px;
-  padding: 14px 16px;
+  gap: 2px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 88%, transparent);
 }
 
-.courier-card__detail strong,
+.courier-card__metric strong,
 .courier-profile-hero__metric strong {
   color: var(--color-text-primary);
-  font-size: 0.96rem;
+  font-size: 0.92rem;
 }
 
-.courier-card__detail span {
+.courier-card__metric span {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
@@ -272,9 +278,14 @@
 .courier-profile-hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
+  gap: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--color-border-subtle);
+}
+
+.courier-card__actions .ui-button {
+  min-height: 38px;
+  padding-inline: 14px;
 }
 
 .courier-empty-state {
@@ -406,7 +417,7 @@
   .couriers-grid,
   .courier-profile-layout__secondary,
   .courier-profile-hero__metrics,
-  .courier-card__details,
+  .courier-card__metrics,
   .couriers-layout,
   .couriers-register__form {
     grid-template-columns: 1fr;
