@@ -10,6 +10,7 @@ import {
 import { firebaseDb, firebaseReady } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { loadLocalRecords, saveLocalRecords } from './localRecords';
+import { courierSeedRecords } from './operationsSeedData';
 
 export const MANUAL_COURIER_STORAGE_KEY = 'nexus-manual-couriers';
 
@@ -24,7 +25,7 @@ function sortCouriers(records) {
 
 export function subscribeToCouriers(storeId, onData, onError) {
   if (!firebaseReady || !firebaseDb || !storeId) {
-    onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, []));
+    onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
     return () => {};
   }
 
@@ -42,7 +43,7 @@ export function subscribeToCouriers(storeId, onData, onError) {
       onData(records);
     },
     (error) => {
-      onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, []));
+      onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
       onError?.(error);
     },
   );

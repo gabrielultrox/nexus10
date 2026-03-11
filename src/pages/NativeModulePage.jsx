@@ -25,6 +25,7 @@ import {
   subscribeToManualModuleRecords,
 } from '../services/manualModuleService';
 import { getNativeModuleContent } from '../services/nativeModuleData';
+import { courierSeedRecords, machineSeedRecords } from '../services/operationsSeedData';
 import { playError, playNotification, playSuccess } from '../services/soundManager';
 
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/;
@@ -223,8 +224,8 @@ function NativeModulePage({ route }) {
   const { currentStoreId, tenantId } = useStore();
   const content = getNativeModuleContent(route);
   const manager = getManualModuleConfig(route.path);
-  const [availableCourierNames, setAvailableCourierNames] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, []).map((courier) => courier?.name?.trim()).filter(Boolean));
-  const [availableMachineOptions, setAvailableMachineOptions] = useState(() => loadLocalRecords('nexus-module-machines', []).map((machine) => machine?.device?.trim()).filter(Boolean));
+  const [availableCourierNames, setAvailableCourierNames] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords).map((courier) => courier?.name?.trim()).filter(Boolean));
+  const [availableMachineOptions, setAvailableMachineOptions] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords).map((machine) => machine?.device?.trim()).filter(Boolean));
   const storeMemberOptions = useMemo(
     () => Array.from(new Set([...storeUserOptions, ...availableCourierNames])),
     [availableCourierNames],

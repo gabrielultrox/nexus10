@@ -12,6 +12,7 @@ import {
 } from '../../../services/courierService';
 import { appendAuditEvent } from '../../../services/localAudit';
 import { loadLocalRecords, saveLocalRecords } from '../../../services/localRecords';
+import { courierSeedRecords } from '../../../services/operationsSeedData';
 import {
   courierShiftOptions,
   courierStatusOptions,
@@ -43,7 +44,7 @@ function CouriersModule() {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const [filters, setFilters] = useState(initialFilters);
-  const [manualCouriers, setManualCouriers] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, []));
+  const [manualCouriers, setManualCouriers] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
   const [form, setForm] = useState(initialCourierForm);
   const [errorMessage, setErrorMessage] = useState('');
 

@@ -1,3 +1,5 @@
+import { machineSeedRecords } from './operationsSeedData';
+
 function createId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
@@ -138,7 +140,7 @@ export const manualModuleConfigs = {
       },
     ],
     actionLabel: 'Checklist OK',
-    initialRecords: [],
+    initialRecords: machineSeedRecords,
     createRecord(values, context = {}) {
       return {
         id: createId('machine'),

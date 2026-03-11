@@ -1,4 +1,5 @@
 import { loadLocalRecords } from './localRecords';
+import { courierSeedRecords, machineSeedRecords } from './operationsSeedData';
 import { getOperatorOptions } from './userProfiles';
 
 export const storeUserOptions = getOperatorOptions();
@@ -7,7 +8,7 @@ const manualCourierStorageKey = 'nexus-manual-couriers';
 const machinesStorageKey = 'nexus-module-machines';
 
 export function getManualCourierNames() {
-  const couriers = loadLocalRecords(manualCourierStorageKey, []);
+  const couriers = loadLocalRecords(manualCourierStorageKey, courierSeedRecords);
 
   return couriers
     .map((courier) => courier?.name?.trim())
@@ -15,7 +16,7 @@ export function getManualCourierNames() {
 }
 
 export function getMachineOptions() {
-  const machines = loadLocalRecords(machinesStorageKey, []);
+  const machines = loadLocalRecords(machinesStorageKey, machineSeedRecords);
   const labels = machines
     .map((machine) => machine?.device?.trim())
     .filter(Boolean);

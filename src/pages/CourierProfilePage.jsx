@@ -5,12 +5,13 @@ import '../styles/couriers.css';
 import CourierProfilePanel from '../modules/couriers/components/CourierProfilePanel';
 import { findCourierById } from '../modules/couriers/utils/courierFilters';
 import { loadLocalRecords } from '../services/localRecords';
+import { courierSeedRecords } from '../services/operationsSeedData';
 
 const manualCourierStorageKey = 'nexus-manual-couriers';
 
 function CourierProfilePage() {
   const { courierId } = useParams();
-  const manualCouriers = loadLocalRecords(manualCourierStorageKey, []);
+  const manualCouriers = loadLocalRecords(manualCourierStorageKey, courierSeedRecords);
   const courier = findCourierById(manualCouriers, courierId);
 
   if (!courier) {

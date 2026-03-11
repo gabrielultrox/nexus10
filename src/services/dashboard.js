@@ -3,6 +3,7 @@ import { isOrderClosedStatus, isSalePosted } from './commerce';
 import { firebaseDb, firebaseReady } from './firebase';
 import { subscribeToInventoryItems } from './inventory';
 import { loadLocalRecords, loadResettableLocalRecords } from './localRecords';
+import { courierSeedRecords } from './operationsSeedData';
 import { subscribeToOrders } from './orders';
 import { subscribeToSales } from './sales';
 
@@ -184,7 +185,7 @@ export function loadDashboardOperationalSources() {
   const changeRecords = loadLocalRecords('nexus-module-change', []);
   const advanceRecords = loadLocalRecords('nexus-module-advances', []);
   const occurrenceRecords = loadLocalRecords('nexus-module-occurrences', []);
-  const courierRecords = loadLocalRecords('nexus-manual-couriers', []);
+  const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords);
 
   return {
     scheduleRecords,
