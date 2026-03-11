@@ -30,6 +30,17 @@ function SalesDetailPanel({ selectedSale, canWrite, acting, onReverse, onCancel 
         </div>
       ) : (
         <div className="sales-domain__detail">
+          <div className="commerce-detail-band">
+            <span className="ui-badge ui-badge--info">{selectedSale.channelLabel}</span>
+            <span className={`ui-badge ${getSaleStatusMeta(selectedSale.domainStatus).badgeClass}`}>{getSaleStatusMeta(selectedSale.domainStatus).label}</span>
+            <span className={`ui-badge ${selectedSale.stockPosted ? 'ui-badge--success' : 'ui-badge--warning'}`}>
+              {selectedSale.stockPosted ? 'Estoque publicado' : 'Estoque pendente'}
+            </span>
+            <span className={`ui-badge ${selectedSale.financialPosted ? 'ui-badge--success' : 'ui-badge--special'}`}>
+              {selectedSale.financialPosted ? 'Financeiro publicado' : 'Financeiro pendente'}
+            </span>
+          </div>
+
           <div className="sales-domain__detail-grid">
             <div className="sales-domain__detail-card"><span>Venda</span><strong>{selectedSale.number}</strong><small>{selectedSale.code}</small></div>
             <div className="sales-domain__detail-card"><span>Cliente</span><strong>{selectedSale.customerSnapshot?.name || 'Cliente avulso'}</strong><small>{selectedSale.customerSnapshot?.phone || 'Sem telefone'}</small></div>

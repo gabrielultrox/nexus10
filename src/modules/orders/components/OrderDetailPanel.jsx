@@ -59,6 +59,15 @@ function OrderDetailPanel({
         </div>
       ) : (
         <div className="orders-domain__detail">
+          <div className="commerce-detail-band">
+            <span className="ui-badge ui-badge--info">{selectedOrder.origin || selectedOrder.sourceLabel || getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)}</span>
+            <span className="ui-badge ui-badge--warning">{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</span>
+            <span className={`ui-badge ${selectedOrder.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--special'}`}>
+              {selectedOrder.saleStatus === 'LAUNCHED' ? 'Venda lancada' : 'Venda nao lancada'}
+            </span>
+            <span className="ui-badge ui-badge--special">{selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)}</span>
+          </div>
+
           <div className="orders-domain__detail-grid">
             <div className="orders-domain__detail-card">
               <span>Pedido</span>

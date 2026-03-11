@@ -1,4 +1,10 @@
-import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce';
+import {
+  CommerceAddressSection,
+  CommerceFormSignalBar,
+  CommerceIdentitySection,
+  CommerceItemsSection,
+  CommerceTotalsSection,
+} from '../../commerce/components/CommerceFormSections';
 import { channelOptions, paymentOptions } from './salesModuleHelpers';
 
 function SalesFormPanel({
@@ -28,164 +34,71 @@ function SalesFormPanel({
         </div>
       </div>
 
+      <CommerceFormSignalBar
+        eyebrow="Fluxo de venda"
+        title="Lance a venda com foco operacional"
+        description="Os blocos foram organizados para leitura rapida, pouca friccao e conferência visual antes do lancamento."
+        badges={[
+          { label: formState.channel === 'IFOOD' ? 'Canal iFood' : 'Venda direta', tone: 'ui-badge--info' },
+          { label: 'Baixa estoque', tone: 'ui-badge--success' },
+          { label: 'Publica financeiro', tone: 'ui-badge--special' },
+        ]}
+      />
+
       <form className="entity-form-grid" onSubmit={onSubmit}>
-        <div className="entity-form-section">
-          <div className="entity-form-section__header">
-            <span className="entity-form-section__eyebrow">Finalizacao</span>
-            <h4 className="entity-form-section__title">Cliente, canal e pagamento</h4>
-            <p className="entity-form-section__description">Os campos abaixo definem a identidade comercial da venda.</p>
-          </div>
+        <CommerceIdentitySection
+          eyebrow="Finalizacao"
+          title="Cliente, canal e pagamento"
+          description="Esses campos definem a identidade comercial da venda antes do lancamento."
+          channelId="sale-channel"
+          channelField="channel"
+          channelValue={formState.channel}
+          channelOptions={channelOptions}
+          customerFieldId="sale-customer"
+          customerValue={formState.customerId}
+          customers={customers}
+          paymentId="sale-payment-method"
+          paymentValue={formState.paymentMethod}
+          paymentOptions={paymentOptions}
+          onFieldChange={onFieldChange}
+          onCustomerChange={onCustomerChange}
+        />
 
-          <div className="entity-stack">
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-channel">Canal</label>
-              <select id="sale-channel" className="ui-select" value={formState.channel} onChange={(event) => onFieldChange('channel', event.target.value)}>
-                {channelOptions.map((channel) => (
-                  <option key={channel} value={channel}>{getChannelLabel(channel)}</option>
-                ))}
-              </select>
-            </div>
+        <CommerceItemsSection
+          eyebrow="Itens"
+          title="Monte a venda"
+          description="Escolha produtos e quantidades em uma grade compacta de leitura forte."
+          items={formState.items}
+          products={products}
+          draftItems={draftItems}
+          itemPrefix="sale"
+          domainClassName="sales-domain"
+          onItemChange={onItemChange}
+          onRemoveItem={onRemoveItem}
+          onAddItem={onAddItem}
+        />
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-customer">Cliente</label>
-              <select id="sale-customer" className="ui-select" value={formState.customerId} onChange={(event) => onCustomerChange(event.target.value)}>
-                <option value="">Cliente avulso</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-              </select>
-            </div>
+        <CommerceAddressSection
+          eyebrow="Entrega"
+          title="Endereco e observacoes"
+          description="Use estes campos quando a venda pedir contexto operacional adicional."
+          itemPrefix="sale"
+          address={formState.address}
+          notes={formState.notes}
+          onAddressChange={onAddressChange}
+          onFieldChange={onFieldChange}
+        />
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-payment-method">Forma de pagamento</label>
-              <select id="sale-payment-method" className="ui-select" value={formState.paymentMethod} onChange={(event) => onFieldChange('paymentMethod', event.target.value)}>
-                {paymentOptions.map((paymentMethod) => (
-                  <option key={paymentMethod} value={paymentMethod}>{getPaymentMethodLabel(paymentMethod)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="entity-form-section entity-form-section--span-2">
-          <div className="entity-form-section__header">
-            <span className="entity-form-section__eyebrow">Itens</span>
-            <h4 className="entity-form-section__title">Monte a venda</h4>
-            <p className="entity-form-section__description">Escolha os produtos, quantidades e valores unitarios antes de postar.</p>
-          </div>
-
-          <div className="sales-domain__items">
-            {formState.items.map((item, index) => (
-              <div key={`${item.productId || 'novo'}-${index}`} className="sales-domain__item-row">
-                <div className="ui-field">
-                  <label className="ui-label" htmlFor={`sale-item-product-${index}`}>Produto</label>
-                  <select id={`sale-item-product-${index}`} className="ui-select" value={item.productId} onChange={(event) => onItemChange(index, 'productId', event.target.value)}>
-                    <option value="">Selecione</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>{product.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="ui-field">
-                  <label className="ui-label" htmlFor={`sale-item-quantity-${index}`}>Quantidade</label>
-                  <input id={`sale-item-quantity-${index}`} className="ui-input" type="number" min="1" step="1" value={item.quantity} onChange={(event) => onItemChange(index, 'quantity', event.target.value)} />
-                </div>
-
-                <div className="ui-field">
-                  <label className="ui-label" htmlFor={`sale-item-price-${index}`}>Preco unitario</label>
-                  <input id={`sale-item-price-${index}`} className="ui-input" type="number" min="0" step="0.01" value={item.unitPrice} onChange={(event) => onItemChange(index, 'unitPrice', event.target.value)} />
-                </div>
-
-                <div className="sales-domain__item-total">
-                  <span className="sales-domain__item-total-label">Total do item</span>
-                  <strong>{formatCurrencyBRL(draftItems[index]?.totalPrice ?? 0)}</strong>
-                </div>
-
-                <button type="button" className="ui-button ui-button--danger" onClick={() => onRemoveItem(index)} disabled={formState.items.length === 1}>
-                  Remover
-                </button>
-              </div>
-            ))}
-
-            <button type="button" className="ui-button ui-button--ghost" onClick={onAddItem}>
-              Adicionar item
-            </button>
-          </div>
-        </div>
-
-        <div className="entity-form-section entity-form-section--span-2">
-          <div className="entity-form-section__header">
-            <span className="entity-form-section__eyebrow">Entrega</span>
-            <h4 className="entity-form-section__title">Endereco e observacoes</h4>
-            <p className="entity-form-section__description">Use estes campos quando a venda exigir contexto operacional adicional.</p>
-          </div>
-
-          <div className="entity-stack">
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-neighborhood">Bairro</label>
-              <input id="sale-neighborhood" className="ui-input" value={formState.address.neighborhood} onChange={(event) => onAddressChange('neighborhood', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-address">Endereco</label>
-              <input id="sale-address" className="ui-input" value={formState.address.addressLine} onChange={(event) => onAddressChange('addressLine', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-reference">Referencia</label>
-              <input id="sale-reference" className="ui-input" value={formState.address.reference} onChange={(event) => onAddressChange('reference', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-complement">Complemento</label>
-              <input id="sale-complement" className="ui-input" value={formState.address.complement} onChange={(event) => onAddressChange('complement', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-notes">Observacoes</label>
-              <textarea id="sale-notes" className="ui-textarea" rows={4} value={formState.notes} onChange={(event) => onFieldChange('notes', event.target.value)} />
-            </div>
-          </div>
-        </div>
-
-        <div className="entity-form-section entity-form-section--span-2">
-          <div className="entity-form-section__header">
-            <span className="entity-form-section__eyebrow">Totais</span>
-            <h4 className="entity-form-section__title">Frete, adicional e descontos</h4>
-            <p className="entity-form-section__description">Os totais sao recalculados automaticamente antes de enviar ao backend.</p>
-          </div>
-
-          <div className="sales-domain__totals-grid">
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-freight">Frete</label>
-              <input id="sale-freight" className="ui-input" type="number" min="0" step="0.01" value={formState.totals.freight} onChange={(event) => onTotalsChange('freight', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-extra">Adicional</label>
-              <input id="sale-extra" className="ui-input" type="number" min="0" step="0.01" value={formState.totals.extraAmount} onChange={(event) => onTotalsChange('extraAmount', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-discount-percent">Desconto (%)</label>
-              <input id="sale-discount-percent" className="ui-input" type="number" min="0" step="0.01" value={formState.totals.discountPercent} onChange={(event) => onTotalsChange('discountPercent', event.target.value)} />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="sale-discount-value">Desconto (R$)</label>
-              <input id="sale-discount-value" className="ui-input" type="number" min="0" step="0.01" value={formState.totals.discountValue} onChange={(event) => onTotalsChange('discountValue', event.target.value)} />
-            </div>
-          </div>
-
-          <div className="sales-domain__summary">
-            <div className="sales-domain__summary-row"><span>Subtotal</span><strong>{formatCurrencyBRL(calculatedTotals.subtotal)}</strong></div>
-            <div className="sales-domain__summary-row"><span>Frete</span><strong>{formatCurrencyBRL(calculatedTotals.freight)}</strong></div>
-            <div className="sales-domain__summary-row"><span>Adicional</span><strong>{formatCurrencyBRL(calculatedTotals.extraAmount)}</strong></div>
-            <div className="sales-domain__summary-row"><span>Desconto</span><strong>{formatCurrencyBRL(calculatedTotals.discountValue)}</strong></div>
-            <div className="sales-domain__summary-row sales-domain__summary-row--total"><span>Total final</span><strong>{formatCurrencyBRL(calculatedTotals.total)}</strong></div>
-          </div>
-        </div>
+        <CommerceTotalsSection
+          eyebrow="Totais"
+          title="Frete, adicional e descontos"
+          description="A conferência final fica concentrada em um resumo mais legível e com menos ruído."
+          itemPrefix="sale"
+          domainClassName="sales-domain"
+          totals={formState.totals}
+          calculatedTotals={calculatedTotals}
+          onTotalsChange={onTotalsChange}
+        />
 
         <div className="entity-form-actions entity-form-grid__wide">
           <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>Cancelar</button>
