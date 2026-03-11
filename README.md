@@ -1,4 +1,4 @@
-# Nexus 10 Seguro
+# Nexus10
 
 Aplicacao operacional para loja com frontend em React/Vite, backend em Express e integracoes com Firebase e iFood.
 
@@ -64,4 +64,4 @@ npm run start:backend  # sobe o backend sem watch
 
 - O projeto possui fallback local quando o Firebase nao esta configurado.
 - O arquivo `.env` esta ignorado no Git e nao foi publicado.
-- O repositório foi preparado para desenvolvimento local e pode ser expandido com deploy separado para frontend e backend.
+- O repositorio foi preparado para desenvolvimento local e pode ser expandido com deploy separado para frontend e backend.
