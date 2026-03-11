@@ -219,6 +219,10 @@ function buildMachineChecklistRecords(machineRecords, checklist = []) {
   });
 }
 
+function shouldUseLocalFallback(error) {
+  return Boolean(error);
+}
+
 function NativeModulePage({ route }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
@@ -275,7 +279,7 @@ function NativeModulePage({ route }) {
     storeId: currentStoreId,
     modulePath: 'machines',
     storageKey: 'nexus-module-machines',
-    initialRecords: [],
+    initialRecords: machineSeedRecords,
     onData: (machineRecords) => {
       const nextMachineOptions = Array.from(new Set(
         machineRecords
@@ -587,6 +591,96 @@ function NativeModulePage({ route }) {
     setFormValues(buildInitialFormState(managerWithResolvedFields));
   }
 
+  async function saveRecordWithFallback({
+    modulePath,
+    storageKey,
+    dailyResetHour = null,
+    record,
+    onLocalApply,
+  }) {
+    if (!canSyncModuleRecords) {
+      onLocalApply();
+      return 'local';
+    }
+
+    try {
+      await saveManualModuleRecord({
+        storeId: currentStoreId,
+        tenantId,
+        modulePath,
+        storageKey,
+        dailyResetHour,
+        record,
+      });
+      return 'remote';
+    } catch (error) {
+      if (!shouldUseLocalFallback(error)) {
+        throw error;
+      }
+
+      onLocalApply();
+      return 'local';
+    }
+  }
+
+  async function deleteRecordWithFallback({
+    modulePath,
+    recordId,
+    onLocalApply,
+  }) {
+    if (!canSyncModuleRecords) {
+      onLocalApply();
+      return 'local';
+    }
+
+    try {
+      await deleteManualModuleRecord({
+        storeId: currentStoreId,
+        modulePath,
+        recordId,
+      });
+      return 'remote';
+    } catch (error) {
+      if (!shouldUseLocalFallback(error)) {
+        throw error;
+      }
+
+      onLocalApply();
+      return 'local';
+    }
+  }
+
+  async function clearRecordsWithFallback({
+    modulePath,
+    storageKey,
+    initialRecords = [],
+    dailyResetHour = null,
+    onLocalApply,
+  }) {
+    if (!canSyncModuleRecords) {
+      onLocalApply();
+      return 'local';
+    }
+
+    try {
+      await clearManualModuleRecords({
+        storeId: currentStoreId,
+        modulePath,
+        storageKey,
+        initialRecords,
+        dailyResetHour,
+      });
+      return 'remote';
+    } catch (error) {
+      if (!shouldUseLocalFallback(error)) {
+        throw error;
+      }
+
+      onLocalApply();
+      return 'local';
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -601,18 +695,15 @@ function NativeModulePage({ route }) {
     };
 
     try {
-      if (canSyncModuleRecords) {
-        await saveManualModuleRecord({
-          storeId: currentStoreId,
-          tenantId,
-          modulePath: route.path,
-          storageKey: manager.storageKey,
-          dailyResetHour: manager.dailyResetHour ?? null,
-          record: newRecord,
-        });
-      } else {
-        setRecords((current) => [newRecord, ...current]);
-      }
+      await saveRecordWithFallback({
+        modulePath: route.path,
+        storageKey: manager.storageKey,
+        dailyResetHour: manager.dailyResetHour ?? null,
+        record: newRecord,
+        onLocalApply: () => {
+          setRecords((current) => [newRecord, ...current]);
+        },
+      });
 
       setFormValues(buildInitialFormState(managerWithResolvedFields));
       setErrorMessage('');
@@ -635,15 +726,13 @@ function NativeModulePage({ route }) {
     const record = records.find((item) => item.id === recordId);
 
     try {
-      if (canSyncModuleRecords) {
-        await deleteManualModuleRecord({
-          storeId: currentStoreId,
-          modulePath: route.path,
-          recordId,
-        });
-      } else {
-        setRecords((current) => current.filter((item) => item.id !== recordId));
-      }
+      await deleteRecordWithFallback({
+        modulePath: route.path,
+        recordId,
+        onLocalApply: () => {
+          setRecords((current) => current.filter((item) => item.id !== recordId));
+        },
+      });
 
       setErrorMessage('');
       playSuccess();
@@ -696,20 +785,17 @@ function NativeModulePage({ route }) {
     };
 
     try {
-      if (canSyncModuleRecords) {
-        await saveManualModuleRecord({
-          storeId: currentStoreId,
-          tenantId,
-          modulePath: route.path,
-          storageKey: manager.storageKey,
-          dailyResetHour: manager.dailyResetHour ?? null,
-          record: nextRecord,
-        });
-      } else {
-        setRecords((current) => current.map((item) => (
-          item.id === recordId ? nextRecord : item
-        )));
-      }
+      await saveRecordWithFallback({
+        modulePath: route.path,
+        storageKey: manager.storageKey,
+        dailyResetHour: manager.dailyResetHour ?? null,
+        record: nextRecord,
+        onLocalApply: () => {
+          setRecords((current) => current.map((item) => (
+            item.id === recordId ? nextRecord : item
+          )));
+        },
+      });
 
       setScheduleMachineDrafts((current) => {
         const nextDrafts = { ...current };
@@ -738,17 +824,15 @@ function NativeModulePage({ route }) {
     }
 
     try {
-      if (manager && canSyncModuleRecords) {
-        await clearManualModuleRecords({
-          storeId: currentStoreId,
-          modulePath: route.path,
-          storageKey: manager.storageKey,
-          initialRecords: manager.initialRecords,
-          dailyResetHour: manager.dailyResetHour ?? null,
-        });
-      } else {
-        setRecords([]);
-      }
+      await clearRecordsWithFallback({
+        modulePath: route.path,
+        storageKey: manager?.storageKey,
+        initialRecords: manager?.initialRecords ?? [],
+        dailyResetHour: manager?.dailyResetHour ?? null,
+        onLocalApply: () => {
+          setRecords([]);
+        },
+      });
 
       setErrorMessage('');
       playNotification();
@@ -778,21 +862,18 @@ function NativeModulePage({ route }) {
     }
 
     try {
-      if (canSyncModuleRecords) {
-        await clearManualModuleRecords({
-          storeId: currentStoreId,
-          modulePath: route.path,
-          storageKey: manager.storageKey,
-          initialRecords: [],
-          dailyResetHour: manager.dailyResetHour ?? 3,
-        });
-      } else {
-        const nextRecords = route.path === 'machine-history'
-          ? buildRouteRecords(route.path, manager)
-          : resetLocalRecordsNow(manager.storageKey, [], manager.dailyResetHour ?? 3);
-
-        setRecords(nextRecords);
-      }
+      const nextRecords = route.path === 'machine-history'
+        ? buildRouteRecords(route.path, manager)
+        : resetLocalRecordsNow(manager.storageKey, [], manager.dailyResetHour ?? 3);
+      await clearRecordsWithFallback({
+        modulePath: route.path,
+        storageKey: manager.storageKey,
+        initialRecords: [],
+        dailyResetHour: manager.dailyResetHour ?? 3,
+        onLocalApply: () => {
+          setRecords(nextRecords);
+        },
+      });
 
       setErrorMessage('');
       playNotification();
@@ -901,20 +982,17 @@ function NativeModulePage({ route }) {
     }
 
     try {
-      if (canSyncModuleRecords) {
-        await saveManualModuleRecord({
-          storeId: currentStoreId,
-          tenantId,
-          modulePath: route.path,
-          storageKey: manager.storageKey,
-          dailyResetHour: manager.dailyResetHour ?? null,
-          record: nextRecord,
-        });
-      } else {
-        setRecords((current) => current.map((record) => (
-          record.id === recordId ? nextRecord : record
-        )));
-      }
+      await saveRecordWithFallback({
+        modulePath: route.path,
+        storageKey: manager.storageKey,
+        dailyResetHour: manager.dailyResetHour ?? null,
+        record: nextRecord,
+        onLocalApply: () => {
+          setRecords((current) => current.map((record) => (
+            record.id === recordId ? nextRecord : record
+          )));
+        },
+      });
 
       if (route.path === 'delivery-reading' && !targetRecord.closed) {
         setRecentlyClosedRecordId(recordId);
@@ -939,32 +1017,30 @@ function NativeModulePage({ route }) {
     const auditContext = buildAuditContext(session);
     const record = machineChecklistRecords.find((item) => item.id === recordId);
 
-    if (!record || record.status === 'Presente') {
+    if (!record) {
       return;
     }
 
+    const nextStatus = record.status === 'Presente' ? 'Ausente' : 'Presente';
     const nextRecord = {
       ...record,
-      status: 'Presente',
+      status: nextStatus,
       updatedAt: auditContext.updatedAt,
       updatedBy: auditContext.updatedBy,
     };
 
     try {
-      if (canSyncModuleRecords) {
-        await saveManualModuleRecord({
-          storeId: currentStoreId,
-          tenantId,
-          modulePath: 'machine-history',
-          storageKey: 'nexus-module-machine-history',
-          dailyResetHour: 3,
-          record: nextRecord,
-        });
-      } else {
-        setMachineChecklistRecords((current) => current.map((item) => (
-          item.id === recordId ? nextRecord : item
-        )));
-      }
+      await saveRecordWithFallback({
+        modulePath: 'machine-history',
+        storageKey: 'nexus-module-machine-history',
+        dailyResetHour: 3,
+        record: nextRecord,
+        onLocalApply: () => {
+          setMachineChecklistRecords((current) => current.map((item) => (
+            item.id === recordId ? nextRecord : item
+          )));
+        },
+      });
 
       setErrorMessage('');
       playSuccess();
@@ -973,7 +1049,7 @@ function NativeModulePage({ route }) {
         module: 'Maquininhas',
         modulePath: 'machines',
         actor: auditContext.updatedBy,
-        action: 'Marcou presente no checklist',
+        action: nextStatus === 'Presente' ? 'Marcou presente no checklist' : 'Desmarcou presenca no checklist',
         target: record?.device ?? 'maquininha',
         details: `Checklist atualizado para ${record?.device ?? 'maquininha'}`,
       });
@@ -1532,22 +1608,24 @@ function NativeModulePage({ route }) {
                       </span>
                     </div>
 
-                    <div className="machine-checklist__footer">
-                      <span className="machine-checklist__updated">
-                        {record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem conferencia hoje'}
-                      </span>
-                      <button
-                        type="button"
-                        className="ui-button ui-button--secondary native-module__table-action"
-                        onClick={() => handleMachineChecklistToggle(record.id)}
-                        disabled={isPresent}
-                      >
-                        {isPresent ? 'Presente no dia' : 'Marcar presente'}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                      <div className="machine-checklist__footer">
+                        <span className="machine-checklist__updated">
+                          {record.updatedAt && record.updatedBy ? `${record.updatedBy} - ${record.updatedAt}` : 'Sem conferencia hoje'}
+                        </span>
+                        <label className={`machine-checklist__presence-check ${isPresent ? 'is-checked' : ''}`} htmlFor={`machine-check-${record.id}`}>
+                          <input
+                            id={`machine-check-${record.id}`}
+                            type="checkbox"
+                            checked={isPresent}
+                            onChange={() => handleMachineChecklistToggle(record.id)}
+                          />
+                          <span className="machine-checklist__presence-box" aria-hidden="true" />
+                          <span>{isPresent ? 'Presente no dia' : 'Confirmar presenca hoje'}</span>
+                        </label>
+                      </div>
+                    </article>
+                  );
+                })}
             </div>
           </div>
         ) : (

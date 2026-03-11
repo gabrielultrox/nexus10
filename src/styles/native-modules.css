@@ -725,6 +725,52 @@
   color: var(--color-text-secondary);
 }
 
+.machine-checklist__presence-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.machine-checklist__presence-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.machine-checklist__presence-box {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 40%, var(--color-border-default));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  pointer-events: none;
+}
+
+.machine-checklist__presence-box::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--color-success-strong), var(--color-accent-cyan));
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
+}
+
+.machine-checklist__presence-check.is-checked {
+  color: var(--color-success-strong);
+}
+
+.machine-checklist__presence-check.is-checked .machine-checklist__presence-box::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .machine-checklist__toggle {
   position: relative;
   width: 54px;
