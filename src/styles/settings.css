@@ -1,7 +1,12 @@
 .settings-summary,
-.settings-pin-form {
+.settings-pin-form,
+.settings-lock-form {
   display: grid;
   gap: var(--space-4);
+}
+
+.settings-lock-form {
+  max-width: 520px;
 }
 
 .settings-summary__row {

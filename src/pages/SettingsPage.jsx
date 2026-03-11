@@ -19,9 +19,12 @@ import {
   playSuccess,
   setSoundEnabled,
 } from '../services/soundManager';
+import { isSettingsUnlocked, lockSettings, unlockSettings } from '../services/settingsAccess';
 
 function SettingsPage() {
   const { session, can } = useAuth();
+  const [masterPassword, setMasterPassword] = useState('');
+  const [settingsUnlocked, setSettingsUnlocked] = useState(() => isSettingsUnlocked());
   const [pinDraft, setPinDraft] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -29,6 +32,32 @@ function SettingsPage() {
   const [pinEnabled, setPinEnabled] = useState(() => hasStoredPin());
   const [currentPinMask, setCurrentPinMask] = useState(() => (hasStoredPin() ? '****' : `${DEFAULT_ACCESS_PIN} padrao`));
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled());
+
+  function handleUnlockSettings(event) {
+    event.preventDefault();
+    setFeedback('');
+    setErrorMessage('');
+
+    try {
+      unlockSettings(masterPassword);
+      setSettingsUnlocked(true);
+      setMasterPassword('');
+      setFeedback('Configuracoes liberadas para esta sessao.');
+      playSuccess();
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel liberar as configuracoes.');
+      playError();
+    }
+  }
+
+  function handleLockSettings() {
+    lockSettings();
+    setSettingsUnlocked(false);
+    setMasterPassword('');
+    setFeedback('');
+    setErrorMessage('');
+    playNotification();
+  }
 
   function handleSavePin(event) {
     event.preventDefault();
@@ -95,12 +124,56 @@ function SettingsPage() {
     }
   }
 
+  if (!settingsUnlocked) {
+    return (
+      <div className="page-stack">
+        <PageIntro
+          eyebrow="Sistema"
+          title="Configuracoes protegidas"
+          description="Digite a senha mestra para acessar os ajustes sensiveis do app."
+        />
+
+        <SurfaceCard title="Senha mestra">
+          <form className="settings-lock-form" onSubmit={handleUnlockSettings}>
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="settings-master-password">
+                Senha mestra
+              </label>
+              <input
+                id="settings-master-password"
+                className="ui-input"
+                type="password"
+                value={masterPassword}
+                onChange={(event) => setMasterPassword(event.target.value)}
+                placeholder="Digite a senha mestra"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <p className="text-caption">
+              Esta tela protege PIN local, sons, tema e demais configuracoes sensiveis da operacao.
+            </p>
+
+            <div className="settings-pin-form__actions">
+              <button type="submit" className="ui-button ui-button--secondary">
+                Liberar configuracoes
+              </button>
+            </div>
+
+            {feedback ? <div className="auth-error auth-error--success">{feedback}</div> : null}
+            {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+          </form>
+        </SurfaceCard>
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack">
       <PageIntro
-        eyebrow="System"
+        eyebrow="Sistema"
         title="Configuracoes"
-        description="Preferencias locais do shell, controle de PIN e ajustes de experiencia sem depender do legado."
+        description="Preferencias locais do app, controle de PIN e ajustes sensiveis da experiencia operacional."
       />
 
       <div className="card-grid">
@@ -131,7 +204,7 @@ function SettingsPage() {
 
         <SurfaceCard title="Tema">
           <div className="settings-summary">
-            <p>O tema do shell controla diretamente o boot, o PIN e o login React nativo.</p>
+            <p>O tema do app controla diretamente o boot, o PIN e o login local.</p>
             <ThemeToggle />
           </div>
         </SurfaceCard>
@@ -148,6 +221,9 @@ function SettingsPage() {
             </div>
             <button type="button" className="ui-button ui-button--secondary" onClick={handleToggleSoundEffects}>
               {soundEffectsEnabled ? 'Desligar sons' : 'Ligar sons'}
+            </button>
+            <button type="button" className="ui-button ui-button--ghost" onClick={handleLockSettings}>
+              Bloquear configuracoes
             </button>
           </div>
         </SurfaceCard>
