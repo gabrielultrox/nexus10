@@ -1,6 +1,8 @@
 import {
+  addDoc,
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -11,28 +13,19 @@ import {
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { subscribeToExternalOrders } from './externalOrders';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
+import {
+  formatCurrencyBRL,
+  getChannelLabel,
+  getPaymentMethodLabel,
+  mapOrderDomainStatusToLegacyBoardStatus,
+  normalizeChannel,
+  normalizeOrderDomainStatus,
+  normalizeOrderSaleStatus,
+  normalizePaymentMethod,
+} from './commerce';
+import { validateOrderInput } from './orderDomain';
 
 const orderStatusSequence = ['received', 'preparing', 'out_for_delivery', 'delivered'];
-const orderStatusAliases = {
-  new: 'received',
-  created: 'received',
-  confirmed: 'received',
-  pending: 'received',
-  queued: 'received',
-  received: 'received',
-  preparing: 'preparing',
-  in_preparation: 'preparing',
-  in_progress: 'preparing',
-  production: 'preparing',
-  out: 'out_for_delivery',
-  dispatching: 'out_for_delivery',
-  on_route: 'out_for_delivery',
-  out_for_delivery: 'out_for_delivery',
-  delivered: 'delivered',
-  completed: 'delivered',
-  cancelled: 'cancelled',
-  cancel: 'cancelled',
-};
 
 function asDate(value) {
   if (!value) {
@@ -45,14 +38,6 @@ function asDate(value) {
 function parseMoney(value) {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-  }).format(parseMoney(value));
 }
 
 function formatTime(value) {
@@ -101,11 +86,6 @@ function formatWaitTime(value) {
   return `${hours}h ${String(minutes).padStart(2, '0')}m`;
 }
 
-function normalizeStatus(status) {
-  const normalized = String(status ?? '').trim().toLowerCase();
-  return orderStatusAliases[normalized] ?? normalized ?? 'received';
-}
-
 function normalizePriority(rawOrder, createdAt) {
   const rawPriority = String(rawOrder.priority ?? '').trim().toLowerCase();
 
@@ -129,7 +109,7 @@ function buildItemsSummary(items) {
     .slice(0, 3)
     .map((item) => {
       const quantity = Number(item?.quantity ?? 0);
-      const name = item?.name?.trim() || 'Item';
+      const name = item?.productSnapshot?.name?.trim() || item?.name?.trim() || 'Item';
       return quantity > 0 ? `${quantity}x ${name}` : name;
     })
     .join(' · ');
@@ -150,93 +130,103 @@ function getOrdersCollectionRef(storeId) {
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders);
 }
 
-function normalizeOrder(documentSnapshot) {
-  const data = documentSnapshot.data();
+function buildCreatedBy(createdBy) {
+  return {
+    id: createdBy?.id ?? createdBy?.uid ?? null,
+    name: createdBy?.name ?? createdBy?.operatorName ?? createdBy?.displayName ?? 'Operador local',
+    role: createdBy?.role ?? 'operator',
+  };
+}
+
+function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
   const createdAt = asDate(data.createdAt);
-  const updatedAt = asDate(data.updatedAt);
-  const status = normalizeStatus(data.status);
-  const total = parseMoney(data.total);
+  const updatedAt = asDate(data.updatedAt) ?? createdAt;
+  const domainStatus = normalizeOrderDomainStatus(data.status);
+  const status = mapOrderDomainStatusToLegacyBoardStatus(domainStatus);
+  const saleStatus = normalizeOrderSaleStatus(data.saleStatus, data.saleId ? 'LAUNCHED' : 'NOT_LAUNCHED');
+  const channel = normalizeChannel(data.source ?? data.origin, isExternal ? 'IFOOD' : null);
+  const paymentMethod = normalizePaymentMethod(
+    data.paymentPreview?.method ?? data.paymentMethod ?? data.payment?.method,
+    null,
+  );
+  const totalAmount = parseMoney(data.totals?.total ?? data.total);
   const customerName = data.customerSnapshot?.name?.trim() || data.customerName?.trim() || 'Cliente';
-  const neighborhood = data.customerSnapshot?.neighborhood?.trim() || data.neighborhood?.trim() || 'Bairro nao informado';
+  const neighborhood = data.address?.neighborhood?.trim()
+    || data.customerSnapshot?.neighborhood?.trim()
+    || data.neighborhood?.trim()
+    || 'Bairro nao informado';
   const courierName = data.courierSnapshot?.name?.trim()
     || data.courierName?.trim()
     || data.assignedCourierName?.trim()
     || 'Nao atribuido';
 
   return {
-    id: documentSnapshot.id,
+    id,
     ...data,
     status,
+    domainStatus,
+    saleStatus,
+    sourceChannel: channel,
+    source: channel ? getChannelLabel(channel) : (isExternal ? 'iFood' : 'Nao informado'),
+    origin: channel ? getChannelLabel(channel) : (data.origin ?? 'Nao informado'),
+    paymentMethod,
+    paymentMethodLabel: paymentMethod ? getPaymentMethodLabel(paymentMethod) : 'Nao informado',
     priority: normalizePriority(data, createdAt),
-    number: data.number?.trim() || `#${documentSnapshot.id.slice(0, 6).toUpperCase()}`,
+    number: data.code?.trim() || data.number?.trim() || `#${id.slice(0, 6).toUpperCase()}`,
     customerName,
     neighborhood,
     courierName,
     itemsSummary: buildItemsSummary(data.items),
-    totalAmount: total,
-    total: formatCurrency(total),
-    time: formatTime(createdAt),
-    waitTime: formatWaitTime(createdAt),
-    createdAt,
-    createdAtLabel: formatDateTime(createdAt),
-    updatedAt: updatedAt ?? createdAt,
-    updatedAtLabel: formatDateTime(updatedAt ?? createdAt),
-    isExternal: false,
-    source: 'internal',
-    timeline: Array.isArray(data.timeline) ? data.timeline : [],
-    tracking: Array.isArray(data.tracking) ? data.tracking : [],
-    externalStatus: null,
-    normalizedStatus: status,
-    syncErrorMessage: null,
-  };
-}
-
-function normalizeExternalOrder(order) {
-  const createdAt = asDate(order.createdAt);
-  const updatedAt = asDate(order.updatedAt) ?? createdAt;
-  const status = normalizeStatus(order.normalizedStatus);
-  const customerName = order.customer?.name?.trim() || 'Cliente iFood';
-  const neighborhood = order.customer?.address?.neighborhood?.trim() || 'Bairro nao informado';
-  const items = Array.isArray(order.items) ? order.items : [];
-  const total = parseMoney(order.total);
-  const tracking = Array.isArray(order.tracking) ? order.tracking : [];
-  const timeline = Array.isArray(order.timeline) ? order.timeline : [];
-  const latestTracking = tracking[0] ?? null;
-
-  return {
-    id: order.id,
-    source: 'iFood',
-    status,
-    normalizedStatus: status,
-    externalStatus: order.externalStatus ?? '',
-    priority: normalizePriority(order, createdAt),
-    number: order.displayId?.trim() || `#${String(order.externalOrderId ?? order.id).slice(0, 6).toUpperCase()}`,
-    customerName,
-    neighborhood,
-    courierName: latestTracking?.label ?? 'Tracking iFood',
-    itemsSummary: buildItemsSummary(items),
-    totalAmount: total,
-    total: formatCurrency(total),
+    totalAmount,
+    total: formatCurrencyBRL(totalAmount),
     time: formatTime(createdAt),
     waitTime: formatWaitTime(createdAt),
     createdAt,
     createdAtLabel: formatDateTime(createdAt),
     updatedAt,
     updatedAtLabel: formatDateTime(updatedAt),
-    paymentMethod: order.paymentMethod || 'Nao informado',
-    origin: 'iFood',
-    isExternal: true,
-    externalOrderId: order.externalOrderId,
-    merchantId: order.merchantId,
-    customer: order.customer,
-    items,
-    subtotal: parseMoney(order.subtotal),
-    discount: parseMoney(order.discount),
-    shipping: parseMoney(order.shipping),
-    tracking,
-    timeline,
-    syncErrorMessage: order.sync?.lastSyncError ?? null,
+    isExternal,
+    timeline: Array.isArray(data.timeline) ? data.timeline : [],
+    tracking: Array.isArray(data.tracking) ? data.tracking : [],
+    externalStatus: data.externalStatus ?? null,
+    normalizedStatus: status,
+    syncErrorMessage: data.sync?.lastSyncError ?? null,
   };
+}
+
+function normalizeOrder(documentSnapshot) {
+  return normalizeOrderRecord(documentSnapshot.id, documentSnapshot.data());
+}
+
+function normalizeExternalOrder(order) {
+  const channel = normalizeChannel(order.source ?? 'IFOOD', 'IFOOD');
+  const paymentMethod = normalizePaymentMethod(order.paymentMethod, null);
+
+  return normalizeOrderRecord(order.id, {
+    ...order,
+    source: channel,
+    paymentMethod,
+    customerSnapshot: {
+      id: order.customer?.id ?? null,
+      name: order.customer?.name ?? 'Cliente iFood',
+      neighborhood: order.customer?.address?.neighborhood ?? '',
+      phone: order.customer?.phone ?? '',
+    },
+    address: {
+      neighborhood: order.customer?.address?.neighborhood ?? '',
+      addressLine: order.customer?.address?.streetName ?? '',
+      reference: order.customer?.address?.reference ?? '',
+      complement: order.customer?.address?.complement ?? '',
+    },
+    totals: {
+      subtotal: parseMoney(order.subtotal),
+      freight: parseMoney(order.shipping),
+      extraAmount: 0,
+      discountPercent: 0,
+      discountValue: parseMoney(order.discount),
+      total: parseMoney(order.total),
+    },
+  }, { isExternal: true });
 }
 
 export function subscribeToOrders(storeId, onData, onError) {
@@ -282,10 +272,51 @@ export function getNextOrderStatus(currentStatus) {
   return orderStatusSequence[currentIndex + 1];
 }
 
+export async function getOrderById({ storeId, orderId }) {
+  assertFirebaseReady();
+
+  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
+  const snapshot = await getDoc(orderRef);
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  return normalizeOrder(snapshot);
+}
+
+export async function createOrder({ storeId, tenantId, values, createdBy = null }) {
+  assertFirebaseReady();
+
+  const payload = validateOrderInput(values);
+  const documentRef = await addDoc(getOrdersCollectionRef(storeId), {
+    ...payload,
+    storeId,
+    tenantId: tenantId ?? null,
+    createdBy: buildCreatedBy(createdBy),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return documentRef.id;
+}
+
+export async function markOrderAsDispatched({ storeId, orderId }) {
+  assertFirebaseReady();
+
+  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
+  await updateDoc(orderRef, {
+    status: 'DISPATCHED',
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function updateOrderStatus({ storeId, orderId, status }) {
   assertFirebaseReady();
 
-  if (!orderStatusSequence.includes(status)) {
+  const allowedStatuses = new Set([...orderStatusSequence, 'cancelled', 'OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']);
+
+  if (!allowedStatuses.has(status)) {
     throw new Error('Status de pedido invalido.');
   }
 

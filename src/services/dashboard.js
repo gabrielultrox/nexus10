@@ -1,4 +1,5 @@
 import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEntries } from './finance';
+import { isOrderClosedStatus, isSalePosted } from './commerce';
 import { firebaseDb, firebaseReady } from './firebase';
 import { subscribeToInventoryItems } from './inventory';
 import { loadLocalRecords, loadResettableLocalRecords } from './localRecords';
@@ -6,7 +7,6 @@ import { subscribeToOrders } from './orders';
 import { subscribeToSales } from './sales';
 
 const delayedOrderThresholdMinutes = 35;
-const finalOrderStatuses = new Set(['completed', 'canceled', 'cancelled', 'delivered', 'refunded']);
 
 function asDate(value) {
   if (!value) {
@@ -77,9 +77,8 @@ function isWithinPeriod(value, startDate, endDate) {
 
 function isOrderDelayed(order) {
   const createdAt = asDate(order.createdAt);
-  const status = String(order.status ?? '').toLowerCase();
 
-  if (!createdAt || finalOrderStatuses.has(status)) {
+  if (!createdAt || isOrderClosedStatus(order.domainStatus ?? order.status)) {
     return false;
   }
 
@@ -225,7 +224,7 @@ export function buildDashboardData({
   operations,
 }) {
   const completedSales = sales.filter((sale) => (
-    sale.status === 'completed' && isWithinPeriod(sale.createdAt, startDate, endDate)
+    isSalePosted(sale.domainStatus ?? sale.status) && isWithinPeriod(sale.createdAt, startDate, endDate)
   ));
   const ordersInPeriod = orders.filter((order) => isWithinPeriod(order.createdAt, startDate, endDate));
   const delayedOrders = ordersInPeriod.filter(isOrderDelayed);
@@ -250,15 +249,16 @@ export function buildDashboardData({
   const productsMap = new Map();
   completedSales.forEach((sale) => {
     sale.items?.forEach((item) => {
-      const currentItem = productsMap.get(item.productId ?? item.name) ?? {
-        id: item.productId ?? item.name,
-        name: item.name,
+      const itemName = item.productSnapshot?.name ?? item.name;
+      const currentItem = productsMap.get(item.productId ?? itemName) ?? {
+        id: item.productId ?? itemName,
+        name: itemName,
         quantity: 0,
         revenue: 0,
       };
 
       currentItem.quantity += Number(item.quantity ?? 0);
-      currentItem.revenue += parseMoney(item.total);
+      currentItem.revenue += parseMoney(item.totalPrice ?? item.total);
       productsMap.set(currentItem.id, currentItem);
     });
   });

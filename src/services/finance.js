@@ -10,6 +10,10 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
+import {
+  normalizePaymentMethod,
+  normalizeSaleDomainStatus,
+} from './commerce';
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
@@ -54,10 +58,10 @@ function buildSaleEntryId(saleId) {
 }
 
 function getSaleFinancialStatus(saleStatus) {
-  switch (saleStatus) {
-    case 'canceled':
+  switch (normalizeSaleDomainStatus(saleStatus)) {
+    case 'CANCELLED':
       return 'cancelada';
-    case 'refunded':
+    case 'REVERSED':
       return 'estornada';
     default:
       return 'ativa';
@@ -67,8 +71,8 @@ function getSaleFinancialStatus(saleStatus) {
 function buildSaleFinanceDescription(sale) {
   const customerName = sale.customerSnapshot?.name?.trim();
   return customerName
-    ? `Venda ${sale.id} · ${customerName}`
-    : `Venda ${sale.id}`;
+    ? `Venda ${sale.code ?? sale.id} - ${customerName}`
+    : `Venda ${sale.code ?? sale.id}`;
 }
 
 export function subscribeToFinancialEntries(storeId, onData, onError) {
@@ -153,9 +157,9 @@ export async function syncSaleToFinancialEntry({ storeId, tenantId, sale }) {
     source: 'venda',
     relatedSaleId: sale.id,
     description: buildSaleFinanceDescription(sale),
-    amount: Number(sale.total ?? 0),
-    paymentMethod: sale.paymentMethod ?? '',
-    status: getSaleFinancialStatus(sale.status ?? 'completed'),
+    amount: Number(sale.totals?.total ?? sale.total ?? 0),
+    paymentMethod: normalizePaymentMethod(sale.payment?.method ?? sale.paymentMethod, null) ?? '',
+    status: getSaleFinancialStatus(sale.status ?? 'POSTED'),
     storeId,
     tenantId: tenantId ?? sale.tenantId ?? null,
     createdAt: currentCreatedAt ?? normalizedCreatedAt,

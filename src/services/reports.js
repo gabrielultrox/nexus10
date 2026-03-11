@@ -1,5 +1,6 @@
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
+import { isSalePosted } from './commerce';
 import { subscribeToFinancialEntries } from './finance';
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
@@ -97,7 +98,7 @@ export function buildPdvReportData({
   endDate,
 }) {
   const filteredSales = sales.filter((sale) => (
-    sale.status === 'completed' && isWithinPeriod(sale.createdAt, startDate, endDate)
+    isSalePosted(sale.domainStatus ?? sale.status) && isWithinPeriod(sale.createdAt, startDate, endDate)
   ));
   const filteredOrders = orders.filter((order) => isWithinPeriod(order.createdAt, startDate, endDate));
   const filteredFinancialEntries = financialEntries.filter((entry) => isWithinPeriod(entry.createdAt, startDate, endDate));
@@ -112,16 +113,17 @@ export function buildPdvReportData({
 
   filteredSales.forEach((sale) => {
     sale.items?.forEach((item) => {
-      const key = item.productId || item.name;
+      const itemName = item.productSnapshot?.name ?? item.name;
+      const key = item.productId || itemName;
       const existing = topProductsMap.get(key) ?? {
         id: key,
-        label: item.name,
+        label: itemName,
         quantity: 0,
         revenue: 0,
       };
 
       existing.quantity += Number(item.quantity ?? 0);
-      existing.revenue += parseMoney(item.total);
+      existing.revenue += parseMoney(item.totalPrice ?? item.total);
       topProductsMap.set(key, existing);
 
       const itemCost = productCostMap.get(item.productId) ?? null;

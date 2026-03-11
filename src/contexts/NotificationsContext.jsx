@@ -3,6 +3,11 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 import { useStore } from './StoreContext';
 import { buildAuditActor, recordAuditLog } from '../services/auditLog';
+import {
+  isOrderClosedStatus,
+  isSalePosted,
+  normalizeOrderDomainStatus,
+} from '../services/commerce';
 import { firebaseDb, firebaseReady } from '../services/firebase';
 import { subscribeToInventoryItems } from '../services/inventory';
 import {
@@ -39,8 +44,7 @@ function isOrderDelayed(order) {
     return false;
   }
 
-  const status = String(order.status ?? '').toLowerCase();
-  if (['completed', 'canceled', 'cancelled', 'delivered', 'refunded'].includes(status)) {
+  if (isOrderClosedStatus(normalizeOrderDomainStatus(order.status))) {
     return false;
   }
 
@@ -153,7 +157,7 @@ export function NotificationsProvider({ children }) {
 
         if (salesInitializedRef.current) {
           sales.forEach((sale) => {
-            if (!knownSaleIdsRef.current.has(sale.id) && sale.status === 'completed') {
+            if (!knownSaleIdsRef.current.has(sale.id) && isSalePosted(sale.domainStatus ?? sale.status)) {
               notifySaleCompleted(sale);
             }
 

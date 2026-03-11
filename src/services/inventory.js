@@ -11,6 +11,11 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
+import {
+  isSaleCancelled,
+  isSalePosted,
+  isSaleReversed,
+} from './commerce';
 import { assertFirebaseReady, firebaseDb } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
@@ -305,7 +310,7 @@ export async function syncSaleInventory({ storeId, tenantId, sale, previousStatu
     return;
   }
 
-  if (sale.status === 'completed' && previousStatus !== 'completed') {
+  if (isSalePosted(sale.status) && !isSalePosted(previousStatus)) {
     for (const item of items) {
       await applyInventoryMovement({
         storeId,
@@ -318,13 +323,13 @@ export async function syncSaleInventory({ storeId, tenantId, sale, previousStatu
         relatedSaleId: sale.id,
         movementId: `sale-${sale.id}-${item.productId}-out`,
         productSnapshot: {
-          name: item.name,
+          name: item.productSnapshot?.name ?? item.name,
         },
       });
     }
   }
 
-  if ((sale.status === 'canceled' || sale.status === 'refunded') && previousStatus === 'completed') {
+  if ((isSaleCancelled(sale.status) || isSaleReversed(sale.status)) && isSalePosted(previousStatus)) {
     for (const item of items) {
       await applyInventoryMovement({
         storeId,
@@ -337,7 +342,7 @@ export async function syncSaleInventory({ storeId, tenantId, sale, previousStatu
         relatedSaleId: sale.id,
         movementId: `sale-${sale.id}-${item.productId}-reversal`,
         productSnapshot: {
-          name: item.name,
+          name: item.productSnapshot?.name ?? item.name,
         },
       });
     }
