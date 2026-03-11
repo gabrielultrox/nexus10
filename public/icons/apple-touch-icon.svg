@@ -1,21 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
   <defs>
     <linearGradient id="shellApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#060b16"/>
-      <stop offset="100%" stop-color="#0e1830"/>
+      <stop offset="0%" stop-color="#05070d"/>
+      <stop offset="100%" stop-color="#111722"/>
     </linearGradient>
     <linearGradient id="lineApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#58e4ff"/>
-      <stop offset="100%" stop-color="#14a4ff"/>
+      <stop offset="0%" stop-color="#cfe7ff"/>
+      <stop offset="100%" stop-color="#f7fbff"/>
     </linearGradient>
     <linearGradient id="accentApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffc24b"/>
-      <stop offset="100%" stop-color="#ff8a1c"/>
+      <stop offset="0%" stop-color="#26d7ff"/>
+      <stop offset="100%" stop-color="#1195f3"/>
     </linearGradient>
   </defs>
   <rect width="180" height="180" rx="42" fill="url(#shellApple)"/>
-  <rect x="18" y="18" width="144" height="144" rx="32" fill="none" stroke="url(#lineApple)" stroke-opacity=".5" stroke-width="2.5"/>
-  <path d="M58 129V51h14l31 47V51h15v78h-14L73 82v47Z" fill="#f7fbff"/>
-  <path d="M44 44h26" stroke="#31dbff" stroke-width="5.5" stroke-linecap="round"/>
-  <path d="M111 136h26" stroke="url(#accentApple)" stroke-width="5.5" stroke-linecap="round"/>
+  <rect x="18" y="18" width="144" height="144" rx="32" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
+  <path
+    d="M90 34 113 48 113 66 101 66 90 51 79 66 67 66 67 48Z
+       M50 61 73 61 82 76 74 90 62 82 54 97 62 112 74 104 82 118 73 132 50 132 36 110 45 98 36 85Z
+       M130 61 144 85 135 98 144 110 130 132 107 132 98 118 106 104 118 112 126 97 118 82 106 90 98 76 107 61Z
+       M77 84 90 73 103 84 96 96 90 87 84 96Z
+       M78 102 90 123 102 102 96 96 90 106 84 96Z"
+    fill="url(#lineApple)"
+  />
+  <path d="M90 73 103 86 77 86Z" fill="url(#accentApple)"/>
+  <path d="M38 36h5v31h-5zm10 0h5v42h-5zm10 0h5v25h-5z" fill="url(#accentApple)"/>
 </svg>

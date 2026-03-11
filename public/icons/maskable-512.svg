@@ -1,21 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="shellMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#060b16"/>
-      <stop offset="100%" stop-color="#0e1830"/>
+      <stop offset="0%" stop-color="#05070d"/>
+      <stop offset="100%" stop-color="#111722"/>
     </linearGradient>
     <linearGradient id="lineMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#58e4ff"/>
-      <stop offset="100%" stop-color="#14a4ff"/>
+      <stop offset="0%" stop-color="#cfe7ff"/>
+      <stop offset="100%" stop-color="#f7fbff"/>
     </linearGradient>
     <linearGradient id="accentMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffc24b"/>
-      <stop offset="100%" stop-color="#ff8a1c"/>
+      <stop offset="0%" stop-color="#26d7ff"/>
+      <stop offset="100%" stop-color="#1195f3"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#shellMask)"/>
-  <rect x="60" y="60" width="392" height="392" rx="108" fill="none" stroke="url(#lineMask)" stroke-opacity=".5" stroke-width="7"/>
-  <path d="M168 360V152h38l100 134V152h38v208h-38L206 226v134Z" fill="#f7fbff"/>
-  <path d="M132 132h72" stroke="#31dbff" stroke-width="16" stroke-linecap="round"/>
-  <path d="M308 380h72" stroke="url(#accentMask)" stroke-width="16" stroke-linecap="round"/>
+  <rect x="60" y="60" width="392" height="392" rx="108" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="5"/>
+  <path
+    d="M256 102 318 141 318 196 286 196 256 155 226 196 194 196 194 141Z
+       M149 177 210 177 235 218 212 263 180 241 157 279 180 317 212 295 235 340 210 378 149 378 112 298 135 274 112 249Z
+       M363 177 400 249 377 274 400 298 363 378 302 378 277 340 300 295 332 317 355 279 332 241 300 263 277 218 302 177Z
+       M224 239 256 207 288 239 271 267 256 244 241 267Z
+       M226 284 256 336 286 284 271 267 256 292 241 267Z"
+    fill="url(#lineMask)"
+  />
+  <path d="M256 207 288 239 224 239Z" fill="url(#accentMask)"/>
+  <path d="M116 108h16v80h-16zm27 0h16v110h-16zm27 0h16v66h-16z" fill="url(#accentMask)"/>
 </svg>

@@ -1,27 +1,36 @@
 <svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Nexus 10 ERP</title>
-  <desc id="desc">Icone minimalista cyberpunk com monograma N.</desc>
+  <desc id="desc">Emblema cyberpunk industrial inspirado em sinaletica de risco, adaptado para o Nexus 10 ERP.</desc>
   <defs>
     <linearGradient id="shell" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#060b16"/>
-      <stop offset="100%" stop-color="#0e1830"/>
+      <stop offset="0%" stop-color="#05070d"/>
+      <stop offset="100%" stop-color="#111722"/>
     </linearGradient>
     <linearGradient id="line" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#58e4ff"/>
-      <stop offset="100%" stop-color="#14a4ff"/>
+      <stop offset="0%" stop-color="#cfe7ff"/>
+      <stop offset="100%" stop-color="#f7fbff"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffc24b"/>
-      <stop offset="100%" stop-color="#ff8a1c"/>
+      <stop offset="0%" stop-color="#26d7ff"/>
+      <stop offset="100%" stop-color="#1195f3"/>
     </linearGradient>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#24cfff" flood-opacity=".24"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#86dfff" flood-opacity=".18"/>
     </filter>
   </defs>
 
   <rect x="14" y="14" width="228" height="228" rx="56" fill="url(#shell)"/>
-  <rect x="28" y="28" width="200" height="200" rx="42" fill="none" stroke="url(#line)" stroke-opacity=".5" stroke-width="3"/>
-  <path d="M82 182V74h22l48 66V74h22v108h-22l-48-66v66Z" fill="#f7fbff" filter="url(#glow)"/>
-  <path d="M64 64h40" stroke="#31dbff" stroke-width="8" stroke-linecap="round" stroke-opacity=".95"/>
-  <path d="M152 192h40" stroke="url(#accent)" stroke-width="8" stroke-linecap="round"/>
+  <rect x="27" y="27" width="202" height="202" rx="42" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
+
+  <path
+    d="M128 48 160 68 160 92 142 92 128 72 114 92 96 92 96 68Z
+       M73 86 105 86 118 108 106 126 88 114 76 134 88 154 106 142 118 160 105 182 73 182 54 150 66 132 54 114Z
+       M183 86 202 114 190 132 202 150 183 182 151 182 138 160 150 142 168 154 180 134 168 114 150 126 138 108 151 86Z
+       M110 118 128 104 146 118 136 136 128 124 120 136Z
+       M112 146 128 174 144 146 136 136 128 150 120 136Z"
+    fill="url(#line)"
+    filter="url(#glow)"
+  />
+  <path d="M128 104 146 122 110 122Z" fill="url(#accent)"/>
+  <path d="M56 50h8v44h-8zm14 0h8v60h-8zm14 0h8v36h-8z" fill="url(#accent)"/>
 </svg>
