@@ -2,6 +2,8 @@ import { formatCurrencyBRL, getChannelLabel, getOrderDomainStatusLabel, getPayme
 
 function OrderDetailPanel({
   selectedOrder,
+  isLoading,
+  requestedOrderId,
   canWrite,
   acting,
   onEdit,
@@ -54,8 +56,16 @@ function OrderDetailPanel({
 
       {!selectedOrder ? (
         <div className="entity-empty-state">
-          <p className="text-section-title">Selecione um pedido</p>
-          <p className="text-body">O detalhe completo aparece aqui assim que um pedido for escolhido.</p>
+          <p className="text-section-title">
+            {isLoading ? 'Carregando pedido' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
+          </p>
+          <p className="text-body">
+            {isLoading
+              ? 'Aguarde enquanto os dados do pedido sao preparados.'
+              : requestedOrderId
+                ? 'Nao localizei esse pedido na base atual ou ele ainda nao foi sincronizado.'
+                : 'O detalhe completo aparece aqui assim que um pedido for escolhido.'}
+          </p>
         </div>
       ) : (
         <div className="orders-domain__detail">

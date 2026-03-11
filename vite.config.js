@@ -63,14 +63,6 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: ({ request }) =>
-              ['style', 'script', 'worker'].includes(request.destination),
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'assets-cache',
-            },
-          },
-          {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
@@ -87,6 +79,9 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    proxy: {
+      '/api': 'http://127.0.0.1:8787',
+    },
   },
   build: {
     rollupOptions: {

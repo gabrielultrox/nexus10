@@ -2,7 +2,7 @@ import { formatCurrencyBRL } from '../../../services/commerce';
 import { getSaleStatusMeta } from '../../../services/sales';
 import { formatDateTime } from './salesModuleHelpers';
 
-function SalesDetailPanel({ selectedSale, canWrite, acting, onReverse, onCancel }) {
+function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, acting, onReverse, onCancel }) {
   return (
     <div className="sales-domain__detail-shell">
       <div className="sales-domain__detail-header">
@@ -25,8 +25,16 @@ function SalesDetailPanel({ selectedSale, canWrite, acting, onReverse, onCancel 
 
       {!selectedSale ? (
         <div className="entity-empty-state">
-          <p className="text-section-title">Selecione uma venda</p>
-          <p className="text-body">O detalhe completo aparece aqui assim que uma venda for escolhida.</p>
+          <p className="text-section-title">
+            {isLoading ? 'Carregando venda' : requestedSaleId ? 'Venda nao encontrada' : 'Selecione uma venda'}
+          </p>
+          <p className="text-body">
+            {isLoading
+              ? 'Aguarde enquanto os dados da venda sao preparados.'
+              : requestedSaleId
+                ? 'Nao localizei essa venda na base atual ou ela ainda nao foi sincronizada.'
+                : 'O detalhe completo aparece aqui assim que uma venda for escolhida.'}
+          </p>
         </div>
       ) : (
         <div className="sales-domain__detail">

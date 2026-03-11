@@ -8,6 +8,7 @@ import { NotificationsProvider } from './contexts/NotificationsContext';
 import { StoreProvider } from './contexts/StoreContext';
 import { ThemeProvider } from './hooks/useTheme';
 import { registerPwa } from './services/pwa';
+import { setupRuntimeRecovery } from './services/runtimeRecovery';
 import { initializeSoundManager } from './services/soundManager';
 import './styles/reset.css';
 import './styles/tokens.css';
@@ -30,6 +31,7 @@ import './styles/inventory.css';
 import './styles/audit-log.css';
 
 registerPwa();
+setupRuntimeRecovery();
 initializeSoundManager();
 
 ReactDOM.createRoot(document.getElementById('root')).render(

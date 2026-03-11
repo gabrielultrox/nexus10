@@ -131,6 +131,7 @@ function OrdersModule({
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [acting, setActing] = useState(false);
   const [formState, setFormState] = useState(() => createInitialFormState());
@@ -142,6 +143,7 @@ function OrdersModule({
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
+      setOrders([]);
       setLoading(false);
       return undefined;
     }
@@ -166,11 +168,53 @@ function OrdersModule({
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
+      setCustomers([]);
+      setProducts([]);
+      setCatalogLoading(false);
       return undefined;
     }
 
-    const unsubscribeCustomers = subscribeToCustomers(currentStoreId, setCustomers, () => {});
-    const unsubscribeProducts = subscribeToProducts(currentStoreId, setProducts, () => {});
+    let customersResolved = false;
+    let productsResolved = false;
+
+    function resolveCustomers() {
+      if (!customersResolved) {
+        customersResolved = true;
+        setCatalogLoading((current) => (productsResolved ? false : current));
+      }
+    }
+
+    function resolveProducts() {
+      if (!productsResolved) {
+        productsResolved = true;
+        setCatalogLoading((current) => (customersResolved ? false : current));
+      }
+    }
+
+    setCatalogLoading(true);
+
+    const unsubscribeCustomers = subscribeToCustomers(
+      currentStoreId,
+      (nextCustomers) => {
+        setCustomers(nextCustomers);
+        resolveCustomers();
+      },
+      (error) => {
+        setErrorMessage((current) => current || getFriendlyErrorMessage(error, 'Nao foi possivel carregar os clientes.'));
+        resolveCustomers();
+      },
+    );
+    const unsubscribeProducts = subscribeToProducts(
+      currentStoreId,
+      (nextProducts) => {
+        setProducts(nextProducts);
+        resolveProducts();
+      },
+      (error) => {
+        setErrorMessage((current) => current || getFriendlyErrorMessage(error, 'Nao foi possivel carregar os produtos.'));
+        resolveProducts();
+      },
+    );
 
     return () => {
       unsubscribeCustomers?.();
@@ -206,6 +250,8 @@ function OrdersModule({
   );
 
   const editingOrderId = viewMode === 'edit' ? selectedOrder?.id ?? orderId ?? null : null;
+  const showFormLoading = (viewMode === 'create' || viewMode === 'edit') && catalogLoading;
+  const showDetailLoading = viewMode === 'detail' && loading && Boolean(orderId) && !selectedOrder;
 
   useEffect(() => {
     const nextViewKey = `${viewMode}:${orderId ?? 'new'}`;
@@ -734,27 +780,36 @@ function OrdersModule({
           {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
           {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-          <OrderFormPanel
-            canWrite={can('orders:write')}
-            editingOrderId={editingOrderId}
-            customers={customers}
-            products={products}
-            formState={formState}
-            saving={saving}
-            draftItems={draftItems}
-            calculatedTotals={calculatedTotals}
-            sourceOptions={sourceOptions}
-            paymentOptions={paymentOptions}
-            onCancel={() => (editingOrderId ? onOpenDetail(editingOrderId) : onOpenList())}
-            onSubmit={handleSubmitAndNavigate}
-            onCustomerChange={handleCustomerChange}
-            onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
-            onAddressChange={updateAddressField}
-            onTotalsChange={updateTotalsField}
-            onItemChange={updateItem}
-            onAddItem={addItem}
-            onRemoveItem={removeItem}
-          />
+          {showFormLoading ? (
+            <SurfaceCard title={editingOrderId ? 'Editar pedido' : 'Novo pedido'}>
+              <div className="entity-empty-state">
+                <p className="text-section-title">Carregando apoio do formulario</p>
+                <p className="text-body">Clientes e produtos estao sendo preparados para o pedido.</p>
+              </div>
+            </SurfaceCard>
+          ) : (
+            <OrderFormPanel
+              canWrite={can('orders:write')}
+              editingOrderId={editingOrderId}
+              customers={customers}
+              products={products}
+              formState={formState}
+              saving={saving}
+              draftItems={draftItems}
+              calculatedTotals={calculatedTotals}
+              sourceOptions={sourceOptions}
+              paymentOptions={paymentOptions}
+              onCancel={() => (editingOrderId ? onOpenDetail(editingOrderId) : onOpenList())}
+              onSubmit={handleSubmitAndNavigate}
+              onCustomerChange={handleCustomerChange}
+              onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
+              onAddressChange={updateAddressField}
+              onTotalsChange={updateTotalsField}
+              onItemChange={updateItem}
+              onAddItem={addItem}
+              onRemoveItem={removeItem}
+            />
+          )}
         </>
       ) : null}
 
@@ -765,6 +820,8 @@ function OrdersModule({
 
           <OrderDetailPanel
             selectedOrder={selectedOrder}
+            isLoading={showDetailLoading}
+            requestedOrderId={orderId}
             canWrite={can('orders:write')}
             acting={acting}
             onEdit={() => selectedOrder && onOpenEdit(selectedOrder.id)}

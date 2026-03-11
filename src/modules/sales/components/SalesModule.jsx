@@ -40,6 +40,7 @@ function SalesModule({
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [referenceDataLoading, setReferenceDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [acting, setActing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +53,7 @@ function SalesModule({
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
+      setSales([]);
       setLoading(false);
       return undefined;
     }
@@ -76,11 +78,53 @@ function SalesModule({
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
+      setCustomers([]);
+      setProducts([]);
+      setReferenceDataLoading(false);
       return undefined;
     }
 
-    const unsubscribeCustomers = subscribeToCustomers(currentStoreId, setCustomers, () => {});
-    const unsubscribeProducts = subscribeToProducts(currentStoreId, setProducts, () => {});
+    let customersResolved = false;
+    let productsResolved = false;
+
+    function resolveCustomers() {
+      if (!customersResolved) {
+        customersResolved = true;
+        setReferenceDataLoading((current) => (productsResolved ? false : current));
+      }
+    }
+
+    function resolveProducts() {
+      if (!productsResolved) {
+        productsResolved = true;
+        setReferenceDataLoading((current) => (customersResolved ? false : current));
+      }
+    }
+
+    setReferenceDataLoading(true);
+
+    const unsubscribeCustomers = subscribeToCustomers(
+      currentStoreId,
+      (nextCustomers) => {
+        setCustomers(nextCustomers);
+        resolveCustomers();
+      },
+      (error) => {
+        setErrorMessage((current) => current || getFriendlyErrorMessage(error, 'Nao foi possivel carregar os clientes.'));
+        resolveCustomers();
+      },
+    );
+    const unsubscribeProducts = subscribeToProducts(
+      currentStoreId,
+      (nextProducts) => {
+        setProducts(nextProducts);
+        resolveProducts();
+      },
+      (error) => {
+        setErrorMessage((current) => current || getFriendlyErrorMessage(error, 'Nao foi possivel carregar os produtos.'));
+        resolveProducts();
+      },
+    );
 
     return () => {
       unsubscribeCustomers?.();
@@ -148,6 +192,8 @@ function SalesModule({
     () => sales.find((sale) => sale.id === saleId) ?? null,
     [sales, saleId],
   );
+  const showCreateLoading = viewMode === 'create' && referenceDataLoading;
+  const showDetailLoading = viewMode === 'detail' && loading && Boolean(saleId) && !selectedSale;
 
   const metrics = useMemo(() => {
     const posted = sales.filter((sale) => sale.domainStatus === 'POSTED');
@@ -346,24 +392,33 @@ function SalesModule({
           {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
           {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-          <SalesFormPanel
-            canWrite={can('sales:write')}
-            customers={customers}
-            products={products}
-            formState={formState}
-            saving={saving}
-            draftItems={draftItems}
-            calculatedTotals={calculatedTotals}
-            onCancel={onOpenList}
-            onSubmit={handleSubmit}
-            onCustomerChange={handleCustomerChange}
-            onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
-            onAddressChange={(field, value) => setFormState((current) => ({ ...current, address: { ...current.address, [field]: value } }))}
-            onTotalsChange={(field, value) => setFormState((current) => ({ ...current, totals: { ...current.totals, [field]: value } }))}
-            onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex !== index ? item : field === 'productId' ? { ...item, productId: value, unitPrice: String(products.find((entry) => entry.id === value)?.price ?? '') } : { ...item, [field]: value }) }))}
-            onAddItem={() => setFormState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
-            onRemoveItem={(index) => setFormState((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }))}
-          />
+          {showCreateLoading ? (
+            <SurfaceCard title="Nova venda">
+              <div className="entity-empty-state">
+                <p className="text-section-title">Carregando apoio do formulario</p>
+                <p className="text-body">Clientes e produtos estao sendo preparados para a venda.</p>
+              </div>
+            </SurfaceCard>
+          ) : (
+            <SalesFormPanel
+              canWrite={can('sales:write')}
+              customers={customers}
+              products={products}
+              formState={formState}
+              saving={saving}
+              draftItems={draftItems}
+              calculatedTotals={calculatedTotals}
+              onCancel={onOpenList}
+              onSubmit={handleSubmit}
+              onCustomerChange={handleCustomerChange}
+              onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
+              onAddressChange={(field, value) => setFormState((current) => ({ ...current, address: { ...current.address, [field]: value } }))}
+              onTotalsChange={(field, value) => setFormState((current) => ({ ...current, totals: { ...current.totals, [field]: value } }))}
+              onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex !== index ? item : field === 'productId' ? { ...item, productId: value, unitPrice: String(products.find((entry) => entry.id === value)?.price ?? '') } : { ...item, [field]: value }) }))}
+              onAddItem={() => setFormState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
+              onRemoveItem={(index) => setFormState((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }))}
+            />
+          )}
         </>
       ) : null}
 
@@ -374,6 +429,8 @@ function SalesModule({
 
           <SalesDetailPanel
             selectedSale={selectedSale}
+            isLoading={showDetailLoading}
+            requestedSaleId={saleId}
             canWrite={can('sales:write')}
             acting={acting}
             onReverse={() => handleStatusChange('REVERSED')}

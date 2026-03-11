@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import AppErrorBoundary from './components/system/AppErrorBoundary';
 import SystemBoot from './components/system/SystemBoot';
 import { useAuth } from './contexts/AuthContext';
 import AppRoutes from './routes';
@@ -13,9 +14,10 @@ import {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signOut } = useAuth();
-  const [bootVisible, setBootVisible] = useState(true);
+  const { isAuthenticated, loading } = useAuth();
+  const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
   const lastPathRef = useRef(location.pathname);
+  const bootVisible = !bootSequenceComplete || loading;
 
   useEffect(() => {
     const rootElement = document.documentElement;
@@ -45,14 +47,12 @@ function App() {
     }
   }, [bootVisible, location.pathname]);
 
-  async function handleBootComplete() {
-    if (isAuthenticated) {
-      await signOut();
+  useEffect(() => {
+    if (!bootSequenceComplete || loading) {
+      return;
     }
 
-    setBootVisible(false);
-
-    if (location.pathname !== '/login') {
+    if (!isAuthenticated && location.pathname !== '/login') {
       navigate('/login', {
         replace: true,
         state: {
@@ -61,12 +61,34 @@ function App() {
           },
         },
       });
+      return;
     }
+
+    if (isAuthenticated && location.pathname === '/login') {
+      const nextPath = location.state?.from?.pathname;
+
+      navigate(nextPath && nextPath !== '/login' ? nextPath : '/dashboard', {
+        replace: true,
+      });
+    }
+  }, [bootSequenceComplete, isAuthenticated, loading, location.pathname, location.state, navigate]);
+
+  function handleBootComplete() {
+    setBootSequenceComplete(true);
   }
 
   return (
     <>
-      <AppRoutes />
+      <AppErrorBoundary
+        resetKey={location.pathname}
+        onReset={() => {
+          if (location.pathname !== '/dashboard' && isAuthenticated) {
+            navigate('/dashboard', { replace: true });
+          }
+        }}
+      >
+        <AppRoutes />
+      </AppErrorBoundary>
       {bootVisible ? <SystemBoot onComplete={handleBootComplete} /> : null}
     </>
   );
