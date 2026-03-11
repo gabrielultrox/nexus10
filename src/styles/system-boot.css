@@ -1,0 +1,623 @@
+.system-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: block;
+  padding: 0;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--color-accent-cyan) 14%, transparent), transparent 32%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-red) 18%, transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-bg-page) 92%, transparent), var(--color-bg-canvas));
+  overflow: hidden;
+  animation: system-boot-fade-in 420ms both;
+}
+
+.system-boot--closing {
+  animation: system-boot-fade-out 520ms both;
+  pointer-events: none;
+}
+
+.system-boot__backdrop,
+.system-boot__grid,
+.system-boot__scanline,
+.system-boot__noise,
+.system-boot__glitch-band,
+.system-boot__horizon {
+  position: absolute;
+  inset: 0;
+}
+
+.system-boot__grid {
+  background:
+    linear-gradient(var(--surface-grid-line-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--surface-grid-line-strong) 1px, transparent 1px);
+  background-size: 100% 42px, 42px 100%;
+  opacity: 0.42;
+  transform: perspective(900px) rotateX(74deg) scale(1.25);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(180deg, transparent 6%, rgba(0, 0, 0, 0.95) 34%, rgba(0, 0, 0, 0.25) 100%);
+}
+
+.system-boot__scanline {
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-accent-cyan) 20%, transparent) 48%, transparent 100%);
+  opacity: 0.32;
+  animation: system-boot-scan 3.4s ease-in-out infinite;
+}
+
+.system-boot__noise {
+  background: repeating-linear-gradient(180deg, var(--surface-scanline) 0 1px, transparent 1px 5px);
+  opacity: 0.5;
+}
+
+.system-boot__glitch-band {
+  inset: 16% -8%;
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-red) 10%, transparent), transparent),
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent);
+  mix-blend-mode: screen;
+  opacity: 0.36;
+  animation: system-boot-glitch 6s steps(2, end) infinite;
+}
+
+.system-boot__horizon {
+  inset: auto -10% 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 34%, transparent), transparent);
+  opacity: 0.5;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--color-accent-cyan) 16%, transparent);
+}
+
+.system-boot__particle {
+  position: absolute;
+  left: var(--boot-particle-left);
+  top: var(--boot-particle-top);
+  width: var(--boot-particle-size);
+  height: var(--boot-particle-size);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent-cyan) 70%, white);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 28%, transparent);
+  animation: system-boot-particle var(--boot-particle-duration) ease-in-out infinite;
+  animation-delay: var(--boot-particle-delay);
+}
+
+.system-boot__shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  padding: clamp(18px, 2.4vw, 28px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 84%, transparent), color-mix(in srgb, var(--color-bg-canvas) 92%, transparent));
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.system-boot__shell::before,
+.system-boot__shell::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+}
+
+.system-boot__shell::before {
+  top: 0;
+  background: linear-gradient(90deg, transparent, var(--color-accent-red), var(--color-accent-cyan), transparent);
+}
+
+.system-boot__shell::after {
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 22%, transparent), transparent);
+  opacity: 0.6;
+}
+
+.system-boot__header,
+.system-boot__content,
+.system-boot__footer {
+  position: relative;
+  z-index: 1;
+}
+
+.system-boot__header,
+.system-boot__footer-meta,
+.system-boot__header-rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.system-boot__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.system-boot__brand-mark {
+  width: 20px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(204, 47, 60, 0.38));
+}
+
+.system-boot__brand strong,
+.system-boot__brand span,
+.system-boot__subsystem span,
+.system-boot__subsystem strong,
+.system-boot__metrics span,
+.system-boot__metrics strong {
+  display: block;
+}
+
+.system-boot__brand strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.system-boot__brand span,
+.system-boot__status-chip,
+.system-boot__eyebrow,
+.system-boot__console-head,
+.system-boot__footer-meta,
+.system-boot__subsystem span,
+.system-boot__metrics span {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.system-boot__status-chip {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-panel) 80%, transparent);
+}
+
+.system-boot__status-chip--dim {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-subtle);
+}
+
+.system-boot__subsystems {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.system-boot__subsystem {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-panel) 80%, transparent);
+}
+
+.system-boot__subsystem strong,
+.system-boot__metrics strong {
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  line-height: 1.1;
+}
+
+.system-boot__subsystem--danger {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent-red) 12%, transparent);
+}
+
+.system-boot__subsystem--info {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+}
+
+.system-boot__subsystem--success {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-semantic-success) 12%, transparent);
+}
+
+.system-boot__subsystem--special {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-semantic-special) 12%, transparent);
+}
+
+.system-boot__content {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(240px, 300px);
+  gap: clamp(14px, 2vw, 24px);
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+  padding-block: 2px;
+}
+
+.system-boot__telemetry,
+.system-boot__console,
+.system-boot__core {
+  min-height: 100%;
+  min-width: 0;
+}
+
+.system-boot__telemetry {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.system-boot__telemetry-card,
+.system-boot__console,
+.system-boot__core {
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 88%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--color-bg-card-alt) 74%, transparent);
+}
+
+.system-boot__telemetry-card {
+  padding: 14px 16px;
+}
+
+.system-boot__telemetry-card span,
+.system-boot__telemetry-card strong {
+  display: block;
+}
+
+.system-boot__telemetry-card span {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.system-boot__telemetry-card strong {
+  margin-top: 8px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+.system-boot__core {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  padding: clamp(18px, 2.4vw, 26px);
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 44%),
+    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-red) 12%, transparent), transparent 58%),
+    color-mix(in srgb, var(--color-bg-card-alt) 70%, transparent);
+}
+
+.system-boot__copy {
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+  text-align: center;
+  align-content: start;
+  justify-items: center;
+}
+
+.system-boot__copy-mark {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.system-boot__copy-mark-icon {
+  width: 34px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(204, 47, 60, 0.44));
+  animation: system-boot-bolt 2.4s ease-in-out infinite;
+}
+
+.system-boot__copy-mark-line {
+  width: 112px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-red) 42%, transparent), color-mix(in srgb, var(--color-accent-cyan) 38%, transparent), transparent);
+  opacity: 0.9;
+}
+
+.system-boot__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.1vw, 2.15rem);
+  line-height: 0.98;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  max-width: 15ch;
+  margin-inline: auto;
+  text-wrap: balance;
+}
+
+.system-boot__description {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 50ch;
+  margin-inline: auto;
+}
+
+.system-boot__metrics {
+  width: 100%;
+  max-width: 620px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.system-boot__metrics div {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
+  text-align: center;
+}
+
+.system-boot__metrics strong {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.system-boot__console {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.system-boot__console-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.system-boot__console-body {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  align-content: start;
+  overflow: auto;
+}
+
+.system-boot__line {
+  position: relative;
+  padding-left: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(4px);
+  animation: system-boot-line-in 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.system-boot__line::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+}
+
+.system-boot__line--danger::before {
+  color: var(--color-accent-red);
+}
+
+.system-boot__line--info::before {
+  color: var(--color-accent-cyan);
+}
+
+.system-boot__line--success::before {
+  color: var(--color-semantic-success);
+}
+
+.system-boot__line--special::before {
+  color: var(--color-semantic-special);
+}
+
+.system-boot__footer {
+  display: grid;
+  gap: 8px;
+}
+
+.system-boot__progress-track {
+  overflow: hidden;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-bg-card-alt) 84%, transparent);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.system-boot__progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, var(--color-accent-red), var(--color-accent-cyan)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22), transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent-cyan) 22%, transparent);
+  transition: width 140ms linear;
+}
+
+html.app-booting,
+html.app-booting body {
+  overflow: hidden;
+}
+
+@keyframes system-boot-fade-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes system-boot-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.02);
+    filter: blur(12px);
+  }
+}
+
+@keyframes system-boot-scan {
+  0% {
+    transform: translateY(-26%);
+    opacity: 0;
+  }
+
+  18%,
+  82% {
+    opacity: 0.36;
+  }
+
+  100% {
+    transform: translateY(26%);
+    opacity: 0;
+  }
+}
+
+@keyframes system-boot-glitch {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.18;
+  }
+
+  12% {
+    transform: translate3d(10px, -2px, 0);
+    opacity: 0.32;
+  }
+
+  14% {
+    transform: translate3d(-8px, 3px, 0);
+  }
+
+  16% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  58% {
+    transform: translate3d(-12px, 1px, 0);
+    opacity: 0.28;
+  }
+
+  60% {
+    transform: translate3d(8px, -3px, 0);
+  }
+
+  62% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes system-boot-particle {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.85);
+    opacity: 0.18;
+  }
+
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.15);
+    opacity: 0.88;
+  }
+}
+
+@keyframes system-boot-bolt {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 22px rgba(204, 47, 60, 0.48));
+  }
+
+  48% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 28px rgba(204, 47, 60, 0.56));
+  }
+
+  52% {
+    transform: scale(0.98);
+    filter: drop-shadow(0 0 18px rgba(204, 47, 60, 0.34));
+  }
+}
+
+@keyframes system-boot-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+
+  40% {
+    opacity: 0.7;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .system-boot__subsystems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .system-boot__content {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .system-boot__telemetry {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .system-boot__metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .system-boot__shell {
+    padding: 18px;
+  }
+
+  .system-boot__header,
+  .system-boot__footer-meta,
+  .system-boot__console-head,
+  .system-boot__header-rail {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .system-boot__subsystems,
+  .system-boot__telemetry {
+    grid-template-columns: 1fr;
+  }
+
+  .system-boot__title {
+    font-size: 1.22rem;
+  }
+
+  .system-boot__description {
+    font-size: 0.78rem;
+  }
+}

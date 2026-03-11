@@ -1,0 +1,15 @@
+.audit-log-toolbar {
+  grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(180px, 220px));
+}
+
+@media (max-width: 1180px) {
+  .audit-log-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .audit-log-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

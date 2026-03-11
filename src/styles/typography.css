@@ -1,0 +1,100 @@
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+.text-display,
+.text-section-title,
+.text-kpi {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.text-display {
+  font-family: var(--font-title);
+  font-size: clamp(3.6rem, 8vw, 5.8rem);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.text-page-title {
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 800;
+  line-height: 0.96;
+}
+
+.text-section-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.04;
+}
+
+.text-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.text-kpi,
+.text-metric-value {
+  font-size: clamp(2.2rem, 3vw, 3rem);
+  font-weight: 800;
+  line-height: 0.94;
+}
+
+.text-body {
+  color: var(--color-text-secondary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-caption,
+.text-label,
+.text-overline,
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.text-label {
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.text-overline {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-cyan);
+}
+
+.text-caption {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.text-mono {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.text-table-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}

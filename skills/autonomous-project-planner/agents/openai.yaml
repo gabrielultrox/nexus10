@@ -1,0 +1,4 @@
+interface:
+  display_name: "Autonomous Project Planner"
+  short_description: "Turn product ideas into dev roadmaps"
+  default_prompt: "Use $autonomous-project-planner to turn this product idea into a complete technical roadmap before coding."

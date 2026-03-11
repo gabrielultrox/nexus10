@@ -1,0 +1,42 @@
+import { useLocation } from 'react-router-dom';
+
+import { useAuth } from '../../contexts/AuthContext';
+import { useStore } from '../../contexts/StoreContext';
+import { getRouteByPathname } from '../../utils/routeCatalog';
+import NotificationCenter from '../notifications/NotificationCenter';
+import ThemeToggle from '../theme/ThemeToggle';
+
+function AppHeader() {
+  const location = useLocation();
+  const { session, signOut } = useAuth();
+  const { currentStoreId } = useStore();
+  const route = getRouteByPathname(location.pathname);
+  const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local';
+
+  return (
+    <header className="app-header">
+      <div className="app-header__intro">
+        <p className="app-header__eyebrow">{route.eyebrow} // nexus core</p>
+        <h1 className="app-header__title">{route.title}</h1>
+      </div>
+
+      <div className="app-header__actions">
+        <div className="app-header__status">
+          <span className="status-dot" />
+          <div>
+            <strong>{operatorLabel}</strong>
+            <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
+          </div>
+        </div>
+        <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
+        <NotificationCenter />
+        <button type="button" className="ui-button ui-button--ghost" onClick={signOut}>
+          Lock / logout
+        </button>
+        <ThemeToggle />
+      </div>
+    </header>
+  );
+}
+
+export default AppHeader;

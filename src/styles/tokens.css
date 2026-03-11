@@ -1,0 +1,302 @@
+:root {
+  --font-display: 'Syne', 'Segoe UI', sans-serif;
+  --font-title: 'Bebas Neue', 'Segoe UI', sans-serif;
+  --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
+  --font-mono: 'Share Tech Mono', 'Consolas', monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  --radius-xs: 8px;
+  --radius-sm: 14px;
+  --radius-md: 22px;
+  --radius-lg: 30px;
+  --radius-pill: 999px;
+
+  --border-thin: 1px;
+  --border-strong: 1px;
+
+  --shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 18px 46px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 28px 84px rgba(0, 0, 0, 0.48);
+  --shadow-focus: 0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 28%, transparent), 0 0 0 5px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+  --shadow-card-hover: 0 20px 52px rgba(0, 0, 0, 0.28);
+
+  --transition-fast: 160ms ease;
+  --transition-base: 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme='dark'] {
+  --color-bg-canvas: #040507;
+  --color-bg-page: #070911;
+  --color-bg-panel: rgba(7, 9, 17, 0.92);
+  --color-bg-card: rgba(9, 10, 17, 0.88);
+  --color-bg-card-alt: rgba(12, 14, 25, 0.96);
+  --color-bg-muted: rgba(16, 17, 30, 0.96);
+  --color-bg-input: rgba(8, 10, 18, 0.92);
+  --color-bg-overlay: rgba(2, 3, 8, 0.82);
+
+  --color-text-primary: #eceef5;
+  --color-text-secondary: #c4cde0;
+  --color-text-muted: #7a869e;
+  --color-text-disabled: #515d72;
+  --color-text-inverse: #05070d;
+
+  --color-border-subtle: rgba(0, 220, 255, 0.08);
+  --color-border-default: rgba(0, 220, 255, 0.16);
+  --color-border-strong: rgba(0, 220, 255, 0.4);
+
+  --color-accent-cyan: #00dcff;
+  --color-accent-cyan-strong: #6af3ff;
+  --color-accent-amber: #f5a623;
+  --color-accent-amber-strong: #ffcc71;
+  --color-accent-green: #1de99b;
+  --color-accent-red: #ff5b6e;
+  --color-accent-blue: #56a0f8;
+  --color-accent-purple: #c084fc;
+  --color-semantic-success: #1de99b;
+  --color-semantic-danger: #ff5b6e;
+  --color-semantic-warning: #f5a623;
+  --color-semantic-info: #56a0f8;
+  --color-semantic-special: #c084fc;
+  --color-semantic-brand: #00dcff;
+
+  --color-status-info-bg: rgba(0, 220, 255, 0.12);
+  --color-status-success-bg: rgba(29, 233, 155, 0.12);
+  --color-status-warning-bg: rgba(245, 166, 35, 0.12);
+  --color-status-danger-bg: rgba(255, 91, 110, 0.14);
+  --color-status-special-bg: rgba(192, 132, 252, 0.14);
+
+  --surface-panel: rgba(8, 10, 18, 0.68);
+  --surface-panel-strong: rgba(8, 10, 18, 0.9);
+  --surface-panel-soft: rgba(255, 255, 255, 0.03);
+  --surface-panel-soft-alt: rgba(255, 255, 255, 0.025);
+  --surface-panel-highlight: rgba(0, 220, 255, 0.06);
+  --surface-grid-line: rgba(255, 255, 255, 0.025);
+  --surface-scanline: rgba(255, 255, 255, 0.018);
+  --surface-grid-line-strong: rgba(255, 255, 255, 0.03);
+  --surface-logo-border: rgba(0, 220, 255, 0.18);
+  --surface-logo-inner-border: rgba(245, 166, 35, 0.2);
+  --surface-brand-chip: rgba(9, 10, 17, 0.96);
+  --surface-brand-mix-start: rgba(245, 166, 35, 0.22);
+  --surface-brand-mix-end: rgba(0, 220, 255, 0.2);
+  --surface-shell-edge: rgba(255, 255, 255, 0.03);
+  --surface-ring-accent: rgba(29, 233, 155, 0.14);
+  --surface-card-gloss: rgba(255, 255, 255, 0.04);
+  --surface-loader-bg: linear-gradient(180deg, rgba(7, 9, 17, 0.82), rgba(4, 5, 7, 0.92));
+
+  --gradient-app:
+    radial-gradient(circle at top left, rgba(0, 220, 255, 0.14), transparent 34%),
+    radial-gradient(circle at top right, rgba(245, 166, 35, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(7, 9, 17, 0.96), rgba(4, 5, 7, 1));
+  --gradient-card:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
+    linear-gradient(145deg, rgba(16, 17, 30, 0.96), rgba(8, 10, 18, 0.98));
+  --gradient-sidebar:
+    linear-gradient(180deg, rgba(7, 9, 17, 0.98), rgba(4, 5, 7, 0.98));
+  --gradient-shell-panel:
+    linear-gradient(145deg, rgba(12, 14, 25, 0.95), rgba(9, 10, 17, 0.9));
+  --gradient-brand-surface:
+    linear-gradient(135deg, rgba(245, 166, 35, 0.22), rgba(0, 220, 255, 0.2)),
+    rgba(9, 10, 17, 0.96);
+  --gradient-auth:
+    radial-gradient(circle at top, rgba(0, 220, 255, 0.12), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(245, 166, 35, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(5, 7, 13, 0.96), rgba(4, 5, 7, 1));
+  --gradient-link-active:
+    linear-gradient(135deg, rgba(245, 166, 35, 0.08), rgba(0, 220, 255, 0.12)),
+    rgba(9, 10, 17, 0.82);
+  --gradient-frame:
+    radial-gradient(circle at top, rgba(0, 220, 255, 0.08), transparent 25%),
+    linear-gradient(180deg, rgba(7, 9, 17, 0.96), rgba(4, 5, 7, 1));
+
+  --glow-cyan: 0 0 0 1px rgba(0, 220, 255, 0.18), 0 0 18px rgba(0, 220, 255, 0.12);
+  --glow-amber: 0 0 0 1px rgba(245, 166, 35, 0.16), 0 0 18px rgba(245, 166, 35, 0.12);
+  --glow-green: 0 0 0 1px rgba(29, 233, 155, 0.18), 0 0 16px rgba(29, 233, 155, 0.12);
+}
+
+:root[data-theme='light'] {
+  --color-bg-canvas: #edf1f7;
+  --color-bg-page: #f4f7fb;
+  --color-bg-panel: rgba(252, 253, 255, 0.94);
+  --color-bg-card: rgba(255, 255, 255, 0.94);
+  --color-bg-card-alt: rgba(247, 250, 255, 0.98);
+  --color-bg-muted: rgba(240, 245, 252, 0.98);
+  --color-bg-input: rgba(247, 250, 255, 0.98);
+  --color-bg-overlay: rgba(229, 236, 247, 0.82);
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #435066;
+  --color-text-muted: #6d7890;
+  --color-text-disabled: #9aa4ba;
+  --color-text-inverse: #f4f8ff;
+
+  --color-border-subtle: rgba(0, 125, 191, 0.1);
+  --color-border-default: rgba(0, 125, 191, 0.18);
+  --color-border-strong: rgba(0, 125, 191, 0.32);
+
+  --color-accent-cyan: #007dbf;
+  --color-accent-cyan-strong: #00a5d8;
+  --color-accent-amber: #c97a00;
+  --color-accent-amber-strong: #f5a623;
+  --color-accent-green: #008f5d;
+  --color-accent-red: #d74257;
+  --color-accent-blue: #2563eb;
+  --color-accent-purple: #9a6cff;
+  --color-semantic-success: #008f5d;
+  --color-semantic-danger: #d74257;
+  --color-semantic-warning: #c97a00;
+  --color-semantic-info: #2563eb;
+  --color-semantic-special: #9a6cff;
+  --color-semantic-brand: #007dbf;
+
+  --color-status-info-bg: rgba(0, 125, 191, 0.08);
+  --color-status-success-bg: rgba(0, 143, 93, 0.1);
+  --color-status-warning-bg: rgba(201, 122, 0, 0.12);
+  --color-status-danger-bg: rgba(215, 66, 87, 0.12);
+  --color-status-special-bg: rgba(154, 108, 255, 0.12);
+
+  --surface-panel: rgba(255, 255, 255, 0.82);
+  --surface-panel-strong: rgba(255, 255, 255, 0.96);
+  --surface-panel-soft: rgba(8, 34, 59, 0.045);
+  --surface-panel-soft-alt: rgba(8, 34, 59, 0.03);
+  --surface-panel-highlight: rgba(0, 125, 191, 0.08);
+  --surface-grid-line: rgba(17, 24, 39, 0.055);
+  --surface-scanline: rgba(17, 24, 39, 0.028);
+  --surface-grid-line-strong: rgba(17, 24, 39, 0.06);
+  --surface-logo-border: rgba(0, 125, 191, 0.16);
+  --surface-logo-inner-border: rgba(201, 122, 0, 0.16);
+  --surface-brand-chip: rgba(255, 255, 255, 0.94);
+  --surface-brand-mix-start: rgba(245, 166, 35, 0.12);
+  --surface-brand-mix-end: rgba(0, 125, 191, 0.12);
+  --surface-shell-edge: rgba(17, 24, 39, 0.06);
+  --surface-ring-accent: rgba(0, 143, 93, 0.16);
+  --surface-card-gloss: rgba(255, 255, 255, 0.6);
+  --surface-loader-bg: linear-gradient(180deg, rgba(244, 247, 251, 0.92), rgba(233, 239, 247, 0.96));
+
+  --gradient-app:
+    radial-gradient(circle at top left, rgba(0, 125, 191, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(245, 166, 35, 0.08), transparent 28%),
+    linear-gradient(180deg, #f7f9fc, #edf1f7);
+  --gradient-card:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
+    linear-gradient(145deg, #ffffff, #f6f9fd);
+  --gradient-sidebar:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.98));
+  --gradient-shell-panel:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 252, 0.96));
+  --gradient-brand-surface:
+    linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(0, 125, 191, 0.12)),
+    rgba(255, 255, 255, 0.94);
+  --gradient-auth:
+    radial-gradient(circle at top, rgba(0, 125, 191, 0.12), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(245, 166, 35, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(247, 249, 252, 0.98), rgba(237, 241, 247, 1));
+  --gradient-link-active:
+    linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(0, 125, 191, 0.1)),
+    rgba(255, 255, 255, 0.96);
+  --gradient-frame:
+    radial-gradient(circle at top, rgba(0, 125, 191, 0.08), transparent 25%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 245, 252, 1));
+
+  --glow-cyan: 0 0 0 1px rgba(0, 125, 191, 0.16), 0 0 18px rgba(0, 125, 191, 0.1);
+  --glow-amber: 0 0 0 1px rgba(201, 122, 0, 0.12), 0 0 18px rgba(201, 122, 0, 0.08);
+  --glow-green: 0 0 0 1px rgba(0, 143, 93, 0.14), 0 0 16px rgba(0, 143, 93, 0.1);
+}
+
+:root[data-theme='amber'] {
+  --color-bg-canvas: #d9ccb4;
+  --color-bg-page: #e7dbc6;
+  --color-bg-panel: rgba(249, 240, 220, 0.94);
+  --color-bg-card: rgba(252, 244, 227, 0.95);
+  --color-bg-card-alt: rgba(242, 229, 206, 0.98);
+  --color-bg-muted: rgba(233, 220, 193, 0.96);
+  --color-bg-input: rgba(252, 244, 229, 0.98);
+  --color-bg-overlay: rgba(91, 66, 32, 0.2);
+
+  --color-text-primary: #302114;
+  --color-text-secondary: #5f4730;
+  --color-text-muted: #89684a;
+  --color-text-disabled: #af9477;
+  --color-text-inverse: #fff7ea;
+
+  --color-border-subtle: rgba(143, 101, 34, 0.14);
+  --color-border-default: rgba(161, 113, 31, 0.24);
+  --color-border-strong: rgba(181, 129, 39, 0.44);
+
+  --color-accent-cyan: #3b7280;
+  --color-accent-cyan-strong: #4f8d9d;
+  --color-accent-amber: #a86c14;
+  --color-accent-amber-strong: #d39a33;
+  --color-accent-green: #537342;
+  --color-accent-red: #b6533f;
+  --color-accent-blue: #4f6fa8;
+  --color-accent-purple: #8d6b9f;
+  --color-semantic-success: #537342;
+  --color-semantic-danger: #b6533f;
+  --color-semantic-warning: #a86c14;
+  --color-semantic-info: #4f6fa8;
+  --color-semantic-special: #8d6b9f;
+  --color-semantic-brand: #a86c14;
+
+  --color-status-info-bg: rgba(79, 111, 168, 0.12);
+  --color-status-success-bg: rgba(83, 115, 66, 0.12);
+  --color-status-warning-bg: rgba(168, 108, 20, 0.16);
+  --color-status-danger-bg: rgba(182, 83, 63, 0.14);
+  --color-status-special-bg: rgba(141, 107, 159, 0.14);
+
+  --surface-panel: rgba(255, 247, 231, 0.78);
+  --surface-panel-strong: rgba(252, 241, 218, 0.94);
+  --surface-panel-soft: rgba(106, 76, 31, 0.06);
+  --surface-panel-soft-alt: rgba(106, 76, 31, 0.04);
+  --surface-panel-highlight: rgba(211, 154, 51, 0.1);
+  --surface-grid-line: rgba(86, 61, 28, 0.08);
+  --surface-scanline: rgba(122, 91, 48, 0.03);
+  --surface-grid-line-strong: rgba(86, 61, 28, 0.1);
+  --surface-logo-border: rgba(168, 108, 20, 0.2);
+  --surface-logo-inner-border: rgba(211, 154, 51, 0.18);
+  --surface-brand-chip: rgba(247, 236, 213, 0.94);
+  --surface-brand-mix-start: rgba(211, 154, 51, 0.18);
+  --surface-brand-mix-end: rgba(79, 111, 168, 0.08);
+  --surface-shell-edge: rgba(101, 73, 35, 0.1);
+  --surface-ring-accent: rgba(168, 108, 20, 0.18);
+  --surface-card-gloss: rgba(255, 249, 236, 0.52);
+  --surface-loader-bg: linear-gradient(180deg, rgba(247, 236, 213, 0.94), rgba(231, 219, 198, 0.98));
+
+  --gradient-app:
+    radial-gradient(circle at top left, rgba(211, 154, 51, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(138, 104, 56, 0.12), transparent 28%),
+    linear-gradient(180deg, #f0e4cd, #dcccae);
+  --gradient-card:
+    linear-gradient(180deg, rgba(255, 250, 239, 0.62), rgba(250, 239, 218, 0.62)),
+    linear-gradient(145deg, #fbf1da, #eeddbd);
+  --gradient-sidebar:
+    linear-gradient(180deg, rgba(248, 236, 211, 0.98), rgba(231, 216, 191, 0.98));
+  --gradient-shell-panel:
+    linear-gradient(145deg, rgba(251, 241, 219, 0.96), rgba(236, 221, 192, 0.96));
+  --gradient-brand-surface:
+    linear-gradient(135deg, rgba(211, 154, 51, 0.18), rgba(120, 89, 41, 0.12)),
+    rgba(249, 239, 218, 0.96);
+  --gradient-auth:
+    radial-gradient(circle at top, rgba(211, 154, 51, 0.16), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(122, 91, 48, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(248, 238, 216, 0.98), rgba(228, 214, 188, 1));
+  --gradient-link-active:
+    linear-gradient(135deg, rgba(211, 154, 51, 0.18), rgba(130, 97, 46, 0.1)),
+    rgba(250, 240, 218, 0.98);
+  --gradient-frame:
+    radial-gradient(circle at top, rgba(211, 154, 51, 0.12), transparent 25%),
+    linear-gradient(180deg, rgba(249, 239, 218, 0.98), rgba(231, 219, 198, 1));
+
+  --glow-cyan: 0 0 0 1px rgba(79, 111, 168, 0.14), 0 0 18px rgba(79, 111, 168, 0.08);
+  --glow-amber: 0 0 0 1px rgba(168, 108, 20, 0.18), 0 0 18px rgba(211, 154, 51, 0.14);
+  --glow-green: 0 0 0 1px rgba(83, 115, 66, 0.14), 0 0 16px rgba(83, 115, 66, 0.1);
+}

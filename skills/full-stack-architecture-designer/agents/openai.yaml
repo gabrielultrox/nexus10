@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full-Stack Architecture Designer"
+  short_description: "Design scalable app architectures"
+  default_prompt: "Use $full-stack-architecture-designer to design a scalable full-stack architecture for this application."

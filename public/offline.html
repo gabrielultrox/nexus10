@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus 10 Seguro · Offline</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at top, rgba(51, 217, 255, 0.12), transparent 36%),
+          linear-gradient(180deg, #07101d 0%, #050816 100%);
+        color: #f3f7ff;
+        font-family: Arial, sans-serif;
+      }
+
+      .offline-card {
+        width: min(460px, calc(100vw - 32px));
+        padding: 32px;
+        border-radius: 24px;
+        border: 1px solid rgba(72, 203, 255, 0.3);
+        background: rgba(10, 17, 31, 0.92);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: #33d9ff;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 34px;
+      }
+
+      p {
+        margin: 0 0 18px;
+        color: #b1bfd6;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="offline-card">
+      <p class="eyebrow">PWA Offline</p>
+      <h1>Sem conexão no momento</h1>
+      <p>O app segue disponível com os assets já cacheados. Assim que a rede voltar, os dados online serão atualizados.</p>
+    </main>
+  </body>
+</html>

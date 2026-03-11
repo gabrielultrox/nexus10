@@ -1,0 +1,109 @@
+import { Suspense, lazy } from 'react';
+import { Navigate, useRoutes } from 'react-router-dom';
+
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+import PublicOnlyRoute from '../components/auth/PublicOnlyRoute';
+import { routeDefinitions } from '../utils/routeCatalog';
+
+const MainLayout = lazy(() => import('../components/layout/MainLayout'));
+const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
+const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'));
+const CouriersPage = lazy(() => import('../pages/CouriersPage'));
+const CustomersPage = lazy(() => import('../pages/CustomersPage'));
+const DashboardPage = lazy(() => import('../pages/DashboardPage'));
+const FinancePage = lazy(() => import('../pages/FinancePage'));
+const InventoryPage = lazy(() => import('../pages/InventoryPage'));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const NativeModulePage = lazy(() => import('../pages/NativeModulePage'));
+const OrdersPage = lazy(() => import('../pages/OrdersPage'));
+const PosReportsPage = lazy(() => import('../pages/PosReportsPage'));
+const ProductsPage = lazy(() => import('../pages/ProductsPage'));
+const ReportsPage = lazy(() => import('../pages/ReportsPage'));
+const SalesPage = lazy(() => import('../pages/SalesPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+
+function RouteLoader() {
+  return (
+    <div className="page-stack">
+      <div className="native-module__empty-state">
+        <p className="text-section-title">Carregando modulo</p>
+        <p className="text-body">Preparando a tela e os dados desta area.</p>
+      </div>
+    </div>
+  );
+}
+
+function withRouteSuspense(element) {
+  return <Suspense fallback={<RouteLoader />}>{element}</Suspense>;
+}
+
+function getRouteElement(route) {
+  const pageElement = (() => {
+    switch (route.path) {
+      case 'dashboard':
+        return withRouteSuspense(<DashboardPage />);
+      case 'couriers':
+        return withRouteSuspense(<CouriersPage />);
+      case 'audit-log':
+        return withRouteSuspense(<AuditLogPage />);
+      case 'finance':
+        return withRouteSuspense(<FinancePage />);
+      case 'inventory':
+        return withRouteSuspense(<InventoryPage />);
+      case 'orders':
+        return withRouteSuspense(<OrdersPage />);
+      case 'pos-reports':
+        return withRouteSuspense(<PosReportsPage />);
+      case 'products':
+        return withRouteSuspense(<ProductsPage />);
+      case 'sales':
+        return withRouteSuspense(<SalesPage />);
+      case 'customers':
+        return withRouteSuspense(<CustomersPage />);
+      case 'reports':
+        return withRouteSuspense(<ReportsPage />);
+      case 'settings':
+        return withRouteSuspense(<SettingsPage />);
+      default:
+        return withRouteSuspense(<NativeModulePage route={route} />);
+    }
+  })();
+
+  return <ProtectedRoute requiredRoles={route.requiredRoles}>{pageElement}</ProtectedRoute>;
+}
+
+const appChildren = routeDefinitions.map((route) => ({
+  path: route.path,
+  element: getRouteElement(route),
+}));
+
+const routes = [
+  {
+    element: <PublicOnlyRoute />,
+    children: [{ path: '/login', element: withRouteSuspense(<LoginPage />) }],
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: '/',
+        element: withRouteSuspense(<MainLayout />),
+        children: [
+          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'couriers/:courierId', element: withRouteSuspense(<CourierProfilePage />) },
+          ...appChildren,
+        ],
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: <Navigate to="/dashboard" replace />,
+  },
+];
+
+function AppRoutes() {
+  return useRoutes(routes);
+}
+
+export default AppRoutes;
