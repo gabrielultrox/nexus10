@@ -95,6 +95,9 @@ const routes = [
         element: withRouteSuspense(<MainLayout />),
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'couriers', element: <Navigate to="/couriers/consulta" replace /> },
+          { path: 'couriers/consulta', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
+          { path: 'couriers/cadastro', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
           { path: 'couriers/:courierId', element: withRouteSuspense(<CourierProfilePage />) },
           ...appChildren,
         ],

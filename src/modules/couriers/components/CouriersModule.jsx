@@ -40,7 +40,7 @@ const initialCourierForm = {
   notes: '',
 };
 
-function CouriersModule() {
+function CouriersModule({ mode = 'lookup' }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const [filters, setFilters] = useState(initialFilters);
@@ -193,22 +193,18 @@ function CouriersModule() {
     }
   }
 
-  return (
-    <section className="couriers-module">
-      <CouriersStats items={stats} />
-
-      {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
-
+  function renderLookup() {
+    return (
       <div className="couriers-layout">
         <div className="couriers-layout__main">
           <SurfaceCard title="Base de entregadores">
             <div className="couriers-panel">
               <div className="couriers-panel__header">
                 <div>
-                  <p className="text-overline">Operacao de pista</p>
-                  <h3 className="text-section-title">Consulta rapida do time</h3>
+                  <p className="text-overline">Consulta operacional</p>
+                  <h3 className="text-section-title">Leitura rapida do time</h3>
                   <p className="text-body">
-                    Busque por nome, turno, status ou maquininha e mantenha a leitura do time leve durante o turno.
+                    Busque por nome, turno, status ou maquininha e abra o perfil do entregador sem disputar espaco com o cadastro.
                   </p>
                 </div>
                 <span className="ui-badge ui-badge--special">
@@ -223,12 +219,38 @@ function CouriersModule() {
         </div>
 
         <aside className="couriers-layout__aside">
-          <SurfaceCard title="Novo entregador">
+          <SurfaceCard title="Resumo da base">
+            <div className="couriers-aside-list">
+              <div className="couriers-aside-list__item">
+                <span>Ativos hoje</span>
+                <strong>{stats[1]?.value ?? 0} em operacao</strong>
+              </div>
+              <div className="couriers-aside-list__item">
+                <span>Fixos</span>
+                <strong>{stats[2]?.value ?? 0} permanentes</strong>
+              </div>
+              <div className="couriers-aside-list__item">
+                <span>Persistencia</span>
+                <strong>{canSyncCouriers ? 'Base compartilhada' : 'Base local'}</strong>
+              </div>
+            </div>
+          </SurfaceCard>
+        </aside>
+      </div>
+    );
+  }
+
+  function renderRegister() {
+    return (
+      <div className="couriers-layout">
+        <div className="couriers-layout__main">
+          <SurfaceCard title="Cadastrar entregador">
             <div className="couriers-register">
               <div className="couriers-register__intro">
-                <p className="text-overline">Cadastro rapido</p>
+                <p className="text-overline">Cadastro dedicado</p>
+                <h3 className="text-section-title">Entrada limpa para novos nomes</h3>
                 <p className="text-body">
-                  Um bloco simples para incluir nome, turno, status e maquininha sem pesar a tela.
+                  Preencha os dados operacionais em uma tela focada, sem cards de consulta competindo com o formulario.
                 </p>
               </div>
 
@@ -361,16 +383,18 @@ function CouriersModule() {
               </form>
             </div>
           </SurfaceCard>
+        </div>
 
-          <SurfaceCard title="Resumo de turno">
+        <aside className="couriers-layout__aside">
+          <SurfaceCard title="Resumo de cadastro">
             <div className="couriers-aside-list">
               <div className="couriers-aside-list__item">
-                <span>Em leitura</span>
-                <strong>{stats[1]?.value ?? 0} ativos hoje</strong>
+                <span>Total atual</span>
+                <strong>{stats[0]?.value ?? 0} entregadores na base</strong>
               </div>
               <div className="couriers-aside-list__item">
-                <span>Base fixa</span>
-                <strong>{stats[2]?.value ?? 0} entregadores permanentes</strong>
+                <span>Fixos</span>
+                <strong>{stats[2]?.value ?? 0} permanentes</strong>
               </div>
               <div className="couriers-aside-list__item">
                 <span>Persistencia</span>
@@ -380,6 +404,14 @@ function CouriersModule() {
           </SurfaceCard>
         </aside>
       </div>
+    );
+  }
+
+  return (
+    <section className="couriers-module">
+      <CouriersStats items={stats} />
+      {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+      {mode === 'register' ? renderRegister() : renderLookup()}
     </section>
   );
 }
