@@ -1,11 +1,13 @@
 .ui-card {
   position: relative;
   overflow: hidden;
-  background: var(--gradient-card);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
 }
 
 .ui-card::before,
@@ -13,10 +15,10 @@
   content: '';
   position: absolute;
   inset: 0 auto auto 0;
-  width: 100%;
+  width: 38%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-accent-amber), var(--color-accent-cyan), transparent);
-  opacity: 0.82;
+  background: linear-gradient(90deg, var(--color-accent-cyan), transparent);
+  opacity: 0.34;
 }
 
 .ui-card--interactive {
@@ -28,39 +30,41 @@
 }
 
 .ui-card--interactive:hover {
-  transform: translateY(-3px);
+  transform: translateY(calc(var(--border-thin) * -1));
   border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
 }
 
 .ui-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--surface-panel-strong);
+  background: color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-section);
   overflow: hidden;
   table-layout: auto;
   min-width: max(100%, 760px);
 }
 
 .ui-table th {
-  padding: 13px 14px;
-  background: var(--color-bg-card-alt);
+  padding: var(--space-3) var(--space-3-5);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
   border-bottom: var(--border-thin) solid var(--color-border-default);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: left;
-  color: var(--color-accent-cyan);
+  color: color-mix(in srgb, var(--color-accent-cyan) 72%, var(--color-text-muted));
   white-space: nowrap;
 }
 
 .ui-table td {
-  padding: 13px 14px;
+  padding: var(--space-3) var(--space-3-5);
   border-top: var(--border-thin) solid var(--color-border-subtle);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   vertical-align: middle;
   line-height: 1.45;
 }
@@ -70,7 +74,7 @@
 }
 
 .ui-table tbody tr:hover {
-  background: var(--surface-panel-highlight);
+  background: color-mix(in srgb, var(--surface-panel-highlight) 86%, transparent);
 }
 
 .entity-table__row--selected {
@@ -84,16 +88,16 @@
   min-height: 40px;
   padding: 9px 14px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 62%, transparent), transparent 42%),
-    var(--color-bg-input);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 28%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--color-bg-input));
   border: var(--border-thin) solid var(--color-border-default);
-  border-radius: 16px;
+  border-radius: var(--radius-field);
   color: var(--color-text-primary);
   font-size: 0.94rem;
   outline: none;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 20px color-mix(in srgb, var(--color-bg-page) 18%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 18%, transparent),
+    0 8px 18px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base),
@@ -113,7 +117,7 @@
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-cyan) 50%),
     linear-gradient(135deg, var(--color-accent-cyan) 50%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 62%, transparent), transparent 42%);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 28%, transparent), transparent 34%);
   background-position:
     calc(100% - 18px) calc(50% - 1px),
     calc(100% - 12px) calc(50% - 1px),
@@ -137,13 +141,13 @@
   box-shadow:
     var(--shadow-focus),
     0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 18%, transparent),
-    0 18px 34px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+    0 14px 28px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   transform: translateY(-1px);
 }
 
 .ui-field {
   display: grid;
-  gap: 8px;
+  gap: var(--space-1-5);
 }
 
 .ui-label {
@@ -161,12 +165,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: calc(var(--space-7) + var(--space-1));
+  min-height: calc(var(--space-6) + var(--space-2));
   padding: var(--space-2) var(--space-5);
   border: var(--border-thin) solid transparent;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: var(--space-3);
+  font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
@@ -184,7 +188,13 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.14), transparent 65%);
+  background:
+    linear-gradient(
+      115deg,
+      transparent,
+      color-mix(in srgb, var(--color-static-white) 14%, transparent),
+      transparent 65%
+    );
   transform: translateX(-140%);
   transition: transform var(--transition-slow);
 }
@@ -204,18 +214,18 @@
 .ui-button--primary {
   background: linear-gradient(135deg, var(--color-accent-amber), var(--color-accent-amber-strong));
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-accent-amber) 18%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-accent-amber) 14%, transparent);
 }
 
 .ui-button--secondary {
   background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-cyan-strong));
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-accent-cyan) 18%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-accent-cyan) 14%, transparent);
 }
 
 .ui-button--ghost {
-  background: var(--surface-panel);
-  border-color: var(--color-border-default);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 94%, transparent);
+  border-color: var(--color-border-subtle);
   color: var(--color-text-secondary);
 }
 
@@ -227,7 +237,7 @@
 
 .ui-button--danger {
   background: var(--color-status-danger-bg);
-  border-color: rgba(255, 91, 110, 0.24);
+  border-color: color-mix(in srgb, var(--color-accent-red) 24%, transparent);
   color: var(--color-accent-red);
 }
 
@@ -253,12 +263,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  min-height: calc(var(--space-4) + var(--space-1));
-  padding: var(--space-1) var(--space-2);
+  min-height: calc(var(--space-4) + var(--border-thin));
+  padding: var(--space-1) var(--space-2-5);
   border: var(--border-thin) solid transparent;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: var(--space-2);
+  font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   line-height: 1;
@@ -274,19 +284,19 @@
 
 .ui-badge--success {
   background: var(--color-status-success-bg);
-  border-color: rgba(29, 233, 155, 0.26);
+  border-color: color-mix(in srgb, var(--color-accent-green) 26%, transparent);
   color: var(--color-accent-green);
 }
 
 .ui-badge--warning {
   background: var(--color-status-warning-bg);
-  border-color: rgba(245, 166, 35, 0.26);
+  border-color: color-mix(in srgb, var(--color-accent-amber) 26%, transparent);
   color: var(--color-accent-amber);
 }
 
 .ui-badge--danger {
   background: var(--color-status-danger-bg);
-  border-color: rgba(255, 91, 110, 0.26);
+  border-color: color-mix(in srgb, var(--color-accent-red) 26%, transparent);
   color: var(--color-accent-red);
 }
 
@@ -301,12 +311,14 @@
   overflow: hidden;
   display: grid;
   gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
-  background: var(--gradient-card);
+  padding: var(--space-3-5) var(--space-4);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
   transition:
     transform var(--transition-base),
     border-color var(--transition-base),
@@ -321,15 +333,15 @@
 }
 
 .ui-kpi-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(calc(var(--border-thin) * -1));
   border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
 }
 
 .ui-kpi-card__label {
   margin-bottom: 0;
   font-family: var(--font-mono);
-  font-size: var(--space-2-5);
+  font-size: 0.62rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -346,8 +358,8 @@
 
 .ui-kpi-card__meta {
   margin-top: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--space-3-5);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
   line-height: 1.4;
 }
 
@@ -382,9 +394,11 @@
   max-height: calc(100vh - 32px);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  background: var(--gradient-card);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 22%, transparent), transparent 26%),
+    color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-panel);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }

@@ -49,8 +49,10 @@
   gap: var(--space-2);
   padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 18px;
-  background: var(--surface-panel-soft-alt);
+  border-radius: var(--radius-section);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .sales-detail__metric span,
@@ -76,10 +78,12 @@
 .sales-detail__items {
   display: grid;
   gap: 0;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
   overflow: hidden;
-  background: var(--surface-panel-soft-alt);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .sales-detail__summary-row,
@@ -136,10 +140,10 @@
   gap: var(--space-2);
   align-items: center;
   padding: var(--space-2);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 30%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
 
@@ -151,7 +155,7 @@
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 30%, transparent), transparent 22%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 24%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 14%, transparent);
 }
 
 .commerce-step__item-row {
@@ -166,7 +170,7 @@
 
 .commerce-step__item-row--header {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 34%, transparent), transparent 48%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 48%),
     color-mix(in srgb, var(--surface-panel-soft) 92%, var(--surface-panel));
 }
 
@@ -180,7 +184,9 @@
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border-subtle);
-  background: color-mix(in srgb, var(--surface-panel-strong) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface-panel-strong) 92%, transparent);
   backdrop-filter: blur(12px);
   border-radius: 0 0 var(--radius-section) var(--radius-section);
 }

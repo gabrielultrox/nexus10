@@ -18,16 +18,18 @@
 .native-module__panels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .native-module__form-shell {
   display: grid;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
-  background: var(--surface-panel-soft-alt);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .native-module__form-copy {
@@ -152,6 +154,10 @@
   gap: var(--space-3);
   flex-wrap: wrap;
   margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
 }
 
 .native-module__toolbar .ui-field {
@@ -180,7 +186,9 @@
   padding: var(--space-4) var(--space-4-5);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .native-module__list-item {
@@ -339,7 +347,9 @@
   padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
-  background: var(--surface-panel-soft-alt);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
   transition:
     border-color var(--duration-normal) var(--ease-standard);
 }
@@ -477,10 +487,10 @@
   gap: var(--space-4);
   padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 55%, transparent), transparent 28%),
-    var(--surface-panel-soft-alt);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 28%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .schedule-records__top {
@@ -587,10 +597,10 @@
   gap: var(--space-4);
   padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 56%, transparent), transparent 28%),
-    var(--surface-panel-soft-alt);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 28%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
   overflow: hidden;
   transition:
     transform var(--duration-normal) var(--ease-standard),
@@ -887,8 +897,8 @@
   border-left: 3px solid var(--color-accent-cyan);
   border-radius: var(--radius-card);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 55%, transparent), transparent 28%),
-    var(--surface-panel-soft-alt);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 28%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
 .machine-checklist__card--absent {
