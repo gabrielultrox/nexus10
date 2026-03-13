@@ -37,20 +37,27 @@ function CouriersPage() {
         }
       />
 
-      <div className="couriers-page-nav">
-        <NavLink
-          to="/couriers/consulta"
-          className={({ isActive }) => `ui-button ${isActive ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-        >
-          Consulta de entregadores
-        </NavLink>
-        <NavLink
-          to="/couriers/cadastro"
-          className={({ isActive }) => `ui-button ${isActive ? 'ui-button--primary' : 'ui-button--ghost'}`}
-        >
-          Cadastro de entregadores
-        </NavLink>
-      </div>
+      <section className="couriers-page-nav-shell">
+        <div className="couriers-page-nav-shell__header">
+          <span className="text-overline">Fluxo de trabalho</span>
+          <h2 className="text-section-title">Escolha a area de operacao</h2>
+        </div>
+
+        <div className="couriers-page-nav">
+          <NavLink
+            to="/couriers/consulta"
+            className={({ isActive }) => `ui-button ${isActive ? 'ui-button--secondary' : 'ui-button--ghost'}`}
+          >
+            Consulta de entregadores
+          </NavLink>
+          <NavLink
+            to="/couriers/cadastro"
+            className={({ isActive }) => `ui-button ${isActive ? 'ui-button--primary' : 'ui-button--ghost'}`}
+          >
+            Cadastro de entregadores
+          </NavLink>
+        </div>
+      </section>
 
       <CouriersModule
         mode={isRegisterMode ? 'register' : 'lookup'}

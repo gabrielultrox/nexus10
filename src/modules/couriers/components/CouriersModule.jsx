@@ -571,7 +571,19 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
 
   return (
     <section className="couriers-module">
-      <CouriersStats items={stats} />
+      <section className="couriers-overview">
+        <div className="couriers-overview__header">
+          <div>
+            <p className="text-overline">Panorama da base</p>
+            <h3 className="text-section-title">Visao geral dos entregadores</h3>
+          </div>
+          <span className="ui-badge ui-badge--info">
+            {canSyncCouriers ? 'Base compartilhada' : 'Base local'}
+          </span>
+        </div>
+
+        <CouriersStats items={stats} />
+      </section>
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       {mode === 'register' ? renderRegister() : renderLookup()}
     </section>
