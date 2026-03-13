@@ -5,6 +5,7 @@ import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
+import { seedBaseProducts } from '../../../services/baseDataSeed';
 import { firebaseReady } from '../../../services/firebase';
 import {
   createProduct,
@@ -58,6 +59,7 @@ function ProductsModule() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
@@ -226,6 +228,54 @@ function ProductsModule() {
     }
   }
 
+  async function handleSeedProducts() {
+    if (!can('catalog:write')) {
+      setErrorMessage('Seu perfil nao pode alterar o catalogo.')
+      playError()
+      return
+    }
+
+    if (!currentStoreId) {
+      setErrorMessage('Nenhuma store ativa disponivel para popular produtos.')
+      playError()
+      return
+    }
+
+    setSeeding(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
+
+    try {
+      const result = await seedBaseProducts({
+        storeId: currentStoreId,
+        tenantId,
+        existingProducts: products,
+      })
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'product.seeded',
+        entityType: 'product',
+        entityId: 'base-seed',
+        description: `Base inicial de produtos processada com ${result.createdCount} novos itens.`,
+      })
+
+      setFeedbackMessage(
+        result.createdCount > 0
+          ? `${result.createdCount} produtos iniciais adicionados.`
+          : 'A base inicial de produtos ja esta completa.',
+      )
+      playSuccess()
+    } catch (error) {
+      setErrorMessage(error.message)
+      playError()
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   function handleEdit(product) {
     setEditingProductId(product.id);
     setFormState(mapProductToForm(product));
@@ -279,9 +329,8 @@ function ProductsModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Produtos">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Firebase nao configurado</p>
         </div>
       </SurfaceCard>
     );
@@ -290,9 +339,8 @@ function ProductsModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Produtos">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione ou vincule uma store antes de operar o catalogo.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Nenhuma store ativa</p>
         </div>
       </SurfaceCard>
     );
@@ -343,6 +391,17 @@ function ProductsModule() {
                 <p className="text-body">Produtos que merecem revisao antes de faltar no turno.</p>
               </div>
             </div>
+          </div>
+
+          <div className="entity-form-actions entity-form-actions--inline">
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleSeedProducts}
+              disabled={seeding || saving || !can('catalog:write')}
+            >
+              {seeding ? 'Preparando base...' : 'Popular base inicial'}
+            </button>
           </div>
 
           <form className="entity-form-grid" onSubmit={handleSubmit}>
@@ -477,13 +536,12 @@ function ProductsModule() {
         </div>
 
         {loading ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Carregando produtos...</p>
+          <div className="module-empty-state">
+            <p className="module-empty-state__text">Carregando produtos</p>
           </div>
         ) : visibleProducts.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Nenhum produto encontrado</p>
-            <p className="text-body">Cadastre itens ou ajuste os filtros para continuar.</p>
+          <div className="module-empty-state">
+            <p className="module-empty-state__text">Nenhum produto encontrado</p>
           </div>
         ) : (
           <div className="entity-table-wrap">

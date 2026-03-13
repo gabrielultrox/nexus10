@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   CommerceFinishStep,
   CommerceItemsStep,
-} from '../../commerce/components/CommerceFormSections';
+} from '../../commerce/components/CommerceFormSections'
 
 function OrderFormPanel({
   canWrite,
@@ -27,6 +27,7 @@ function OrderFormPanel({
   onRemoveItem,
 }) {
   const [step, setStep] = useState(1)
+  const formRef = useRef(null)
   const hasValidItems = draftItems.some((item) => item.productId && Number(item.unitPrice) > 0)
   const summaryItems = draftItems
     .map((item, index) => ({
@@ -39,6 +40,28 @@ function OrderFormPanel({
   useEffect(() => {
     setStep(1)
   }, [editingOrderId])
+
+  useEffect(() => {
+    if (step !== 2) {
+      return undefined
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setStep(1)
+        return
+      }
+
+      if (event.key === 'Enter' && event.ctrlKey && canWrite && !saving && hasValidItems) {
+        event.preventDefault()
+        formRef.current?.requestSubmit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeydown)
+    return () => window.removeEventListener('keydown', handleKeydown)
+  }, [canWrite, hasValidItems, saving, step])
 
   return (
     <div className="orders-domain__detail-shell">
@@ -65,7 +88,7 @@ function OrderFormPanel({
             onAdvance={() => setStep(2)}
           />
         ) : (
-          <form className="commerce-wizard__form" onSubmit={onSubmit}>
+          <form ref={formRef} className="commerce-wizard__form" onSubmit={onSubmit}>
             <CommerceFinishStep
               identityProps={{
                 eyebrow: 'Comercial',
@@ -85,7 +108,7 @@ function OrderFormPanel({
               }}
               addressProps={{
                 eyebrow: 'Entrega',
-                title: 'Endereço e observações',
+                title: 'Endereco e observacoes',
                 itemPrefix: 'order',
                 address: formState.address,
                 notes: formState.notes,
@@ -114,7 +137,7 @@ function OrderFormPanel({
                   Cancelar
                 </button>
                 <button type="submit" className="ui-button ui-button--primary" disabled={saving || !canWrite}>
-                  {saving ? 'Salvando...' : 'Lançar'}
+                  {saving ? 'Salvando...' : 'Lancar'}
                 </button>
               </div>
             </div>
@@ -125,4 +148,4 @@ function OrderFormPanel({
   )
 }
 
-export default OrderFormPanel;
+export default OrderFormPanel

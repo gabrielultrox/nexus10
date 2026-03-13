@@ -311,9 +311,8 @@ function SalesModule({
   if (!firebaseReady || !currentStoreId) {
     return (
       <SurfaceCard title="Vendas">
-        <div className="entity-empty-state">
-          <p className="text-section-title">{firebaseReady ? 'Nenhuma loja ativa' : 'Firebase nao configurado'}</p>
-          <p className="text-body">{firebaseReady ? 'Selecione uma loja antes de operar o dominio de vendas.' : 'Configure as variaveis VITE_FIREBASE_* para usar persistencia real.'}</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">{firebaseReady ? 'Nenhuma loja ativa' : 'Firebase nao configurado'}</p>
         </div>
       </SurfaceCard>
     );
@@ -355,9 +354,9 @@ function SalesModule({
 
             <div className="sales-domain__list-shell sales-domain__list-shell--full">
               {loading ? (
-                <div className="entity-empty-state"><p className="text-section-title">Carregando vendas...</p></div>
+                <div className="module-empty-state"><p className="module-empty-state__text">Carregando vendas</p></div>
               ) : visibleSales.length === 0 ? (
-                <div className="entity-empty-state"><p className="text-section-title">Nenhuma venda encontrada</p><p className="text-body">Ajuste os filtros ou lance uma nova venda para preencher a lista.</p></div>
+                <div className="module-empty-state"><p className="module-empty-state__text">Nenhuma venda encontrada</p></div>
               ) : (
                 <div className="entity-table-wrap">
                   <table className="ui-table">
@@ -393,9 +392,8 @@ function SalesModule({
 
           {showCreateLoading ? (
             <SurfaceCard title="Nova venda">
-              <div className="entity-empty-state">
-                <p className="text-section-title">Carregando apoio do formulario</p>
-                <p className="text-body">Clientes e produtos estao sendo preparados para a venda.</p>
+              <div className="module-empty-state">
+                <p className="module-empty-state__text">Carregando apoio do formulario</p>
               </div>
             </SurfaceCard>
           ) : (

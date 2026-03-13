@@ -182,6 +182,11 @@
   padding-top: 0;
 }
 
+.entity-form-actions--inline {
+  justify-content: flex-start;
+  padding-top: 0;
+}
+
 .entity-toolbar-shell {
   display: grid;
   gap: var(--space-4);

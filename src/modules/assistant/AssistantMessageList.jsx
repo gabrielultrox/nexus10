@@ -37,7 +37,8 @@ function AssistantMessageList({ messages, onNavigate }) {
                   key={`${message.id}-${card.id}`}
                   type="button"
                   className="assistant-result-card"
-                  onClick={() => onNavigate(card.route)}
+                  onClick={() => card.route && onNavigate(card.route)}
+                  disabled={!card.route}
                 >
                   <span className="assistant-result-card__type">{cardTypeLabelMap[card.type] ?? 'resultado'}</span>
                   <strong>{card.title}</strong>

@@ -577,9 +577,8 @@ function OrdersModule({
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Pedidos">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Firebase nao configurado</p>
         </div>
       </SurfaceCard>
     );
@@ -588,9 +587,8 @@ function OrdersModule({
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Pedidos">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma loja ativa</p>
-          <p className="text-body">Selecione uma loja antes de operar o dominio de pedidos.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Nenhuma loja ativa</p>
         </div>
       </SurfaceCard>
     );
@@ -727,13 +725,12 @@ function OrdersModule({
 
             <div className="orders-domain__list-shell orders-domain__list-shell--full">
               {loading ? (
-                <div className="entity-empty-state">
-                  <p className="text-section-title">Carregando pedidos...</p>
+                <div className="module-empty-state">
+                  <p className="module-empty-state__text">Carregando pedidos</p>
                 </div>
               ) : visibleOrders.length === 0 ? (
-                <div className="entity-empty-state">
-                  <p className="text-section-title">Nenhum pedido encontrado</p>
-                  <p className="text-body">Crie um novo pedido ou ajuste os filtros para continuar.</p>
+                <div className="module-empty-state">
+                  <p className="module-empty-state__text">Nenhum pedido encontrado</p>
                 </div>
               ) : (
                 <div className="entity-table-wrap">
@@ -781,9 +778,8 @@ function OrdersModule({
 
           {showFormLoading ? (
             <SurfaceCard title={editingOrderId ? 'Editar pedido' : 'Novo pedido'}>
-              <div className="entity-empty-state">
-                <p className="text-section-title">Carregando apoio do formulario</p>
-                <p className="text-body">Clientes e produtos estao sendo preparados para o pedido.</p>
+              <div className="module-empty-state">
+                <p className="module-empty-state__text">Carregando apoio do formulario</p>
               </div>
             </SurfaceCard>
           ) : (

@@ -1,15 +1,24 @@
-import { formatCurrencyBRL } from '../../../services/commerce';
-import { printSaleTicket } from '../../../services/commercePrint';
-import { getSaleStatusMeta } from '../../../services/sales';
-import { formatDateTime } from './salesModuleHelpers';
+import { formatCurrencyBRL } from '../../../services/commerce'
+import { printSaleTicket } from '../../../services/commercePrint'
+import { getSaleStatusMeta } from '../../../services/sales'
+import { formatDateTime } from './salesModuleHelpers'
 
-function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, acting, onReverse, onCancel }) {
+function SalesDetailPanel({
+  selectedSale,
+  isLoading,
+  requestedSaleId,
+  canWrite,
+  acting,
+  onReverse,
+  onCancel,
+}) {
+  const statusMeta = selectedSale ? getSaleStatusMeta(selectedSale.domainStatus) : null
+
   return (
     <div className="sales-domain__detail-shell">
       <div className="sales-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe da Venda</p>
-          <p className="text-body">Consulte o efeito operacional e financeiro da venda selecionada.</p>
         </div>
 
         {selectedSale ? (
@@ -21,10 +30,20 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
             >
               Imprimir venda
             </button>
-            <button type="button" className="ui-button ui-button--warning" onClick={onReverse} disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}>
+            <button
+              type="button"
+              className="ui-button ui-button--warning"
+              onClick={onReverse}
+              disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}
+            >
               Estornar venda
             </button>
-            <button type="button" className="ui-button ui-button--danger" onClick={onCancel} disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}>
+            <button
+              type="button"
+              className="ui-button ui-button--danger"
+              onClick={onCancel}
+              disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}
+            >
               Cancelar venda
             </button>
           </div>
@@ -41,7 +60,7 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
         <div className="sales-domain__detail">
           <div className="commerce-detail-band">
             <span className="ui-badge ui-badge--info">{selectedSale.channelLabel}</span>
-            <span className={`ui-badge ${getSaleStatusMeta(selectedSale.domainStatus).badgeClass}`}>{getSaleStatusMeta(selectedSale.domainStatus).label}</span>
+            <span className={`ui-badge ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
             <span className={`ui-badge ${selectedSale.stockPosted ? 'ui-badge--success' : 'ui-badge--warning'}`}>
               {selectedSale.stockPosted ? 'Estoque publicado' : 'Estoque pendente'}
             </span>
@@ -51,12 +70,36 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
           </div>
 
           <div className="sales-domain__detail-grid">
-            <div className="sales-domain__detail-card"><span>Venda</span><strong>{selectedSale.number}</strong><small>{selectedSale.code}</small></div>
-            <div className="sales-domain__detail-card"><span>Cliente</span><strong>{selectedSale.customerSnapshot?.name || 'Cliente avulso'}</strong><small>{selectedSale.customerSnapshot?.phone || 'Sem telefone'}</small></div>
-            <div className="sales-domain__detail-card"><span>Canal</span><strong>{selectedSale.channelLabel}</strong><small>{selectedSale.source === 'ORDER' ? `Pedido ${selectedSale.orderId ?? '-'}` : 'Venda direta'}</small></div>
-            <div className="sales-domain__detail-card"><span>Status</span><strong>{getSaleStatusMeta(selectedSale.domainStatus).label}</strong><small>{selectedSale.stockPosted ? 'Estoque publicado' : 'Estoque pendente'}</small></div>
-            <div className="sales-domain__detail-card"><span>Pagamento</span><strong>{selectedSale.paymentMethodLabel}</strong><small>{selectedSale.financialPosted ? 'Financeiro publicado' : 'Financeiro pendente'}</small></div>
-            <div className="sales-domain__detail-card"><span>Criada em</span><strong>{formatDateTime(selectedSale.createdAtDate ?? selectedSale.createdAt)}</strong><small>Lancada em {formatDateTime(selectedSale.launchedAtDate ?? selectedSale.launchedAt)}</small></div>
+            <div className="sales-domain__detail-card">
+              <span>Venda</span>
+              <strong>{selectedSale.number}</strong>
+              <small>{selectedSale.code}</small>
+            </div>
+            <div className="sales-domain__detail-card">
+              <span>Cliente</span>
+              <strong>{selectedSale.customerSnapshot?.name || 'Cliente avulso'}</strong>
+              <small>{selectedSale.customerSnapshot?.phone || 'Sem telefone'}</small>
+            </div>
+            <div className="sales-domain__detail-card">
+              <span>Canal</span>
+              <strong>{selectedSale.channelLabel}</strong>
+              <small>{selectedSale.source === 'ORDER' ? `Pedido ${selectedSale.orderId ?? '-'}` : 'Venda direta'}</small>
+            </div>
+            <div className="sales-domain__detail-card">
+              <span>Status</span>
+              <strong>{statusMeta.label}</strong>
+              <small>{selectedSale.stockPosted ? 'Estoque publicado' : 'Aguardando postagem de estoque'}</small>
+            </div>
+            <div className="sales-domain__detail-card">
+              <span>Pagamento</span>
+              <strong>{selectedSale.paymentMethodLabel}</strong>
+              <small>{selectedSale.financialPosted ? 'Financeiro publicado' : 'Aguardando financeiro'}</small>
+            </div>
+            <div className="sales-domain__detail-card">
+              <span>Criada em</span>
+              <strong>{formatDateTime(selectedSale.createdAtDate ?? selectedSale.createdAt)}</strong>
+              <small>Lancada em {formatDateTime(selectedSale.launchedAtDate ?? selectedSale.launchedAt)}</small>
+            </div>
           </div>
 
           <div className="sales-domain__detail-panels">
@@ -77,10 +120,34 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
             </div>
           </div>
 
-          <div className="sales-domain__notes">
-            <span className="sales-domain__notes-label">Observacoes</span>
-            <p>{selectedSale.notes || 'Nenhuma observacao registrada.'}</p>
-            <p>{selectedSale.orderId ? `Pedido vinculado: ${selectedSale.orderId}` : 'Venda criada diretamente.'}</p>
+          <div className="sales-domain__detail-panels">
+            <div className={`sales-domain__timeline-card${selectedSale.domainStatus !== 'POSTED' ? ' sales-domain__timeline-card--muted' : ''}`}>
+              <span className="sales-domain__notes-label">Publicacao operacional</span>
+              <div className="sales-domain__timeline-list">
+                <div className="sales-domain__timeline-step">
+                  <strong>Origem</strong>
+                  <p>{selectedSale.source === 'ORDER' ? `Gerada do pedido ${selectedSale.orderId ?? '-'}` : 'Venda criada diretamente'}</p>
+                </div>
+                <div className="sales-domain__timeline-step">
+                  <strong>Estoque</strong>
+                  <p>{selectedSale.stockPosted ? 'Movimento aplicado no estoque' : 'Ainda nao publicado no estoque'}</p>
+                </div>
+                <div className="sales-domain__timeline-step">
+                  <strong>Financeiro</strong>
+                  <p>{selectedSale.financialPosted ? 'Receita registrada no financeiro' : 'Ainda nao publicada no financeiro'}</p>
+                </div>
+                <div className="sales-domain__timeline-step">
+                  <strong>Auditoria</strong>
+                  <p>{selectedSale.launchedBy ? `Lancada por ${selectedSale.launchedBy.name ?? selectedSale.launchedBy.email ?? 'operador'}` : 'Sem operador informado'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="sales-domain__notes">
+              <span className="sales-domain__notes-label">Observacoes</span>
+              <p>{selectedSale.notes || 'Nenhuma observacao registrada.'}</p>
+              <p>{selectedSale.orderId ? `Pedido vinculado: ${selectedSale.orderId}` : 'Venda criada diretamente.'}</p>
+            </div>
           </div>
 
           <div className="sales-domain__items-list">
@@ -98,7 +165,7 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default SalesDetailPanel;
+export default SalesDetailPanel

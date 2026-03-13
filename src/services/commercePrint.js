@@ -43,6 +43,7 @@ function buildDocumentTitle(type, code) {
 function buildOrderPrintModel(order) {
   return {
     title: buildDocumentTitle('order', order.number || order.code),
+    brand: 'Hora Dez Conveniencia',
     eyebrow: 'Comprovante operacional',
     typeLabel: 'Pedido',
     code: order.number || order.code || '--',
@@ -82,6 +83,7 @@ function buildOrderPrintModel(order) {
 function buildSalePrintModel(sale) {
   return {
     title: buildDocumentTitle('sale', sale.number || sale.code),
+    brand: 'Hora Dez Conveniencia',
     eyebrow: 'Comprovante operacional',
     typeLabel: 'Venda',
     code: sale.number || sale.code || '--',
@@ -202,10 +204,12 @@ function buildPrintHtml(model) {
       }
 
       .print-ticket__header {
+        display: grid;
         gap: 2mm;
       }
 
       .print-ticket__eyebrow,
+      .print-ticket__brand,
       .print-ticket__label,
       .print-ticket__meta span,
       .print-ticket__notes-label {
@@ -217,11 +221,22 @@ function buildPrintHtml(model) {
         text-transform: uppercase;
       }
 
+      .print-ticket__brand {
+        color: #0f172a;
+        letter-spacing: 0.12em;
+      }
+
       .print-ticket__title {
         margin: 1.6mm 0 0;
         font-family: "Syne", "Segoe UI", sans-serif;
         font-size: 6.4mm;
         line-height: 1.02;
+      }
+
+      .print-ticket__subtitle {
+        margin: 0;
+        color: #475569;
+        font-size: 3.1mm;
       }
 
       .print-ticket__meta {
@@ -336,8 +351,10 @@ function buildPrintHtml(model) {
   <body>
     <main class="print-ticket">
       <section class="print-ticket__header">
+        <span class="print-ticket__brand">${escapeHtml(model.brand)}</span>
         <span class="print-ticket__eyebrow">${escapeHtml(model.eyebrow)}</span>
         <h1 class="print-ticket__title">${escapeHtml(model.typeLabel)} ${escapeHtml(model.code)}</h1>
+        <p class="print-ticket__subtitle">${escapeHtml(model.linkLabel)}</p>
         <div class="print-ticket__meta">
           <div>
             <span>Status</span>
@@ -387,8 +404,8 @@ function buildPrintHtml(model) {
           <span class="print-ticket__notes-label">Observacoes</span>
           <p>${escapeHtml(model.notes)}</p>
         </div>
-        <p class="print-ticket__footer-note">${escapeHtml(model.linkLabel)}</p>
-        <p>Atualizado em ${escapeHtml(model.updatedAt)}</p>
+        <p class="print-ticket__footer-note">Atualizado em ${escapeHtml(model.updatedAt)}</p>
+        <p>Impressao operacional para conferencia rapida.</p>
       </section>
     </main>
     <script>

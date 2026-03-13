@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   CommerceFinishStep,
   CommerceItemsStep,
-} from '../../commerce/components/CommerceFormSections';
-import { channelOptions, paymentOptions } from './salesModuleHelpers';
+} from '../../commerce/components/CommerceFormSections'
+import { channelOptions, paymentOptions } from './salesModuleHelpers'
 
 function SalesFormPanel({
   canWrite,
@@ -25,6 +25,7 @@ function SalesFormPanel({
   onRemoveItem,
 }) {
   const [step, setStep] = useState(1)
+  const formRef = useRef(null)
   const hasValidItems = draftItems.some((item) => item.productId && Number(item.unitPrice) > 0)
   const summaryItems = draftItems
     .map((item, index) => ({
@@ -37,6 +38,28 @@ function SalesFormPanel({
   useEffect(() => {
     setStep(1)
   }, [])
+
+  useEffect(() => {
+    if (step !== 2) {
+      return undefined
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setStep(1)
+        return
+      }
+
+      if (event.key === 'Enter' && event.ctrlKey && canWrite && !saving && hasValidItems) {
+        event.preventDefault()
+        formRef.current?.requestSubmit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeydown)
+    return () => window.removeEventListener('keydown', handleKeydown)
+  }, [canWrite, hasValidItems, saving, step])
 
   return (
     <div className="sales-domain__detail-shell">
@@ -63,10 +86,10 @@ function SalesFormPanel({
             onAdvance={() => setStep(2)}
           />
         ) : (
-          <form className="commerce-wizard__form" onSubmit={onSubmit}>
+          <form ref={formRef} className="commerce-wizard__form" onSubmit={onSubmit}>
             <CommerceFinishStep
               identityProps={{
-                eyebrow: 'Finalização',
+                eyebrow: 'Finalizacao',
                 title: 'Cliente, canal e pagamento',
                 channelId: 'sale-channel',
                 channelField: 'channel',
@@ -83,7 +106,7 @@ function SalesFormPanel({
               }}
               addressProps={{
                 eyebrow: 'Entrega',
-                title: 'Endereço e observações',
+                title: 'Endereco e observacoes',
                 itemPrefix: 'sale',
                 address: formState.address,
                 notes: formState.notes,
@@ -112,7 +135,7 @@ function SalesFormPanel({
                   Cancelar
                 </button>
                 <button type="submit" className="ui-button ui-button--primary" disabled={saving || !canWrite}>
-                  {saving ? 'Lançando...' : 'Lançar'}
+                  {saving ? 'Lancando...' : 'Lancar'}
                 </button>
               </div>
             </div>
@@ -123,4 +146,4 @@ function SalesFormPanel({
   )
 }
 
-export default SalesFormPanel;
+export default SalesFormPanel

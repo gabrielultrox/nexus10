@@ -5,6 +5,7 @@ import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
+import { seedBaseCustomers } from '../../../services/baseDataSeed';
 import { firebaseReady } from '../../../services/firebase';
 import {
   createCustomer,
@@ -46,6 +47,7 @@ function CustomersModule() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
@@ -206,6 +208,54 @@ function CustomersModule() {
     }
   }
 
+  async function handleSeedCustomers() {
+    if (!can('customers:write')) {
+      setErrorMessage('Seu perfil nao pode alterar clientes.')
+      playError()
+      return
+    }
+
+    if (!currentStoreId) {
+      setErrorMessage('Nenhuma store ativa disponivel para popular a base.')
+      playError()
+      return
+    }
+
+    setSeeding(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
+
+    try {
+      const result = await seedBaseCustomers({
+        storeId: currentStoreId,
+        tenantId,
+        existingCustomers: customers,
+      })
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'customer.seeded',
+        entityType: 'customer',
+        entityId: 'base-seed',
+        description: `Base inicial de clientes processada com ${result.createdCount} novos cadastros.`,
+      })
+
+      setFeedbackMessage(
+        result.createdCount > 0
+          ? `${result.createdCount} clientes iniciais adicionados.`
+          : 'A base inicial de clientes ja esta completa.',
+      )
+      playSuccess()
+    } catch (error) {
+      setErrorMessage(error.message)
+      playError()
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   function handleEdit(customer) {
     setEditingCustomerId(customer.id);
     setFormState(mapCustomerToForm(customer));
@@ -259,9 +309,8 @@ function CustomersModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Clientes">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Firebase nao configurado</p>
         </div>
       </SurfaceCard>
     );
@@ -270,9 +319,8 @@ function CustomersModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Clientes">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione ou vincule uma store antes de operar a base de clientes.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Nenhuma store ativa</p>
         </div>
       </SurfaceCard>
     );
@@ -323,6 +371,17 @@ function CustomersModule() {
                 <p className="text-body">Cadastros com entrega mais agil e menos retrabalho.</p>
               </div>
             </div>
+          </div>
+
+          <div className="entity-form-actions entity-form-actions--inline">
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleSeedCustomers}
+              disabled={seeding || saving || !can('customers:write')}
+            >
+              {seeding ? 'Preparando base...' : 'Popular base inicial'}
+            </button>
           </div>
 
           <form className="entity-form-grid" onSubmit={handleSubmit}>
@@ -437,13 +496,12 @@ function CustomersModule() {
         </div>
 
         {loading ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Carregando clientes...</p>
+          <div className="module-empty-state">
+            <p className="module-empty-state__text">Carregando clientes</p>
           </div>
         ) : visibleCustomers.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Nenhum cliente encontrado</p>
-            <p className="text-body">Cadastre clientes ou ajuste a busca para continuar.</p>
+          <div className="module-empty-state">
+            <p className="module-empty-state__text">Nenhum cliente encontrado</p>
           </div>
         ) : (
           <div className="entity-table-wrap">

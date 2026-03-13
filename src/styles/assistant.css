@@ -294,6 +294,11 @@
   text-align: left;
 }
 
+.assistant-result-card:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
 .assistant-result-card strong,
 .assistant-result-card small,
 .assistant-result-card span {

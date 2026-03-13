@@ -1,5 +1,10 @@
-import { formatCurrencyBRL, getChannelLabel, getOrderDomainStatusLabel, getPaymentMethodLabel } from '../../../services/commerce';
-import { printOrderTicket } from '../../../services/commercePrint';
+import {
+  formatCurrencyBRL,
+  getChannelLabel,
+  getOrderDomainStatusLabel,
+  getPaymentMethodLabel,
+} from '../../../services/commerce'
+import { printOrderTicket } from '../../../services/commercePrint'
 
 function OrderDetailPanel({
   selectedOrder,
@@ -12,12 +17,21 @@ function OrderDetailPanel({
   onConvertToSale,
   formatDateTime,
 }) {
+  const orderSource = selectedOrder
+    ? selectedOrder.origin
+      || selectedOrder.sourceLabel
+      || getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)
+    : '--'
+  const paymentLabel = selectedOrder
+    ? selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)
+    : '--'
+  const isSaleLaunched = selectedOrder?.saleStatus === 'LAUNCHED'
+
   return (
     <div className="orders-domain__detail-shell">
       <div className="orders-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe do Pedido</p>
-          <p className="text-body">Consulte os dados comerciais e avance somente as acoes permitidas.</p>
         </div>
 
         {selectedOrder ? (
@@ -33,7 +47,7 @@ function OrderDetailPanel({
               type="button"
               className="ui-button ui-button--ghost"
               onClick={onEdit}
-              disabled={!canWrite || selectedOrder.saleStatus === 'LAUNCHED'}
+              disabled={!canWrite || isSaleLaunched}
             >
               Editar pedido
             </button>
@@ -52,7 +66,7 @@ function OrderDetailPanel({
               disabled={
                 acting
                 || !canWrite
-                || selectedOrder.saleStatus === 'LAUNCHED'
+                || isSaleLaunched
                 || selectedOrder.domainStatus === 'CANCELLED'
               }
             >
@@ -71,12 +85,12 @@ function OrderDetailPanel({
       ) : (
         <div className="orders-domain__detail">
           <div className="commerce-detail-band">
-            <span className="ui-badge ui-badge--info">{selectedOrder.origin || selectedOrder.sourceLabel || getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)}</span>
+            <span className="ui-badge ui-badge--info">{orderSource}</span>
             <span className="ui-badge ui-badge--warning">{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</span>
-            <span className={`ui-badge ${selectedOrder.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--special'}`}>
-              {selectedOrder.saleStatus === 'LAUNCHED' ? 'Venda lancada' : 'Venda nao lancada'}
+            <span className={`ui-badge ${isSaleLaunched ? 'ui-badge--success' : 'ui-badge--special'}`}>
+              {isSaleLaunched ? 'Venda lancada' : 'Venda nao lancada'}
             </span>
-            <span className="ui-badge ui-badge--special">{selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)}</span>
+            <span className="ui-badge ui-badge--special">{paymentLabel}</span>
           </div>
 
           <div className="orders-domain__detail-grid">
@@ -92,13 +106,13 @@ function OrderDetailPanel({
             </div>
             <div className="orders-domain__detail-card">
               <span>Canal</span>
-              <strong>{selectedOrder.origin || selectedOrder.sourceLabel || getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)}</strong>
-              <small>{selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)}</small>
+              <strong>{orderSource}</strong>
+              <small>{paymentLabel}</small>
             </div>
             <div className="orders-domain__detail-card">
               <span>Status</span>
               <strong>{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</strong>
-              <small>{selectedOrder.saleStatus === 'LAUNCHED' ? 'Venda lancada' : 'Venda nao lancada'}</small>
+              <small>{isSaleLaunched ? 'Pronto para consulta em vendas' : 'Aguardando conversao'}</small>
             </div>
             <div className="orders-domain__detail-card">
               <span>Total</span>
@@ -141,10 +155,34 @@ function OrderDetailPanel({
             </div>
           </div>
 
-          <div className="orders-domain__notes">
-            <span className="orders-domain__notes-label">Observacoes</span>
-            <p>{selectedOrder.notes || 'Nenhuma observacao registrada.'}</p>
-            <p>{selectedOrder.saleId ? `Venda vinculada: ${selectedOrder.saleId}` : 'Ainda sem venda vinculada.'}</p>
+          <div className="orders-domain__detail-panels">
+            <div className={`orders-domain__timeline-card${isSaleLaunched ? ' orders-domain__timeline-card--launched' : ''}`}>
+              <span className="orders-domain__notes-label">Conversao e auditoria</span>
+              <div className="orders-domain__timeline-list">
+                <div className="orders-domain__timeline-step">
+                  <strong>Pedido criado</strong>
+                  <p>{formatDateTime(selectedOrder.createdAt)}</p>
+                </div>
+                <div className="orders-domain__timeline-step">
+                  <strong>Expedicao</strong>
+                  <p>{selectedOrder.domainStatus === 'DISPATCHED' ? 'Marcado como despachado' : 'Ainda em aberto'}</p>
+                </div>
+                <div className="orders-domain__timeline-step">
+                  <strong>Geracao de venda</strong>
+                  <p>{isSaleLaunched ? `Venda vinculada: ${selectedOrder.saleId}` : 'Ainda sem venda vinculada'}</p>
+                </div>
+                <div className="orders-domain__timeline-step">
+                  <strong>Impacto definitivo</strong>
+                  <p>{isSaleLaunched ? 'Somente a venda publicou estoque e financeiro' : 'Sem impacto em estoque ou financeiro'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="orders-domain__notes">
+              <span className="orders-domain__notes-label">Observacoes</span>
+              <p>{selectedOrder.notes || 'Nenhuma observacao registrada.'}</p>
+              <p>{selectedOrder.saleId ? `Venda vinculada: ${selectedOrder.saleId}` : 'Ainda sem venda vinculada.'}</p>
+            </div>
           </div>
 
           <div className="orders-domain__items-list">
@@ -162,7 +200,7 @@ function OrderDetailPanel({
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default OrderDetailPanel;
+export default OrderDetailPanel

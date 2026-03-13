@@ -1,23 +1,23 @@
-import { resolveAssistantIntent, INTENTS } from './assistantIntentResolver.js';
-import { resolveKnowledgeAnswer } from './assistantKnowledgeService.js';
-import { createAssistantQueryService } from './assistantQueryService.js';
-import { queryLLM } from './assistantLLMService.js';
+import { resolveAssistantIntent, INTENTS } from './assistantIntentResolver.js'
+import { resolveKnowledgeAnswer } from './assistantKnowledgeService.js'
+import { createAssistantQueryService } from './assistantQueryService.js'
+import { queryLLM } from './assistantLLMService.js'
 
-const queryService = createAssistantQueryService();
+const queryService = createAssistantQueryService()
 
 function buildNavigationResponse(intent) {
   return {
     intentType: intent.type,
-    title: 'Navegação assistida',
+    title: 'Navegacao assistida',
     answer: intent.route
-      ? `Posso te levar direto para ${intent.routeLabel ?? 'o módulo solicitado'}.`
-      : 'Não identifiquei um módulo específico para abrir.',
+      ? `Posso te levar direto para ${intent.routeLabel ?? 'o modulo solicitado'}.`
+      : 'Nao identifiquei um modulo especifico para abrir.',
     cards: [],
     navigationTarget: intent.route
-      ? { route: intent.route, label: intent.routeLabel ?? 'Abrir módulo' }
+      ? { route: intent.route, label: intent.routeLabel ?? 'Abrir modulo' }
       : null,
     suggestions: ['Novo pedido', 'Nova venda', 'Abrir clientes'],
-  };
+  }
 }
 
 function buildEmptySearchResponse(entity) {
@@ -27,42 +27,42 @@ function buildEmptySearchResponse(entity) {
     customers: 'cliente',
     products: 'produto',
     overview: 'registro',
-  };
+  }
 
   return {
     intentType: INTENTS.search,
     title: 'Busca operacional',
-    answer: `Não encontrei ${labelMap[entity] ?? 'registro'} com esse critério agora.`,
+    answer: `Nao encontrei ${labelMap[entity] ?? 'registro'} com esse criterio agora.`,
     cards: [],
     navigationTarget: null,
     suggestions: ['Buscar pedido', 'Buscar cliente', 'Vendas de hoje'],
-  };
+  }
 }
 
 function buildSearchErrorResponse(intentType) {
   return {
     intentType,
     title: 'Busca operacional',
-    answer: 'Não consegui consultar os dados agora. Posso continuar ajudando com navegação e explicações do sistema.',
+    answer: 'Nao consegui consultar os dados agora. Posso continuar ajudando com navegacao e explicacoes do sistema.',
     cards: [],
     navigationTarget: null,
     suggestions: ['Ajuda sobre pedidos', 'Abrir clientes', 'Nova venda'],
-  };
+  }
 }
 
 function buildUnknownFallback() {
   return {
     intentType: INTENTS.unknown,
     title: 'NEXA',
-    answer: 'Posso ajudar com explicações do sistema, navegação entre módulos e busca segura por pedidos, vendas, clientes e produtos.',
+    answer: 'Posso ajudar com explicacoes do sistema, navegacao entre modulos e busca segura por pedidos, vendas, clientes e produtos.',
     cards: [],
     navigationTarget: null,
     suggestions: ['Ajuda sobre pedidos', 'Nova venda', 'Buscar cliente'],
-  };
+  }
 }
 
 function buildSearchAnswerFallback(cards) {
-  return `Encontrei ${cards.length} resultado${cards.length > 1 ? 's' : ''} para você consultar agora.`;
+  return `Encontrei ${cards.length} resultado${cards.length > 1 ? 's' : ''} para voce consultar agora.`
 }
 
 function buildSearchSuccessResponse(cards, answer) {
@@ -73,51 +73,51 @@ function buildSearchSuccessResponse(cards, answer) {
     cards,
     navigationTarget: cards[0]?.route ? { route: cards[0].route, label: 'Abrir primeiro resultado' } : null,
     suggestions: ['Buscar pedido', 'Buscar cliente', 'Vendas de hoje'],
-  };
+  }
 }
 
 async function fetchSearchCards({ storeId, intent, message }) {
   if (intent.entity === 'sales' || intent.normalizedText.includes('venda')) {
-    return queryService.searchSales({ storeId, text: message });
+    return queryService.searchSales({ storeId, text: message })
   }
 
   if (intent.entity === 'orders' || intent.normalizedText.includes('pedido')) {
-    return queryService.searchOrders({ storeId, text: message });
+    return queryService.searchOrders({ storeId, text: message })
   }
 
   if (intent.entity === 'customers' || intent.normalizedText.includes('cliente')) {
-    return queryService.searchCustomers({ storeId, text: message });
+    return queryService.searchCustomers({ storeId, text: message })
   }
 
   if (intent.entity === 'products' || intent.normalizedText.includes('produto')) {
-    return queryService.searchProducts({ storeId, text: message });
+    return queryService.searchProducts({ storeId, text: message })
   }
 
-  return queryService.searchSales({ storeId, text: message });
+  return queryService.searchSales({ storeId, text: message })
 }
 
 async function resolveSearchResponse({ storeId, intent, message, context }) {
-  const cards = await fetchSearchCards({ storeId, intent, message });
+  const cards = await fetchSearchCards({ storeId, intent, message })
 
   if (cards.length === 0) {
-    return buildEmptySearchResponse(intent.entity);
+    return buildEmptySearchResponse(intent.entity)
   }
 
-  const fallbackAnswer = buildSearchAnswerFallback(cards);
+  const fallbackAnswer = buildSearchAnswerFallback(cards)
 
   try {
-    const llmAnswer = await queryLLM({ message, context, dataContext: cards });
-    return buildSearchSuccessResponse(cards, llmAnswer || fallbackAnswer);
+    const llmAnswer = await queryLLM({ message, context, dataContext: cards })
+    return buildSearchSuccessResponse(cards, llmAnswer || fallbackAnswer)
   } catch (_error) {
-    return buildSearchSuccessResponse(cards, fallbackAnswer);
+    return buildSearchSuccessResponse(cards, fallbackAnswer)
   }
 }
 
 async function resolveHelpResponse({ intent, message, context }) {
-  const helpResponse = resolveKnowledgeAnswer(message, context);
+  const helpResponse = resolveKnowledgeAnswer(message, context)
 
   try {
-    const llmAnswer = await queryLLM({ message, context, dataContext: [] });
+    const llmAnswer = await queryLLM({ message, context, dataContext: [] })
 
     return {
       intentType: intent.type,
@@ -126,7 +126,7 @@ async function resolveHelpResponse({ intent, message, context }) {
       cards: [],
       navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
       suggestions: helpResponse.suggestions,
-    };
+    }
   } catch (_error) {
     return {
       intentType: intent.type,
@@ -135,38 +135,38 @@ async function resolveHelpResponse({ intent, message, context }) {
       cards: [],
       navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
       suggestions: helpResponse.suggestions,
-    };
+    }
   }
 }
 
 export async function handleAssistantQuery({ storeId, message, context = {} }) {
-  const intent = resolveAssistantIntent(message);
+  const intent = resolveAssistantIntent(message)
 
   if (intent.type === INTENTS.navigation) {
-    return buildNavigationResponse(intent);
+    return buildNavigationResponse(intent)
   }
 
   if (intent.type === INTENTS.search) {
     try {
-      return await resolveSearchResponse({ storeId, intent, message, context });
+      return await resolveSearchResponse({ storeId, intent, message, context })
     } catch (_error) {
-      return buildSearchErrorResponse(intent.type);
+      return buildSearchErrorResponse(intent.type)
     }
   }
 
   if (intent.type === INTENTS.help) {
-    return resolveHelpResponse({ intent, message, context });
+    return resolveHelpResponse({ intent, message, context })
   }
 
-  const fallbackResponse = buildUnknownFallback();
+  const fallbackResponse = buildUnknownFallback()
 
   try {
-    const llmAnswer = await queryLLM({ message, context, dataContext: [] });
+    const llmAnswer = await queryLLM({ message, context, dataContext: [] })
     return {
       ...fallbackResponse,
       answer: llmAnswer || fallbackResponse.answer,
-    };
+    }
   } catch (_error) {
-    return fallbackResponse;
+    return fallbackResponse
   }
 }
