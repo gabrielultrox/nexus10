@@ -4,11 +4,11 @@ import { syncSaleStock } from '../stock/stockService.js';
 import { normalizeSaleDomainStatus } from './saleValidationService.js';
 
 function isPosted(status) {
-  return normalizeSaleDomainStatus(status, 'POSTED') === 'POSTED';
+  return normalizeSaleDomainStatus(status, null) === 'POSTED';
 }
 
 function isReversed(status) {
-  const normalized = normalizeSaleDomainStatus(status, 'POSTED');
+  const normalized = normalizeSaleDomainStatus(status, null);
   return normalized === 'REVERSED' || normalized === 'CANCELLED';
 }
 

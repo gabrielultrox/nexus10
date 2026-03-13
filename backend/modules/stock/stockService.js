@@ -2,11 +2,11 @@ import { normalizeSaleDomainStatus } from '../sales/saleValidationService.js';
 import { applyStockMovement } from './stockMovementService.js';
 
 function isPosted(status) {
-  return normalizeSaleDomainStatus(status) === 'POSTED';
+  return normalizeSaleDomainStatus(status, null) === 'POSTED';
 }
 
 function isReversal(status) {
-  const normalized = normalizeSaleDomainStatus(status);
+  const normalized = normalizeSaleDomainStatus(status, null);
   return normalized === 'CANCELLED' || normalized === 'REVERSED';
 }
 
