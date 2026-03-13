@@ -13,23 +13,24 @@
 }
 
 .workspace-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
-  align-items: end;
-  padding: var(--space-5);
-  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 28%, var(--color-border-subtle));
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 22%, var(--color-border-subtle));
   border-radius: var(--radius-shell);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 22%, transparent), transparent 22%),
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 12%, transparent), transparent 38%),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 14%, transparent), transparent 18%),
     linear-gradient(145deg, color-mix(in srgb, var(--surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--surface-panel) 94%, transparent));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 24%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 18%, transparent);
 }
 
 .workspace-header__copy {
-  display: grid;
-  gap: var(--space-2);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .workspace-header__eyebrow {
@@ -42,17 +43,14 @@
 
 .workspace-header__title {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  line-height: 1.02;
-  text-shadow: 0 0 22px color-mix(in srgb, var(--color-accent-cyan) 14%, transparent);
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+  line-height: 1.1;
+  text-shadow: none;
 }
 
 .workspace-header__description {
-  max-width: 64ch;
-  color: var(--color-text-secondary);
-  font-size: 0.96rem;
-  line-height: 1.6;
+  display: none;
 }
 
 .workspace-nav {
@@ -60,10 +58,11 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .workspace-nav .ui-button {
-  min-width: 170px;
+  min-width: 140px;
   border-radius: var(--radius-pill);
 }
 
@@ -164,10 +163,11 @@
 .orders-domain__notes,
 .orders-domain__items-list {
   display: grid;
-  gap: var(--space-1-5);
+  gap: 0;
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   border-radius: var(--radius-section);
+  overflow: hidden;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 24%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -240,13 +240,12 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-4);
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .orders-domain__item-line:last-child {
   border-bottom: 0;
-  padding-bottom: 0;
 }
 
 .orders-domain__item-line p,
@@ -975,8 +974,8 @@
 
 @media (max-width: 1080px) {
   .workspace-header {
-    grid-template-columns: 1fr;
-    align-items: start;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .workspace-nav {

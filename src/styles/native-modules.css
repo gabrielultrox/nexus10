@@ -23,13 +23,11 @@
 
 .native-module__form-shell {
   display: grid;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-panel);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 30%),
-    var(--surface-panel-soft-alt);
+  border-radius: var(--radius-section);
+  background: var(--surface-panel-soft-alt);
 }
 
 .native-module__form-copy {
@@ -310,7 +308,7 @@
 
 .machine-operations__title {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: clamp(1.5rem, 2vw, 1.95rem);
   line-height: 0.94;
 }
@@ -401,7 +399,7 @@
 
 .machine-operations__device {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: clamp(1.55rem, 2.2vw, 2rem);
   line-height: 0.9;
 }
@@ -584,7 +582,7 @@
 
 .delivery-reading__section-title {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.35rem;
   line-height: 0.96;
 }

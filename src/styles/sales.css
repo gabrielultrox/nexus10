@@ -66,7 +66,11 @@
 .sales-detail__summary,
 .sales-detail__items {
   display: grid;
-  gap: var(--space-3);
+  gap: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  overflow: hidden;
+  background: var(--surface-panel-soft-alt);
 }
 
 .sales-detail__summary-row,
@@ -74,10 +78,16 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 18px;
-  background: var(--surface-panel-soft-alt);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-bottom: 1px solid var(--color-border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.sales-detail__summary-row:last-child,
+.sales-detail__item:last-child {
+  border-bottom: none;
 }
 
 .sales-detail__item p {
@@ -157,10 +167,9 @@
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border-subtle);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 36%, transparent), transparent 38%),
-    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--color-bg-panel));
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: color-mix(in srgb, var(--surface-panel-strong) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-radius: 0 0 var(--radius-section) var(--radius-section);
 }
 
 .commerce-step__subtotal {
