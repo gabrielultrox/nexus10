@@ -104,8 +104,14 @@ export function CommerceItemsStep({
   subtotal,
 }) {
   const productRefs = useRef([])
+  const quantityRef = useRef(null)
+  const unitPriceRef = useRef(null)
+  const discountRef = useRef(null)
+  const addButtonRef = useRef(null)
   const pendingFocusIndex = useRef(null)
   const didInitialFocus = useRef(false)
+  const currentItemIndex = Math.max(items.length - 1, 0)
+  const currentItem = items[currentItemIndex] ?? {}
   const validItems = draftItems
     .map((item, index) => ({ ...item, itemIndex: index }))
     .filter((item) => item.productId)
@@ -131,19 +137,117 @@ export function CommerceItemsStep({
     return () => window.cancelAnimationFrame(nextFrame)
   }, [items.length])
 
+  useEffect(() => {
+    function handleKeydown(event) {
+      if (event.key !== 'F12' || !hasValidItems) {
+        return
+      }
+
+      event.preventDefault()
+      onAdvance()
+    }
+
+    window.addEventListener('keydown', handleKeydown)
+
+    return () => window.removeEventListener('keydown', handleKeydown)
+  }, [hasValidItems, onAdvance])
+
+  function focusCurrentProduct(index = currentItemIndex) {
+    productRefs.current[index]?.focus()
+  }
+
+  function focusNextRequiredField(item = currentItem) {
+    if (!item.productId) {
+      focusCurrentProduct()
+      return true
+    }
+
+    if (!(Number(item.quantity) > 0)) {
+      quantityRef.current?.focus()
+      return true
+    }
+
+    if (!(Number(item.unitPrice) > 0)) {
+      unitPriceRef.current?.focus()
+      return true
+    }
+
+    return false
+  }
+
+  function commitCurrentLine() {
+    if (currentItem.productId && Number(currentItem.unitPrice) > 0) {
+      pendingFocusIndex.current = currentItemIndex + 1
+      onAddItem()
+      return true
+    }
+
+    if (!focusNextRequiredField()) {
+      focusCurrentProduct()
+    }
+
+    return false
+  }
+
   function handleAddRow() {
-    const lastIndex = Math.max(items.length - 1, 0)
-    const lastItem = items[lastIndex] ?? {}
-    const hasValidLastItem = Boolean(lastItem.productId && Number(lastItem.unitPrice) > 0)
+    const hasValidLastItem = Boolean(currentItem.productId && Number(currentItem.unitPrice) > 0)
 
     if (hasValidLastItem) {
-      pendingFocusIndex.current = items.length
-      onAddItem()
+      commitCurrentLine()
       return
     }
 
-    pendingFocusIndex.current = lastIndex
-    productRefs.current[lastIndex]?.focus()
+    focusNextRequiredField()
+  }
+
+  function moveFocusWithinEntry(field, backwards = false) {
+    const focusMap = {
+      product: () => focusCurrentProduct(),
+      quantity: () => quantityRef.current?.focus(),
+      price: () => unitPriceRef.current?.focus(),
+      discount: () => discountRef.current?.focus(),
+      add: () => addButtonRef.current?.focus(),
+    }
+
+    const forwardMap = {
+      product: 'quantity',
+      quantity: 'price',
+      price: 'add',
+      discount: 'add',
+    }
+
+    const backwardMap = {
+      add: 'price',
+      price: 'quantity',
+      discount: 'price',
+      quantity: 'product',
+      product: 'add',
+    }
+
+    if (!backwards && field === 'add') {
+      if (!commitCurrentLine()) {
+        focusCurrentProduct()
+      }
+      return
+    }
+
+    const nextField = backwards ? backwardMap[field] : forwardMap[field]
+    focusMap[nextField]?.()
+  }
+
+  function handleEntryKeyDown(field) {
+    return (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        commitCurrentLine()
+        return
+      }
+
+      if (event.key === 'Tab') {
+        event.preventDefault()
+        moveFocusWithinEntry(field, event.shiftKey)
+      }
+    }
   }
 
   return (
@@ -157,11 +261,12 @@ export function CommerceItemsStep({
         <div className="commerce-step__input-row">
           <select
             ref={(element) => {
-              productRefs.current[items.length - 1] = element
+              productRefs.current[currentItemIndex] = element
             }}
             className="ui-select"
-            value={items[items.length - 1]?.productId ?? ''}
-            onChange={(event) => onItemChange(items.length - 1, 'productId', event.target.value)}
+            value={currentItem.productId ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'productId', event.target.value)}
+            onKeyDown={handleEntryKeyDown('product')}
           >
             <option value="">Produto</option>
             {products.map((product) => (
@@ -172,41 +277,54 @@ export function CommerceItemsStep({
           </select>
 
           <input
+            ref={quantityRef}
             className="ui-input"
             type="number"
             min="1"
             step="1"
             placeholder="Qtd"
-            value={items[items.length - 1]?.quantity ?? ''}
-            onChange={(event) => onItemChange(items.length - 1, 'quantity', event.target.value)}
+            value={currentItem.quantity ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'quantity', event.target.value)}
+            onKeyDown={handleEntryKeyDown('quantity')}
           />
 
           <input
+            ref={unitPriceRef}
             className="ui-input"
             type="number"
             min="0"
             step="0.01"
             placeholder="Valor"
-            value={items[items.length - 1]?.unitPrice ?? ''}
-            onChange={(event) => onItemChange(items.length - 1, 'unitPrice', event.target.value)}
+            value={currentItem.unitPrice ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'unitPrice', event.target.value)}
+            onKeyDown={handleEntryKeyDown('price')}
           />
 
           <input
+            ref={discountRef}
             className="ui-input"
             type="number"
             min="0"
             step="0.01"
             placeholder="Desc. %"
-            value={items[items.length - 1]?.discountPercent ?? ''}
-            onChange={(event) => onItemChange(items.length - 1, 'discountPercent', event.target.value)}
+            value={currentItem.discountPercent ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'discountPercent', event.target.value)}
+            onKeyDown={handleEntryKeyDown('discount')}
+            tabIndex={-1}
           />
 
           <div className="commerce-step__line-total">
             <span>Total</span>
-            <strong>{formatCurrencyBRL(draftItems[items.length - 1]?.totalPrice ?? 0)}</strong>
+            <strong>{formatCurrencyBRL(draftItems[currentItemIndex]?.totalPrice ?? 0)}</strong>
           </div>
 
-          <button type="button" className="ui-button ui-button--primary commerce-step__add-button" onClick={handleAddRow}>
+          <button
+            ref={addButtonRef}
+            type="button"
+            className="ui-button ui-button--primary commerce-step__add-button"
+            onClick={handleAddRow}
+            onKeyDown={handleEntryKeyDown('add')}
+          >
             +
           </button>
         </div>

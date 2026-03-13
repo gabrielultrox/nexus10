@@ -44,6 +44,7 @@ function required(name, fallback = '') {
 export const backendEnv = {
   port: asNumber(process.env.PORT, 8787),
   nodeEnv: required('NODE_ENV', 'development'),
+  openaiApiKey: process.env.OPENAI_API_KEY ?? null,
   frontendOrigin: required('FRONTEND_ORIGIN', '').split(',').map((item) => item.trim()).filter(Boolean),
   ifoodAuthBaseUrl: required('IFOOD_AUTH_BASE_URL', 'https://merchant-api.ifood.com.br/authentication/v1.0'),
   ifoodMerchantBaseUrl: required('IFOOD_MERCHANT_BASE_URL', 'https://merchant-api.ifood.com.br'),
