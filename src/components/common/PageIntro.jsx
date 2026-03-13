@@ -1,11 +1,12 @@
-function PageIntro({ eyebrow, title, description }) {
+function PageIntro(props) {
+  const { eyebrow, title } = props
+
   return (
-    <section className="page-intro">
-      <p className="page-intro__eyebrow">{eyebrow}</p>
-      <h2 className="page-intro__title">{title}</h2>
-      <p className="page-intro__description">{description}</p>
-    </section>
-  );
+    <div className="page-intro">
+      <span className="page-intro__eyebrow">{eyebrow}</span>
+      <h1 className="page-intro__title">{title}</h1>
+    </div>
+  )
 }
 
-export default PageIntro;
+export default PageIntro

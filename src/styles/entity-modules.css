@@ -1,6 +1,6 @@
 .entity-module {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .entity-stack {

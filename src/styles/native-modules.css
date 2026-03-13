@@ -1,3 +1,20 @@
+.native-module__kpi-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.native-module__kpi-card {
+  padding: var(--space-3) var(--space-4);
+}
+
+.native-module__kpi-value {
+  font-size: var(--space-4);
+}
+
+.native-module__kpi-label {
+  font-size: var(--space-1-5);
+}
+
 .native-module__panels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

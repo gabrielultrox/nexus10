@@ -1,16 +1,16 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom'
 
-import { navigationItems } from '../../utils/navigation';
+import { navigationItems } from '../../utils/navigation'
 
 function Sidebar() {
   const sections = navigationItems.reduce((groups, item) => {
     if (!groups[item.section]) {
-      groups[item.section] = [];
+      groups[item.section] = []
     }
 
-    groups[item.section].push(item);
-    return groups;
-  }, {});
+    groups[item.section].push(item)
+    return groups
+  }, {})
 
   return (
     <aside className="sidebar">
@@ -27,10 +27,9 @@ function Sidebar() {
         </div>
       </div>
 
-      <div className="sidebar__status-panel">
+      <div className="sidebar__operational">
         <span className="sidebar__status-line">Centro operacional</span>
         <strong className="sidebar__status-title">Loja pronta para rodar</strong>
-        <p className="sidebar__status-copy">Acesse pedidos, vendas, operacao e controles diários em um so lugar.</p>
       </div>
 
       <nav className="sidebar__nav" aria-label="Navegacao principal">
@@ -63,7 +62,7 @@ function Sidebar() {
         <p>Nexus 10 ERP // operacao da loja</p>
       </div>
     </aside>
-  );
+  )
 }
 
-export default Sidebar;
+export default Sidebar

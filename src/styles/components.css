@@ -3,7 +3,7 @@
   overflow: hidden;
   background: var(--gradient-card);
   border: var(--border-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(16px);
 }
@@ -160,17 +160,17 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 46px;
-  padding: 0 16px;
+  min-height: calc(var(--space-7) + var(--space-1));
+  padding: var(--space-2) var(--space-5);
   border: var(--border-thin) solid transparent;
-  border-radius: 16px;
+  border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: var(--space-3);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
   overflow: hidden;
-  white-space: normal;
+  white-space: nowrap;
   transition:
     transform var(--transition-fast),
     border-color var(--transition-base),
@@ -251,17 +251,17 @@
 .ui-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  padding: 0 9px;
+  gap: var(--space-1-5);
+  min-height: calc(var(--space-4) + var(--space-1));
+  padding: var(--space-1) var(--space-2);
   border: var(--border-thin) solid transparent;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.1em;
+  font-size: var(--space-1-5);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 500;
   max-width: 100%;
 }
 
@@ -297,14 +297,15 @@
 
 .ui-kpi-card {
   position: relative;
-  padding: var(--space-4);
-  background:
-    linear-gradient(180deg, var(--surface-card-gloss), transparent 24%),
-    var(--gradient-card);
-  border: var(--border-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  background: var(--gradient-card);
+  border: var(--border-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(16px);
   transition:
     transform var(--transition-base),
     border-color var(--transition-base),
@@ -313,9 +314,9 @@
 
 .ui-kpi-card__top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .ui-kpi-card:hover {
@@ -325,27 +326,32 @@
 }
 
 .ui-kpi-card__label {
-  margin-bottom: var(--space-3);
+  margin-bottom: 0;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: var(--space-1-5);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
 .ui-kpi-card__value {
-  font-family: var(--font-display);
-  font-size: clamp(1.7rem, 2.4vw, 2.2rem);
-  font-weight: 800;
-  line-height: 1.04;
+  font-family: var(--font-title);
+  font-size: clamp(var(--space-6-5), 3vw, var(--space-8-5));
+  font-weight: 700;
+  line-height: 1;
   color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .ui-kpi-card__meta {
-  margin-top: var(--space-2);
-  color: var(--color-text-secondary);
-  font-size: 0.88rem;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--space-3);
+  line-height: 1.4;
+}
+
+.surface-card {
+  border-radius: var(--radius-sm);
 }
 
 .ui-table__cell--strong {
