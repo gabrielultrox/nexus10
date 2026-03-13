@@ -10,6 +10,8 @@ import { firebaseReady } from '../../../services/firebase';
 import {
   createCustomer,
   deleteCustomer,
+  importCustomersFromCsv,
+  previewCustomersImport,
   subscribeToCustomers,
   updateCustomer,
 } from '../../../services/customerService';
@@ -48,6 +50,10 @@ function CustomersModule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvMode, setCsvMode] = useState('all');
+  const [csvPreview, setCsvPreview] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
@@ -74,6 +80,51 @@ function CustomersModule() {
 
     return unsubscribe;
   }, [currentStoreId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function buildPreview() {
+      if (!csvFile) {
+        setCsvPreview(null);
+        return;
+      }
+
+      try {
+        const csvText = await csvFile.text();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCsvPreview(
+          previewCustomersImport({
+            csvText,
+            customers,
+            mode: csvMode,
+          }),
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCsvPreview({
+          createdCount: 0,
+          updatedCount: 0,
+          skippedCount: 0,
+          importedCount: 0,
+          errors: [{ rowNumber: '-', reason: error.message }],
+        });
+      }
+    }
+
+    buildPreview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [csvFile, csvMode, customers]);
 
   const visibleCustomers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -256,6 +307,56 @@ function CustomersModule() {
     }
   }
 
+  async function handleCsvImport() {
+    if (!can('customers:write')) {
+      setErrorMessage('Seu perfil nao pode alterar clientes.');
+      playError();
+      return;
+    }
+
+    if (!currentStoreId || !csvFile) {
+      setErrorMessage('Selecione um arquivo CSV para importar clientes.');
+      playError();
+      return;
+    }
+
+    setImporting(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      const csvText = await csvFile.text();
+      const result = await importCustomersFromCsv({
+        storeId: currentStoreId,
+        tenantId,
+        csvText,
+        customers,
+        mode: csvMode,
+      });
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'customer.csv_imported',
+        entityType: 'customer',
+        entityId: 'csv-import',
+        description: `${result.importedCount} cliente(s) processados via CSV. ${result.createdCount} criado(s). ${result.updatedCount} atualizado(s). ${result.skippedCount} ignorado(s).`,
+      });
+
+      setFeedbackMessage(
+        `${result.importedCount} cliente(s) processados via CSV. ${result.createdCount} criado(s). ${result.updatedCount} atualizado(s). ${result.skippedCount} ignorado(s).`,
+      );
+      setCsvFile(null);
+      playSuccess();
+    } catch (error) {
+      setErrorMessage(error.message);
+      playError();
+    } finally {
+      setImporting(false);
+    }
+  }
+
   function handleEdit(customer) {
     setEditingCustomerId(customer.id);
     setFormState(mapCustomerToForm(customer));
@@ -382,7 +483,60 @@ function CustomersModule() {
             >
               {seeding ? 'Preparando base...' : 'Popular base inicial'}
             </button>
+            <select
+              className="ui-select"
+              value={csvMode}
+              onChange={(event) => setCsvMode(event.target.value)}
+            >
+              <option value="all">CSV: criar e atualizar</option>
+              <option value="create_only">CSV: criar novos</option>
+              <option value="update_only">CSV: atualizar existentes</option>
+            </select>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleCsvImport}
+              disabled={importing || saving || !csvFile || !can('customers:write')}
+            >
+              {importing ? 'Importando clientes...' : 'Importar clientes CSV'}
+            </button>
           </div>
+          {csvPreview ? (
+            <div className="inventory-import">
+              <div className="inventory-import__copy">
+                <p className="text-body">
+                  Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount} para criar,
+                  {' '}
+                  {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
+                </p>
+              </div>
+              {csvPreview.errors?.length > 0 ? (
+                <div className="entity-table-wrap">
+                  <table className="ui-table">
+                    <thead>
+                      <tr>
+                        <th>Linha</th>
+                        <th>Motivo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.errors.slice(0, 10).map((error) => (
+                        <tr key={`${error.rowNumber}-${error.reason}`}>
+                          <td>{error.rowNumber}</td>
+                          <td>{error.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <form className="entity-form-grid" onSubmit={handleSubmit}>
             <div className="entity-form-section entity-form-section--span-2">

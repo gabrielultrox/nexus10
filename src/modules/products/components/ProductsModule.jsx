@@ -7,7 +7,9 @@ import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
 import { seedBaseProducts } from '../../../services/baseDataSeed';
 import { firebaseReady } from '../../../services/firebase';
+import { analyzeProductCatalog } from '../../../services/productCatalogAudit';
 import {
+  applyMinimumStockDefaults,
   createProduct,
   deleteProduct,
   subscribeToProducts,
@@ -60,6 +62,7 @@ function ProductsModule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [fixingMinimums, setFixingMinimums] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
@@ -111,6 +114,8 @@ function ProductsModule() {
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [categoryFilter, products, searchTerm, statusFilter]);
+
+  const catalogAudit = useMemo(() => analyzeProductCatalog(products), [products]);
 
   const metrics = useMemo(() => {
     const activeProducts = products.filter((product) => product.status === 'active').length;
@@ -276,6 +281,54 @@ function ProductsModule() {
     }
   }
 
+  async function handleApplyMinimumStockDefaults() {
+    if (!can('catalog:write')) {
+      setErrorMessage('Seu perfil nao pode alterar o catalogo.');
+      playError();
+      return;
+    }
+
+    if (!currentStoreId) {
+      setErrorMessage('Nenhuma store ativa disponivel para higienizar a base.');
+      playError();
+      return;
+    }
+
+    setFixingMinimums(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      const result = await applyMinimumStockDefaults({
+        storeId: currentStoreId,
+        tenantId,
+        products,
+      });
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'product.minimum_stock_fixed',
+        entityType: 'product',
+        entityId: 'bulk-minimum-stock',
+        description: `${result.updatedCount} produto(s) receberam estoque minimo padrao.`,
+      });
+
+      setFeedbackMessage(
+        result.updatedCount > 0
+          ? `${result.updatedCount} produto(s) receberam estoque minimo padrao.`
+          : 'Nenhum produto precisava de estoque minimo padrao.',
+      );
+      playSuccess();
+    } catch (error) {
+      setErrorMessage(error.message);
+      playError();
+    } finally {
+      setFixingMinimums(false);
+    }
+  }
+
   function handleEdit(product) {
     setEditingProductId(product.id);
     setFormState(mapProductToForm(product));
@@ -360,6 +413,91 @@ function ProductsModule() {
           />
         ))}
       </div>
+
+      <SurfaceCard title="Higiene da base">
+        <div className="entity-toolbar-shell">
+          <div className="entity-toolbar-copy">
+            <p className="text-section-title">Auditoria da importacao</p>
+            <p className="text-body">Revise duplicidades, nomes suspeitos e estoque minimo para manter o PDV mais confiavel.</p>
+          </div>
+
+          <div className="entity-form-actions entity-form-actions--inline">
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleApplyMinimumStockDefaults}
+              disabled={fixingMinimums || !can('catalog:write')}
+            >
+              {fixingMinimums ? 'Corrigindo...' : 'Corrigir estoque minimo'}
+            </button>
+          </div>
+        </div>
+
+        <div className="card-grid">
+          <MetricCard
+            label="Nomes suspeitos"
+            value={String(catalogAudit.possibleEncodingIssues.length).padStart(2, '0')}
+            meta="itens com possivel problema de acentuacao"
+            badgeText="texto"
+            badgeClass="ui-badge--warning"
+          />
+          <MetricCard
+            label="Minimo zerado"
+            value={String(catalogAudit.zeroMinimumStock.length).padStart(2, '0')}
+            meta="produtos com saldo positivo e sem minimo"
+            badgeText="estoque"
+            badgeClass="ui-badge--special"
+          />
+          <MetricCard
+            label="SKU duplicado"
+            value={String(catalogAudit.duplicateSkuGroups.length).padStart(2, '0')}
+            meta="grupos com codigos repetidos"
+            badgeText="sku"
+            badgeClass="ui-badge--info"
+          />
+          <MetricCard
+            label="Categoria vazia"
+            value={String(catalogAudit.uncategorized.length).padStart(2, '0')}
+            meta="itens sem categoria definida"
+            badgeText="catalogo"
+            badgeClass="ui-badge--warning"
+          />
+        </div>
+
+        <div className="entity-table-wrap">
+          <table className="ui-table">
+            <thead>
+              <tr>
+                <th>Diagnostico</th>
+                <th>Exemplo</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="ui-table__cell--strong">Nomes com acentuacao suspeita</td>
+                <td>{catalogAudit.possibleEncodingIssues[0]?.name ?? '-'}</td>
+                <td className="ui-table__cell--numeric">{catalogAudit.possibleEncodingIssues.length}</td>
+              </tr>
+              <tr>
+                <td className="ui-table__cell--strong">Produtos com minimo zerado</td>
+                <td>{catalogAudit.zeroMinimumStock[0]?.name ?? '-'}</td>
+                <td className="ui-table__cell--numeric">{catalogAudit.zeroMinimumStock.length}</td>
+              </tr>
+              <tr>
+                <td className="ui-table__cell--strong">Grupos de SKU duplicado</td>
+                <td>{catalogAudit.duplicateSkuGroups[0]?.map((product) => product.sku || product.name).join(' / ') ?? '-'}</td>
+                <td className="ui-table__cell--numeric">{catalogAudit.duplicateSkuGroups.length}</td>
+              </tr>
+              <tr>
+                <td className="ui-table__cell--strong">Grupos de nome duplicado</td>
+                <td>{catalogAudit.duplicateNameGroups[0]?.map((product) => product.name).join(' / ') ?? '-'}</td>
+                <td className="ui-table__cell--numeric">{catalogAudit.duplicateNameGroups.length}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </SurfaceCard>
 
       <SurfaceCard title={editingProductId ? 'Editar produto' : 'Cadastrar produto'}>
         <div className="entity-form-shell">

@@ -330,6 +330,68 @@ export async function adjustInventoryManually({ storeId, tenantId, values }) {
 }
 
 export async function importInventoryFromCsv({ storeId, tenantId, csvText, products }) {
+  return importInventoryFromCsvWithMode({
+    storeId,
+    tenantId,
+    csvText,
+    products,
+    mode: 'all',
+  });
+}
+
+export function previewInventoryImport({ csvText, products, mode = 'all' }) {
+  const rows = parseInventoryCsv(csvText);
+  const result = {
+    createdCount: 0,
+    updatedCount: 0,
+    skippedCount: 0,
+    importedCount: 0,
+    errors: [],
+  };
+
+  rows.forEach((row) => {
+    const mappedRow = mapInventoryCsvRow(row);
+
+    if (!mappedRow) {
+      result.skippedCount += 1;
+      result.errors.push({
+        rowNumber: row.__rowNumber,
+        reason: 'Linha sem nome de produto valido.',
+      });
+      return;
+    }
+
+    const existingProduct = resolveProductFromImport(products, mappedRow);
+
+    if (mode === 'create_only' && existingProduct) {
+      result.skippedCount += 1;
+      return;
+    }
+
+    if (mode === 'update_only' && !existingProduct) {
+      result.skippedCount += 1;
+      return;
+    }
+
+    if (existingProduct) {
+      result.updatedCount += 1;
+    } else {
+      result.createdCount += 1;
+    }
+
+    result.importedCount += 1;
+  });
+
+  return result;
+}
+
+export async function importInventoryFromCsvWithMode({
+  storeId,
+  tenantId,
+  csvText,
+  products,
+  mode = 'all',
+}) {
   const rows = parseInventoryCsv(csvText);
   const knownProducts = [...products];
   const result = {
@@ -337,6 +399,7 @@ export async function importInventoryFromCsv({ storeId, tenantId, csvText, produ
     updatedCount: 0,
     skippedCount: 0,
     importedCount: 0,
+    errors: [],
   };
 
   for (const row of rows) {
@@ -344,10 +407,25 @@ export async function importInventoryFromCsv({ storeId, tenantId, csvText, produ
 
     if (!mappedRow) {
       result.skippedCount += 1;
+      result.errors.push({
+        rowNumber: row.__rowNumber,
+        reason: 'Linha sem nome de produto valido.',
+      });
       continue;
     }
 
     const existingProduct = resolveProductFromImport(knownProducts, mappedRow);
+
+    if (mode === 'create_only' && existingProduct) {
+      result.skippedCount += 1;
+      continue;
+    }
+
+    if (mode === 'update_only' && !existingProduct) {
+      result.skippedCount += 1;
+      continue;
+    }
+
     const productId = existingProduct?.id ?? createImportedProductId(mappedRow);
     const productRef = getProductRef(storeId, productId);
     const productPayload = {

@@ -8,7 +8,8 @@ import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
 import { firebaseReady } from '../../../services/firebase';
 import {
   adjustInventoryManually,
-  importInventoryFromCsv,
+  importInventoryFromCsvWithMode,
+  previewInventoryImport,
   subscribeToInventoryItems,
   subscribeToInventoryMovements,
 } from '../../../services/inventory';
@@ -93,6 +94,8 @@ function InventoryModule() {
   const [movementStartDate, setMovementStartDate] = useState('');
   const [movementEndDate, setMovementEndDate] = useState('');
   const [csvFile, setCsvFile] = useState(null);
+  const [csvMode, setCsvMode] = useState('all');
+  const [csvPreview, setCsvPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -180,6 +183,49 @@ function InventoryModule() {
       return matchesSearch && isWithinPeriod(movement.createdAt, movementStartDate, movementEndDate);
     });
   }, [movementEndDate, movementSearchTerm, movementStartDate, movements]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function buildPreview() {
+      if (!csvFile) {
+        setCsvPreview(null);
+        return;
+      }
+
+      try {
+        const csvText = await csvFile.text();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCsvPreview(previewInventoryImport({
+          csvText,
+          products,
+          mode: csvMode,
+        }));
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCsvPreview({
+          createdCount: 0,
+          updatedCount: 0,
+          skippedCount: 0,
+          importedCount: 0,
+          errors: [{ rowNumber: '-', reason: error.message }],
+        });
+      }
+    }
+
+    buildPreview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [csvFile, csvMode, products]);
 
   const metrics = useMemo(() => {
     const totalUnits = inventoryItems.reduce((total, item) => total + Number(item.currentStock ?? 0), 0);
@@ -300,11 +346,12 @@ function InventoryModule() {
 
     try {
       const csvText = await csvFile.text();
-      const importResult = await importInventoryFromCsv({
+      const importResult = await importInventoryFromCsvWithMode({
         storeId: currentStoreId,
         tenantId,
         csvText,
         products,
+        mode: csvMode,
       });
       await recordAuditLog({
         storeId: currentStoreId,
@@ -480,13 +527,47 @@ function InventoryModule() {
                 <div className="inventory-import">
                   <div className="inventory-import__copy">
                     <p className="text-body">Aceita planilhas com codigo, nome, estoque e preco. Produtos ausentes sao criados automaticamente.</p>
+                    {csvPreview ? (
+                      <p className="text-body">
+                        Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount} para criar, {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
+                      </p>
+                    ) : null}
                   </div>
                   <div className="inventory-import__actions">
+                    <select
+                      className="ui-select"
+                      value={csvMode}
+                      onChange={(event) => setCsvMode(event.target.value)}
+                    >
+                      <option value="all">Criar e atualizar</option>
+                      <option value="create_only">Criar novos</option>
+                      <option value="update_only">Atualizar existentes</option>
+                    </select>
                     <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} />
                     <button type="button" className="ui-button ui-button--ghost" onClick={handleCsvImport} disabled={saving || !csvFile || !can('inventory:write')}>
                       Importar estoque
                     </button>
                   </div>
+                  {csvPreview?.errors?.length > 0 ? (
+                    <div className="entity-table-wrap">
+                      <table className="ui-table">
+                        <thead>
+                          <tr>
+                            <th>Linha</th>
+                            <th>Motivo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {csvPreview.errors.slice(0, 10).map((error) => (
+                            <tr key={`${error.rowNumber}-${error.reason}`}>
+                              <td>{error.rowNumber}</td>
+                              <td>{error.reason}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

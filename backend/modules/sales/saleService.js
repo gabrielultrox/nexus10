@@ -10,6 +10,7 @@ import {
 
 const repository = createSaleRepository();
 const reversibleStatuses = new Set(['POSTED']);
+const saleInfrastructureTimeoutMs = 15000;
 
 function validateStoreId(storeId) {
   if (!String(storeId ?? '').trim()) {
@@ -72,6 +73,47 @@ function buildOrderSnapshot(orderId, order) {
   };
 }
 
+function withInfrastructureTimeout(promise, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(createSaleError(
+          `Tempo excedido ao concluir ${label}.`,
+          504,
+          'SALE_TIMEOUT',
+        ));
+      }, saleInfrastructureTimeoutMs);
+    }),
+  ]);
+}
+
+function normalizeInfrastructureError(error) {
+  if (error?.code === 'SALE_TIMEOUT') {
+    return error;
+  }
+
+  const message = String(error?.message ?? '');
+
+  if (/RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)) {
+    return createSaleError(
+      'Sistema temporariamente sobrecarregado para lancar a venda. Tente novamente em instantes.',
+      503,
+      'SALE_INFRA_UNAVAILABLE',
+    );
+  }
+
+  if (/DEADLINE_EXCEEDED|deadline exceeded/i.test(message)) {
+    return createSaleError(
+      'Tempo excedido ao lancar a venda. Tente novamente em instantes.',
+      504,
+      'SALE_INFRA_TIMEOUT',
+    );
+  }
+
+  return error;
+}
+
 function buildSaleDocument({
   storeId,
   tenantId,
@@ -128,34 +170,48 @@ async function finalizeSaleCreation({
   saleData,
   actor,
 }) {
-  const postingFlags = await postSaleLifecycle({
-    storeId,
-    tenantId,
-    sale: {
-      id: saleId,
+  try {
+    const postingFlags = await withInfrastructureTimeout(
+      postSaleLifecycle({
+        storeId,
+        tenantId,
+        sale: {
+          id: saleId,
+          ...saleData,
+        },
+        previousStatus: null,
+        actor,
+      }),
+      'o posting da venda',
+    );
+
+    const nextData = {
       ...saleData,
-    },
-    previousStatus: null,
-    actor,
-  });
+      ...postingFlags,
+      updatedAt: new Date(),
+    };
 
-  const nextData = {
-    ...saleData,
-    ...postingFlags,
-    updatedAt: new Date(),
-  };
+    await withInfrastructureTimeout(
+      repository.markPostingFlags({
+        storeId,
+        saleId,
+        stockPosted: postingFlags.stockPosted,
+        financialPosted: postingFlags.financialPosted,
+      }),
+      'a confirmacao do posting',
+    );
 
-  await repository.markPostingFlags({
-    storeId,
-    saleId,
-    stockPosted: postingFlags.stockPosted,
-    financialPosted: postingFlags.financialPosted,
-  });
+    return {
+      id: saleId,
+      data: nextData,
+    };
+  } catch (error) {
+    throw normalizeInfrastructureError(error);
+  }
+}
 
-  return {
-    id: saleId,
-    data: nextData,
-  };
+async function safeCleanup(task) {
+  await withInfrastructureTimeout(task, 'a limpeza da operacao').catch(() => {});
 }
 
 export async function createDirectSale({ storeId, tenantId = null, values, createdBy = null }) {
@@ -173,10 +229,13 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
     createdBy,
   });
 
-  const createdSale = await repository.createDirectSale({
-    storeId,
-    payload: saleData,
-  });
+  const createdSale = await withInfrastructureTimeout(
+    repository.createDirectSale({
+      storeId,
+      payload: saleData,
+    }),
+    'a criacao inicial da venda',
+  );
 
   try {
     const persistedSale = await finalizeSaleCreation({
@@ -189,10 +248,12 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
 
     return mapSaleResponse(persistedSale);
   } catch (error) {
-    await repository.deleteSale({
-      storeId,
-      saleId: createdSale.id,
-    }).catch(() => {});
+    await safeCleanup(
+      repository.deleteSale({
+        storeId,
+        saleId: createdSale.id,
+      }),
+    );
 
     throw error;
   }
@@ -227,11 +288,14 @@ export async function createSaleFromOrder({
     orderSnapshot: buildOrderSnapshot(orderId, order.data),
   });
 
-  const createdSale = await repository.createSaleFromOrder({
-    storeId,
-    orderId,
-    payload: saleData,
-  });
+  const createdSale = await withInfrastructureTimeout(
+    repository.createSaleFromOrder({
+      storeId,
+      orderId,
+      payload: saleData,
+    }),
+    'a criacao inicial da venda a partir do pedido',
+  );
 
   try {
     const persistedSale = await finalizeSaleCreation({
@@ -248,12 +312,14 @@ export async function createSaleFromOrder({
       sale: mapSaleResponse(persistedSale),
     };
   } catch (error) {
-    await repository.revertSaleFromOrder({
-      storeId,
-      orderId,
-      saleId: createdSale.saleId,
-      previousOrderStatus: createdSale.previousOrderStatus,
-    }).catch(() => {});
+    await safeCleanup(
+      repository.revertSaleFromOrder({
+        storeId,
+        orderId,
+        saleId: createdSale.saleId,
+        previousOrderStatus: createdSale.previousOrderStatus,
+      }),
+    );
 
     throw error;
   }

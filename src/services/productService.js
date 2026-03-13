@@ -8,6 +8,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 
 import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
@@ -140,4 +141,63 @@ export async function deleteProduct({ storeId, productId }) {
   const productRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.products, productId);
   await deleteDoc(productRef);
   await deleteInventoryItemForProduct({ storeId, productId });
+}
+
+export async function applyMinimumStockDefaults({ storeId, tenantId, products, minimumStock = 1 }) {
+  assertFirebaseReady();
+
+  const eligibleProducts = products.filter(
+    (product) => Number(product.stock ?? 0) > 0 && Number(product.minimumStock ?? 0) <= 0,
+  );
+
+  if (eligibleProducts.length === 0) {
+    return { updatedCount: 0 };
+  }
+
+  for (let index = 0; index < eligibleProducts.length; index += 400) {
+    const batch = writeBatch(firebaseDb);
+    const chunk = eligibleProducts.slice(index, index + 400);
+
+    chunk.forEach((product) => {
+      const productRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.products,
+        product.id,
+      );
+      const inventoryRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.inventoryItems,
+        product.id,
+      );
+
+      batch.set(productRef, {
+        minimumStock,
+        tenantId: product.tenantId ?? tenantId ?? null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      batch.set(inventoryRef, {
+        storeId,
+        tenantId: product.tenantId ?? tenantId ?? null,
+        productId: product.id,
+        productName: product.name,
+        category: product.category ?? '',
+        sku: product.sku ?? '',
+        currentStock: Number(product.stock ?? 0),
+        minimumStock,
+        status: product.status ?? 'active',
+        lowStock: Number(product.stock ?? 0) <= minimumStock,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+    });
+
+    await batch.commit();
+  }
+
+  return { updatedCount: eligibleProducts.length };
 }

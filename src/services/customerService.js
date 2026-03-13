@@ -7,10 +7,12 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from 'firebase/firestore';
 
 import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
+import { parseCustomerCsv, mapCustomerCsvRow, resolveCustomerFromImport } from './customerCsv';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 function normalizePhone(phone) {
@@ -106,4 +108,127 @@ export async function deleteCustomer({ storeId, customerId }) {
   assertFirebaseReady();
   const customerRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.customers, customerId);
   await deleteDoc(customerRef);
+}
+
+export async function importCustomersFromCsv({
+  storeId,
+  tenantId,
+  csvText,
+  customers,
+  mode = 'all',
+}) {
+  const rows = parseCustomerCsv(csvText);
+  const knownCustomers = [...customers];
+  const result = {
+    createdCount: 0,
+    updatedCount: 0,
+    skippedCount: 0,
+    importedCount: 0,
+    errors: [],
+  };
+
+  for (const row of rows) {
+    const mappedRow = mapCustomerCsvRow(row);
+
+    if (!mappedRow) {
+      result.skippedCount += 1;
+      result.errors.push({
+        rowNumber: row.__rowNumber,
+        reason: 'Linha sem nome ou telefone valido.',
+      });
+      continue;
+    }
+
+    const existingCustomer = resolveCustomerFromImport(knownCustomers, mappedRow);
+
+    if (mode === 'create_only' && existingCustomer) {
+      result.skippedCount += 1;
+      continue;
+    }
+
+    if (mode === 'update_only' && !existingCustomer) {
+      result.skippedCount += 1;
+      continue;
+    }
+
+    const customerRef = existingCustomer
+      ? doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.customers, existingCustomer.id)
+      : doc(collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.customers));
+
+    const payload = {
+      ...mappedRow,
+      storeId,
+      tenantId: tenantId ?? null,
+      createdAt: existingCustomer?.createdAt ?? serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(customerRef, payload, { merge: true });
+
+    if (existingCustomer) {
+      const existingIndex = knownCustomers.findIndex((customer) => customer.id === existingCustomer.id);
+      knownCustomers[existingIndex] = {
+        ...existingCustomer,
+        ...payload,
+        id: existingCustomer.id,
+      };
+      result.updatedCount += 1;
+    } else {
+      knownCustomers.push({
+        ...payload,
+        id: customerRef.id,
+      });
+      result.createdCount += 1;
+    }
+
+    result.importedCount += 1;
+  }
+
+  return result;
+}
+
+export function previewCustomersImport({ csvText, customers, mode = 'all' }) {
+  const rows = parseCustomerCsv(csvText);
+  const result = {
+    createdCount: 0,
+    updatedCount: 0,
+    skippedCount: 0,
+    importedCount: 0,
+    errors: [],
+  };
+
+  rows.forEach((row) => {
+    const mappedRow = mapCustomerCsvRow(row);
+
+    if (!mappedRow) {
+      result.skippedCount += 1;
+      result.errors.push({
+        rowNumber: row.__rowNumber,
+        reason: 'Linha sem nome ou telefone valido.',
+      });
+      return;
+    }
+
+    const existingCustomer = resolveCustomerFromImport(customers, mappedRow);
+
+    if (mode === 'create_only' && existingCustomer) {
+      result.skippedCount += 1;
+      return;
+    }
+
+    if (mode === 'update_only' && !existingCustomer) {
+      result.skippedCount += 1;
+      return;
+    }
+
+    if (existingCustomer) {
+      result.updatedCount += 1;
+    } else {
+      result.createdCount += 1;
+    }
+
+    result.importedCount += 1;
+  });
+
+  return result;
 }
