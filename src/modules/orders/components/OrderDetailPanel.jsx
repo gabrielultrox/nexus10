@@ -1,4 +1,5 @@
 import { formatCurrencyBRL, getChannelLabel, getOrderDomainStatusLabel, getPaymentMethodLabel } from '../../../services/commerce';
+import { printOrderTicket } from '../../../services/commercePrint';
 
 function OrderDetailPanel({
   selectedOrder,
@@ -21,6 +22,13 @@ function OrderDetailPanel({
 
         {selectedOrder ? (
           <div className="orders-domain__detail-actions">
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={() => printOrderTicket(selectedOrder)}
+            >
+              Imprimir pedido
+            </button>
             <button
               type="button"
               className="ui-button ui-button--ghost"

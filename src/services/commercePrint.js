@@ -1,0 +1,427 @@
+import {
+  formatCurrencyBRL,
+  getChannelLabel,
+  getOrderDomainStatusLabel,
+  getPaymentMethodLabel,
+} from './commerce'
+import { getSaleStatusMeta } from './sales'
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function formatPrintableDate(value) {
+  if (!value) {
+    return '--'
+  }
+
+  const normalized = typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
+
+  if (Number.isNaN(normalized.getTime())) {
+    return '--'
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(normalized)
+}
+
+function buildDocumentTitle(type, code) {
+  const safeCode = escapeHtml(code || '--')
+  return type === 'order' ? `Pedido ${safeCode}` : `Venda ${safeCode}`
+}
+
+function buildOrderPrintModel(order) {
+  return {
+    title: buildDocumentTitle('order', order.number || order.code),
+    eyebrow: 'Comprovante operacional',
+    typeLabel: 'Pedido',
+    code: order.number || order.code || '--',
+    secondaryCode: order.code || '--',
+    status: getOrderDomainStatusLabel(order.domainStatus),
+    source:
+      order.origin ||
+      order.sourceLabel ||
+      getChannelLabel(order.sourceChannel ?? order.source),
+    customer: order.customerName || 'Cliente avulso',
+    customerPhone: order.customerSnapshot?.phone || 'Sem telefone',
+    payment: order.paymentMethodLabel || getPaymentMethodLabel(order.paymentMethod),
+    createdAt: formatPrintableDate(order.createdAt),
+    updatedAt: formatPrintableDate(order.updatedAt),
+    addressLine: order.address?.addressLine || 'Endereco nao informado',
+    neighborhood: order.address?.neighborhood || 'Bairro nao informado',
+    reference: order.address?.reference || 'Sem referencia',
+    complement: order.address?.complement || 'Sem complemento',
+    notes: order.notes || 'Nenhuma observacao registrada.',
+    linkLabel: order.saleId ? `Venda vinculada: ${order.saleId}` : 'Ainda sem venda vinculada.',
+    items: (order.items || []).map((item) => ({
+      name: item.productSnapshot?.name ?? item.name ?? 'Item',
+      quantity: item.quantity ?? 0,
+      unitPrice: formatCurrencyBRL(item.unitPrice ?? 0),
+      totalPrice: formatCurrencyBRL(item.totalPrice ?? 0),
+    })),
+    totals: [
+      { label: 'Subtotal', value: formatCurrencyBRL(order.totals?.subtotal ?? 0) },
+      { label: 'Frete', value: formatCurrencyBRL(order.totals?.freight ?? 0) },
+      { label: 'Adicional', value: formatCurrencyBRL(order.totals?.extraAmount ?? 0) },
+      { label: 'Desconto', value: formatCurrencyBRL(order.totals?.discountValue ?? 0) },
+      { label: 'Total', value: formatCurrencyBRL(order.totals?.total ?? 0), isTotal: true },
+    ],
+  }
+}
+
+function buildSalePrintModel(sale) {
+  return {
+    title: buildDocumentTitle('sale', sale.number || sale.code),
+    eyebrow: 'Comprovante operacional',
+    typeLabel: 'Venda',
+    code: sale.number || sale.code || '--',
+    secondaryCode: sale.code || '--',
+    status: getSaleStatusMeta(sale.domainStatus).label,
+    source: sale.channelLabel || 'Canal nao informado',
+    customer: sale.customerSnapshot?.name || 'Cliente avulso',
+    customerPhone: sale.customerSnapshot?.phone || 'Sem telefone',
+    payment: sale.paymentMethodLabel || getPaymentMethodLabel(sale.paymentMethod),
+    createdAt: formatPrintableDate(sale.createdAtDate ?? sale.createdAt),
+    updatedAt: formatPrintableDate(sale.launchedAtDate ?? sale.launchedAt),
+    addressLine: sale.address?.addressLine || 'Endereco nao informado',
+    neighborhood: sale.address?.neighborhood || 'Bairro nao informado',
+    reference: sale.address?.reference || 'Sem referencia',
+    complement: sale.address?.complement || 'Sem complemento',
+    notes: sale.notes || 'Nenhuma observacao registrada.',
+    linkLabel: sale.orderId ? `Pedido vinculado: ${sale.orderId}` : 'Venda criada diretamente.',
+    items: (sale.items || []).map((item) => ({
+      name: item.name || item.productSnapshot?.name || 'Item',
+      quantity: item.quantity ?? 0,
+      unitPrice: formatCurrencyBRL(item.unitPrice ?? 0),
+      totalPrice: formatCurrencyBRL(item.totalPrice ?? item.total ?? 0),
+    })),
+    totals: [
+      { label: 'Subtotal', value: formatCurrencyBRL(sale.totals?.subtotal ?? 0) },
+      { label: 'Frete', value: formatCurrencyBRL(sale.totals?.freight ?? 0) },
+      { label: 'Adicional', value: formatCurrencyBRL(sale.totals?.extraAmount ?? 0) },
+      { label: 'Desconto', value: formatCurrencyBRL(sale.totals?.discountValue ?? 0) },
+      { label: 'Total', value: formatCurrencyBRL(sale.totals?.total ?? 0), isTotal: true },
+    ],
+  }
+}
+
+function renderItems(items) {
+  if (!items.length) {
+    return `
+      <div class="print-ticket__empty">Nenhum item registrado.</div>
+    `
+  }
+
+  return items
+    .map(
+      (item) => `
+        <div class="print-ticket__item">
+          <div class="print-ticket__item-main">
+            <strong>${escapeHtml(item.name)}</strong>
+            <span>${escapeHtml(item.quantity)} x ${escapeHtml(item.unitPrice)}</span>
+          </div>
+          <strong class="print-ticket__item-total">${escapeHtml(item.totalPrice)}</strong>
+        </div>
+      `,
+    )
+    .join('')
+}
+
+function renderTotals(totals) {
+  return totals
+    .map(
+      (item) => `
+        <div class="print-ticket__total-row${item.isTotal ? ' print-ticket__total-row--grand' : ''}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
+        </div>
+      `,
+    )
+    .join('')
+}
+
+function buildPrintHtml(model) {
+  return `<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(model.title)}</title>
+    <style>
+      @page {
+        size: 80mm 297mm;
+        margin: 4mm;
+      }
+
+      :root {
+        color-scheme: light;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #111827;
+        font-family: "DM Sans", "Segoe UI", sans-serif;
+      }
+
+      body {
+        width: 72mm;
+      }
+
+      .print-ticket {
+        display: grid;
+        gap: 3mm;
+        width: 100%;
+        padding: 1mm 0;
+      }
+
+      .print-ticket__header,
+      .print-ticket__section,
+      .print-ticket__totals,
+      .print-ticket__footer {
+        border: 0.35mm solid #d2dae8;
+        border-radius: 2.4mm;
+        padding: 2.6mm;
+        background: linear-gradient(180deg, rgba(247, 250, 255, 0.98), rgba(255, 255, 255, 1));
+      }
+
+      .print-ticket__header {
+        gap: 2mm;
+      }
+
+      .print-ticket__eyebrow,
+      .print-ticket__label,
+      .print-ticket__meta span,
+      .print-ticket__notes-label {
+        display: block;
+        color: #4b84a9;
+        font-family: "Share Tech Mono", "Consolas", monospace;
+        font-size: 2.6mm;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .print-ticket__title {
+        margin: 1.6mm 0 0;
+        font-family: "Syne", "Segoe UI", sans-serif;
+        font-size: 6.4mm;
+        line-height: 1.02;
+      }
+
+      .print-ticket__meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2mm;
+        margin-top: 2.4mm;
+      }
+
+      .print-ticket__meta strong,
+      .print-ticket__identity strong,
+      .print-ticket__address strong,
+      .print-ticket__item strong,
+      .print-ticket__total-row strong {
+        color: #0f172a;
+      }
+
+      .print-ticket__identity,
+      .print-ticket__address,
+      .print-ticket__notes {
+        display: grid;
+        gap: 1.4mm;
+      }
+
+      .print-ticket__identity p,
+      .print-ticket__address p,
+      .print-ticket__notes p,
+      .print-ticket__item span,
+      .print-ticket__empty,
+      .print-ticket__footer p {
+        margin: 0;
+        color: #475569;
+        font-size: 3.2mm;
+        line-height: 1.45;
+      }
+
+      .print-ticket__items {
+        display: grid;
+        gap: 0;
+      }
+
+      .print-ticket__item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2mm;
+        align-items: start;
+        padding: 2mm 0;
+        border-bottom: 0.25mm dashed #d8e2ee;
+      }
+
+      .print-ticket__item:last-child {
+        border-bottom: 0;
+      }
+
+      .print-ticket__item-main {
+        display: grid;
+        gap: 0.8mm;
+      }
+
+      .print-ticket__item-total {
+        font-size: 3.2mm;
+        white-space: nowrap;
+      }
+
+      .print-ticket__totals {
+        display: grid;
+        gap: 0;
+      }
+
+      .print-ticket__total-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 2mm;
+        align-items: center;
+        padding: 1.8mm 0;
+        border-bottom: 0.25mm dashed #d8e2ee;
+        font-size: 3.1mm;
+        color: #475569;
+      }
+
+      .print-ticket__total-row:last-child {
+        border-bottom: 0;
+      }
+
+      .print-ticket__total-row--grand {
+        padding-top: 2.4mm;
+        font-size: 3.6mm;
+      }
+
+      .print-ticket__total-row--grand strong {
+        font-size: 4.4mm;
+      }
+
+      .print-ticket__footer {
+        display: grid;
+        gap: 1.6mm;
+      }
+
+      .print-ticket__footer-note {
+        padding-top: 1.8mm;
+        border-top: 0.25mm dashed #d8e2ee;
+      }
+
+      @media screen {
+        body {
+          margin: 0 auto;
+          padding: 4mm 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="print-ticket">
+      <section class="print-ticket__header">
+        <span class="print-ticket__eyebrow">${escapeHtml(model.eyebrow)}</span>
+        <h1 class="print-ticket__title">${escapeHtml(model.typeLabel)} ${escapeHtml(model.code)}</h1>
+        <div class="print-ticket__meta">
+          <div>
+            <span>Status</span>
+            <strong>${escapeHtml(model.status)}</strong>
+          </div>
+          <div>
+            <span>Canal</span>
+            <strong>${escapeHtml(model.source)}</strong>
+          </div>
+          <div>
+            <span>Pagamento</span>
+            <strong>${escapeHtml(model.payment)}</strong>
+          </div>
+          <div>
+            <span>Criado em</span>
+            <strong>${escapeHtml(model.createdAt)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="print-ticket__section print-ticket__identity">
+        <span class="print-ticket__label">Cliente</span>
+        <strong>${escapeHtml(model.customer)}</strong>
+        <p>${escapeHtml(model.customerPhone)}</p>
+        <p>Codigo interno: ${escapeHtml(model.secondaryCode)}</p>
+      </section>
+
+      <section class="print-ticket__section print-ticket__address">
+        <span class="print-ticket__label">Entrega</span>
+        <strong>${escapeHtml(model.addressLine)}</strong>
+        <p>${escapeHtml(model.neighborhood)}</p>
+        <p>${escapeHtml(model.reference)}</p>
+        <p>${escapeHtml(model.complement)}</p>
+      </section>
+
+      <section class="print-ticket__section">
+        <span class="print-ticket__label">Itens</span>
+        <div class="print-ticket__items">${renderItems(model.items)}</div>
+      </section>
+
+      <section class="print-ticket__totals">
+        ${renderTotals(model.totals)}
+      </section>
+
+      <section class="print-ticket__footer">
+        <div class="print-ticket__notes">
+          <span class="print-ticket__notes-label">Observacoes</span>
+          <p>${escapeHtml(model.notes)}</p>
+        </div>
+        <p class="print-ticket__footer-note">${escapeHtml(model.linkLabel)}</p>
+        <p>Atualizado em ${escapeHtml(model.updatedAt)}</p>
+      </section>
+    </main>
+    <script>
+      window.addEventListener('load', () => {
+        window.print();
+      });
+      window.addEventListener('afterprint', () => {
+        window.close();
+      });
+    </script>
+  </body>
+</html>`
+}
+
+function openPrintWindow(html, title) {
+  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=460,height=880')
+
+  if (!printWindow) {
+    throw new Error('Nao foi possivel abrir a janela de impressao.')
+  }
+
+  printWindow.document.open()
+  printWindow.document.write(html)
+  printWindow.document.close()
+  printWindow.document.title = title
+}
+
+export function printOrderTicket(order) {
+  const model = buildOrderPrintModel(order)
+  openPrintWindow(buildPrintHtml(model), model.title)
+}
+
+export function printSaleTicket(sale) {
+  const model = buildSalePrintModel(sale)
+  openPrintWindow(buildPrintHtml(model), model.title)
+}

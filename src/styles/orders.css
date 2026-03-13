@@ -239,6 +239,10 @@
   white-space: nowrap;
 }
 
+.orders-domain__detail-actions {
+  align-items: center;
+}
+
 .orders-domain__item-line {
   display: flex;
   justify-content: space-between;

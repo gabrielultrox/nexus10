@@ -1,4 +1,5 @@
 import { formatCurrencyBRL } from '../../../services/commerce';
+import { printSaleTicket } from '../../../services/commercePrint';
 import { getSaleStatusMeta } from '../../../services/sales';
 import { formatDateTime } from './salesModuleHelpers';
 
@@ -13,6 +14,13 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
 
         {selectedSale ? (
           <div className="sales-domain__detail-actions">
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={() => printSaleTicket(selectedSale)}
+            >
+              Imprimir venda
+            </button>
             <button type="button" className="ui-button ui-button--warning" onClick={onReverse} disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}>
               Estornar venda
             </button>
