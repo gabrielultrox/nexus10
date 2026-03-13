@@ -1172,7 +1172,18 @@
   padding: var(--space-6-75) var(--space-6-75) var(--space-7-25);
 }
 
+.schedule-export-image__canvas--schedule-machines {
+  width: 1080px;
+  padding: var(--space-6-75) var(--space-6-75) var(--space-7-25);
+}
+
 .schedule-export-image__canvas--machines .schedule-export-image__metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
   margin-top: var(--space-4);
@@ -1183,7 +1194,17 @@
   line-height: 0.96;
 }
 
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__title {
+  font-size: 2.25rem;
+  line-height: 0.96;
+}
+
 .schedule-export-image__canvas--machines .schedule-export-image__meta {
+  margin-top: var(--space-1);
+  font-size: 1rem;
+}
+
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__meta {
   margin-top: var(--space-1);
   font-size: 1rem;
 }
@@ -1193,7 +1214,17 @@
   padding: var(--space-3-5) var(--space-4);
 }
 
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__stamp {
+  min-width: 180px;
+  padding: var(--space-3-5) var(--space-4);
+}
+
 .schedule-export-image__canvas--machines .schedule-export-image__metric {
+  padding: var(--space-4) var(--space-3-5);
+  border-radius: var(--radius-section);
+}
+
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__metric {
   padding: var(--space-4) var(--space-3-5);
   border-radius: var(--radius-section);
 }
@@ -1203,8 +1234,20 @@
   font-size: 1.7rem;
 }
 
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__metric strong {
+  margin-bottom: 0;
+  font-size: 1.7rem;
+}
+
 .schedule-export-image__canvas--machines .schedule-export-image__stamp span,
 .schedule-export-image__canvas--machines .schedule-export-image__metric span {
+  margin-bottom: 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+}
+
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__stamp span,
+.schedule-export-image__canvas--schedule-machines .schedule-export-image__metric span {
   margin-bottom: 4px;
   font-size: 0.68rem;
   letter-spacing: 0.14em;
@@ -1260,6 +1303,58 @@
 .schedule-export-image__machine-badge--absent {
   background: var(--color-export-danger-bg);
   color: var(--color-export-danger-text);
+}
+
+.schedule-export-image__used-machine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3-5);
+  margin-top: var(--space-4);
+}
+
+.schedule-export-image__used-machine-card {
+  display: grid;
+  gap: var(--space-3-5);
+  min-height: 168px;
+  padding: var(--space-4-5) var(--space-4);
+  border: 1px solid var(--color-export-dark-border);
+  border-radius: var(--radius-section);
+  background: var(--color-export-dark-surface);
+}
+
+.schedule-export-image__used-machine-top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.schedule-export-image__used-machine-body {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-export-dark-border-soft);
+}
+
+.schedule-export-image__used-machine-label {
+  display: block;
+  color: var(--color-export-dark-label);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.schedule-export-image__used-machine-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.schedule-export-image__used-machine-courier {
+  color: var(--color-export-dark-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .schedule-export-image__header,
@@ -1497,6 +1592,24 @@
 .schedule-export-image__canvas--light .schedule-export-image__machine-badge--absent {
   background: var(--color-export-light-danger-bg);
   color: var(--color-export-light-danger-text);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__used-machine-card {
+  border-color: var(--color-export-light-border);
+  background: var(--color-export-light-surface);
+  box-shadow: 0 16px 34px var(--color-export-light-shadow);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__used-machine-body {
+  border-color: var(--color-export-light-border);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__used-machine-label {
+  color: var(--color-export-light-label);
+}
+
+.schedule-export-image__canvas--light .schedule-export-image__used-machine-courier {
+  color: var(--color-export-light-text);
 }
 
 @media (max-width: 880px) {

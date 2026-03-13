@@ -11,6 +11,7 @@ function NativeModuleToolbar({
   visibleCount,
   recordsLength,
   onExportSchedule,
+  onExportScheduleMachines,
   onExportMachines,
   onManualReset,
   onClearAll,
@@ -59,9 +60,14 @@ function NativeModuleToolbar({
       <div className="native-module__toolbar-actions">
         <span className="ui-badge ui-badge--special">{visibleCount} visiveis</span>
         {routePath === 'schedule' ? (
-          <button type="button" className="ui-button ui-button--secondary" onClick={onExportSchedule}>
-            Exportar imagem
-          </button>
+          <>
+            <button type="button" className="ui-button ui-button--secondary" onClick={onExportSchedule}>
+              Exportar escala
+            </button>
+            <button type="button" className="ui-button ui-button--secondary" onClick={onExportScheduleMachines}>
+              Exportar maquininhas usadas
+            </button>
+          </>
         ) : null}
         {routePath === 'machines' ? (
           <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
@@ -616,6 +622,7 @@ function NativeModuleRecordsSection(props) {
     setStatusFilter,
     visibleCount,
     handleExportScheduleImage,
+    handleExportScheduleMachinesImage,
     handleExportMachineChecklistImage,
     handleManualReset,
     handleClearAll,
@@ -641,6 +648,7 @@ function NativeModuleRecordsSection(props) {
         visibleCount={visibleCount}
         recordsLength={records.length}
         onExportSchedule={handleExportScheduleImage}
+        onExportScheduleMachines={handleExportScheduleMachinesImage}
         onExportMachines={handleExportMachineChecklistImage}
         onManualReset={handleManualReset}
         onClearAll={handleClearAll}

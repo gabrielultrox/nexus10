@@ -314,6 +314,7 @@ function NativeModuleWorkspace({ route }) {
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
   const scheduleImageRef = useRef(null);
+  const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
 
   useEffect(() => subscribeToCouriers(
@@ -649,6 +650,33 @@ function NativeModuleWorkspace({ route }) {
       : []),
     [route.path, visibleRecords],
   );
+  const usedScheduleMachines = useMemo(() => {
+    if (route.path !== 'schedule') {
+      return [];
+    }
+
+    const groupedMachines = visibleRecords.reduce((accumulator, record) => {
+      const machineLabel = typeof record.machine === 'string' ? record.machine.trim() : '';
+
+      if (!machineLabel || machineLabel === 'Sem maquininha') {
+        return accumulator;
+      }
+
+      const currentEntry = accumulator.get(machineLabel) ?? {
+        device: machineLabel,
+        couriers: [],
+      };
+
+      if (record.courier && !currentEntry.couriers.includes(record.courier)) {
+        currentEntry.couriers.push(record.courier);
+      }
+
+      accumulator.set(machineLabel, currentEntry);
+      return accumulator;
+    }, new Map());
+
+    return Array.from(groupedMachines.values()).sort((left, right) => left.device.localeCompare(right.device, 'pt-BR'));
+  }, [route.path, visibleRecords]);
 
   function updateField(name, value) {
     setFormValues((current) => ({
@@ -1054,6 +1082,25 @@ function NativeModuleWorkspace({ route }) {
     await exportImageFromRef(scheduleImageRef, 'escala do dia', 'Nao foi possivel exportar a escala como imagem.');
   }
 
+  async function handleExportScheduleMachinesImage() {
+    if (route.path !== 'schedule') {
+      playError();
+      return;
+    }
+
+    if (usedScheduleMachines.length === 0) {
+      setErrorMessage('Nao ha maquininhas utilizadas hoje para exportar.');
+      playError();
+      return;
+    }
+
+    await exportImageFromRef(
+      scheduleMachinesImageRef,
+      'maquininhas utilizadas no dia',
+      'Nao foi possivel exportar as maquininhas utilizadas como imagem.',
+    );
+  }
+
   async function handleExportMachineChecklistImage() {
     if (route.path !== 'machines') {
       playError();
@@ -1303,6 +1350,7 @@ function NativeModuleWorkspace({ route }) {
         setStatusFilter={setStatusFilter}
         visibleCount={visibleCount}
         handleExportScheduleImage={handleExportScheduleImage}
+        handleExportScheduleMachinesImage={handleExportScheduleMachinesImage}
         handleExportMachineChecklistImage={handleExportMachineChecklistImage}
         handleManualReset={handleManualReset}
         handleClearAll={handleClearAll}
@@ -1313,8 +1361,10 @@ function NativeModuleWorkspace({ route }) {
       <NativeModuleExportCanvases
         routePath={route.path}
         scheduleImageRef={scheduleImageRef}
+        scheduleMachinesImageRef={scheduleMachinesImageRef}
         machineChecklistImageRef={machineChecklistImageRef}
         visibleRecords={visibleRecords}
+        usedScheduleMachines={usedScheduleMachines}
         metrics={metrics}
         formatChecklistDate={formatChecklistDate}
         session={session}
