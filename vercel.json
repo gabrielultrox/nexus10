@@ -1,5 +1,4 @@
 {
-  "x-platform": "Canonical deploy platform: Vercel. Deploy command: npx vercel --prod",
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
