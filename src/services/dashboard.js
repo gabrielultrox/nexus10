@@ -2,7 +2,7 @@ import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEnt
 import { isOrderClosedStatus, isSalePosted } from './commerce';
 import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase';
 import { subscribeToInventoryItems } from './inventory';
-import { loadLocalRecords, loadResettableLocalRecords } from './localRecords';
+import { loadLocalRecords, loadResettableLocalRecords } from './localAccess';
 import { courierSeedRecords } from './operationsSeedData';
 import { subscribeToOrders } from './orders';
 import { subscribeToSales } from './sales';

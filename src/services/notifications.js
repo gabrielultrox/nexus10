@@ -1,4 +1,4 @@
-import { loadLocalRecords, saveLocalRecords } from './localRecords';
+import { loadLocalRecords, saveLocalRecords } from './localAccess';
 
 export const NOTIFICATIONS_STORAGE_KEY = 'nexus-operational-notifications';
 export const NOTIFICATIONS_EVENT = 'nexus:notifications-updated';

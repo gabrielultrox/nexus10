@@ -275,11 +275,23 @@
     grid-template-columns: 1fr;
   }
 
+  .entity-form-section--span-2,
   .entity-form-grid__wide {
     grid-column: auto;
   }
 
   .entity-form-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .entity-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entity-form-section--span-2,
+  .entity-form-grid__wide {
+    grid-column: 1 / -1;
   }
 }

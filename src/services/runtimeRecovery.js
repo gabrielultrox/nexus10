@@ -34,7 +34,7 @@ function canAttemptRecovery() {
   try {
     const lastAttempt = Number(window.sessionStorage.getItem(RECOVERY_STORAGE_KEY) ?? 0);
     return !lastAttempt || (Date.now() - lastAttempt) > RECOVERY_TTL_MS;
-  } catch (error) {
+  } catch {
     return true;
   }
 }

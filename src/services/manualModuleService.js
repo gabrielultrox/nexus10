@@ -16,7 +16,7 @@ import {
   resetLocalRecordsNow,
   saveLocalRecords,
   saveResettableLocalRecords,
-} from './localRecords';
+} from './localAccess';
 
 function getOperationalDay(resetHour = 3) {
   const now = new Date();
@@ -221,7 +221,6 @@ export async function saveManualModuleRecord({
   storeId,
   tenantId,
   modulePath,
-  storageKey,
   dailyResetHour = null,
   record,
 }) {

@@ -4,7 +4,7 @@
   min-width: 0;
   padding: var(--space-4);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
-  border-radius: 32px;
+  border-radius: var(--radius-shell-lg);
   background:
     radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 32%),
     radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-amber) 10%, transparent), transparent 28%),
@@ -19,7 +19,7 @@
   align-items: end;
   padding: var(--space-5);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 28%, var(--color-border-subtle));
-  border-radius: 28px;
+  border-radius: var(--radius-shell);
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 22%, transparent), transparent 22%),
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 12%, transparent), transparent 38%),
@@ -64,7 +64,7 @@
 
 .workspace-nav .ui-button {
   min-width: 170px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .workspace-shell--orders .workspace-nav .ui-button--primary,
@@ -97,7 +97,7 @@
 
 .orders-domain__copy {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .orders-domain__actions,
@@ -127,7 +127,7 @@
 .orders-domain__detail-shell {
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 22%, var(--color-border-subtle));
-  border-radius: 24px;
+  border-radius: var(--radius-panel);
   background:
     linear-gradient(140deg, color-mix(in srgb, var(--color-accent-cyan) 12%, transparent), transparent 16%),
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 12%, transparent), transparent 44%),
@@ -153,7 +153,7 @@
   min-width: 0;
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 26%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -164,10 +164,10 @@
 .orders-domain__notes,
 .orders-domain__items-list {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 24%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -204,7 +204,7 @@
   gap: var(--space-2);
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 24%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -269,7 +269,7 @@
 
 .sales-domain__copy {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .sales-domain__actions,
@@ -312,7 +312,7 @@
   align-items: end;
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-primary) 24%, var(--color-border-subtle));
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 8%, transparent), transparent 24%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -325,10 +325,10 @@
 .sales-domain__items-list,
 .sales-domain__summary {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-secondary) 20%, var(--color-border-subtle));
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-primary) 12%, transparent), transparent 46%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -406,7 +406,7 @@
   align-items: start;
   padding: var(--space-4);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
-  border-radius: 24px;
+  border-radius: var(--radius-panel);
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 18%),
     linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--surface-panel) 94%, transparent));
@@ -447,7 +447,7 @@
 .commerce-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--radius-panel);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 38%, transparent), transparent 26%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
@@ -494,7 +494,7 @@
 
 .orders-domain .surface-card,
 .sales-domain .surface-card {
-  border-radius: 28px;
+  border-radius: var(--radius-shell);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 20%),
@@ -510,7 +510,7 @@
 
 .orders-domain .ui-kpi-card,
 .sales-domain .ui-kpi-card {
-  border-radius: 24px;
+  border-radius: var(--radius-panel);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 32%, transparent), transparent 22%),
     color-mix(in srgb, var(--surface-panel-strong) 96%, transparent);
@@ -534,7 +534,7 @@
 
 .orders-domain .ui-field,
 .sales-domain .ui-field {
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .orders-domain .ui-label,
@@ -578,7 +578,7 @@
 .sales-domain .ui-select,
 .sales-domain .ui-textarea {
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   font-size: 0.9rem;
   color: var(--color-text-primary);
   background:
@@ -608,7 +608,7 @@
 .sales-domain .commerce-panel__add-button {
   min-height: 40px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-size: 0.66rem;
 }
 
@@ -623,14 +623,14 @@
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-cyan) 50%),
     linear-gradient(135deg, var(--color-accent-cyan) 50%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, #ffffff 7%, transparent), transparent 38%);
+    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 7%, transparent), transparent 38%);
 }
 
 .sales-domain .ui-select {
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-primary) 50%),
     linear-gradient(135deg, var(--color-accent-primary) 50%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, #ffffff 7%, transparent), transparent 38%);
+    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 7%, transparent), transparent 38%);
 }
 
 .orders-domain .ui-input:focus,
@@ -655,7 +655,7 @@
 .sales-domain .sales-domain__toolbar {
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, var(--surface-panel));
 }
 
@@ -666,7 +666,7 @@
 
 .orders-domain .entity-table-wrap,
 .sales-domain .entity-table-wrap {
-  border-radius: 24px;
+  border-radius: var(--radius-panel);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   background: color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
@@ -693,7 +693,7 @@
 
 .orders-domain .entity-empty-state,
 .sales-domain .entity-empty-state {
-  border-radius: 22px;
+  border-radius: var(--radius-md);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 20%, var(--color-border-subtle));
   background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, var(--surface-panel));
 }

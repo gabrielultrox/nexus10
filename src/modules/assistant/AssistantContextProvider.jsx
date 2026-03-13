@@ -152,23 +152,20 @@ export function AssistantContextProvider({ children }) {
     sendMessage(action.prompt);
   }
 
-  const value = useMemo(
-    () => ({
-      isOpen,
-      isLoading,
-      messages,
-      pageContext,
-      quickActions: initialQuickActions,
-      openPanel,
-      closePanel,
-      sendMessage,
-      handleQuickAction,
-      navigateTo(route) {
-        navigate(route);
-      },
-    }),
-    [isLoading, isOpen, messages, navigate, pageContext],
-  );
+  const value = {
+    isOpen,
+    isLoading,
+    messages,
+    pageContext,
+    quickActions: initialQuickActions,
+    openPanel,
+    closePanel,
+    sendMessage,
+    handleQuickAction,
+    navigateTo(route) {
+      navigate(route);
+    },
+  };
 
   return (
     <AssistantContext.Provider value={value}>

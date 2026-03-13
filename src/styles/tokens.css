@@ -6,19 +6,39 @@
   --font-body: var(--font-sans);
 
   --space-1: 4px;
+  --space-1-5: 6px;
   --space-2: 8px;
+  --space-2-5: 10px;
   --space-3: 12px;
+  --space-3-5: 14px;
   --space-4: 16px;
+  --space-4-5: 18px;
   --space-5: 20px;
+  --space-5-5: 22px;
   --space-6: 24px;
+  --space-6-5: 28px;
+  --space-6-75: 30px;
   --space-7: 32px;
+  --space-7-25: 34px;
   --space-8: 40px;
+  --space-8-5: 44px;
   --space-9: 56px;
 
+  --radius-2xs: 4px;
+  --radius-3xs: 5px;
+  --radius-checkbox: 6px;
+  --radius-checkbox-soft: 7px;
   --radius-xs: 8px;
+  --radius-base: 10px;
   --radius-sm: 14px;
+  --radius-field: 16px;
+  --radius-section: 18px;
+  --radius-card: 20px;
   --radius-md: 22px;
+  --radius-panel: 24px;
+  --radius-shell: 28px;
   --radius-lg: 30px;
+  --radius-shell-lg: 32px;
   --radius-pill: 999px;
 
   --border-thin: 1px;
@@ -36,6 +56,53 @@
   --duration-normal: 240ms;
   --duration-slow: 380ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --surface-elevated: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--color-bg-card-alt));
+  --color-success-strong: var(--color-semantic-success);
+  --color-static-white: #ffffff;
+  --color-export-dark-text: #f4f7fb;
+  --color-export-dark-text-muted: rgba(226, 236, 248, 0.8);
+  --color-export-dark-text-soft: rgba(208, 220, 235, 0.74);
+  --color-export-dark-label: rgba(153, 173, 197, 0.82);
+  --color-export-dark-eyebrow: rgba(117, 214, 255, 0.82);
+  --color-export-dark-surface: rgba(12, 24, 42, 0.72);
+  --color-export-dark-surface-strong: rgba(12, 24, 42, 0.76);
+  --color-export-dark-border: rgba(124, 170, 215, 0.18);
+  --color-export-dark-border-soft: rgba(124, 170, 215, 0.14);
+  --color-export-dark-cyan-glow: rgba(0, 198, 255, 0.18);
+  --color-export-dark-amber-glow: rgba(255, 145, 0, 0.16);
+  --color-export-dark-bg-top: rgba(8, 17, 31, 0.98);
+  --color-export-dark-bg-bottom: rgba(7, 12, 24, 1);
+  --color-export-success-bg: rgba(23, 160, 120, 0.16);
+  --color-export-success-border: rgba(23, 160, 120, 0.3);
+  --color-export-success-text: #7ef0c2;
+  --color-export-danger-bg: rgba(255, 91, 110, 0.16);
+  --color-export-danger-border: rgba(255, 91, 110, 0.24);
+  --color-export-danger-text: #ffb7c0;
+  --color-export-tag-bg: rgba(0, 198, 255, 0.14);
+  --color-export-tag-text: #8be8ff;
+  --color-export-problem-bg: rgba(255, 145, 0, 0.16);
+  --color-export-problem-text: #ffc177;
+  --color-export-light-bg-top: #ffffff;
+  --color-export-light-bg-bottom: #f3f7fb;
+  --color-export-light-text: #162235;
+  --color-export-light-text-soft: rgba(22, 34, 53, 0.74);
+  --color-export-light-label: rgba(66, 85, 110, 0.84);
+  --color-export-light-border: rgba(128, 154, 186, 0.24);
+  --color-export-light-surface: rgba(255, 255, 255, 0.86);
+  --color-export-light-shadow: rgba(18, 31, 49, 0.08);
+  --color-export-light-frame-shadow: rgba(13, 24, 40, 0.16);
+  --color-export-light-cyan-glow: rgba(0, 150, 220, 0.08);
+  --color-export-light-amber-glow: rgba(255, 145, 0, 0.08);
+  --color-export-light-cyan: #0d8bd8;
+  --color-export-light-success-bg: rgba(23, 160, 120, 0.12);
+  --color-export-light-success-text: #168561;
+  --color-export-light-danger-bg: rgba(255, 91, 110, 0.12);
+  --color-export-light-danger-text: #c84a5a;
+  --color-export-light-tag-bg: rgba(13, 139, 216, 0.1);
+  --color-export-light-tag-text: #0f75b6;
+  --color-export-light-problem-bg: rgba(255, 145, 0, 0.12);
+  --color-export-light-problem-text: #b67207;
 }
 
 :root[data-theme='dark'] {

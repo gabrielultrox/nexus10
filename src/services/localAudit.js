@@ -1,4 +1,4 @@
-import { loadLocalRecords, saveLocalRecords } from './localRecords';
+import { loadLocalRecords, saveLocalRecords } from './localAccess';
 
 export const AUDIT_LOG_STORAGE_KEY = 'nexus-local-audit-log';
 

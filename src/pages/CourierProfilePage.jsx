@@ -4,7 +4,7 @@ import '../styles/couriers.css';
 
 import CourierProfilePanel from '../modules/couriers/components/CourierProfilePanel';
 import { findCourierById } from '../modules/couriers/utils/courierFilters';
-import { loadLocalRecords } from '../services/localRecords';
+import { loadLocalRecords } from '../services/localAccess';
 import { courierSeedRecords } from '../services/operationsSeedData';
 
 const manualCourierStorageKey = 'nexus-manual-couriers';

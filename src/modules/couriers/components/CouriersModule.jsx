@@ -11,7 +11,7 @@ import {
   subscribeToCouriers,
 } from '../../../services/courierService';
 import { appendAuditEvent } from '../../../services/localAudit';
-import { loadLocalRecords, saveLocalRecords } from '../../../services/localRecords';
+import { loadLocalRecords, saveLocalRecords } from '../../../services/localAccess';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
 import { saveManualModuleRecord, subscribeToManualModuleRecords } from '../../../services/manualModuleService';
 import {
@@ -180,7 +180,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
         });
         return 'remote';
       }
-    } catch (error) {
+    } catch {
       // Fall back to local persistence when the shared base is unavailable.
     }
 
@@ -246,7 +246,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
           updatedBy: session?.operatorName ?? session?.displayName ?? 'Operador local',
         },
       })));
-    } catch (error) {
+    } catch {
       // Keep the local assignment when shared sync is unavailable.
     }
   }
@@ -321,7 +321,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
           courierId,
         });
       }
-    } catch (error) {
+    } catch {
       // Fall back to local deletion when the shared base is unavailable.
     }
 

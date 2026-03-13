@@ -30,7 +30,6 @@ import {
 function SalesModule({
   saleId,
   viewMode,
-  onOpenCreate,
   onOpenDetail,
   onOpenList,
 }) {

@@ -9,7 +9,7 @@ import {
 
 import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
-import { loadLocalRecords, saveLocalRecords } from './localRecords';
+import { loadLocalRecords, saveLocalRecords } from './localAccess';
 import { courierSeedRecords } from './operationsSeedData';
 
 export const MANUAL_COURIER_STORAGE_KEY = 'nexus-manual-couriers';

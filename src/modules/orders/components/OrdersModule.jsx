@@ -120,7 +120,6 @@ function mapOrderToForm(order) {
 function OrdersModule({
   orderId,
   viewMode,
-  onOpenCreate,
   onOpenDetail,
   onOpenEdit,
   onOpenList,

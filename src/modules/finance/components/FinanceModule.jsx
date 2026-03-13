@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import SurfaceCard from '../../../components/common/SurfaceCard';
-import MetricCard from '../../../components/common/MetricCard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
@@ -606,7 +605,9 @@ function FinanceModule() {
           <span className="ui-badge ui-badge--danger">
             {activeFilteredEntries.filter((entry) => getFinanceEntryDirection(entry) === 'saida').length} saidas
           </span>
-          <span className="ui-badge ui-badge--info">{sales.length} vendas observadas</span>
+          <span className="ui-badge ui-badge--info">
+            {activeFilteredEntries.filter((entry) => entry.source === 'venda').length} vendas observadas
+          </span>
         </div>
 
         {loading ? (
