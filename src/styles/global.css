@@ -315,56 +315,50 @@ body::after {
 }
 
 .app-header {
-  padding: var(--space-5) var(--space-6) 0;
+  padding: var(--space-4) var(--space-5) 0;
 }
 
 .app-header__inner {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--space-4);
+  padding: 0 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.app-header__intro-wrap {
+.app-header__context {
   display: grid;
-  gap: 12px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
-.app-header__brand-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  width: fit-content;
-  min-height: 52px;
-  padding: 10px 14px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 18px;
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-sm);
+.app-header__context-label {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: var(--space-2-5);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
-.app-header__brand-mark {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(214, 35, 46, 0.22));
+.app-header__context-copy {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.app-header__brand-chip strong,
-.app-header__brand-chip small {
-  display: block;
+.app-header__context-copy strong {
+  color: var(--color-text-primary);
+  font-family: var(--font-title);
+  font-size: var(--space-4);
+  line-height: 1;
 }
 
-.app-header__brand-chip strong {
-  font-size: 0.92rem;
-  line-height: 1.1;
-}
-
-.app-header__brand-chip small {
+.app-header__context-copy small {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: var(--space-2-5);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -517,13 +511,6 @@ body::after {
   padding-bottom: calc(var(--space-8) + 72px);
 }
 
-.app-header__intro {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.app-header__eyebrow,
 .page-intro__eyebrow {
   margin-bottom: 6px;
   color: var(--color-accent-cyan);
@@ -533,18 +520,12 @@ body::after {
   text-transform: uppercase;
 }
 
-.app-header__title,
-.page-intro__title {
-  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-  line-height: 1.08;
-}
-
 .app-header__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -926,20 +907,23 @@ body::after {
 
   .app-header__inner {
     flex-direction: column;
+    align-items: flex-start;
   }
 
-  .app-header__intro-wrap,
-  .app-header__brand-chip {
+  .app-header__context,
+  .app-header__actions,
+  .app-header__status {
     width: 100%;
+  }
+
+  .app-header__context-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
   }
 
   .app-header__actions {
-    width: 100%;
     justify-content: flex-start;
-  }
-
-  .app-header__status {
-    width: 100%;
   }
 
   .page-intro {

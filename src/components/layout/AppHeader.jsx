@@ -16,18 +16,11 @@ function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <div className="app-header__intro-wrap">
-          <div className="app-header__brand-chip" aria-hidden="true">
-            <img src="/brand-bolt-red.svg" alt="" className="app-header__brand-mark" />
-            <div>
-              <strong>Nexus 10 ERP</strong>
-              <small>Operacao em tempo real</small>
-            </div>
-          </div>
-
-          <div className="app-header__intro">
-            <p className="app-header__eyebrow">{route.eyebrow}</p>
-            <h1 className="app-header__title">{route.title}</h1>
+        <div className="app-header__context">
+          <span className="app-header__context-label">Sessao operacional</span>
+          <div className="app-header__context-copy">
+            <strong>{route.eyebrow}</strong>
+            <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
           </div>
         </div>
 
@@ -36,7 +29,7 @@ function AppHeader() {
             <span className="status-dot" />
             <div>
               <strong>{operatorLabel}</strong>
-              <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
+              <small>{route.title}</small>
             </div>
           </div>
           <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
