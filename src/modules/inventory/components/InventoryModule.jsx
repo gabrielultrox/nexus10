@@ -144,11 +144,32 @@ function InventoryModule() {
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
+  const inventoryMap = useMemo(
+    () => new Map(inventoryItems.map((item) => [item.productId ?? item.id, item])),
+    [inventoryItems],
+  )
+  const stockRows = useMemo(
+    () => products.map((product) => {
+      const inventoryItem = inventoryMap.get(product.id)
+
+      return {
+        id: product.id,
+        productId: product.id,
+        productName: product.name,
+        category: product.category ?? '',
+        sku: product.sku ?? '',
+        currentStock: Number(inventoryItem?.currentStock ?? product.stock ?? 0),
+        minimumStock: Number(inventoryItem?.minimumStock ?? product.minimumStock ?? 0),
+        status: product.status ?? inventoryItem?.status ?? 'active',
+      }
+    }),
+    [inventoryMap, products],
+  )
 
   const visibleInventoryItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return inventoryItems.filter((item) => {
+    return stockRows.filter((item) => {
       const matchesSearch = normalizedSearch.length === 0 || [
         item.productName,
         item.category,
@@ -165,7 +186,7 @@ function InventoryModule() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [inventoryItems, searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, stockRows]);
 
   const visibleMovements = useMemo(() => {
     const normalizedSearch = movementSearchTerm.trim().toLowerCase();
@@ -228,11 +249,11 @@ function InventoryModule() {
   }, [csvFile, csvMode, products]);
 
   const metrics = useMemo(() => {
-    const totalUnits = inventoryItems.reduce((total, item) => total + Number(item.currentStock ?? 0), 0);
-    const lowStockItems = inventoryItems.filter(
+    const totalUnits = stockRows.reduce((total, item) => total + Number(item.currentStock ?? 0), 0);
+    const lowStockItems = stockRows.filter(
       (item) => Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
     ).length;
-    const inventoryCost = inventoryItems.reduce((total, item) => {
+    const inventoryCost = stockRows.reduce((total, item) => {
       const product = productMap.get(item.productId);
       return total + Number(item.currentStock ?? 0) * Number(product?.cost ?? 0);
     }, 0);
@@ -240,8 +261,8 @@ function InventoryModule() {
     return [
       {
         label: 'Itens monitorados',
-        value: String(inventoryItems.length).padStart(2, '0'),
-        meta: 'produtos com controle de estoque ativo',
+        value: String(stockRows.length).padStart(2, '0'),
+        meta: 'produtos da loja com saldo visivel',
         badgeText: 'real',
         badgeClass: 'ui-badge--info',
       },
@@ -270,7 +291,7 @@ function InventoryModule() {
         badgeClass: 'ui-badge--special',
       },
     ];
-  }, [inventoryItems, productMap]);
+  }, [productMap, stockRows]);
 
   function updateAdjustmentField(field, value) {
     setAdjustmentState((current) => ({
@@ -583,11 +604,11 @@ function InventoryModule() {
           {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
         </SurfaceCard>
 
-        <SurfaceCard title="Saldo atual">
+      <SurfaceCard title="Lista completa da loja">
           <div className="entity-toolbar-shell">
             <div className="entity-toolbar-copy">
-              <p className="text-section-title">Consulta do saldo</p>
-              <p className="text-body">Acompanhe o estoque atual com filtros mais claros e leitura mais limpa.</p>
+              <p className="text-section-title">Produtos e quantidade em estoque</p>
+              <p className="text-body">Veja toda a base da loja com saldo atual, minimo e alerta de reposicao.</p>
             </div>
 
             <div className="entity-toolbar inventory-toolbar">
@@ -635,7 +656,7 @@ function InventoryModule() {
                     <th>Produto</th>
                     <th>Categoria</th>
                     <th>SKU</th>
-                    <th>Atual</th>
+                    <th>Qtd. estoque</th>
                     <th>Minimo</th>
                     <th>Alerta</th>
                   </tr>

@@ -639,11 +639,11 @@ function ProductsModule() {
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       </SurfaceCard>
 
-      <SurfaceCard title="Base de produtos">
+      <SurfaceCard title="Lista completa da loja">
         <div className="entity-toolbar-shell">
           <div className="entity-toolbar-copy">
-            <p className="text-section-title">Consulta refinada</p>
-            <p className="text-body">Localize itens por nome, categoria, SKU ou recorte de status sem poluir a tela principal.</p>
+            <p className="text-section-title">Produtos com quantidade em estoque</p>
+            <p className="text-body">Consulte toda a base da loja com preco, custo e saldo atual no mesmo lugar.</p>
           </div>
 
           <div className="entity-toolbar">
@@ -690,7 +690,7 @@ function ProductsModule() {
                   <th>Categoria</th>
                   <th>Preco</th>
                   <th>Custo</th>
-                  <th>Estoque</th>
+                  <th>Qtd. estoque</th>
                   <th>Minimo</th>
                   <th>Status</th>
                   <th>Acoes</th>

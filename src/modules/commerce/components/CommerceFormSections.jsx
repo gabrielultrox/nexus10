@@ -1,6 +1,185 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce'
+
+function normalizeSearchToken(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function formatProductSearchLabel(product) {
+  const skuPart = product?.sku ? ` • ${product.sku}` : ''
+  return `${product?.name ?? 'Produto'}${skuPart}`
+}
+
+function findProductBySearch(products, query, allowPartial = false) {
+  const normalizedQuery = normalizeSearchToken(query)
+
+  if (!normalizedQuery) {
+    return null
+  }
+
+  const exactMatch = products.find((product) => {
+    const nameToken = normalizeSearchToken(product.name)
+    const skuToken = normalizeSearchToken(product.sku)
+    const labelToken = normalizeSearchToken(formatProductSearchLabel(product))
+    return (
+      nameToken === normalizedQuery
+      || skuToken === normalizedQuery
+      || labelToken === normalizedQuery
+    )
+  })
+
+  if (exactMatch || !allowPartial) {
+    return exactMatch ?? null
+  }
+
+  const partialMatches = products.filter((product) => {
+    const haystack = [
+      product.name,
+      product.category,
+      product.sku,
+      product.barcode,
+    ]
+      .join(' ')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+    return haystack.includes(normalizedQuery)
+  })
+
+  return partialMatches.length === 1 ? partialMatches[0] : (partialMatches[0] ?? null)
+}
+
+function ProductSearchField({
+  products,
+  value,
+  inputRef,
+  onChange,
+  onKeyDown,
+  placeholder = 'Buscar produto',
+}) {
+  const [query, setQuery] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const closeTimeoutRef = useRef(null)
+  const selectedProduct = useMemo(
+    () => products.find((product) => product.id === value) ?? null,
+    [products, value],
+  )
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = normalizeSearchToken(query)
+
+    if (!normalizedQuery) {
+      return products.slice(0, 8)
+    }
+
+    return products
+      .filter((product) => {
+        const haystack = [
+          product.name,
+          product.category,
+          product.sku,
+          product.barcode,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+
+        return haystack.includes(normalizedQuery)
+      })
+      .slice(0, 8)
+  }, [products, query])
+
+  useEffect(() => {
+    const nextQuery = selectedProduct ? formatProductSearchLabel(selectedProduct) : ''
+    setQuery((current) => (current === nextQuery ? current : nextQuery))
+  }, [selectedProduct])
+
+  useEffect(() => () => {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current)
+    }
+  }, [])
+
+  function commitSelection(nextQuery, { allowPartial = false } = {}) {
+    const product = findProductBySearch(products, nextQuery, allowPartial)
+
+    if (product) {
+      onChange(product.id)
+      setQuery(formatProductSearchLabel(product))
+      return product
+    }
+
+    if (!nextQuery.trim()) {
+      onChange('')
+      setQuery('')
+    }
+
+    return null
+  }
+
+  return (
+    <div className="commerce-product-search">
+      <input
+        ref={inputRef}
+        className="ui-input commerce-product-search__input"
+        value={query}
+        placeholder={placeholder}
+        onChange={(event) => {
+          const nextValue = event.target.value
+          setQuery(nextValue)
+          setIsOpen(true)
+
+          const exactProduct = findProductBySearch(products, nextValue)
+          if (exactProduct) {
+            onChange(exactProduct.id)
+          } else {
+            onChange('')
+          } 
+        }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => {
+          closeTimeoutRef.current = window.setTimeout(() => {
+            commitSelection(query, { allowPartial: true })
+            setIsOpen(false)
+          }, 120)
+        }}
+        onKeyDown={onKeyDown}
+      />
+
+      {isOpen && filteredProducts.length > 0 ? (
+        <div className="commerce-product-search__panel">
+          {filteredProducts.map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              className={`commerce-product-search__option${product.id === value ? ' commerce-product-search__option--active' : ''}`}
+              onMouseDown={(event) => {
+                event.preventDefault()
+                if (closeTimeoutRef.current) {
+                  window.clearTimeout(closeTimeoutRef.current)
+                }
+                onChange(product.id)
+                setQuery(formatProductSearchLabel(product))
+                setIsOpen(false)
+              }}
+            >
+              <span>{product.name}</span>
+              <small>
+                {[product.sku, product.category].filter(Boolean).join(' • ') || 'Sem classificacao'}
+              </small>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 export function CommerceIdentitySection({
   eyebrow,
@@ -157,6 +336,14 @@ export function CommerceItemsStep({
   }
 
   function focusNextRequiredField(item = currentItem) {
+    const typedProduct = findProductBySearch(products, productRefs.current[currentItemIndex]?.value, true)
+
+    if (!item.productId && typedProduct) {
+      onItemChange(currentItemIndex, 'productId', typedProduct.id)
+      quantityRef.current?.focus()
+      return true
+    }
+
     if (!item.productId) {
       focusCurrentProduct()
       return true
@@ -259,22 +446,16 @@ export function CommerceItemsStep({
         </div>
 
         <div className="commerce-step__input-row">
-          <select
-            ref={(element) => {
+          <ProductSearchField
+            inputRef={(element) => {
               productRefs.current[currentItemIndex] = element
             }}
-            className="ui-select"
+            products={products}
             value={currentItem.productId ?? ''}
-            onChange={(event) => onItemChange(currentItemIndex, 'productId', event.target.value)}
+            onChange={(productId) => onItemChange(currentItemIndex, 'productId', productId)}
+            placeholder="Buscar produto"
             onKeyDown={handleEntryKeyDown('product')}
-          >
-            <option value="">Produto</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name}
-              </option>
-            ))}
-          </select>
+          />
 
           <input
             ref={quantityRef}
