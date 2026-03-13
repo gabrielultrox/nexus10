@@ -1,6 +1,5 @@
 import {
   CommerceAddressSection,
-  CommerceFormSignalBar,
   CommerceIdentitySection,
   CommerceItemsSection,
   CommerceTotalsSection,
@@ -30,26 +29,13 @@ function SalesFormPanel({
       <div className="sales-domain__detail-header">
         <div>
           <p className="text-section-title">Nova Venda</p>
-          <p className="text-body">Lance uma venda real com itens, totais e detalhes finais.</p>
         </div>
       </div>
-
-      <CommerceFormSignalBar
-        eyebrow="Fluxo de venda"
-        title="Lance a venda com foco operacional"
-        description="Os blocos foram organizados para leitura rapida, pouca friccao e conferência visual antes do lancamento."
-        badges={[
-          { label: formState.channel === 'IFOOD' ? 'Canal iFood' : 'Venda direta', tone: 'ui-badge--info' },
-          { label: 'Baixa estoque', tone: 'ui-badge--success' },
-          { label: 'Publica financeiro', tone: 'ui-badge--special' },
-        ]}
-      />
 
       <form className="entity-form-grid" onSubmit={onSubmit}>
         <CommerceIdentitySection
           eyebrow="Finalizacao"
           title="Cliente, canal e pagamento"
-          description="Esses campos definem a identidade comercial da venda antes do lancamento."
           channelId="sale-channel"
           channelField="channel"
           channelValue={formState.channel}
@@ -67,7 +53,6 @@ function SalesFormPanel({
         <CommerceItemsSection
           eyebrow="Itens"
           title="Monte a venda"
-          description="Escolha produtos e quantidades em uma grade compacta de leitura forte."
           items={formState.items}
           products={products}
           draftItems={draftItems}
@@ -81,7 +66,6 @@ function SalesFormPanel({
         <CommerceAddressSection
           eyebrow="Entrega"
           title="Endereco e observacoes"
-          description="Use estes campos quando a venda pedir contexto operacional adicional."
           itemPrefix="sale"
           address={formState.address}
           notes={formState.notes}
@@ -92,7 +76,6 @@ function SalesFormPanel({
         <CommerceTotalsSection
           eyebrow="Totais"
           title="Frete, adicional e descontos"
-          description="A conferência final fica concentrada em um resumo mais legível e com menos ruído."
           itemPrefix="sale"
           domainClassName="sales-domain"
           totals={formState.totals}

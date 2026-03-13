@@ -23,7 +23,6 @@ export function CommerceFormSignalBar({ eyebrow, title, description, badges = []
 export function CommerceIdentitySection({
   eyebrow,
   title,
-  description,
   channelId,
   channelLabel = 'Canal',
   channelField,
@@ -42,8 +41,7 @@ export function CommerceIdentitySection({
     <div className="entity-form-section commerce-panel commerce-panel--identity">
       <div className="entity-form-section__header">
         <span className="entity-form-section__eyebrow">{eyebrow}</span>
-        <h4 className="entity-form-section__title">{title}</h4>
-        <p className="entity-form-section__description">{description}</p>
+        <p className="entity-form-section__title">{title}</p>
       </div>
 
       <div className="entity-stack">
@@ -103,7 +101,6 @@ export function CommerceIdentitySection({
 export function CommerceItemsSection({
   eyebrow,
   title,
-  description,
   items,
   products,
   draftItems,
@@ -117,8 +114,7 @@ export function CommerceItemsSection({
     <div className="entity-form-section entity-form-section--span-2 commerce-panel commerce-panel--items">
       <div className="entity-form-section__header">
         <span className="entity-form-section__eyebrow">{eyebrow}</span>
-        <h4 className="entity-form-section__title">{title}</h4>
-        <p className="entity-form-section__description">{description}</p>
+        <p className="entity-form-section__title">{title}</p>
       </div>
 
       <div className={`${domainClassName}__items`}>
@@ -194,7 +190,6 @@ export function CommerceItemsSection({
 export function CommerceAddressSection({
   eyebrow,
   title,
-  description,
   itemPrefix,
   address,
   notes,
@@ -205,8 +200,7 @@ export function CommerceAddressSection({
     <div className="entity-form-section entity-form-section--span-2 commerce-panel">
       <div className="entity-form-section__header">
         <span className="entity-form-section__eyebrow">{eyebrow}</span>
-        <h4 className="entity-form-section__title">{title}</h4>
-        <p className="entity-form-section__description">{description}</p>
+        <p className="entity-form-section__title">{title}</p>
       </div>
 
       <div className="entity-stack">
@@ -268,7 +262,6 @@ export function CommerceAddressSection({
 export function CommerceTotalsSection({
   eyebrow,
   title,
-  description,
   itemPrefix,
   domainClassName,
   totals,
@@ -279,8 +272,7 @@ export function CommerceTotalsSection({
     <div className="entity-form-section entity-form-section--span-2 commerce-panel commerce-panel--totals">
       <div className="entity-form-section__header">
         <span className="entity-form-section__eyebrow">{eyebrow}</span>
-        <h4 className="entity-form-section__title">{title}</h4>
-        <p className="entity-form-section__description">{description}</p>
+        <p className="entity-form-section__title">{title}</p>
       </div>
 
       <div className={`${domainClassName}__totals-grid`}>

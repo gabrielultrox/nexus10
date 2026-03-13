@@ -1,6 +1,5 @@
 import {
   CommerceAddressSection,
-  CommerceFormSignalBar,
   CommerceIdentitySection,
   CommerceItemsSection,
   CommerceTotalsSection,
@@ -32,28 +31,13 @@ function OrderFormPanel({
       <div className="orders-domain__detail-header">
         <div>
           <p className="text-section-title">{editingOrderId ? 'Editar Pedido' : 'Novo Pedido'}</p>
-          <p className="text-body">
-            Registre itens, cliente, pagamento e entrega sem gerar impacto em estoque ou financeiro.
-          </p>
         </div>
       </div>
-
-      <CommerceFormSignalBar
-        eyebrow="Fluxo comercial"
-        title={editingOrderId ? 'Ajuste o pedido com seguranca' : 'Monte um pedido com leitura imediata'}
-        description="Itens, cliente, entrega e totais ficam agrupados em blocos claros para operar rapido sem poluir a tela."
-        badges={[
-          { label: formState.source === 'IFOOD' ? 'Canal iFood' : 'Canal operacional', tone: 'ui-badge--info' },
-          { label: 'Sem estoque', tone: 'ui-badge--warning' },
-          { label: 'Sem financeiro', tone: 'ui-badge--special' },
-        ]}
-      />
 
       <form className="entity-form-grid" onSubmit={onSubmit}>
         <CommerceIdentitySection
           eyebrow="Comercial"
           title="Canal, cliente e pagamento"
-          description="Defina a origem do pedido e quem vai receber a proposta comercial."
           channelId="order-source"
           channelField="source"
           channelValue={formState.source}
@@ -71,7 +55,6 @@ function OrderFormPanel({
         <CommerceItemsSection
           eyebrow="Itens"
           title="Monte o pedido"
-          description="Adicione os produtos, ajuste quantidades e acompanhe o subtotal no mesmo bloco."
           items={formState.items}
           products={products}
           draftItems={draftItems}
@@ -85,7 +68,6 @@ function OrderFormPanel({
         <CommerceAddressSection
           eyebrow="Entrega"
           title="Endereco e observacoes"
-          description="Organize o contexto operacional do despacho sem espalhar os campos pela tela."
           itemPrefix="order"
           address={formState.address}
           notes={formState.notes}
@@ -96,7 +78,6 @@ function OrderFormPanel({
         <CommerceTotalsSection
           eyebrow="Totais"
           title="Frete, adicional e descontos"
-          description="A leitura dos totais fica concentrada em um quadro final de conferência."
           itemPrefix="order"
           domainClassName="orders-domain"
           totals={formState.totals}
