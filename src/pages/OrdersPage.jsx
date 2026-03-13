@@ -2,6 +2,7 @@ import '../styles/orders.css';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import PageTabs from '../components/common/PageTabs';
 import OrdersModule from '../modules/orders/components/OrdersModule';
 
 function OrdersPage() {
@@ -11,6 +12,26 @@ function OrdersPage() {
   const isNew = location.pathname === '/orders/new';
   const isEdit = location.pathname.endsWith('/edit');
   const viewMode = isNew ? 'create' : isEdit ? 'edit' : orderId ? 'detail' : 'list';
+  const orderTabs = [
+    { id: 'list', label: 'Lista de pedidos' },
+    { id: 'form', label: viewMode === 'edit' ? 'Editar pedido' : 'Novo pedido' },
+    ...(orderId ? [{ id: 'detail', label: 'Detalhe do pedido' }] : []),
+  ];
+  const activeTab = viewMode === 'list' ? 'list' : viewMode === 'create' || viewMode === 'edit' ? 'form' : 'detail';
+
+  function handleTabChange(tabId) {
+    if (tabId === 'list') {
+      navigate('/orders');
+      return;
+    }
+
+    if (tabId === 'form') {
+      navigate('/orders/new');
+      return;
+    }
+
+    navigate(orderId ? `/orders/${orderId}` : '/orders');
+  }
 
   return (
     <div className="workspace-shell workspace-shell--orders">
@@ -38,28 +59,7 @@ function OrdersPage() {
         </div>
 
         <div className="workspace-nav">
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'list' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-            onClick={() => navigate('/orders')}
-          >
-            Lista de pedidos
-          </button>
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'create' ? 'ui-button--secondary' : 'ui-button--primary'}`}
-            onClick={() => navigate('/orders/new')}
-          >
-            Novo pedido
-          </button>
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'detail' || viewMode === 'edit' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-            onClick={() => navigate(orderId ? `/orders/${orderId}` : '/orders')}
-            disabled={!orderId}
-          >
-            Detalhe do pedido
-          </button>
+          <PageTabs tabs={orderTabs} activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </section>
 

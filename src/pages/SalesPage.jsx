@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import PageTabs from '../components/common/PageTabs';
 import SalesModule from '../modules/sales/components/SalesModule';
 
 function SalesPage() {
@@ -8,6 +9,26 @@ function SalesPage() {
   const { saleId } = useParams();
   const isNew = location.pathname === '/sales/new';
   const viewMode = isNew ? 'create' : saleId ? 'detail' : 'list';
+  const salesTabs = [
+    { id: 'list', label: 'Lista de vendas' },
+    { id: 'form', label: 'Nova venda' },
+    ...(saleId ? [{ id: 'detail', label: 'Detalhe da venda' }] : []),
+  ];
+  const activeTab = viewMode === 'list' ? 'list' : viewMode === 'create' ? 'form' : 'detail';
+
+  function handleTabChange(tabId) {
+    if (tabId === 'list') {
+      navigate('/sales');
+      return;
+    }
+
+    if (tabId === 'form') {
+      navigate('/sales/new');
+      return;
+    }
+
+    navigate(saleId ? `/sales/${saleId}` : '/sales');
+  }
 
   return (
     <div className="workspace-shell workspace-shell--sales">
@@ -27,28 +48,7 @@ function SalesPage() {
         </div>
 
         <div className="workspace-nav">
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'list' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-            onClick={() => navigate('/sales')}
-          >
-            Lista de vendas
-          </button>
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'create' ? 'ui-button--secondary' : 'ui-button--primary'}`}
-            onClick={() => navigate('/sales/new')}
-          >
-            Nova venda
-          </button>
-          <button
-            type="button"
-            className={`ui-button ${viewMode === 'detail' ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-            onClick={() => navigate(saleId ? `/sales/${saleId}` : '/sales')}
-            disabled={!saleId}
-          >
-            Detalhe da venda
-          </button>
+          <PageTabs tabs={salesTabs} activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </section>
 

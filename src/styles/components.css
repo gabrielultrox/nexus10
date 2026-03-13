@@ -147,10 +147,11 @@
 }
 
 .ui-label {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: var(--space-3);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--color-text-muted);
 }
 

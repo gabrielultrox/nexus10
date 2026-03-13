@@ -1,15 +1,23 @@
-import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import '../styles/couriers.css';
 
 import PageIntro from '../components/common/PageIntro';
+import PageTabs from '../components/common/PageTabs';
 import CouriersModule from '../modules/couriers/components/CouriersModule';
+
+const COURIERS_TABS = [
+  { id: 'consulta', label: 'Consulta' },
+  { id: 'cadastro', label: 'Cadastro' },
+];
 
 function CouriersPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isRegisterMode = location.pathname.endsWith('/cadastro');
   const editingCourierId = searchParams.get('edit');
+  const activeTab = isRegisterMode ? 'cadastro' : 'consulta';
 
   function clearEditingCourier() {
     const nextParams = new URLSearchParams(searchParams);
@@ -43,20 +51,11 @@ function CouriersPage() {
           <h2 className="text-section-title">Escolha a area de operacao</h2>
         </div>
 
-        <div className="couriers-page-nav">
-          <NavLink
-            to="/couriers/consulta"
-            className={({ isActive }) => `ui-button ${isActive ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-          >
-            Consulta de entregadores
-          </NavLink>
-          <NavLink
-            to="/couriers/cadastro"
-            className={({ isActive }) => `ui-button ${isActive ? 'ui-button--primary' : 'ui-button--ghost'}`}
-          >
-            Cadastro de entregadores
-          </NavLink>
-        </div>
+        <PageTabs
+          tabs={COURIERS_TABS}
+          activeTab={activeTab}
+          onTabChange={(id) => navigate(`/couriers/${id}`)}
+        />
       </section>
 
       <CouriersModule

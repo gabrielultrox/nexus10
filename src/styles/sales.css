@@ -3,6 +3,15 @@
   gap: var(--space-5);
 }
 
+.workspace-shell--sales .workspace-nav .page-tabs {
+  margin-bottom: 0;
+  border-bottom-color: color-mix(in srgb, var(--color-accent-primary) 18%, var(--color-border-subtle));
+}
+
+.workspace-shell--sales .workspace-nav .page-tabs__tab {
+  min-width: calc(var(--space-9) * 2 + var(--space-7));
+}
+
 .sales-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);

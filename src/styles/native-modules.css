@@ -32,10 +32,8 @@
 
 .native-module__form-copy {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .native-module__form-grid {

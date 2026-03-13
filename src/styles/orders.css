@@ -61,9 +61,13 @@
   flex-shrink: 0;
 }
 
-.workspace-nav .ui-button {
-  min-width: 140px;
-  border-radius: var(--radius-pill);
+.workspace-nav .page-tabs {
+  margin-bottom: 0;
+  border-bottom-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+}
+
+.workspace-nav .page-tabs__tab {
+  min-width: calc(var(--space-9) * 2 + var(--space-7));
 }
 
 .workspace-shell--orders .workspace-nav .ui-button--primary,

@@ -83,7 +83,6 @@ function NativeModuleFormCard({
     <SurfaceCard title={manager.formTitle}>
       <div className="native-module__form-shell">
         <div className="native-module__form-copy">
-          <p className="text-body">{manager.formDescription}</p>
           <span className="ui-badge ui-badge--info">{recordsLength} registros do dia</span>
         </div>
 
