@@ -21,6 +21,53 @@
   gap: var(--space-3);
 }
 
+.native-module__status-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.native-module__status-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  background: var(--surface-panel-soft-alt);
+}
+
+.native-module__status-card--actions {
+  align-content: start;
+}
+
+.native-module__status-label {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--space-2-5);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.native-module__status-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.native-module__status-value {
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.native-module__status-value--small {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 .native-module__form-shell {
   display: grid;
   gap: var(--space-3);
@@ -1613,6 +1660,7 @@
 }
 
 @media (max-width: 880px) {
+  .native-module__status-bar,
   .native-module__form-grid,
   .native-module__toolbar,
   .native-module__panels {

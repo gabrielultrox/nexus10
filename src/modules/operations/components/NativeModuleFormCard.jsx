@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 import SurfaceCard from '../../../components/common/SurfaceCard'
 
 function NativeModuleField({ field, routePath, value, updateField }) {
@@ -75,6 +77,17 @@ function NativeModuleFormCard({
   onReset,
   updateField,
 }) {
+  const formRef = useRef(null)
+
+  useEffect(() => {
+    if (!formRef.current) {
+      return
+    }
+
+    const firstField = formRef.current.querySelector('input:not([type="checkbox"]), select, textarea')
+    firstField?.focus()
+  }, [routePath])
+
   if (!managerWithResolvedFields || managerWithResolvedFields.hideForm) {
     return null
   }
@@ -87,6 +100,7 @@ function NativeModuleFormCard({
         </div>
 
         <form
+          ref={formRef}
           className={`native-module__form-grid${routePath === 'advances' ? ' native-module__form-grid--advances' : ''}`}
           onSubmit={onSubmit}
         >

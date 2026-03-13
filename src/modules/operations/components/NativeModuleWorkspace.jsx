@@ -6,7 +6,7 @@ import PageIntro from '../../../components/common/PageIntro';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../services/courierService';
-import { firebaseReady } from '../../../services/firebase';
+import { canUseRemoteSync, firebaseReady } from '../../../services/firebase';
 import { appendAuditEvent, loadAuditEvents } from '../../../services/localAudit';
 import {
   loadLocalRecords,
@@ -23,6 +23,11 @@ import {
   saveManualModuleRecord,
   subscribeToManualModuleRecords,
 } from '../../../services/manualModuleService';
+import {
+  enqueueManualModuleSyncOperation,
+  flushManualModuleSyncQueue,
+  getManualModulePendingCount,
+} from '../../../services/manualModuleSyncQueue';
 import { getNativeModuleContent } from '../../../services/nativeModuleData';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
 import { playError, playNotification, playSuccess } from '../../../services/soundManager';
@@ -30,6 +35,7 @@ import NativeModuleExportCanvases from './NativeModuleExportCanvases';
 import NativeModuleFormCard from './NativeModuleFormCard';
 import NativeModulePanels from './NativeModulePanels';
 import NativeModuleRecordsSection from './NativeModuleRecordsSection';
+import NativeModuleStatusBar from './NativeModuleStatusBar';
 
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/;
 
@@ -288,6 +294,11 @@ function NativeModuleWorkspace({ route }) {
     [availableCourierNames],
   );
   const canSyncModuleRecords = Boolean(firebaseReady && currentStoreId);
+  const syncModulePaths = useMemo(
+    () => (route.path === 'machines' ? ['machines', 'machine-history'] : [route.path]),
+    [route.path],
+  );
+  const remoteSyncReady = Boolean(currentStoreId && canUseRemoteSync());
   const resolvedFields = useMemo(
     () => buildResolvedFields(manager, route.path, {
       courierOptions: availableCourierNames,
@@ -313,9 +324,21 @@ function NativeModuleWorkspace({ route }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
+  const [pendingSyncCount, setPendingSyncCount] = useState(() => getManualModulePendingCount(syncModulePaths));
+  const [syncActivityLabel, setSyncActivityLabel] = useState(
+    remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta',
+  );
   const scheduleImageRef = useRef(null);
   const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
+
+  useEffect(() => {
+    setPendingSyncCount(getManualModulePendingCount(syncModulePaths));
+  }, [syncModulePaths]);
+
+  useEffect(() => {
+    setSyncActivityLabel(remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta');
+  }, [remoteSyncReady, route.path]);
 
   useEffect(() => subscribeToCouriers(
     currentStoreId,
@@ -448,6 +471,42 @@ function NativeModuleWorkspace({ route }) {
     window.addEventListener('focus', refreshRecords);
     return () => window.removeEventListener('focus', refreshRecords);
   }, [manager, route.path]);
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refreshSyncState() {
+      if (currentStoreId && canUseRemoteSync()) {
+        const result = await flushManualModuleSyncQueue({
+          storeId: currentStoreId,
+          tenantId,
+          modulePaths: syncModulePaths,
+        })
+
+        if (cancelled) {
+          return
+        }
+
+        setPendingSyncCount(result.pendingCount)
+
+        if (result.flushedCount > 0) {
+          setSyncActivityLabel(`${result.flushedCount} pendencias reenviadas`)
+        }
+      } else if (!cancelled) {
+        setPendingSyncCount(getManualModulePendingCount(syncModulePaths))
+      }
+    }
+
+    refreshSyncState()
+    window.addEventListener('online', refreshSyncState)
+    window.addEventListener('focus', refreshSyncState)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('online', refreshSyncState)
+      window.removeEventListener('focus', refreshSyncState)
+    }
+  }, [currentStoreId, syncModulePaths, tenantId])
 
   useEffect(() => {
     if (!recentlyClosedRecordId) {
@@ -678,6 +737,20 @@ function NativeModuleWorkspace({ route }) {
     return Array.from(groupedMachines.values()).sort((left, right) => left.device.localeCompare(right.device, 'pt-BR'));
   }, [route.path, visibleRecords]);
 
+  const syncModeLabel = pendingSyncCount > 0
+    ? 'Pendente'
+    : remoteSyncReady
+      ? 'Compartilhada'
+      : 'Local'
+  const syncModeTone = pendingSyncCount > 0
+    ? 'ui-badge--warning'
+    : remoteSyncReady
+      ? 'ui-badge--success'
+      : 'ui-badge--special'
+  const resetLabel = manager?.dailyResetHour != null
+    ? `${String(manager.dailyResetHour).padStart(2, '0')}h`
+    : 'Sem reset'
+
   function updateField(name, value) {
     setFormValues((current) => ({
       ...current,
@@ -689,6 +762,16 @@ function NativeModuleWorkspace({ route }) {
     setFormValues(buildInitialFormState(managerWithResolvedFields));
   }
 
+  function refreshPendingSyncCount() {
+    setPendingSyncCount(getManualModulePendingCount(syncModulePaths))
+  }
+
+  function queueSyncOperation(operation) {
+    enqueueManualModuleSyncOperation(operation)
+    refreshPendingSyncCount()
+    setSyncActivityLabel('Salvo localmente para reenviar')
+  }
+
   async function saveRecordWithFallback({
     modulePath,
     storageKey,
@@ -698,6 +781,13 @@ function NativeModuleWorkspace({ route }) {
   }) {
     if (!canSyncModuleRecords) {
       onLocalApply();
+      queueSyncOperation({
+        type: 'save',
+        modulePath,
+        storageKey,
+        dailyResetHour,
+        record,
+      })
       return 'local';
     }
 
@@ -710,6 +800,8 @@ function NativeModuleWorkspace({ route }) {
         dailyResetHour,
         record,
       });
+      refreshPendingSyncCount()
+      setSyncActivityLabel('Sincronizado em tempo real')
       return 'remote';
     } catch (error) {
       if (!shouldUseLocalFallback(error)) {
@@ -717,6 +809,13 @@ function NativeModuleWorkspace({ route }) {
       }
 
       onLocalApply();
+      queueSyncOperation({
+        type: 'save',
+        modulePath,
+        storageKey,
+        dailyResetHour,
+        record,
+      })
       return 'local';
     }
   }
@@ -728,6 +827,11 @@ function NativeModuleWorkspace({ route }) {
   }) {
     if (!canSyncModuleRecords) {
       onLocalApply();
+      queueSyncOperation({
+        type: 'delete',
+        modulePath,
+        recordId,
+      })
       return 'local';
     }
 
@@ -737,6 +841,8 @@ function NativeModuleWorkspace({ route }) {
         modulePath,
         recordId,
       });
+      refreshPendingSyncCount()
+      setSyncActivityLabel('Exclusao sincronizada')
       return 'remote';
     } catch (error) {
       if (!shouldUseLocalFallback(error)) {
@@ -744,6 +850,11 @@ function NativeModuleWorkspace({ route }) {
       }
 
       onLocalApply();
+      queueSyncOperation({
+        type: 'delete',
+        modulePath,
+        recordId,
+      })
       return 'local';
     }
   }
@@ -757,6 +868,13 @@ function NativeModuleWorkspace({ route }) {
   }) {
     if (!canSyncModuleRecords) {
       onLocalApply();
+      queueSyncOperation({
+        type: 'clear',
+        modulePath,
+        storageKey,
+        initialRecords,
+        dailyResetHour,
+      })
       return 'local';
     }
 
@@ -768,6 +886,8 @@ function NativeModuleWorkspace({ route }) {
         initialRecords,
         dailyResetHour,
       });
+      refreshPendingSyncCount()
+      setSyncActivityLabel('Limpeza sincronizada')
       return 'remote';
     } catch (error) {
       if (!shouldUseLocalFallback(error)) {
@@ -775,8 +895,48 @@ function NativeModuleWorkspace({ route }) {
       }
 
       onLocalApply();
+      queueSyncOperation({
+        type: 'clear',
+        modulePath,
+        storageKey,
+        initialRecords,
+        dailyResetHour,
+      })
       return 'local';
     }
+  }
+
+  async function handleRetrySync() {
+    if (!currentStoreId || !canUseRemoteSync()) {
+      setErrorMessage('A sincronizacao remota nao esta pronta nesta sessao.')
+      playError()
+      return
+    }
+
+    const result = await flushManualModuleSyncQueue({
+      storeId: currentStoreId,
+      tenantId,
+      modulePaths: syncModulePaths,
+    })
+
+    setPendingSyncCount(result.pendingCount)
+
+    if (result.flushedCount > 0) {
+      setErrorMessage('')
+      setSyncActivityLabel(`${result.flushedCount} pendencias reenviadas`)
+      playSuccess()
+      return
+    }
+
+    if (result.pendingCount > 0) {
+      setErrorMessage('Ainda existem pendencias aguardando a base compartilhada responder.')
+      playNotification()
+      return
+    }
+
+    setErrorMessage('')
+    setSyncActivityLabel('Nenhuma pendencia para reenviar')
+    playNotification()
   }
 
   async function handleSubmit(event) {
@@ -1302,6 +1462,18 @@ function NativeModuleWorkspace({ route }) {
           />
         ))}
       </div>
+
+      {manager ? (
+        <NativeModuleStatusBar
+          syncModeLabel={syncModeLabel}
+          syncModeTone={syncModeTone}
+          pendingCount={pendingSyncCount}
+          resetLabel={resetLabel}
+          activityLabel={syncActivityLabel}
+          onRetrySync={handleRetrySync}
+          retryDisabled={!remoteSyncReady || pendingSyncCount === 0}
+        />
+      ) : null}
 
       <NativeModuleFormCard
         manager={manager}
