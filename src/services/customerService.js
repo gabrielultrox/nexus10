@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 function normalizePhone(phone) {
@@ -48,19 +48,32 @@ function getCustomersCollectionRef(storeId) {
 }
 
 export function subscribeToCustomers(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const customersQuery = query(getCustomersCollectionRef(storeId), orderBy('name'));
 
-  return onSnapshot(
-    customersQuery,
-    (snapshot) => {
-      const customers = snapshot.docs.map((documentSnapshot) => ({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data(),
-      }));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      customersQuery,
+      (snapshot) => {
+        const customers = snapshot.docs.map((documentSnapshot) => ({
+          id: documentSnapshot.id,
+          ...documentSnapshot.data(),
+        }));
 
-      onData(customers);
+        onData(customers);
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 

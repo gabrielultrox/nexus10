@@ -7,7 +7,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 function getAuditLogsCollectionRef(storeId) {
@@ -31,14 +31,27 @@ export function buildAuditActor(session) {
 }
 
 export function subscribeToAuditLogs(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const auditQuery = query(getAuditLogsCollectionRef(storeId), orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    auditQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      auditQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 

@@ -2,7 +2,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 import { isSalePosted } from './commerce';
 import { subscribeToFinancialEntries } from './finance';
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { subscribeToProducts } from './productService';
 import { subscribeToSales } from './sales';
@@ -64,6 +64,14 @@ function parseMoney(value) {
 }
 
 export function subscribeToReportSources(storeId, handlers) {
+  if (!storeId || !canUseRemoteSync()) {
+    handlers.onSales?.([]);
+    handlers.onFinancialEntries?.([]);
+    handlers.onProducts?.([]);
+    handlers.onOrders?.([]);
+    return () => {};
+  }
+
   const unsubscribers = [];
 
   unsubscribers.push(subscribeToSales(storeId, handlers.onSales, handlers.onError));
@@ -76,12 +84,20 @@ export function subscribeToReportSources(storeId, handlers) {
     orderBy('createdAt', 'desc'),
   );
 
-  unsubscribers.push(onSnapshot(
-    ordersQuery,
-    (snapshot) => {
-      handlers.onOrders(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  unsubscribers.push(guardRemoteSubscription(
+    () => onSnapshot(
+      ordersQuery,
+      (snapshot) => {
+        handlers.onOrders(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      handlers.onError,
+    ),
+    {
+      onFallback() {
+        handlers.onOrders?.([]);
+      },
+      onError: handlers.onError,
     },
-    handlers.onError,
   ));
 
   return () => {

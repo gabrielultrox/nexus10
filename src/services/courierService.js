@@ -7,7 +7,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
-import { firebaseDb, firebaseReady } from './firebase';
+import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { loadLocalRecords, saveLocalRecords } from './localRecords';
 import { courierSeedRecords } from './operationsSeedData';
@@ -31,20 +31,28 @@ export function subscribeToCouriers(storeId, onData, onError) {
 
   const collectionRef = collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.couriers);
 
-  return onSnapshot(
-    collectionRef,
-    (snapshot) => {
-      const records = sortCouriers(snapshot.docs.map((documentSnapshot) => ({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data(),
-      })));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      collectionRef,
+      (snapshot) => {
+        const records = sortCouriers(snapshot.docs.map((documentSnapshot) => ({
+          id: documentSnapshot.id,
+          ...documentSnapshot.data(),
+        })));
 
-      saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, records);
-      onData(records);
-    },
-    (error) => {
-      onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
-      onError?.(error);
+        saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, records);
+        onData(records);
+      },
+      (error) => {
+        onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
+        onError?.(error);
+      },
+    ),
+    {
+      onFallback() {
+        onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
+      },
+      onError,
     },
   );
 }

@@ -1,6 +1,6 @@
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
-import { firebaseDb, firebaseReady } from './firebase';
+import { canUseRemoteSync, firebaseDb, firebaseReady } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { normalizeRole, roles } from './permissions';
 
@@ -54,7 +54,7 @@ export function getOperatorOptions() {
 export async function resolveUserProfileByOperator(operatorName) {
   const fallback = getDefaultUserProfile(operatorName);
 
-  if (!firebaseReady || !firebaseDb) {
+  if (!firebaseReady || !firebaseDb || !canUseRemoteSync()) {
     return fallback;
   }
 

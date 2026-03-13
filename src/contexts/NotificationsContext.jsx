@@ -8,7 +8,12 @@ import {
   isSalePosted,
   normalizeOrderDomainStatus,
 } from '../services/commerce';
-import { firebaseDb, firebaseReady } from '../services/firebase';
+import {
+  canUseRemoteSync,
+  firebaseDb,
+  firebaseReady,
+  guardRemoteSubscription,
+} from '../services/firebase';
 import { subscribeToInventoryItems } from '../services/inventory';
 import {
   dismissNotification,
@@ -103,7 +108,7 @@ export function NotificationsProvider({ children }) {
     inventoryInitializedRef.current = false;
     knownSaleIdsRef.current = new Set();
 
-    if (!firebaseReady || !firebaseDb || !currentStoreId) {
+    if (!firebaseReady || !firebaseDb || !currentStoreId || !canUseRemoteSync()) {
       return undefined;
     }
 
@@ -112,47 +117,54 @@ export function NotificationsProvider({ children }) {
       orderBy('createdAt', 'desc'),
     );
 
-    const unsubscribeOrders = onSnapshot(
-      ordersQuery,
-      (snapshot) => {
-        const orders = snapshot.docs.map((documentSnapshot) => ({
-          id: documentSnapshot.id,
-          ...documentSnapshot.data(),
-        }));
+    const unsubscribeOrders = guardRemoteSubscription(
+      () => onSnapshot(
+        ordersQuery,
+        (snapshot) => {
+          const orders = snapshot.docs.map((documentSnapshot) => ({
+            id: documentSnapshot.id,
+            ...documentSnapshot.data(),
+          }));
 
-        if (ordersInitializedRef.current) {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const orderData = {
-                id: change.doc.id,
-                ...change.doc.data(),
-              };
-              notifyNewOrder({
-                ...orderData,
-              });
-              recordAuditLog({
-                storeId: currentStoreId,
-                tenantId,
-                actor: buildAuditActor(),
-                action: 'order.created',
-                entityType: 'order',
-                entityId: change.doc.id,
-                description: `Pedido ${orderData.number ?? `#${change.doc.id.slice(0, 6).toUpperCase()}`} entrou na fila operacional.`,
-              });
+          if (ordersInitializedRef.current) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const orderData = {
+                  id: change.doc.id,
+                  ...change.doc.data(),
+                };
+                notifyNewOrder({
+                  ...orderData,
+                });
+                recordAuditLog({
+                  storeId: currentStoreId,
+                  tenantId,
+                  actor: buildAuditActor(),
+                  action: 'order.created',
+                  entityType: 'order',
+                  entityId: change.doc.id,
+                  description: `Pedido ${orderData.number ?? `#${change.doc.id.slice(0, 6).toUpperCase()}`} entrou na fila operacional.`,
+                });
+              }
+            });
+          }
+
+          orders.forEach((order) => {
+            if (isOrderDelayed(order)) {
+              notifyDelayedOrder(order);
             }
           });
-        }
 
-        orders.forEach((order) => {
-          if (isOrderDelayed(order)) {
-            notifyDelayedOrder(order);
-          }
-        });
-
-        ordersInitializedRef.current = true;
-      },
-      (error) => {
-        notifyImportantError(error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.');
+          ordersInitializedRef.current = true;
+        },
+        (error) => {
+          notifyImportantError(error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.');
+        },
+      ),
+      {
+        onError(error) {
+          notifyImportantError(error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.');
+        },
       },
     );
 

@@ -1,6 +1,6 @@
 import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEntries } from './finance';
 import { isOrderClosedStatus, isSalePosted } from './commerce';
-import { firebaseDb, firebaseReady } from './firebase';
+import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase';
 import { subscribeToInventoryItems } from './inventory';
 import { loadLocalRecords, loadResettableLocalRecords } from './localRecords';
 import { courierSeedRecords } from './operationsSeedData';
@@ -198,7 +198,11 @@ export function loadDashboardOperationalSources() {
 }
 
 export function subscribeToDashboardSources(storeId, handlers) {
-  if (!firebaseReady || !firebaseDb || !storeId) {
+  if (!firebaseReady || !firebaseDb || !storeId || !canUseRemoteSync()) {
+    handlers.onSales?.([]);
+    handlers.onOrders?.([]);
+    handlers.onInventoryItems?.([]);
+    handlers.onFinancialEntries?.([]);
     return () => {};
   }
 

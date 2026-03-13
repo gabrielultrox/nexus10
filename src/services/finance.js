@@ -7,7 +7,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 const financeTypes = new Set(['entrada', 'saida']);
@@ -42,26 +42,52 @@ function getFinancialClosuresCollectionRef(storeId) {
 }
 
 export function subscribeToFinancialEntries(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const entriesQuery = query(getFinancialEntriesCollectionRef(storeId), orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    entriesQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      entriesQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToFinancialClosures(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const closuresQuery = query(getFinancialClosuresCollectionRef(storeId), orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    closuresQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map(mapSnapshot));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      closuresQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map(mapSnapshot));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 

@@ -132,6 +132,10 @@ export function validateOrderInput(values) {
     values.paymentPreview?.method ?? values.paymentMethod ?? values.payment?.method,
   );
 
+  if (!paymentMethod) {
+    throw new Error('Informe a forma de pagamento do pedido.');
+  }
+
   return {
     code: values.code?.trim() || buildRecordCode('PED'),
     source,

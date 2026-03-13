@@ -10,7 +10,7 @@ import {
   where,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import {
   buildExternalOrderDocumentId,
@@ -53,77 +53,142 @@ export function getExternalOrderDocumentId({ source, merchantId, externalOrderId
 }
 
 export function subscribeToExternalOrders(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const ordersQuery = query(getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrders), orderBy('updatedAt', 'desc'));
 
-  return onSnapshot(
-    ordersQuery,
-    (snapshot) => {
-      onData(snapshot.docs.map((documentSnapshot) => normalizeExternalOrderRecord({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data(),
-      })));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      ordersQuery,
+      (snapshot) => {
+        onData(snapshot.docs.map((documentSnapshot) => normalizeExternalOrderRecord({
+          id: documentSnapshot.id,
+          ...documentSnapshot.data(),
+        })));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToExternalOrderEvents(storeId, externalOrderId, onData, onError) {
+  if (!storeId || !externalOrderId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const eventsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrderEvents),
     where('externalOrderId', '==', externalOrderId),
   );
 
-  return onSnapshot(
-    eventsQuery,
-    (snapshot) => {
-      onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      eventsQuery,
+      (snapshot) => {
+        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToExternalOrderTracking(storeId, externalOrderId, onData, onError) {
+  if (!storeId || !externalOrderId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const trackingQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrderTracking),
     where('externalOrderId', '==', externalOrderId),
   );
 
-  return onSnapshot(
-    trackingQuery,
-    (snapshot) => {
-      onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'happenedAt'));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      trackingQuery,
+      (snapshot) => {
+        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'happenedAt'));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToIntegrationLogs(storeId, source, onData, onError) {
+  if (!storeId || !source || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const logsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.integrationLogs),
     where('source', '==', source),
   );
 
-  return onSnapshot(
-    logsQuery,
-    (snapshot) => {
-      onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      logsQuery,
+      (snapshot) => {
+        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
 export function subscribeToIntegrationMerchants(storeId, source, onData, onError) {
+  if (!storeId || !source || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const merchantsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.integrationMerchants),
     where('source', '==', source),
   );
 
-  return onSnapshot(
-    merchantsQuery,
-    (snapshot) => {
-      onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'updatedAt'));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      merchantsQuery,
+      (snapshot) => {
+        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'updatedAt'));
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 

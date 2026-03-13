@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 
-import { assertFirebaseReady, firebaseDb } from './firebase';
+import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { deleteInventoryItemForProduct, ensureInventoryItemForProduct } from './inventory';
 
@@ -68,19 +68,32 @@ function getProductsCollectionRef(storeId) {
 }
 
 export function subscribeToProducts(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([]);
+    return () => {};
+  }
+
   const productsQuery = query(getProductsCollectionRef(storeId), orderBy('name'));
 
-  return onSnapshot(
-    productsQuery,
-    (snapshot) => {
-      const products = snapshot.docs.map((documentSnapshot) => ({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data(),
-      }));
+  return guardRemoteSubscription(
+    () => onSnapshot(
+      productsQuery,
+      (snapshot) => {
+        const products = snapshot.docs.map((documentSnapshot) => ({
+          id: documentSnapshot.id,
+          ...documentSnapshot.data(),
+        }));
 
-      onData(products);
+        onData(products);
+      },
+      onError,
+    ),
+    {
+      onFallback() {
+        onData([]);
+      },
+      onError,
     },
-    onError,
   );
 }
 
