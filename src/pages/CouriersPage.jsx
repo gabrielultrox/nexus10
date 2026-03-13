@@ -45,18 +45,11 @@ function CouriersPage() {
         }
       />
 
-      <section className="couriers-page-nav-shell">
-        <div className="couriers-page-nav-shell__header">
-          <span className="text-overline">Fluxo de trabalho</span>
-          <h2 className="text-section-title">Escolha a area de operacao</h2>
-        </div>
-
-        <PageTabs
-          tabs={COURIERS_TABS}
-          activeTab={activeTab}
-          onTabChange={(id) => navigate(`/couriers/${id}`)}
-        />
-      </section>
+      <PageTabs
+        tabs={COURIERS_TABS}
+        activeTab={activeTab}
+        onTabChange={(id) => navigate(`/couriers/${id}`)}
+      />
 
       <CouriersModule
         mode={isRegisterMode ? 'register' : 'lookup'}

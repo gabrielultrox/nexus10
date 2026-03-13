@@ -3,22 +3,22 @@ function DashboardFilters({ startDate, endDate, onChange, onSetPreset }) {
     <section className="dashboard-filters">
       <div className="dashboard-filters__fields">
         <div className="ui-field">
-          <label className="ui-label" htmlFor="dashboard-start-date">Inicio</label>
           <input
             id="dashboard-start-date"
             className="ui-input"
             type="date"
+            aria-label="Data inicial"
             value={startDate}
             onChange={(event) => onChange('startDate', event.target.value)}
           />
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor="dashboard-end-date">Fim</label>
           <input
             id="dashboard-end-date"
             className="ui-input"
             type="date"
+            aria-label="Data final"
             value={endDate}
             onChange={(event) => onChange('endDate', event.target.value)}
           />

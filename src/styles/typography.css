@@ -11,8 +11,8 @@ h4,
 .text-display,
 .text-section-title,
 .text-kpi {
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
 }
 
 .text-display {
@@ -31,9 +31,9 @@ h4,
 }
 
 .text-section-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  line-height: 1.15;
+  font-size: var(--space-4);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .text-card-title {

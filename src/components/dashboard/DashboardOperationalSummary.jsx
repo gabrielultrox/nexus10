@@ -4,11 +4,7 @@ import DashboardSectionHeader from './DashboardSectionHeader';
 function DashboardOperationalSummary({ operations }) {
   return (
     <section className="dashboard-section">
-      <DashboardSectionHeader
-        eyebrow="Operation"
-        title="Resumo Operacional"
-        description="Consolidacao rapida do turno atual, do caixa e das pendencias prioritarias."
-      />
+      <DashboardSectionHeader title="Resumo Operacional" />
 
       <div className="dashboard-summary-grid">
         <SurfaceCard title="Escala Ativa">

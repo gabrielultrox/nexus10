@@ -9,11 +9,7 @@ function DashboardCharts({ charts }) {
 
   return (
     <section className="dashboard-section">
-      <DashboardSectionHeader
-        eyebrow="Analytics"
-        title="Leitura de Performance"
-        description="Paineis visuais para ritmo da operacao e comportamento de pedidos ao longo do dia."
-      />
+      <DashboardSectionHeader title="Leitura de Performance" />
 
       <div className="dashboard-chart-grid">
         <SurfaceCard title={primaryChart.title}>

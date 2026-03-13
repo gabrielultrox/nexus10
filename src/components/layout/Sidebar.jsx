@@ -15,21 +15,8 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <div className="sidebar__brand-badge">
-          <span className="sidebar__brand-badge-ring" />
-          <div className="sidebar__logo">
-            <img src="/brand-bolt-red.svg" alt="" className="sidebar__logo-mark" />
-          </div>
-        </div>
-        <div>
-          <strong className="sidebar__title">Nexus 10 ERP</strong>
-          <p className="sidebar__subtitle">Operacao em tempo real</p>
-        </div>
-      </div>
-
-      <div className="sidebar__operational">
-        <span className="sidebar__status-line">Centro operacional</span>
-        <strong className="sidebar__status-title">Loja pronta para rodar</strong>
+        <img src="/brand-bolt-red.svg" alt="" className="sidebar__logo-mark" />
+        <strong className="sidebar__title">Nexus 10</strong>
       </div>
 
       <nav className="sidebar__nav" aria-label="Navegacao principal">
@@ -56,11 +43,6 @@ function Sidebar() {
           </div>
         ))}
       </nav>
-
-      <div className="sidebar__footer">
-        <span className="sidebar__footer-line" />
-        <p>Nexus 10 ERP // operacao da loja</p>
-      </div>
     </aside>
   )
 }

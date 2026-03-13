@@ -3,7 +3,6 @@
   gap: var(--space-5);
 }
 
-.couriers-page-nav-shell,
 .couriers-overview {
   display: grid;
   gap: var(--space-4);
@@ -15,16 +14,10 @@
       180deg,
       color-mix(in srgb, var(--surface-card-gloss) 32%, transparent),
       transparent 42%
-    ),
+  ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
   box-shadow: var(--shadow-sm);
 }
-
-.couriers-page-nav-shell {
-  margin-top: calc(var(--space-2) * -1);
-}
-
-.couriers-page-nav-shell__header,
 .couriers-overview__header {
   display: flex;
   align-items: end;
@@ -32,10 +25,6 @@
   gap: var(--space-3);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.couriers-page-nav-shell .page-tabs {
-  margin-bottom: 0;
 }
 
 .couriers-layout {
@@ -412,7 +401,6 @@
   .courier-profile-hero__header,
   .courier-card__header,
   .couriers-panel__header,
-  .couriers-page-nav-shell__header,
   .couriers-overview__header {
     flex-direction: column;
     align-items: flex-start;
@@ -429,10 +417,6 @@
 }
 
 @media (max-width: 640px) {
-  .couriers-page-nav-shell .page-tabs {
-    width: 100%;
-  }
-
   .couriers-filters {
     grid-template-columns: 1fr;
   }

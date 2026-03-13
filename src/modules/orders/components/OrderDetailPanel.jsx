@@ -63,16 +63,9 @@ function OrderDetailPanel({
       </div>
 
       {!selectedOrder ? (
-        <div className="entity-empty-state">
-          <p className="text-section-title">
-            {isLoading ? 'Carregando pedido' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
-          </p>
-          <p className="text-body">
-            {isLoading
-              ? 'Aguarde enquanto os dados do pedido sao preparados.'
-              : requestedOrderId
-                ? 'Nao localizei esse pedido na base atual ou ele ainda nao foi sincronizado.'
-                : 'O detalhe completo aparece aqui assim que um pedido for escolhido.'}
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">
+            {isLoading ? 'Carregando...' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
           </p>
         </div>
       ) : (

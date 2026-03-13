@@ -7,7 +7,6 @@ import DashboardCharts from '../components/dashboard/DashboardCharts';
 import DashboardFilters from '../components/dashboard/DashboardFilters';
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary';
-import SurfaceCard from '../components/common/SurfaceCard';
 import { useStore } from '../contexts/StoreContext';
 import {
   buildDashboardData,
@@ -129,14 +128,12 @@ function DashboardPage() {
         description="Visao central da operacao com indicadores, comportamento do turno e leitura rapida do status diario."
       />
 
-      <SurfaceCard title="Filtro do dashboard">
-        <DashboardFilters
-          startDate={period.startDate}
-          endDate={period.endDate}
-          onChange={handlePeriodChange}
-          onSetPreset={handlePresetChange}
-        />
-      </SurfaceCard>
+      <DashboardFilters
+        startDate={period.startDate}
+        endDate={period.endDate}
+        onChange={handlePeriodChange}
+        onSetPreset={handlePresetChange}
+      />
 
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 

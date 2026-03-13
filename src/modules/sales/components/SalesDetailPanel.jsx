@@ -32,16 +32,9 @@ function SalesDetailPanel({ selectedSale, isLoading, requestedSaleId, canWrite, 
       </div>
 
       {!selectedSale ? (
-        <div className="entity-empty-state">
-          <p className="text-section-title">
-            {isLoading ? 'Carregando venda' : requestedSaleId ? 'Venda nao encontrada' : 'Selecione uma venda'}
-          </p>
-          <p className="text-body">
-            {isLoading
-              ? 'Aguarde enquanto os dados da venda sao preparados.'
-              : requestedSaleId
-                ? 'Nao localizei essa venda na base atual ou ela ainda nao foi sincronizada.'
-                : 'O detalhe completo aparece aqui assim que uma venda for escolhida.'}
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">
+            {isLoading ? 'Carregando...' : requestedSaleId ? 'Venda nao encontrada' : 'Selecione uma venda'}
           </p>
         </div>
       ) : (
