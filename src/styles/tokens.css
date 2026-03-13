@@ -3,6 +3,7 @@
   --font-title: 'Syne', 'Segoe UI', sans-serif;
   --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', 'Consolas', monospace;
+  --font-body: var(--font-sans);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -32,6 +33,9 @@
   --transition-fast: 160ms ease;
   --transition-base: 240ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-slow: 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-normal: 240ms;
+  --duration-slow: 380ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root[data-theme='dark'] {
@@ -62,6 +66,9 @@
   --color-accent-red: #ff5b6e;
   --color-accent-blue: #56a0f8;
   --color-accent-purple: #c084fc;
+  --color-accent-primary: var(--color-accent-cyan);
+  --color-accent-secondary: var(--color-accent-amber);
+  --color-warning-strong: var(--color-accent-amber-strong);
   --color-semantic-success: #1de99b;
   --color-semantic-danger: #ff5b6e;
   --color-semantic-warning: #f5a623;
@@ -92,6 +99,7 @@
   --surface-ring-accent: rgba(29, 233, 155, 0.14);
   --surface-card-gloss: rgba(255, 255, 255, 0.04);
   --surface-loader-bg: linear-gradient(180deg, rgba(7, 9, 17, 0.82), rgba(4, 5, 7, 0.92));
+  --color-shadow-rgb: #020812;
 
   --gradient-app:
     radial-gradient(circle at top left, rgba(0, 220, 255, 0.14), transparent 34%),
@@ -151,6 +159,9 @@
   --color-accent-red: #d74257;
   --color-accent-blue: #2563eb;
   --color-accent-purple: #9a6cff;
+  --color-accent-primary: var(--color-accent-cyan);
+  --color-accent-secondary: var(--color-accent-amber);
+  --color-warning-strong: var(--color-accent-amber-strong);
   --color-semantic-success: #008f5d;
   --color-semantic-danger: #d74257;
   --color-semantic-warning: #c97a00;
@@ -181,6 +192,7 @@
   --surface-ring-accent: rgba(0, 143, 93, 0.16);
   --surface-card-gloss: rgba(255, 255, 255, 0.6);
   --surface-loader-bg: linear-gradient(180deg, rgba(244, 247, 251, 0.92), rgba(233, 239, 247, 0.96));
+  --color-shadow-rgb: #0f172a;
 
   --gradient-app:
     radial-gradient(circle at top left, rgba(0, 125, 191, 0.12), transparent 34%),
@@ -240,6 +252,9 @@
   --color-accent-red: #b6533f;
   --color-accent-blue: #4f6fa8;
   --color-accent-purple: #8d6b9f;
+  --color-accent-primary: var(--color-accent-cyan);
+  --color-accent-secondary: var(--color-accent-amber);
+  --color-warning-strong: var(--color-accent-amber-strong);
   --color-semantic-success: #537342;
   --color-semantic-danger: #b6533f;
   --color-semantic-warning: #a86c14;
@@ -270,6 +285,7 @@
   --surface-ring-accent: rgba(168, 108, 20, 0.18);
   --surface-card-gloss: rgba(255, 249, 236, 0.52);
   --surface-loader-bg: linear-gradient(180deg, rgba(247, 236, 213, 0.94), rgba(231, 219, 198, 0.98));
+  --color-shadow-rgb: #5d4326;
 
   --gradient-app:
     radial-gradient(circle at top left, rgba(211, 154, 51, 0.18), transparent 34%),

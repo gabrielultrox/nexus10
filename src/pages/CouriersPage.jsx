@@ -31,8 +31,8 @@ function CouriersPage() {
         description={
           isRegisterMode
             ? editingCourierId
-              ? 'Ajuste os dados do entregador e atualize a maquininha vinculada sem misturar com a tela de consulta.'
-              : 'Cadastre nome, status, turno e maquininha em uma tela dedicada, sem disputar espaco com a consulta.'
+              ? 'Ajuste os dados do entregador e atualize a maquininha fixa sem misturar com a tela de consulta.'
+              : 'Cadastre nome, status, turno e maquininha fixa em uma tela dedicada, sem disputar espaco com a consulta.'
             : 'Consulte a base de entregadores com filtros, leitura rapida de status e acesso direto ao perfil.'
         }
       />

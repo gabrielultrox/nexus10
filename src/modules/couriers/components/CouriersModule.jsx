@@ -300,7 +300,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
         action: isEditing ? 'Atualizou entregador' : 'Cadastrou entregador',
         target: newCourier.name,
         details: isEditing
-          ? `Cadastro atualizado com maquininha ${newCourier.machine}`
+          ? `Cadastro atualizado com maquininha fixa ${newCourier.machine}`
           : persistenceMode === 'remote'
             ? 'Cadastro sincronizado com a base compartilhada'
             : 'Cadastro manual realizado no modulo de entregadores',
@@ -352,7 +352,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                   <p className="text-overline">Consulta operacional</p>
                   <h3 className="text-section-title">Leitura rapida do time</h3>
                   <p className="text-body">
-                    Busque por nome, turno, status ou maquininha e abra o perfil do entregador sem disputar espaco com o cadastro.
+                    Busque por nome, turno, status ou maquininha fixa e abra o perfil do entregador sem disputar espaco com o cadastro.
                   </p>
                 </div>
                 <span className="ui-badge ui-badge--special">
@@ -400,8 +400,8 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                   {editingCourier ? `Ajustes de ${editingCourier.name}` : 'Entrada limpa para novos nomes'}
                 </h3>
                 <p className="text-body">
-                  {editingCourier
-                    ? 'Atualize telefone, turno, status e maquininha sem sair da tela de cadastro.'
+                    {editingCourier
+                      ? 'Atualize telefone, turno, status e maquininha fixa sem sair da tela de cadastro.'
                     : 'Preencha os dados operacionais em uma tela focada, sem cards de consulta competindo com o formulario.'}
                 </p>
               </div>
@@ -451,8 +451,8 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                 </div>
 
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="courier-machine-register">
-                    Maquininha
+                    <label className="ui-label" htmlFor="courier-machine-register">
+                      Maquininha fixa
                   </label>
                   <select
                     id="courier-machine-register"
