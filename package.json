@@ -12,6 +12,7 @@
     "format": "prettier --write src",
     "start:backend": "node backend/server.js",
     "seed:ifood-merchant": "node backend/scripts/seedIfoodMerchant.js",
+    "inventory:import-csv": "node backend/scripts/importInventoryCsv.js",
     "preview": "vite preview",
     "test": "vitest run",
     "firebase:login": "firebase login",

@@ -300,7 +300,7 @@ function InventoryModule() {
 
     try {
       const csvText = await csvFile.text();
-      const importedCount = await importInventoryFromCsv({
+      const importResult = await importInventoryFromCsv({
         storeId: currentStoreId,
         tenantId,
         csvText,
@@ -313,10 +313,24 @@ function InventoryModule() {
         action: 'inventory.csv_imported',
         entityType: 'inventory_import',
         entityId: `csv-${Date.now()}`,
-        description: `${importedCount} item(ns) atualizados via importacao CSV.`,
+        description: [
+          `${importResult.importedCount} item(ns) importados via CSV.`,
+          `${importResult.createdCount} criado(s).`,
+          `${importResult.updatedCount} atualizado(s).`,
+          importResult.skippedCount > 0 ? `${importResult.skippedCount} ignorado(s).` : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
       });
 
-      setFeedbackMessage(`${importedCount} item(ns) atualizados via CSV.`);
+      setFeedbackMessage([
+        `${importResult.importedCount} item(ns) processados via CSV.`,
+        `${importResult.createdCount} criado(s).`,
+        `${importResult.updatedCount} atualizado(s).`,
+        importResult.skippedCount > 0 ? `${importResult.skippedCount} ignorado(s).` : '',
+      ]
+        .filter(Boolean)
+        .join(' '));
       setCsvFile(null);
       playSuccess();
     } catch (error) {
@@ -465,7 +479,7 @@ function InventoryModule() {
 
                 <div className="inventory-import">
                   <div className="inventory-import__copy">
-                    <p className="text-body">Aceita colunas como `sku`, `produto/nome`, `estoque/currentStock` e `minimo/minimumStock`.</p>
+                    <p className="text-body">Aceita planilhas com codigo, nome, estoque e preco. Produtos ausentes sao criados automaticamente.</p>
                   </div>
                   <div className="inventory-import__actions">
                     <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} />

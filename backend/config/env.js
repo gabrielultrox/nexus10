@@ -22,7 +22,17 @@ function parseEnvFile(filePath) {
     }
 
     const key = trimmedLine.slice(0, separatorIndex).trim();
-    const value = trimmedLine.slice(separatorIndex + 1).trim();
+    let value = trimmedLine.slice(separatorIndex + 1).trim();
+
+    if (
+      value.length >= 2
+      && (
+        (value.startsWith('"') && value.endsWith('"'))
+        || (value.startsWith("'") && value.endsWith("'"))
+      )
+    ) {
+      value = value.slice(1, -1);
+    }
 
     if (key && process.env[key] == null) {
       process.env[key] = value;

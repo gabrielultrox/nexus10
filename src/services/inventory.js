@@ -7,10 +7,17 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  setDoc,
 } from 'firebase/firestore';
 
 import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
+import {
+  createImportedProductId,
+  mapInventoryCsvRow,
+  parseInventoryCsv,
+  resolveProductFromImport,
+} from './inventoryCsv';
 
 const decrementTypes = new Set(['sale', 'manual_out']);
 const incrementTypes = new Set(['manual_in', 'sale_reversal']);
@@ -322,81 +329,81 @@ export async function adjustInventoryManually({ storeId, tenantId, values }) {
   });
 }
 
-function normalizeCsvHeader(header) {
-  return String(header ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function parseCsv(text) {
-  const lines = String(text ?? '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  if (lines.length < 2) {
-    throw new Error('Arquivo CSV sem linhas suficientes para importacao.');
-  }
-
-  const delimiter = lines[0].includes(';') ? ';' : ',';
-  const headers = lines[0].split(delimiter).map(normalizeCsvHeader);
-
-  return lines.slice(1).map((line) => {
-    const values = line.split(delimiter).map((item) => item.trim().replace(/^"|"$/g, ''));
-    return headers.reduce((accumulator, header, index) => {
-      accumulator[header] = values[index] ?? '';
-      return accumulator;
-    }, {});
-  });
-}
-
-function resolveProductFromCsvRow(products, row) {
-  const byId = row.productid || row.id;
-  const bySku = row.sku;
-  const byName = row.nome || row.produto || row.product || row.name;
-
-  return products.find((product) => (
-    (byId && product.id === byId)
-    || (bySku && product.sku?.toLowerCase() === bySku.toLowerCase())
-    || (byName && product.name?.toLowerCase() === byName.toLowerCase())
-  ));
-}
-
 export async function importInventoryFromCsv({ storeId, tenantId, csvText, products }) {
-  const rows = parseCsv(csvText);
-  let importedCount = 0;
+  const rows = parseInventoryCsv(csvText);
+  const knownProducts = [...products];
+  const result = {
+    createdCount: 0,
+    updatedCount: 0,
+    skippedCount: 0,
+    importedCount: 0,
+  };
 
   for (const row of rows) {
-    const product = resolveProductFromCsvRow(products, row);
+    const mappedRow = mapInventoryCsvRow(row);
 
-    if (!product) {
+    if (!mappedRow) {
+      result.skippedCount += 1;
       continue;
     }
 
-    const currentStock = parseInteger(row.currentstock || row.stock || row.estoque, 'Estoque atual');
-    const minimumStock = parseInteger(row.minimumstock || row.minimostock || row.estoqueminimo || row.minimo || 0, 'Estoque minimo');
+    const existingProduct = resolveProductFromImport(knownProducts, mappedRow);
+    const productId = existingProduct?.id ?? createImportedProductId(mappedRow);
+    const productRef = getProductRef(storeId, productId);
+    const productPayload = {
+      name: mappedRow.name,
+      category: existingProduct?.category || mappedRow.category,
+      price: mappedRow.price,
+      cost: mappedRow.cost,
+      stock: mappedRow.stock,
+      minimumStock: mappedRow.minimumStock,
+      sku: mappedRow.externalCode || existingProduct?.sku || '',
+      barcode: mappedRow.barcode || existingProduct?.barcode || '',
+      description: mappedRow.description || existingProduct?.description || '',
+      status: existingProduct?.status || 'active',
+      storeId,
+      tenantId: tenantId ?? null,
+      updatedAt: serverTimestamp(),
+      createdAt: existingProduct?.createdAt ?? serverTimestamp(),
+    };
+
+    await setDoc(productRef, productPayload, { merge: true });
 
     await applyInventoryMovement({
       storeId,
       tenantId,
-      productId: product.id,
+      productId,
       movementType: 'csv_import',
-      quantity: currentStock,
+      quantity: mappedRow.stock,
       reason: 'Importacao de estoque via CSV',
       source: 'manual',
-      movementId: `csv-import-${product.id}-${Date.now()}`,
+      movementId: `csv-import-${productId}-${row.__rowNumber}`,
       productSnapshot: {
-        ...product,
-        stock: currentStock,
-        minimumStock,
+        ...existingProduct,
+        ...productPayload,
+        productName: productPayload.name,
       },
-      minimumStockOverride: minimumStock,
+      minimumStockOverride: mappedRow.minimumStock,
     });
 
-    importedCount += 1;
+    if (existingProduct) {
+      const existingIndex = knownProducts.findIndex((product) => product.id === existingProduct.id);
+      knownProducts[existingIndex] = {
+        ...existingProduct,
+        ...productPayload,
+        id: productId,
+      };
+      result.updatedCount += 1;
+    } else {
+      knownProducts.push({
+        ...productPayload,
+        id: productId,
+      });
+      result.createdCount += 1;
+    }
+
+    result.importedCount += 1;
   }
 
-  return importedCount;
+  return result;
 }
