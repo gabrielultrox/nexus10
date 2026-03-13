@@ -194,6 +194,16 @@ export const routeDefinitions = [
     requiredRoles: ['admin'],
   },
   {
+    path: 'pdv',
+    label: 'PDV',
+    icon: '18',
+    section: 'PDV',
+    eyebrow: 'PDV',
+    title: 'Central do PDV',
+    description: 'Entrada unica do PDV com atalhos para pedido, venda, catalogo, estoque, clientes e relatorios.',
+    requiredRoles: ['atendente'],
+  },
+  {
     path: 'pos',
     label: 'Novo pedido',
     icon: '18',
@@ -202,6 +212,7 @@ export const routeDefinitions = [
     title: 'PDV',
     description: 'Fluxo de montagem de pedido, cliente, itens, frete e finalizacao.',
     requiredRoles: ['atendente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'orders',
@@ -212,6 +223,7 @@ export const routeDefinitions = [
     title: 'Dominio de pedidos',
     description: 'Pedidos comerciais e operacionais sem impacto definitivo em estoque ou financeiro.',
     requiredRoles: ['atendente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'sales',
@@ -222,6 +234,7 @@ export const routeDefinitions = [
     title: 'Dominio de vendas',
     description: 'Vendas reais com postagem de estoque, financeiro e auditoria centralizada.',
     requiredRoles: ['operador'],
+    hiddenInSidebar: true,
   },
   {
     path: 'products',
@@ -232,6 +245,7 @@ export const routeDefinitions = [
     title: 'Produtos',
     description: 'Catalogo com busca, categorias, ordenacao e edicao operacional.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'inventory',
@@ -242,6 +256,7 @@ export const routeDefinitions = [
     title: 'Controle de estoque',
     description: 'Saldo atual, ajustes, historico e integracao automatica com as vendas.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'customers',
@@ -252,6 +267,7 @@ export const routeDefinitions = [
     title: 'Clientes',
     description: 'Base de clientes, localizacao, historico e relacionamento com o PDV.',
     requiredRoles: ['atendente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'pos-reports',
@@ -262,6 +278,7 @@ export const routeDefinitions = [
     title: 'Relatorios do PDV',
     description: 'Relatorios comerciais, filtros por data e leitura da operacao de vendas.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'settings',

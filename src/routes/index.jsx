@@ -18,6 +18,7 @@ const InventoryPage = lazy(() => import('../pages/InventoryPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const NativeModulePage = lazy(() => import('../pages/NativeModulePage'));
 const OrdersPage = lazy(() => import('../pages/OrdersPage'));
+const PdvPage = lazy(() => import('../pages/PdvPage'));
 const PosReportsPage = lazy(() => import('../pages/PosReportsPage'));
 const ProductsPage = lazy(() => import('../pages/ProductsPage'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage'));
@@ -58,6 +59,8 @@ function getRouteElement(route) {
         return withRouteSuspense(<InventoryPage />);
       case 'orders':
         return withRouteSuspense(<OrdersPage />);
+      case 'pdv':
+        return withRouteSuspense(<PdvPage />);
       case 'pos-reports':
         return withRouteSuspense(<PosReportsPage />);
       case 'products':
@@ -82,6 +85,7 @@ const appChildren = routeDefinitions
   .filter(
     (route) =>
       ![
+        'pos',
         'orders',
         'sales',
         'reports',
@@ -108,6 +112,7 @@ const routes = [
         element: withRouteSuspense(<MainLayout />),
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'pos', element: <Navigate to="/pdv" replace /> },
           { path: 'reports', element: <Navigate to="/analysis?screen=reports" replace /> },
           { path: 'monthly-report', element: <Navigate to="/analysis?screen=monthly-report" replace /> },
           { path: 'orders-hour', element: <Navigate to="/analysis?screen=orders-hour" replace /> },

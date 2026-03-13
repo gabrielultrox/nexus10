@@ -909,6 +909,58 @@ body::after {
   max-width: calc(var(--space-9) * 5);
 }
 
+.pdv-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 4), 1fr));
+  gap: var(--space-3);
+}
+
+.pdv-hub-card {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-height: calc(var(--space-9) * 2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  background: var(--surface-panel-soft-alt);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.pdv-hub-card:hover {
+  border-color: var(--color-border-strong);
+  background: var(--surface-panel-highlight);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(calc(var(--border-thin) * -1));
+}
+
+.pdv-hub-card__eyebrow {
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: var(--space-2-5);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pdv-hub-card__title {
+  font-family: var(--font-sans);
+  font-size: var(--space-4);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.pdv-hub-card__description {
+  color: var(--color-text-secondary);
+  font-size: var(--space-3-5);
+  line-height: 1.5;
+}
+
 @keyframes pulse-dot {
   0%,
   100% {
