@@ -71,7 +71,14 @@ export async function applyStockMovement({
 
     const productData = productSnapshotDoc.exists ? productSnapshotDoc.data() : null;
     const currentStockSource = stockItemSnapshot.exists ? stockItemSnapshot.data() : legacyStockItemSnapshot.data();
-    const snapshot = buildProductSnapshot(productId, productSnapshot ?? productData, currentStockSource);
+    const snapshot = buildProductSnapshot(
+      productId,
+      {
+        ...(productData ?? {}),
+        ...(productSnapshot ?? {}),
+      },
+      currentStockSource,
+    );
     const currentStock = Number(currentStockSource?.currentStock ?? snapshot.currentStock ?? 0);
     const minimumStock = minimumStockOverride != null
       ? Number(minimumStockOverride)
