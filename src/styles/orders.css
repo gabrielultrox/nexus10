@@ -147,7 +147,7 @@
 
 .orders-domain__item-row {
   display: grid;
-  grid-template-columns: minmax(200px, 1.4fr) repeat(2, minmax(110px, 0.6fr)) minmax(140px, 0.7fr) auto;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr) auto;
   gap: var(--space-2);
   align-items: end;
   min-width: 0;
@@ -174,7 +174,7 @@
 }
 
 .orders-domain__item-total {
-  min-height: 46px;
+  min-height: 42px;
   align-content: center;
 }
 
@@ -307,7 +307,7 @@
 
 .sales-domain__item-row {
   display: grid;
-  grid-template-columns: minmax(200px, 1.4fr) repeat(2, minmax(110px, 0.6fr)) minmax(140px, 0.7fr) auto;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr) auto;
   gap: var(--space-2);
   align-items: end;
   padding: var(--space-3);
@@ -335,7 +335,7 @@
 }
 
 .sales-domain__item-total {
-  min-height: 46px;
+  min-height: 42px;
   align-content: center;
 }
 
@@ -532,6 +532,16 @@
   color: var(--color-text-muted);
 }
 
+.orders-domain .ui-field,
+.sales-domain .ui-field {
+  gap: 6px;
+}
+
+.orders-domain .ui-label,
+.sales-domain .ui-label {
+  font-size: 0.64rem;
+}
+
 .orders-domain .ui-kpi-card__value,
 .sales-domain .ui-kpi-card__value,
 .orders-domain .text-section-title,
@@ -569,6 +579,7 @@
 .sales-domain .ui-textarea {
   min-height: 44px;
   padding: 10px 12px;
+  font-size: 0.9rem;
   color: var(--color-text-primary);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 38%),
@@ -589,6 +600,16 @@
 .orders-domain .ui-textarea,
 .sales-domain .ui-textarea {
   min-height: 104px;
+}
+
+.orders-domain__item-row .ui-button,
+.sales-domain__item-row .ui-button,
+.orders-domain .commerce-panel__add-button,
+.sales-domain .commerce-panel__add-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 0.66rem;
 }
 
 .orders-domain .ui-input::placeholder,
