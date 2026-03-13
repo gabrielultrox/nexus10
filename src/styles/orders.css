@@ -725,12 +725,22 @@
   grid-template-columns: 1fr 80px 110px 80px auto auto;
   gap: var(--space-2);
   align-items: center;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 30%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
 
 .commerce-step__line-total {
   display: grid;
   gap: var(--space-1);
   min-width: 110px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-field);
+  background: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--surface-panel));
 }
 
 .commerce-step__line-total span {
@@ -743,6 +753,9 @@
 
 .commerce-step__line-total strong {
   color: var(--color-text-primary);
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .commerce-step__add-button,
@@ -758,6 +771,10 @@
   overflow-y: auto;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 30%, transparent), transparent 22%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 24%, transparent);
 }
 
 .commerce-step__item-row {
@@ -771,7 +788,9 @@
 }
 
 .commerce-step__item-row--header {
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, var(--surface-panel));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 34%, transparent), transparent 48%),
+    color-mix(in srgb, var(--surface-panel-soft) 92%, var(--surface-panel));
   color: var(--color-text-muted);
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -795,7 +814,9 @@
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border-subtle);
-  background: var(--color-bg-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 36%, transparent), transparent 38%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--color-bg-panel));
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
@@ -810,6 +831,94 @@
   font-family: var(--font-mono);
   font-size: 1rem;
   color: var(--color-accent-cyan);
+}
+
+.orders-domain .commerce-panel--items {
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 44%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 26%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
+}
+
+.orders-domain .commerce-step__input-row {
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 40%, transparent), transparent 28%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
+}
+
+.orders-domain .commerce-step__line-total {
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 46%),
+    color-mix(in srgb, var(--surface-panel-strong) 96%, var(--surface-panel));
+}
+
+.orders-domain .commerce-step__line-total strong,
+.orders-domain .commerce-step__subtotal {
+  color: var(--color-accent-cyan);
+}
+
+.orders-domain .commerce-step__item-list {
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
+}
+
+.orders-domain .commerce-step__item-row--header {
+  color: color-mix(in srgb, var(--color-accent-cyan) 62%, var(--color-text-muted));
+}
+
+.orders-domain .commerce-step__footer {
+  border-top-color: color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 34%, transparent), transparent 38%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--color-bg-panel));
+}
+
+.sales-domain .commerce-panel--items {
+  border: 1px solid color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-secondary) 8%, transparent), transparent 44%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 44%, transparent), transparent 26%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--surface-panel));
+}
+
+.sales-domain .commerce-step__input-row {
+  border-color: color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 10%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 40%, transparent), transparent 28%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
+}
+
+.sales-domain .commerce-step__line-total {
+  border-color: color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-secondary) 8%, transparent), transparent 46%),
+    color-mix(in srgb, var(--surface-panel-strong) 96%, var(--surface-panel));
+}
+
+.sales-domain .commerce-step__line-total strong,
+.sales-domain .commerce-step__subtotal {
+  color: var(--color-accent-secondary);
+}
+
+.sales-domain .commerce-step__item-list {
+  border-color: color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
+}
+
+.sales-domain .commerce-step__item-row--header {
+  color: color-mix(in srgb, var(--color-accent-secondary) 62%, var(--color-text-muted));
+}
+
+.sales-domain .commerce-step__footer {
+  border-top-color: color-mix(in srgb, var(--color-accent-secondary) 16%, var(--color-border-subtle));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 8%, transparent), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 34%, transparent), transparent 38%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--color-bg-panel));
 }
 
 .commerce-step__finish-grid {
