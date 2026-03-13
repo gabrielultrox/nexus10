@@ -1,24 +1,6 @@
-import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce';
+import { useEffect, useRef } from 'react'
 
-export function CommerceFormSignalBar({ eyebrow, title, description, badges = [] }) {
-  return (
-    <section className="commerce-signal-bar">
-      <div className="commerce-signal-bar__copy">
-        <span className="commerce-signal-bar__eyebrow">{eyebrow}</span>
-        <h3 className="commerce-signal-bar__title">{title}</h3>
-        <p className="commerce-signal-bar__description">{description}</p>
-      </div>
-
-      <div className="commerce-signal-bar__badges">
-        {badges.map((badge) => (
-          <span key={`${badge.label}-${badge.tone ?? 'info'}`} className={`ui-badge ${badge.tone ?? 'ui-badge--info'}`}>
-            {badge.label}
-          </span>
-        ))}
-      </div>
-    </section>
-  );
-}
+import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce'
 
 export function CommerceIdentitySection({
   eyebrow,
@@ -46,7 +28,9 @@ export function CommerceIdentitySection({
 
       <div className="entity-stack">
         <div className="ui-field">
-          <label className="ui-label" htmlFor={channelId}>{channelLabel}</label>
+          <label className="ui-label" htmlFor={channelId}>
+            {channelLabel}
+          </label>
           <select
             id={channelId}
             className="ui-select"
@@ -62,7 +46,9 @@ export function CommerceIdentitySection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={customerFieldId}>Cliente</label>
+          <label className="ui-label" htmlFor={customerFieldId}>
+            Cliente
+          </label>
           <select
             id={customerFieldId}
             className="ui-select"
@@ -79,7 +65,9 @@ export function CommerceIdentitySection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={paymentId}>Forma de pagamento</label>
+          <label className="ui-label" htmlFor={paymentId}>
+            Forma de pagamento
+          </label>
           <select
             id={paymentId}
             className="ui-select"
@@ -95,96 +83,180 @@ export function CommerceIdentitySection({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export function CommerceItemsSection({
+export function CommerceItemsSection(props) {
+  return <CommerceItemsStep {...props} />
+}
+
+export function CommerceItemsStep({
   eyebrow,
   title,
   items,
   products,
   draftItems,
-  itemPrefix,
-  domainClassName,
   onItemChange,
   onRemoveItem,
   onAddItem,
+  onAdvance,
+  hasValidItems,
+  subtotal,
 }) {
+  const productRefs = useRef([])
+  const pendingFocusIndex = useRef(null)
+  const didInitialFocus = useRef(false)
+  const validItems = draftItems
+    .map((item, index) => ({ ...item, itemIndex: index }))
+    .filter((item) => item.productId)
+
+  useEffect(() => {
+    if (!didInitialFocus.current) {
+      productRefs.current[0]?.focus()
+      didInitialFocus.current = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (pendingFocusIndex.current == null) {
+      return
+    }
+
+    const nextIndex = pendingFocusIndex.current
+    const nextFrame = window.requestAnimationFrame(() => {
+      productRefs.current[nextIndex]?.focus()
+      pendingFocusIndex.current = null
+    })
+
+    return () => window.cancelAnimationFrame(nextFrame)
+  }, [items.length])
+
+  function handleAddRow() {
+    const lastIndex = Math.max(items.length - 1, 0)
+    const lastItem = items[lastIndex] ?? {}
+    const hasValidLastItem = Boolean(lastItem.productId && Number(lastItem.unitPrice) > 0)
+
+    if (hasValidLastItem) {
+      pendingFocusIndex.current = items.length
+      onAddItem()
+      return
+    }
+
+    pendingFocusIndex.current = lastIndex
+    productRefs.current[lastIndex]?.focus()
+  }
+
   return (
-    <div className="entity-form-section entity-form-section--span-2 commerce-panel commerce-panel--items">
-      <div className="entity-form-section__header">
-        <span className="entity-form-section__eyebrow">{eyebrow}</span>
-        <p className="entity-form-section__title">{title}</p>
+    <section className="commerce-step commerce-step--items">
+      <div className="entity-form-section commerce-panel commerce-panel--items">
+        <div className="entity-form-section__header">
+          <span className="entity-form-section__eyebrow">{eyebrow}</span>
+          <p className="entity-form-section__title">{title}</p>
+        </div>
+
+        <div className="commerce-step__input-row">
+          <select
+            ref={(element) => {
+              productRefs.current[items.length - 1] = element
+            }}
+            className="ui-select"
+            value={items[items.length - 1]?.productId ?? ''}
+            onChange={(event) => onItemChange(items.length - 1, 'productId', event.target.value)}
+          >
+            <option value="">Produto</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </select>
+
+          <input
+            className="ui-input"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Qtd"
+            value={items[items.length - 1]?.quantity ?? ''}
+            onChange={(event) => onItemChange(items.length - 1, 'quantity', event.target.value)}
+          />
+
+          <input
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Valor"
+            value={items[items.length - 1]?.unitPrice ?? ''}
+            onChange={(event) => onItemChange(items.length - 1, 'unitPrice', event.target.value)}
+          />
+
+          <input
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Desc. %"
+            value={items[items.length - 1]?.discountPercent ?? ''}
+            onChange={(event) => onItemChange(items.length - 1, 'discountPercent', event.target.value)}
+          />
+
+          <div className="commerce-step__line-total">
+            <span>Total</span>
+            <strong>{formatCurrencyBRL(draftItems[items.length - 1]?.totalPrice ?? 0)}</strong>
+          </div>
+
+          <button type="button" className="ui-button ui-button--primary commerce-step__add-button" onClick={handleAddRow}>
+            +
+          </button>
+        </div>
       </div>
 
-      <div className={`${domainClassName}__items`}>
-        {items.map((item, index) => (
-          <div key={`${item.productId || 'novo'}-${index}`} className={`${domainClassName}__item-row`}>
-            <div className="ui-field">
-              <label className="ui-label" htmlFor={`${itemPrefix}-item-product-${index}`}>Produto</label>
-              <select
-                id={`${itemPrefix}-item-product-${index}`}
-                className="ui-select"
-                value={item.productId}
-                onChange={(event) => onItemChange(index, 'productId', event.target.value)}
+      <div className="commerce-step__item-list">
+        <div className="commerce-step__item-row commerce-step__item-row--header">
+          <strong>Produto</strong>
+          <strong>Qtd</strong>
+          <strong>Preço unit.</strong>
+          <strong>Desconto</strong>
+          <strong>Total</strong>
+          <span />
+        </div>
+
+        {validItems.length === 0 ? (
+          <div className="commerce-step__empty">Adicione pelo menos um item para continuar.</div>
+        ) : (
+          validItems.map((item) => (
+            <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__item-row">
+              <span>{item.productSnapshot?.name ?? 'Produto'}</span>
+              <span>{item.quantity}</span>
+              <span>{formatCurrencyBRL(item.unitPrice)}</span>
+              <span>{Number(item.discountPercent ?? 0)}%</span>
+              <strong>{formatCurrencyBRL(item.totalPrice ?? 0)}</strong>
+              <button
+                type="button"
+                className="ui-button ui-button--danger commerce-step__remove-button"
+                onClick={() => onRemoveItem(item.itemIndex)}
               >
-                <option value="">Selecione</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
+                ×
+              </button>
             </div>
+          ))
+        )}
+      </div>
 
-            <div className="ui-field">
-              <label className="ui-label" htmlFor={`${itemPrefix}-item-quantity-${index}`}>Quantidade</label>
-              <input
-                id={`${itemPrefix}-item-quantity-${index}`}
-                className="ui-input"
-                type="number"
-                min="1"
-                step="1"
-                value={item.quantity}
-                onChange={(event) => onItemChange(index, 'quantity', event.target.value)}
-              />
-            </div>
-
-            <div className="ui-field">
-              <label className="ui-label" htmlFor={`${itemPrefix}-item-price-${index}`}>Preco unitario</label>
-              <input
-                id={`${itemPrefix}-item-price-${index}`}
-                className="ui-input"
-                type="number"
-                min="0"
-                step="0.01"
-                value={item.unitPrice}
-                onChange={(event) => onItemChange(index, 'unitPrice', event.target.value)}
-              />
-            </div>
-
-            <div className={`${domainClassName}__item-total`}>
-              <span className={`${domainClassName}__item-total-label`}>Total do item</span>
-              <strong>{formatCurrencyBRL(draftItems[index]?.totalPrice ?? 0)}</strong>
-            </div>
-
-            <button
-              type="button"
-              className="ui-button ui-button--danger"
-              onClick={() => onRemoveItem(index)}
-              disabled={items.length === 1}
-            >
-              Remover
-            </button>
-          </div>
-        ))}
-
-        <button type="button" className="ui-button ui-button--ghost commerce-panel__add-button" onClick={onAddItem}>
-          Adicionar item
+      <div className="commerce-step__footer">
+        <div className="commerce-step__subtotal">Subtotal: {formatCurrencyBRL(subtotal)}</div>
+        <button
+          type="button"
+          className="ui-button ui-button--primary"
+          disabled={!hasValidItems}
+          onClick={onAdvance}
+        >
+          Avançar →
         </button>
       </div>
-    </div>
-  );
+    </section>
+  )
 }
 
 export function CommerceAddressSection({
@@ -205,7 +277,9 @@ export function CommerceAddressSection({
 
       <div className="entity-stack">
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-neighborhood`}>Bairro</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-neighborhood`}>
+            Bairro
+          </label>
           <input
             id={`${itemPrefix}-neighborhood`}
             className="ui-input"
@@ -215,7 +289,9 @@ export function CommerceAddressSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-address`}>Endereco</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-address`}>
+            Endereço
+          </label>
           <input
             id={`${itemPrefix}-address`}
             className="ui-input"
@@ -225,7 +301,9 @@ export function CommerceAddressSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-reference`}>Referencia</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-reference`}>
+            Referência
+          </label>
           <input
             id={`${itemPrefix}-reference`}
             className="ui-input"
@@ -235,7 +313,9 @@ export function CommerceAddressSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-complement`}>Complemento</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-complement`}>
+            Complemento
+          </label>
           <input
             id={`${itemPrefix}-complement`}
             className="ui-input"
@@ -245,7 +325,9 @@ export function CommerceAddressSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-notes`}>Observacoes</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-notes`}>
+            Observações
+          </label>
           <textarea
             id={`${itemPrefix}-notes`}
             className="ui-textarea"
@@ -256,7 +338,7 @@ export function CommerceAddressSection({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export function CommerceTotalsSection({
@@ -277,7 +359,9 @@ export function CommerceTotalsSection({
 
       <div className={`${domainClassName}__totals-grid`}>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-freight`}>Frete</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-freight`}>
+            Frete
+          </label>
           <input
             id={`${itemPrefix}-freight`}
             className="ui-input"
@@ -290,7 +374,9 @@ export function CommerceTotalsSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-extra`}>Adicional</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-extra`}>
+            Adicional
+          </label>
           <input
             id={`${itemPrefix}-extra`}
             className="ui-input"
@@ -303,7 +389,9 @@ export function CommerceTotalsSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-discount-percent`}>Desconto (%)</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-discount-percent`}>
+            Desconto (%)
+          </label>
           <input
             id={`${itemPrefix}-discount-percent`}
             className="ui-input"
@@ -316,7 +404,9 @@ export function CommerceTotalsSection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-discount-value`}>Desconto (R$)</label>
+          <label className="ui-label" htmlFor={`${itemPrefix}-discount-value`}>
+            Desconto (R$)
+          </label>
           <input
             id={`${itemPrefix}-discount-value`}
             className="ui-input"
@@ -352,5 +442,52 @@ export function CommerceTotalsSection({
         </div>
       </div>
     </div>
-  );
+  )
+}
+
+export function CommerceFinishStep({
+  identityProps,
+  addressProps,
+  totalsProps,
+  summaryItems,
+  totalFinal,
+}) {
+  return (
+    <section className="commerce-step commerce-step--finish">
+      <div className="commerce-step__finish-grid">
+        <div className="entity-stack">
+          <CommerceIdentitySection {...identityProps} />
+          <CommerceAddressSection {...addressProps} />
+        </div>
+
+        <div className="entity-stack">
+          <CommerceTotalsSection {...totalsProps} />
+
+          <div className="entity-form-section commerce-panel commerce-panel--summary">
+            <div className="entity-form-section__header">
+              <span className="entity-form-section__eyebrow">Resumo</span>
+              <p className="entity-form-section__title">Itens da operação</p>
+            </div>
+
+            <div className="entity-stack">
+              {summaryItems.map((item) => (
+                <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__summary-item">
+                  <span>{item.name}</span>
+                  <span>
+                    {item.quantity} × {formatCurrencyBRL(item.unitPrice)}
+                  </span>
+                  <strong>{formatCurrencyBRL(item.totalPrice)}</strong>
+                </div>
+              ))}
+
+              <div className="commerce-step__total-final">
+                <span>Total final</span>
+                <strong>{formatCurrencyBRL(totalFinal)}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }

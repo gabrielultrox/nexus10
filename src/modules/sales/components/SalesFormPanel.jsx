@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react'
+
 import {
-  CommerceAddressSection,
-  CommerceIdentitySection,
-  CommerceItemsSection,
-  CommerceTotalsSection,
+  CommerceFinishStep,
+  CommerceItemsStep,
 } from '../../commerce/components/CommerceFormSections';
 import { channelOptions, paymentOptions } from './salesModuleHelpers';
 
@@ -24,6 +24,20 @@ function SalesFormPanel({
   onAddItem,
   onRemoveItem,
 }) {
+  const [step, setStep] = useState(1)
+  const hasValidItems = draftItems.some((item) => item.productId && Number(item.unitPrice) > 0)
+  const summaryItems = draftItems
+    .map((item, index) => ({
+      ...item,
+      itemIndex: index,
+      name: item.productSnapshot?.name ?? item.name ?? 'Produto',
+    }))
+    .filter((item) => item.productId)
+
+  useEffect(() => {
+    setStep(1)
+  }, [])
+
   return (
     <div className="sales-domain__detail-shell">
       <div className="sales-domain__detail-header">
@@ -32,66 +46,81 @@ function SalesFormPanel({
         </div>
       </div>
 
-      <form className="entity-form-grid" onSubmit={onSubmit}>
-        <CommerceIdentitySection
-          eyebrow="Finalizacao"
-          title="Cliente, canal e pagamento"
-          channelId="sale-channel"
-          channelField="channel"
-          channelValue={formState.channel}
-          channelOptions={channelOptions}
-          customerFieldId="sale-customer"
-          customerValue={formState.customerId}
-          customers={customers}
-          paymentId="sale-payment-method"
-          paymentValue={formState.paymentMethod}
-          paymentOptions={paymentOptions}
-          onFieldChange={onFieldChange}
-          onCustomerChange={onCustomerChange}
-        />
+      <div className="commerce-wizard">
+        {step === 1 ? (
+          <CommerceItemsStep
+            eyebrow="Itens"
+            title="Monte a venda"
+            items={formState.items}
+            products={products}
+            draftItems={draftItems}
+            itemPrefix="sale"
+            onItemChange={onItemChange}
+            onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
+            subtotal={calculatedTotals.subtotal}
+            hasValidItems={hasValidItems}
+            onAdvance={() => setStep(2)}
+          />
+        ) : (
+          <form className="commerce-wizard__form" onSubmit={onSubmit}>
+            <CommerceFinishStep
+              identityProps={{
+                eyebrow: 'Finalização',
+                title: 'Cliente, canal e pagamento',
+                channelId: 'sale-channel',
+                channelField: 'channel',
+                channelValue: formState.channel,
+                channelOptions,
+                customerFieldId: 'sale-customer',
+                customerValue: formState.customerId,
+                customers,
+                paymentId: 'sale-payment-method',
+                paymentValue: formState.paymentMethod,
+                paymentOptions,
+                onFieldChange,
+                onCustomerChange,
+              }}
+              addressProps={{
+                eyebrow: 'Entrega',
+                title: 'Endereço e observações',
+                itemPrefix: 'sale',
+                address: formState.address,
+                notes: formState.notes,
+                onAddressChange,
+                onFieldChange,
+              }}
+              totalsProps={{
+                eyebrow: 'Totais',
+                title: 'Frete, adicional e descontos',
+                itemPrefix: 'sale',
+                domainClassName: 'sales-domain',
+                totals: formState.totals,
+                calculatedTotals,
+                onTotalsChange,
+              }}
+              summaryItems={summaryItems}
+              totalFinal={calculatedTotals.total}
+            />
 
-        <CommerceItemsSection
-          eyebrow="Itens"
-          title="Monte a venda"
-          items={formState.items}
-          products={products}
-          draftItems={draftItems}
-          itemPrefix="sale"
-          domainClassName="sales-domain"
-          onItemChange={onItemChange}
-          onRemoveItem={onRemoveItem}
-          onAddItem={onAddItem}
-        />
-
-        <CommerceAddressSection
-          eyebrow="Entrega"
-          title="Endereco e observacoes"
-          itemPrefix="sale"
-          address={formState.address}
-          notes={formState.notes}
-          onAddressChange={onAddressChange}
-          onFieldChange={onFieldChange}
-        />
-
-        <CommerceTotalsSection
-          eyebrow="Totais"
-          title="Frete, adicional e descontos"
-          itemPrefix="sale"
-          domainClassName="sales-domain"
-          totals={formState.totals}
-          calculatedTotals={calculatedTotals}
-          onTotalsChange={onTotalsChange}
-        />
-
-        <div className="entity-form-actions entity-form-grid__wide">
-          <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>Cancelar</button>
-          <button type="submit" className="ui-button ui-button--primary" disabled={saving || !canWrite}>
-            {saving ? 'Lancando...' : 'Lancar venda'}
-          </button>
-        </div>
-      </form>
+            <div className="commerce-step__footer">
+              <button type="button" className="ui-button ui-button--ghost" onClick={() => setStep(1)}>
+                Voltar
+              </button>
+              <div className="commerce-step__footer-actions">
+                <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>
+                  Cancelar
+                </button>
+                <button type="submit" className="ui-button ui-button--primary" disabled={saving || !canWrite}>
+                  {saving ? 'Lançando...' : 'Lançar'}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
-  );
+  )
 }
 
 export default SalesFormPanel;
