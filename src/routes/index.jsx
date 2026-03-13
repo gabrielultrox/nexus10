@@ -6,6 +6,7 @@ import PublicOnlyRoute from '../components/auth/PublicOnlyRoute';
 import { routeDefinitions } from '../utils/routeCatalog';
 
 const MainLayout = lazy(() => import('../components/layout/MainLayout'));
+const AnalysisPage = lazy(() => import('../pages/AnalysisPage'));
 const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
 const CommerceWorkspaceLayout = lazy(() => import('../components/layout/CommerceWorkspaceLayout'));
 const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'));
@@ -47,6 +48,8 @@ function getRouteElement(route) {
         return withRouteSuspense(<DashboardPage />);
       case 'couriers':
         return withRouteSuspense(<CouriersPage />);
+      case 'analysis':
+        return withRouteSuspense(<AnalysisPage />);
       case 'audit-log':
         return withRouteSuspense(<AuditLogPage />);
       case 'finance':
@@ -76,7 +79,17 @@ function getRouteElement(route) {
 }
 
 const appChildren = routeDefinitions
-  .filter((route) => !['orders', 'sales'].includes(route.path))
+  .filter(
+    (route) =>
+      ![
+        'orders',
+        'sales',
+        'reports',
+        'monthly-report',
+        'orders-hour',
+        'ratings',
+      ].includes(route.path),
+  )
   .map((route) => ({
     path: route.path,
     element: getRouteElement(route),
@@ -95,6 +108,10 @@ const routes = [
         element: withRouteSuspense(<MainLayout />),
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'reports', element: <Navigate to="/analysis?screen=reports" replace /> },
+          { path: 'monthly-report', element: <Navigate to="/analysis?screen=monthly-report" replace /> },
+          { path: 'orders-hour', element: <Navigate to="/analysis?screen=orders-hour" replace /> },
+          { path: 'ratings', element: <Navigate to="/analysis?screen=ratings" replace /> },
           { path: 'couriers', element: <Navigate to="/couriers/consulta" replace /> },
           { path: 'couriers/consulta', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
           { path: 'couriers/cadastro', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },

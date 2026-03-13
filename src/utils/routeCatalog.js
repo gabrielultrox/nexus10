@@ -130,6 +130,16 @@ export const routeDefinitions = [
     requiredRoles: ['operador'],
   },
   {
+    path: 'analysis',
+    label: 'Analise',
+    icon: '13',
+    section: 'Analise',
+    eyebrow: 'Analise',
+    title: 'Analise',
+    description: 'Entrada unica da camada analitica, com seletor interno para relatorios e leituras historicas.',
+    requiredRoles: ['gerente'],
+  },
+  {
     path: 'reports',
     label: 'Relatorios',
     icon: '13',
@@ -138,6 +148,7 @@ export const routeDefinitions = [
     title: 'Relatorios',
     description: 'Camada analitica principal com indicadores e leitura historica.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'monthly-report',
@@ -148,6 +159,7 @@ export const routeDefinitions = [
     title: 'Relatorio mensal',
     description: 'Resumo mensal, navegacao por periodo e comparativos de desempenho.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'orders-hour',
@@ -158,6 +170,7 @@ export const routeDefinitions = [
     title: 'Pedidos por hora',
     description: 'Leitura detalhada de volume por faixa horaria e comportamento do turno.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'ratings',
@@ -168,6 +181,7 @@ export const routeDefinitions = [
     title: 'Avaliacoes',
     description: 'Painel de satisfacao, sinais de experiencia e qualidade de atendimento.',
     requiredRoles: ['gerente'],
+    hiddenInSidebar: true,
   },
   {
     path: 'audit-log',

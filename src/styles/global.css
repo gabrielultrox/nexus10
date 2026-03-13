@@ -892,6 +892,23 @@ body::after {
   text-transform: uppercase;
 }
 
+.analysis-switcher {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.analysis-switcher__copy {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.analysis-switcher__field {
+  min-width: calc(var(--space-9) * 4);
+  max-width: calc(var(--space-9) * 5);
+}
+
 @keyframes pulse-dot {
   0%,
   100% {
@@ -1011,5 +1028,15 @@ body::after {
   .commerce-shell__header-actions > *,
   .commerce-shell__rail-actions > * {
     width: 100%;
+  }
+
+  .analysis-switcher {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analysis-switcher__field {
+    min-width: 0;
+    max-width: none;
   }
 }
