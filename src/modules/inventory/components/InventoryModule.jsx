@@ -81,6 +81,32 @@ function getMovementLabel(type) {
   }
 }
 
+function buildInventoryQualityBadges(item, isLowStock) {
+  const badges = []
+
+  if (isLowStock) {
+    badges.push({ label: 'Baixo', tone: 'ui-badge--warning' })
+  }
+
+  if (Number(item.price ?? 0) <= 0) {
+    badges.push({ label: 'Sem preco', tone: 'ui-badge--danger' })
+  }
+
+  if (Number(item.cost ?? 0) <= 0) {
+    badges.push({ label: 'Sem custo', tone: 'ui-badge--special' })
+  }
+
+  if (Number(item.minimumStock ?? 0) <= 0) {
+    badges.push({ label: 'Sem minimo', tone: 'ui-badge--info' })
+  }
+
+  if (item.status !== 'active') {
+    badges.push({ label: 'Inativo', tone: 'ui-badge--danger' })
+  }
+
+  return badges
+}
+
 function InventoryModule() {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
@@ -90,6 +116,7 @@ function InventoryModule() {
   const [adjustmentState, setAdjustmentState] = useState(initialAdjustmentState);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [qualityFilter, setQualityFilter] = useState('all');
   const [movementSearchTerm, setMovementSearchTerm] = useState('');
   const [movementStartDate, setMovementStartDate] = useState('');
   const [movementEndDate, setMovementEndDate] = useState('');
@@ -158,6 +185,9 @@ function InventoryModule() {
         productName: product.name,
         category: product.category ?? '',
         sku: product.sku ?? '',
+        barcode: product.barcode ?? '',
+        price: Number(product.price ?? 0),
+        cost: Number(product.cost ?? 0),
         currentStock: Number(inventoryItem?.currentStock ?? product.stock ?? 0),
         minimumStock: Number(inventoryItem?.minimumStock ?? product.minimumStock ?? 0),
         status: product.status ?? inventoryItem?.status ?? 'active',
@@ -174,6 +204,7 @@ function InventoryModule() {
         item.productName,
         item.category,
         item.sku,
+        item.barcode,
       ]
         .join(' ')
         .toLowerCase()
@@ -183,10 +214,15 @@ function InventoryModule() {
       const matchesStatus = statusFilter === 'all'
         || (statusFilter === 'low' && isLowStock)
         || (statusFilter === 'ok' && !isLowStock);
+      const matchesQuality = qualityFilter === 'all'
+        || (qualityFilter === 'missing-price' && Number(item.price ?? 0) <= 0)
+        || (qualityFilter === 'missing-cost' && Number(item.cost ?? 0) <= 0)
+        || (qualityFilter === 'missing-minimum' && Number(item.minimumStock ?? 0) <= 0)
+        || (qualityFilter === 'inactive' && item.status !== 'active');
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesQuality;
     });
-  }, [searchTerm, statusFilter, stockRows]);
+  }, [qualityFilter, searchTerm, statusFilter, stockRows]);
 
   const visibleMovements = useMemo(() => {
     const normalizedSearch = movementSearchTerm.trim().toLowerCase();
@@ -636,6 +672,22 @@ function InventoryModule() {
                   <option value="ok">Normal</option>
                 </select>
               </div>
+
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="inventory-quality-filter">Qualidade</label>
+                <select
+                  id="inventory-quality-filter"
+                  className="ui-select"
+                  value={qualityFilter}
+                  onChange={(event) => setQualityFilter(event.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  <option value="missing-price">Sem preco</option>
+                  <option value="missing-cost">Sem custo</option>
+                  <option value="missing-minimum">Sem minimo</option>
+                  <option value="inactive">Inativos</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -658,12 +710,13 @@ function InventoryModule() {
                     <th>SKU</th>
                     <th>Qtd. estoque</th>
                     <th>Minimo</th>
-                    <th>Alerta</th>
+                    <th>Saude</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visibleInventoryItems.map((item) => {
                     const isLowStock = Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0);
+                    const qualityBadges = buildInventoryQualityBadges(item, isLowStock)
 
                     return (
                       <tr key={item.id}>
@@ -673,9 +726,17 @@ function InventoryModule() {
                         <td className="ui-table__cell--numeric">{item.currentStock}</td>
                         <td className="ui-table__cell--numeric">{item.minimumStock ?? 0}</td>
                         <td>
-                          <span className={`ui-badge ${isLowStock ? 'ui-badge--warning' : 'ui-badge--success'}`}>
-                            {isLowStock ? 'Baixo' : 'OK'}
-                          </span>
+                          <div className="entity-table__actions">
+                            {qualityBadges.length === 0 ? (
+                              <span className="ui-badge ui-badge--success">OK</span>
+                            ) : (
+                              qualityBadges.slice(0, 3).map((badge) => (
+                                <span key={`${item.id}-${badge.label}`} className={`ui-badge ${badge.tone}`}>
+                                  {badge.label}
+                                </span>
+                              ))
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

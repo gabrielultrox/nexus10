@@ -61,6 +61,41 @@ function buildUnknownFallback() {
   }
 }
 
+function buildContextSuggestions(context = {}, cards = []) {
+  const suggestions = []
+
+  if (context.orderId) {
+    suggestions.push('Buscar pedido', 'Nova venda')
+  }
+
+  if (context.saleId) {
+    suggestions.push('Vendas de hoje', 'Buscar cliente')
+  }
+
+  if (context.routePath === '/products' || context.routePath === '/inventory') {
+    suggestions.push('Buscar produto', 'Abrir estoque')
+  }
+
+  if (
+    context.routePath === '/couriers'
+    || context.routePath === '/schedule'
+    || context.routePath === '/machines'
+    || context.routePath === '/delivery-reading'
+  ) {
+    suggestions.push('Abrir escala', 'Abrir maquininhas')
+  }
+
+  if (cards[0]?.type === 'product') {
+    suggestions.push('Abrir estoque', 'Nova venda')
+  }
+
+  if (cards[0]?.type === 'customer') {
+    suggestions.push('Novo pedido', 'Nova venda')
+  }
+
+  return Array.from(new Set([...suggestions, 'Buscar pedido', 'Buscar cliente'])).slice(0, 3)
+}
+
 function buildSearchAnswerFallback(cards) {
   return `Encontrei ${cards.length} resultado${cards.length > 1 ? 's' : ''} para voce consultar agora.`
 }
@@ -68,11 +103,11 @@ function buildSearchAnswerFallback(cards) {
 function buildSearchSuccessResponse(cards, answer) {
   return {
     intentType: INTENTS.search,
-    title: 'Busca operacional',
+    title: cards[0]?.type ? `Busca de ${cards[0].type === 'sale' ? 'vendas' : cards[0].type === 'order' ? 'pedidos' : cards[0].type === 'customer' ? 'clientes' : 'produtos'}` : 'Busca operacional',
     answer,
     cards,
     navigationTarget: cards[0]?.route ? { route: cards[0].route, label: 'Abrir primeiro resultado' } : null,
-    suggestions: ['Buscar pedido', 'Buscar cliente', 'Vendas de hoje'],
+    suggestions: buildContextSuggestions({}, cards),
   }
 }
 
@@ -107,9 +142,15 @@ async function resolveSearchResponse({ storeId, intent, message, context }) {
 
   try {
     const llmAnswer = await queryLLM({ message, context, dataContext: cards })
-    return buildSearchSuccessResponse(cards, llmAnswer || fallbackAnswer)
+    return {
+      ...buildSearchSuccessResponse(cards, llmAnswer || fallbackAnswer),
+      suggestions: buildContextSuggestions(context, cards),
+    }
   } catch (_error) {
-    return buildSearchSuccessResponse(cards, fallbackAnswer)
+    return {
+      ...buildSearchSuccessResponse(cards, fallbackAnswer),
+      suggestions: buildContextSuggestions(context, cards),
+    }
   }
 }
 
@@ -125,7 +166,7 @@ async function resolveHelpResponse({ intent, message, context }) {
       answer: llmAnswer || helpResponse.answer,
       cards: [],
       navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
-      suggestions: helpResponse.suggestions,
+      suggestions: buildContextSuggestions(context, []).concat(helpResponse.suggestions).slice(0, 3),
     }
   } catch (_error) {
     return {
@@ -134,7 +175,7 @@ async function resolveHelpResponse({ intent, message, context }) {
       answer: helpResponse.answer,
       cards: [],
       navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
-      suggestions: helpResponse.suggestions,
+      suggestions: buildContextSuggestions(context, []).concat(helpResponse.suggestions).slice(0, 3),
     }
   }
 }

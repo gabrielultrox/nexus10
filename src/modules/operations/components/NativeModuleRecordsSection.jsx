@@ -13,6 +13,7 @@ function NativeModuleToolbar({
   onExportSchedule,
   onExportScheduleMachines,
   onExportMachines,
+  onExportBackup,
   onManualReset,
   onClearAll,
 }) {
@@ -74,6 +75,9 @@ function NativeModuleToolbar({
             Exportar presentes
           </button>
         ) : null}
+        <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
+          Exportar backup
+        </button>
         {manager.manualResetLabel ? (
           <button type="button" className="ui-button ui-button--ghost" onClick={onManualReset}>
             {manager.manualResetLabel}
@@ -621,12 +625,13 @@ function NativeModuleRecordsSection(props) {
     setSearchTerm,
     setStatusFilter,
     visibleCount,
-    handleExportScheduleImage,
-    handleExportScheduleMachinesImage,
-    handleExportMachineChecklistImage,
-    handleManualReset,
-    handleClearAll,
-    tableColumns,
+  handleExportScheduleImage,
+  handleExportScheduleMachinesImage,
+  handleExportMachineChecklistImage,
+  handleExportBackup,
+  handleManualReset,
+  handleClearAll,
+  tableColumns,
     handleMarkReturned,
   } = props
 
@@ -650,6 +655,7 @@ function NativeModuleRecordsSection(props) {
         onExportSchedule={handleExportScheduleImage}
         onExportScheduleMachines={handleExportScheduleMachinesImage}
         onExportMachines={handleExportMachineChecklistImage}
+        onExportBackup={handleExportBackup}
         onManualReset={handleManualReset}
         onClearAll={handleClearAll}
       />

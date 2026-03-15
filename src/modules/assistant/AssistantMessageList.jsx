@@ -40,7 +40,10 @@ function AssistantMessageList({ messages, onNavigate }) {
                   onClick={() => card.route && onNavigate(card.route)}
                   disabled={!card.route}
                 >
-                  <span className="assistant-result-card__type">{cardTypeLabelMap[card.type] ?? 'resultado'}</span>
+                  <div className="assistant-result-card__header">
+                    <span className="assistant-result-card__type">{cardTypeLabelMap[card.type] ?? 'resultado'}</span>
+                    <span className="assistant-result-card__arrow">{card.route ? 'Abrir' : 'Consulta'}</span>
+                  </div>
                   <strong>{card.title}</strong>
                   <small>{card.subtitle}</small>
                   <span>{card.meta}</span>

@@ -51,9 +51,18 @@ function SalesFormPanel({
         return
       }
 
-      if (event.key === 'Enter' && event.ctrlKey && canWrite && !saving && hasValidItems) {
+      if ((event.key === 'Enter' && event.ctrlKey) || event.key === 'F10') {
+        if (!canWrite || saving || !hasValidItems) {
+          return
+        }
         event.preventDefault()
         formRef.current?.requestSubmit()
+        return
+      }
+
+      if (event.key === 'F9') {
+        event.preventDefault()
+        setStep(1)
       }
     }
 

@@ -38,9 +38,18 @@ function parseInteger(value, fieldLabel) {
   return parsed;
 }
 
+export function normalizeProductCategory(value) {
+  return String(value ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function validateProductInput(values) {
   const name = values.name?.trim();
-  const category = values.category?.trim();
+  const category = normalizeProductCategory(values.category);
 
   if (!name) {
     throw new Error('Informe o nome do produto.');
@@ -61,6 +70,29 @@ export function validateProductInput(values) {
     description: values.description?.trim() ?? '',
     status: values.status?.trim() || 'active',
   };
+}
+
+function buildInventorySnapshot(storeId, tenantId, productId, product) {
+  const currentStock = Number(product.stock ?? 0)
+  const minimumStock = Number(product.minimumStock ?? 0)
+
+  return {
+    storeId,
+    tenantId: product.tenantId ?? tenantId ?? null,
+    productId,
+    productName: product.name,
+    category: product.category ?? '',
+    sku: product.sku ?? '',
+    barcode: product.barcode ?? '',
+    price: Number(product.price ?? 0),
+    cost: Number(product.cost ?? 0),
+    currentStock,
+    minimumStock,
+    status: product.status ?? 'active',
+    lowStock: currentStock <= minimumStock,
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
+  }
 }
 
 function getProductsCollectionRef(storeId) {
@@ -180,24 +212,150 @@ export async function applyMinimumStockDefaults({ storeId, tenantId, products, m
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      batch.set(inventoryRef, {
-        storeId,
-        tenantId: product.tenantId ?? tenantId ?? null,
-        productId: product.id,
-        productName: product.name,
-        category: product.category ?? '',
-        sku: product.sku ?? '',
-        currentStock: Number(product.stock ?? 0),
-        minimumStock,
-        status: product.status ?? 'active',
-        lowStock: Number(product.stock ?? 0) <= minimumStock,
-        updatedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      }, { merge: true });
+      batch.set(
+        inventoryRef,
+        buildInventorySnapshot(storeId, tenantId, product.id, {
+          ...product,
+          minimumStock,
+        }),
+        { merge: true },
+      );
     });
 
     await batch.commit();
   }
 
   return { updatedCount: eligibleProducts.length };
+}
+
+export async function bulkUpdateProducts({
+  storeId,
+  tenantId,
+  productIds,
+  products,
+  changes,
+}) {
+  assertFirebaseReady()
+
+  const selectedIds = Array.from(new Set((productIds ?? []).filter(Boolean)))
+  const selectedProducts = (products ?? []).filter((product) => selectedIds.includes(product.id))
+
+  if (selectedProducts.length === 0) {
+    return { updatedCount: 0 }
+  }
+
+  const normalizedChanges = {}
+
+  if (Object.prototype.hasOwnProperty.call(changes, 'category')) {
+    normalizedChanges.category = normalizeProductCategory(changes.category)
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, 'minimumStock')) {
+    normalizedChanges.minimumStock = parseInteger(changes.minimumStock, 'Estoque minimo')
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, 'status')) {
+    normalizedChanges.status = String(changes.status ?? '').trim() || 'active'
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, 'price')) {
+    normalizedChanges.price = parseDecimal(changes.price, 'Preco')
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, 'cost')) {
+    normalizedChanges.cost = parseDecimal(changes.cost, 'Custo')
+  }
+
+  for (let index = 0; index < selectedProducts.length; index += 350) {
+    const batch = writeBatch(firebaseDb)
+    const chunk = selectedProducts.slice(index, index + 350)
+
+    chunk.forEach((product) => {
+      const productRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.products,
+        product.id,
+      )
+      const inventoryRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.inventoryItems,
+        product.id,
+      )
+      const nextProduct = {
+        ...product,
+        ...normalizedChanges,
+      }
+
+      batch.set(productRef, {
+        ...normalizedChanges,
+        updatedAt: serverTimestamp(),
+        tenantId: product.tenantId ?? tenantId ?? null,
+      }, { merge: true })
+      batch.set(
+        inventoryRef,
+        buildInventorySnapshot(storeId, tenantId, product.id, nextProduct),
+        { merge: true },
+      )
+    })
+
+    await batch.commit()
+  }
+
+  return { updatedCount: selectedProducts.length }
+}
+
+export async function normalizeProductCategories({ storeId, tenantId, products }) {
+  const normalizedProducts = (products ?? []).filter((product) => {
+    const normalizedCategory = normalizeProductCategory(product.category)
+    return normalizedCategory && normalizedCategory !== product.category
+  })
+
+  if (normalizedProducts.length === 0) {
+    return { updatedCount: 0 }
+  }
+
+  for (let index = 0; index < normalizedProducts.length; index += 350) {
+    const batch = writeBatch(firebaseDb)
+    const chunk = normalizedProducts.slice(index, index + 350)
+
+    chunk.forEach((product) => {
+      const nextProduct = {
+        ...product,
+        category: normalizeProductCategory(product.category),
+      }
+      const productRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.products,
+        product.id,
+      )
+      const inventoryRef = doc(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        storeId,
+        FIRESTORE_COLLECTIONS.inventoryItems,
+        product.id,
+      )
+
+      batch.set(productRef, {
+        category: nextProduct.category,
+        updatedAt: serverTimestamp(),
+        tenantId: product.tenantId ?? tenantId ?? null,
+      }, { merge: true })
+      batch.set(
+        inventoryRef,
+        buildInventorySnapshot(storeId, tenantId, product.id, nextProduct),
+        { merge: true },
+      )
+    })
+
+    await batch.commit()
+  }
+
+  return { updatedCount: normalizedProducts.length }
 }

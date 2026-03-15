@@ -6,6 +6,8 @@ import {
 import { canUseRemoteSync } from './firebase'
 
 const MANUAL_MODULE_SYNC_QUEUE_KEY = 'nexus-manual-module-sync-queue'
+const MANUAL_MODULE_SYNC_HISTORY_KEY = 'nexus-manual-module-sync-history'
+const MANUAL_MODULE_LOCAL_MODE_KEY = 'nexus-manual-module-local-only'
 
 function getStorage() {
   if (typeof window === 'undefined') {
@@ -47,6 +49,36 @@ function saveQueue(queue) {
     storage.setItem(MANUAL_MODULE_SYNC_QUEUE_KEY, JSON.stringify(queue))
   } catch {
     // Ignore queue write failures to keep the operation flow usable.
+  }
+}
+
+function loadHistory() {
+  const storage = getStorage()
+
+  if (!storage) {
+    return []
+  }
+
+  try {
+    const rawValue = storage.getItem(MANUAL_MODULE_SYNC_HISTORY_KEY)
+    const parsedValue = JSON.parse(rawValue ?? '[]')
+    return Array.isArray(parsedValue) ? parsedValue : []
+  } catch {
+    return []
+  }
+}
+
+function saveHistory(history) {
+  const storage = getStorage()
+
+  if (!storage) {
+    return
+  }
+
+  try {
+    storage.setItem(MANUAL_MODULE_SYNC_HISTORY_KEY, JSON.stringify(history))
+  } catch {
+    // Ignore history write failures to keep the operation flow usable.
   }
 }
 
@@ -125,6 +157,44 @@ export function getManualModulePendingCount(modulePaths = []) {
   return queue.filter((operation) => normalizedModulePaths.includes(operation.modulePath)).length
 }
 
+export function getManualModuleSyncHistory(modulePaths = [], limit = 6) {
+  const normalizedModulePaths = normalizeModulePaths(modulePaths)
+  const history = loadHistory()
+
+  const filteredHistory = normalizedModulePaths.length === 0
+    ? history
+    : history.filter((entry) => entry.modulePaths?.some((modulePath) => normalizedModulePaths.includes(modulePath)))
+
+  return filteredHistory.slice(0, limit)
+}
+
+function recordManualModuleSyncHistory(entry) {
+  const history = loadHistory()
+  const nextHistory = [entry, ...history].slice(0, 20)
+  saveHistory(nextHistory)
+}
+
+export function getManualModuleLocalMode() {
+  const storage = getStorage()
+
+  if (!storage) {
+    return false
+  }
+
+  return storage.getItem(MANUAL_MODULE_LOCAL_MODE_KEY) === 'true'
+}
+
+export function setManualModuleLocalMode(enabled) {
+  const storage = getStorage()
+
+  if (!storage) {
+    return false
+  }
+
+  storage.setItem(MANUAL_MODULE_LOCAL_MODE_KEY, enabled ? 'true' : 'false')
+  return enabled
+}
+
 export async function flushManualModuleSyncQueue({ storeId, tenantId, modulePaths = [] }) {
   const normalizedModulePaths = normalizeModulePaths(modulePaths)
   const queue = loadQueue()
@@ -180,6 +250,19 @@ export async function flushManualModuleSyncQueue({ storeId, tenantId, modulePath
   }
 
   saveQueue(remainingQueue)
+
+  if (flushedCount > 0) {
+    recordManualModuleSyncHistory({
+      id: createQueueId(),
+      type: 'flush',
+      flushedCount,
+      pendingCount: normalizedModulePaths.length > 0
+        ? remainingQueue.filter((operation) => normalizedModulePaths.includes(operation.modulePath)).length
+        : remainingQueue.length,
+      modulePaths: normalizedModulePaths.length > 0 ? normalizedModulePaths : Array.from(new Set(queue.map((operation) => operation.modulePath))),
+      createdAt: new Date().toISOString(),
+    })
+  }
 
   return {
     flushedCount,

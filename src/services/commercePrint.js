@@ -139,6 +139,17 @@ function renderItems(items) {
     .join('')
 }
 
+function renderChecklist(model) {
+  return `
+    <div class="print-ticket__checklist">
+      <div><span>Status</span><strong>${escapeHtml(model.status)}</strong></div>
+      <div><span>Canal</span><strong>${escapeHtml(model.source)}</strong></div>
+      <div><span>Pagamento</span><strong>${escapeHtml(model.payment)}</strong></div>
+      <div><span>Atualizado</span><strong>${escapeHtml(model.updatedAt)}</strong></div>
+    </div>
+  `
+}
+
 function renderTotals(totals) {
   return totals
     .map(
@@ -246,6 +257,29 @@ function buildPrintHtml(model) {
         margin-top: 2.4mm;
       }
 
+      .print-ticket__checklist {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.6mm 2mm;
+        padding: 2mm;
+        border: 0.25mm dashed #d8e2ee;
+        border-radius: 2mm;
+        background: rgba(248, 251, 255, 0.9);
+      }
+
+      .print-ticket__checklist div {
+        display: grid;
+        gap: 0.6mm;
+      }
+
+      .print-ticket__checklist span {
+        color: #4b84a9;
+        font-family: "Share Tech Mono", "Consolas", monospace;
+        font-size: 2.4mm;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
       .print-ticket__meta strong,
       .print-ticket__identity strong,
       .print-ticket__address strong,
@@ -276,6 +310,19 @@ function buildPrintHtml(model) {
       .print-ticket__items {
         display: grid;
         gap: 0;
+      }
+
+      .print-ticket__items-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2mm;
+        padding-bottom: 1.6mm;
+        border-bottom: 0.25mm dashed #d8e2ee;
+        color: #4b84a9;
+        font-family: "Share Tech Mono", "Consolas", monospace;
+        font-size: 2.4mm;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
       .print-ticket__item {
@@ -373,6 +420,7 @@ function buildPrintHtml(model) {
             <strong>${escapeHtml(model.createdAt)}</strong>
           </div>
         </div>
+        ${renderChecklist(model)}
       </section>
 
       <section class="print-ticket__section print-ticket__identity">
@@ -392,7 +440,13 @@ function buildPrintHtml(model) {
 
       <section class="print-ticket__section">
         <span class="print-ticket__label">Itens</span>
-        <div class="print-ticket__items">${renderItems(model.items)}</div>
+        <div class="print-ticket__items">
+          <div class="print-ticket__items-head">
+            <span>Descricao</span>
+            <span>Total</span>
+          </div>
+          ${renderItems(model.items)}
+        </div>
       </section>
 
       <section class="print-ticket__totals">

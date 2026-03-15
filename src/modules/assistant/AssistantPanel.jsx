@@ -38,6 +38,9 @@ function AssistantPanel() {
                 {pageContext.orderId ? ` - Pedido ${pageContext.orderId}` : ''}
                 {pageContext.saleId ? ` - Venda ${pageContext.saleId}` : ''}
               </p>
+              <p className="assistant-panel__context assistant-panel__context--hint">
+                {pageContext.routeHint}
+              </p>
             </div>
 
             <button type="button" className="ui-button ui-button--ghost" onClick={closePanel}>

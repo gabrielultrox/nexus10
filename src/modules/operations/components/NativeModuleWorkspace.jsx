@@ -26,7 +26,10 @@ import {
 import {
   enqueueManualModuleSyncOperation,
   flushManualModuleSyncQueue,
+  getManualModuleLocalMode,
   getManualModulePendingCount,
+  getManualModuleSyncHistory,
+  setManualModuleLocalMode,
 } from '../../../services/manualModuleSyncQueue';
 import { getNativeModuleContent } from '../../../services/nativeModuleData';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
@@ -287,6 +290,8 @@ function NativeModuleWorkspace({ route }) {
   const { currentStoreId, tenantId } = useStore();
   const content = getNativeModuleContent(route);
   const manager = getManualModuleConfig(route.path);
+  const [isOnline, setIsOnline] = useState(() => window.navigator.onLine);
+  const [localOnlyMode, setLocalOnlyModeState] = useState(() => getManualModuleLocalMode());
   const [availableCourierNames, setAvailableCourierNames] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords).map((courier) => courier?.name?.trim()).filter(Boolean));
   const [availableMachineRecords, setAvailableMachineRecords] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords));
   const [availableMachineOptions, setAvailableMachineOptions] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords).map((machine) => machine?.device?.trim()).filter(Boolean));
@@ -294,12 +299,12 @@ function NativeModuleWorkspace({ route }) {
     () => Array.from(new Set([...storeUserOptions, ...availableCourierNames])),
     [availableCourierNames],
   );
-  const canSyncModuleRecords = Boolean(firebaseReady && currentStoreId);
   const syncModulePaths = useMemo(
     () => (route.path === 'machines' ? ['machines', 'machine-history'] : [route.path]),
     [route.path],
   );
-  const remoteSyncReady = Boolean(currentStoreId && canUseRemoteSync());
+  const canSyncModuleRecords = Boolean(firebaseReady && currentStoreId && isOnline && !localOnlyMode);
+  const remoteSyncReady = Boolean(currentStoreId && isOnline && !localOnlyMode && canUseRemoteSync());
   const resolvedFields = useMemo(
     () => buildResolvedFields(manager, route.path, {
       courierOptions: availableCourierNames,
@@ -326,6 +331,7 @@ function NativeModuleWorkspace({ route }) {
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(() => getManualModulePendingCount(syncModulePaths));
+  const [syncHistory, setSyncHistory] = useState(() => getManualModuleSyncHistory(syncModulePaths));
   const [syncActivityLabel, setSyncActivityLabel] = useState(
     remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta',
   );
@@ -335,11 +341,40 @@ function NativeModuleWorkspace({ route }) {
 
   useEffect(() => {
     setPendingSyncCount(getManualModulePendingCount(syncModulePaths));
+    setSyncHistory(getManualModuleSyncHistory(syncModulePaths));
   }, [syncModulePaths]);
 
   useEffect(() => {
+    if (localOnlyMode) {
+      setSyncActivityLabel('Modo somente local ativo');
+      return;
+    }
+
+    if (!isOnline) {
+      setSyncActivityLabel('Sem rede, salvando localmente');
+      return;
+    }
+
     setSyncActivityLabel(remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta');
-  }, [remoteSyncReady, route.path]);
+  }, [isOnline, localOnlyMode, remoteSyncReady, route.path]);
+
+  useEffect(() => {
+    function handleOnline() {
+      setIsOnline(true);
+    }
+
+    function handleOffline() {
+      setIsOnline(false);
+    }
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => subscribeToCouriers(
     currentStoreId,
@@ -478,7 +513,7 @@ function NativeModuleWorkspace({ route }) {
     let cancelled = false
 
     async function refreshSyncState() {
-      if (currentStoreId && canUseRemoteSync()) {
+      if (currentStoreId && isOnline && !localOnlyMode && canUseRemoteSync()) {
         const result = await flushManualModuleSyncQueue({
           storeId: currentStoreId,
           tenantId,
@@ -490,12 +525,14 @@ function NativeModuleWorkspace({ route }) {
         }
 
         setPendingSyncCount(result.pendingCount)
+        setSyncHistory(getManualModuleSyncHistory(syncModulePaths))
 
         if (result.flushedCount > 0) {
           setSyncActivityLabel(`${result.flushedCount} pendencias reenviadas`)
         }
       } else if (!cancelled) {
         setPendingSyncCount(getManualModulePendingCount(syncModulePaths))
+        setSyncHistory(getManualModuleSyncHistory(syncModulePaths))
       }
     }
 
@@ -508,7 +545,7 @@ function NativeModuleWorkspace({ route }) {
       window.removeEventListener('online', refreshSyncState)
       window.removeEventListener('focus', refreshSyncState)
     }
-  }, [currentStoreId, syncModulePaths, tenantId])
+  }, [currentStoreId, isOnline, localOnlyMode, syncModulePaths, tenantId])
 
   useEffect(() => {
     if (!recentlyClosedRecordId) {
@@ -820,9 +857,14 @@ function NativeModuleWorkspace({ route }) {
     setPendingSyncCount(getManualModulePendingCount(syncModulePaths))
   }
 
+  function refreshSyncHistory() {
+    setSyncHistory(getManualModuleSyncHistory(syncModulePaths))
+  }
+
   function queueSyncOperation(operation) {
     enqueueManualModuleSyncOperation(operation)
     refreshPendingSyncCount()
+    refreshSyncHistory()
     setSyncActivityLabel('Salvo localmente para reenviar')
   }
 
@@ -855,6 +897,7 @@ function NativeModuleWorkspace({ route }) {
         record,
       });
       refreshPendingSyncCount()
+      refreshSyncHistory()
       setSyncActivityLabel('Sincronizado em tempo real')
       return 'remote';
     } catch (error) {
@@ -896,6 +939,7 @@ function NativeModuleWorkspace({ route }) {
         recordId,
       });
       refreshPendingSyncCount()
+      refreshSyncHistory()
       setSyncActivityLabel('Exclusao sincronizada')
       return 'remote';
     } catch (error) {
@@ -941,6 +985,7 @@ function NativeModuleWorkspace({ route }) {
         dailyResetHour,
       });
       refreshPendingSyncCount()
+      refreshSyncHistory()
       setSyncActivityLabel('Limpeza sincronizada')
       return 'remote';
     } catch (error) {
@@ -961,6 +1006,18 @@ function NativeModuleWorkspace({ route }) {
   }
 
   async function handleRetrySync() {
+    if (localOnlyMode) {
+      setErrorMessage('Desative o modo somente local para reenviar as pendencias.')
+      playError()
+      return
+    }
+
+    if (!isOnline) {
+      setErrorMessage('Conecte este dispositivo para reenviar as pendencias.')
+      playError()
+      return
+    }
+
     if (!currentStoreId || !canUseRemoteSync()) {
       setErrorMessage('A sincronizacao remota nao esta pronta nesta sessao.')
       playError()
@@ -974,6 +1031,7 @@ function NativeModuleWorkspace({ route }) {
     })
 
     setPendingSyncCount(result.pendingCount)
+    refreshSyncHistory()
 
     if (result.flushedCount > 0) {
       setErrorMessage('')
@@ -991,6 +1049,60 @@ function NativeModuleWorkspace({ route }) {
     setErrorMessage('')
     setSyncActivityLabel('Nenhuma pendencia para reenviar')
     playNotification()
+  }
+
+  function downloadBackupFile(payload, fileLabel) {
+    const fileDate = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date()).replace(/\//g, '-')
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `${fileLabel}-${fileDate}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  function handleExportBackup() {
+    downloadBackupFile({
+      module: route.path,
+      title: route.title,
+      exportedAt: new Date().toISOString(),
+      localOnlyMode,
+      isOnline,
+      pendingSyncCount,
+      records,
+      machineChecklistRecords: route.path === 'machines' ? machineChecklistRecords : [],
+    }, `backup-${route.path}`)
+    setSyncActivityLabel('Backup local exportado')
+    playNotification()
+  }
+
+  async function handleToggleLocalMode() {
+    const nextValue = !localOnlyMode
+
+    setManualModuleLocalMode(nextValue)
+    setLocalOnlyModeState(nextValue)
+
+    if (nextValue) {
+      setSyncActivityLabel('Modo somente local ativo')
+      playNotification()
+      return
+    }
+
+    setSyncActivityLabel('Voltando ao modo compartilhado')
+
+    if (currentStoreId && isOnline && canUseRemoteSync()) {
+      await handleRetrySync()
+    } else {
+      playNotification()
+    }
   }
 
   async function handleSubmit(event) {
@@ -1526,7 +1638,11 @@ function NativeModuleWorkspace({ route }) {
           pendingCount={pendingSyncCount}
           resetLabel={resetLabel}
           activityLabel={syncActivityLabel}
+          isOnline={isOnline}
+          localOnlyMode={localOnlyMode}
+          syncHistory={syncHistory}
           onRetrySync={handleRetrySync}
+          onToggleLocalMode={handleToggleLocalMode}
           retryDisabled={!remoteSyncReady || pendingSyncCount === 0}
         />
       ) : null}
@@ -1580,6 +1696,7 @@ function NativeModuleWorkspace({ route }) {
         handleExportScheduleImage={handleExportScheduleImage}
         handleExportScheduleMachinesImage={handleExportScheduleMachinesImage}
         handleExportMachineChecklistImage={handleExportMachineChecklistImage}
+        handleExportBackup={handleExportBackup}
         handleManualReset={handleManualReset}
         handleClearAll={handleClearAll}
         tableColumns={tableColumns}
