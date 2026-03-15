@@ -288,6 +288,7 @@ function NativeModuleWorkspace({ route }) {
   const content = getNativeModuleContent(route);
   const manager = getManualModuleConfig(route.path);
   const [availableCourierNames, setAvailableCourierNames] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords).map((courier) => courier?.name?.trim()).filter(Boolean));
+  const [availableMachineRecords, setAvailableMachineRecords] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords));
   const [availableMachineOptions, setAvailableMachineOptions] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords).map((machine) => machine?.device?.trim()).filter(Boolean));
   const storeMemberOptions = useMemo(
     () => Array.from(new Set([...storeUserOptions, ...availableCourierNames])),
@@ -358,6 +359,7 @@ function NativeModuleWorkspace({ route }) {
     storageKey: 'nexus-module-machines',
     initialRecords: machineSeedRecords,
     onData: (machineRecords) => {
+      setAvailableMachineRecords(machineRecords)
       const nextMachineOptions = Array.from(new Set(
         machineRecords
           .map((machine) => machine?.device?.trim())
@@ -758,6 +760,58 @@ function NativeModuleWorkspace({ route }) {
     }));
   }
 
+  async function markAssignedMachineAsPresent(machineName, auditContext) {
+    if (!machineName || machineName === 'Sem maquininha') {
+      return
+    }
+
+    const existingChecklistRecord = machineChecklistState.find((item) => item.device === machineName)
+      ?? machineChecklistRecords.find((item) => item.device === machineName)
+    const sourceMachineRecord = availableMachineRecords.find((item) => item.device === machineName)
+    const nextChecklistRecord = {
+      id: existingChecklistRecord?.id ?? sourceMachineRecord?.id ?? `machine-check-${machineName.toLowerCase().replace(/\s+/g, '-')}`,
+      device: machineName,
+      holder: existingChecklistRecord?.holder ?? sourceMachineRecord?.holder ?? 'Nenhum',
+      model: existingChecklistRecord?.model ?? sourceMachineRecord?.model ?? 'Nao informado',
+      status: 'Presente',
+      machineStatus: existingChecklistRecord?.machineStatus ?? sourceMachineRecord?.status ?? 'Ativa',
+      updatedAt: auditContext.updatedAt,
+      updatedBy: auditContext.updatedBy,
+    }
+
+    await saveRecordWithFallback({
+      modulePath: 'machine-history',
+      storageKey: 'nexus-module-machine-history',
+      dailyResetHour: 3,
+      record: nextChecklistRecord,
+      onLocalApply: () => {
+        setMachineChecklistState((current) => {
+          const existingRecord = current.find((item) => item.id === nextChecklistRecord.id || item.device === machineName)
+
+          if (existingRecord) {
+            return current.map((item) => (
+              item.id === existingRecord.id ? nextChecklistRecord : item
+            ))
+          }
+
+          return [nextChecklistRecord, ...current]
+        })
+
+        setMachineChecklistRecords((current) => {
+          const existingRecord = current.find((item) => item.id === nextChecklistRecord.id || item.device === machineName)
+
+          if (existingRecord) {
+            return current.map((item) => (
+              item.id === existingRecord.id ? nextChecklistRecord : item
+            ))
+          }
+
+          return [nextChecklistRecord, ...current]
+        })
+      },
+    })
+  }
+
   function resetManagedForm() {
     setFormValues(buildInitialFormState(managerWithResolvedFields));
   }
@@ -1058,6 +1112,8 @@ function NativeModuleWorkspace({ route }) {
           )));
         },
       });
+
+      await markAssignedMachineAsPresent(nextMachine, auditContext)
 
       setScheduleMachineDrafts((current) => {
         const nextDrafts = { ...current };
