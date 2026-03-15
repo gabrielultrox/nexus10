@@ -38,6 +38,19 @@ function formatHourLabel(hour) {
   return `${String(hour).padStart(2, '0')}h`;
 }
 
+function summarizeProductName(name) {
+  const words = String(name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (words.length <= 3) {
+    return words.join(' ')
+  }
+
+  return `${words.slice(0, 3).join(' ')}...`
+}
+
 function buildDateLabel(date) {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
@@ -338,8 +351,10 @@ export function buildDashboardData({
       {
         id: 'top-products',
         label: 'Top produtos',
-        value: topProducts[0]?.name ?? 'Sem giro',
-        meta: topProducts[0] ? `${formatInteger(topProducts[0].quantity)} itens no periodo` : 'aguardando vendas concluidas',
+        value: topProducts[0] ? formatInteger(topProducts[0].quantity) : '0',
+        meta: topProducts[0]
+          ? `${summarizeProductName(topProducts[0].name)} lidera o periodo`
+          : 'aguardando vendas concluidas',
         badgeText: 'mix',
         badgeClass: 'ui-badge--special',
         tone: 'amber',

@@ -50,6 +50,29 @@
   gap: var(--space-3);
 }
 
+.dashboard-kpi-card .ui-kpi-card__value {
+  font-size: clamp(var(--space-6-5), calc(var(--space-6) + 1.1vw), var(--space-8));
+  line-height: 0.94;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-kpi-card .ui-kpi-card__meta {
+  display: -webkit-box;
+  min-height: calc(var(--space-4) * 2);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.dashboard-kpi-card__value--currency {
+  font-size: clamp(var(--space-6), calc(var(--space-5-5) + 1vw), var(--space-7-25));
+  letter-spacing: -0.04em;
+}
+
+.dashboard-kpi-card__value--compact {
+  font-size: clamp(var(--space-6), calc(var(--space-5-5) + 0.9vw), var(--space-7));
+}
+
 .dashboard-chart-grid,
 .dashboard-summary-grid {
   display: grid;
