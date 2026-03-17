@@ -1,5 +1,13 @@
 import SurfaceCard from '../../../components/common/SurfaceCard'
 
+function ModuleEmptyState({ message }) {
+  return (
+    <div className="module-empty-state native-module__empty-state">
+      <p className="module-empty-state__text">{message}</p>
+    </div>
+  )
+}
+
 function NativeModuleToolbar({
   routePath,
   manager,
@@ -23,71 +31,81 @@ function NativeModuleToolbar({
 
   return (
     <div className="native-module__toolbar">
-      <div className="ui-field">
-        <label className="ui-label" htmlFor={`${routePath}-search`}>
-          Buscar
-        </label>
-        <input
-          id={`${routePath}-search`}
-          className="ui-input"
-          type="text"
-          value={searchTerm}
-          placeholder={routePath === 'machines' ? 'Dispositivo, entregador ou modelo' : 'Buscar nos registros'}
-          onChange={(event) => setSearchTerm(event.target.value)}
-        />
+      <div className="native-module__toolbar-primary">
+        <div className="ui-field">
+          <label className="ui-label" htmlFor={`${routePath}-search`}>
+            Buscar
+          </label>
+          <input
+            id={`${routePath}-search`}
+            className="ui-input"
+            type="text"
+            value={searchTerm}
+            placeholder={routePath === 'machines' ? 'Dispositivo, entregador ou modelo' : 'Buscar nos registros'}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
+
+        {statusField ? (
+          <div className="ui-field">
+            <label className="ui-label" htmlFor={`${routePath}-status-filter`}>
+              Filtrar status
+            </label>
+            <select
+              id={`${routePath}-status-filter`}
+              className="ui-select"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="all">Todos</option>
+              {statusField.options.map((option) => (
+                <option key={`${routePath}-status-${option}`} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </div>
 
-      {statusField ? (
-        <div className="ui-field">
-          <label className="ui-label" htmlFor={`${routePath}-status-filter`}>
-            Filtrar status
-          </label>
-          <select
-            id={`${routePath}-status-filter`}
-            className="ui-select"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="all">Todos</option>
-            {statusField.options.map((option) => (
-              <option key={`${routePath}-status-${option}`} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+      <div className="native-module__toolbar-secondary">
+        <div className="native-module__toolbar-summary">
+          <span className="ui-badge ui-badge--special">{visibleCount} visiveis</span>
+          <span className="native-module__toolbar-summary-text">
+            {recordsLength} registro{recordsLength === 1 ? '' : 's'} no dia
+          </span>
         </div>
-      ) : null}
 
-      <div className="native-module__toolbar-actions">
-        <span className="ui-badge ui-badge--special">{visibleCount} visiveis</span>
-        {routePath === 'schedule' ? (
-          <>
-            <button type="button" className="ui-button ui-button--secondary" onClick={onExportSchedule}>
-              Exportar escala
+        <div className="native-module__toolbar-actions">
+          {routePath === 'schedule' ? (
+            <>
+              <button type="button" className="ui-button ui-button--secondary" onClick={onExportSchedule}>
+                Exportar escala
+              </button>
+              <button type="button" className="ui-button ui-button--secondary" onClick={onExportScheduleMachines}>
+                Exportar maquininhas usadas
+              </button>
+            </>
+          ) : null}
+          {routePath === 'machines' ? (
+            <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
+              Exportar presentes
             </button>
-            <button type="button" className="ui-button ui-button--secondary" onClick={onExportScheduleMachines}>
-              Exportar maquininhas usadas
+          ) : null}
+          <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
+            Exportar backup
+          </button>
+          {manager.manualResetLabel ? (
+            <button type="button" className="ui-button ui-button--ghost" onClick={onManualReset}>
+              {manager.manualResetLabel}
             </button>
-          </>
-        ) : null}
-        {routePath === 'machines' ? (
-          <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
-            Exportar presentes
-          </button>
-        ) : null}
-        <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
-          Exportar backup
-        </button>
-        {manager.manualResetLabel ? (
-          <button type="button" className="ui-button ui-button--ghost" onClick={onManualReset}>
-            {manager.manualResetLabel}
-          </button>
-        ) : null}
-        {recordsLength > 0 && manager.allowClearAll !== false ? (
-          <button type="button" className="ui-button ui-button--ghost" onClick={onClearAll}>
-            Limpar tudo
-          </button>
-        ) : null}
+          ) : null}
+          {recordsLength > 0 && manager.allowClearAll !== false ? (
+            <button type="button" className="ui-button ui-button--ghost" onClick={onClearAll}>
+              Limpar tudo
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -124,12 +142,7 @@ function NativeModuleMachineHistory({ groups }) {
 
         <div className="machine-history__content">
           {groups.length === 0 ? (
-            <div className="native-module__empty-state">
-              <p className="text-section-title">Nenhum historico encontrado</p>
-              <p className="text-body">
-                As marcacoes do checklist das maquininhas vao aparecer aqui por dia.
-              </p>
-            </div>
+            <ModuleEmptyState message="Nenhum historico encontrado" />
           ) : (
             groups.map((group) => (
               <section key={group.dayKey} className="machine-history__day-group">
@@ -179,12 +192,7 @@ function NativeModuleDeliveryReading({
           </header>
 
           {openRecords.length === 0 ? (
-            <div className="delivery-reading__empty">
-              <p className="text-label">Nenhuma entrega lida em aberto</p>
-              <p className="text-body">
-                As entregas lidas e ainda nao fechadas vao aparecer primeiro aqui.
-              </p>
-            </div>
+            <ModuleEmptyState message="Nenhuma entrega lida em aberto" />
           ) : (
             <div className="delivery-reading__grid">
               {openRecords.map((record) => (
@@ -250,12 +258,7 @@ function NativeModuleDeliveryReading({
           </header>
 
           {closedRecords.length === 0 ? (
-            <div className="delivery-reading__empty">
-              <p className="text-label">Nenhuma entrega fechada ainda</p>
-              <p className="text-body">
-                Quando a leitura for confirmada como fechada, ela migra para esta area.
-              </p>
-            </div>
+            <ModuleEmptyState message="Nenhuma entrega fechada ainda" />
           ) : (
             <div className="delivery-reading__grid">
               {closedRecords.map((record) => (
@@ -665,16 +668,9 @@ function NativeModuleRecordsSection(props) {
       {isMachineHistory ? (
         <NativeModuleMachineHistory groups={machineHistoryGroups} />
       ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : tableRows.length === 0) && manager) ? (
-        <div className="native-module__empty-state">
-          <p className="text-section-title">
-            {records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
-          </p>
-          <p className="text-body">
-            {records.length === 0
-              ? manager.emptyDescription
-              : 'Ajuste a busca ou o filtro para localizar registros deste modulo.'}
-          </p>
-        </div>
+        <ModuleEmptyState
+          message={records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
+        />
       ) : isDeliveryReading ? (
         <NativeModuleDeliveryReading
           openRecords={visibleOpenDeliveryRecords}

@@ -1,9 +1,12 @@
 .native-module__kpi-grid {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 2 + var(--space-8)), 1fr));
   gap: var(--space-3);
+  align-items: stretch;
 }
 
 .native-module__kpi-card {
+  align-content: start;
+  min-height: 100%;
   padding: var(--space-3) var(--space-4);
 }
 
@@ -17,26 +20,27 @@
 
 .native-module__panels {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 3 + var(--space-4)), 1fr));
   gap: var(--space-3);
 }
 
 .native-module__status-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(calc(var(--space-9) * 3 + var(--space-2)), 0.95fr);
   gap: var(--space-3);
   align-items: stretch;
 }
 
 .native-module__status-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 2 + var(--space-4)), 1fr));
   gap: var(--space-3);
 }
 
 .native-module__status-card {
   display: grid;
   gap: var(--space-2-5);
+  align-content: start;
   padding: var(--space-3-5) var(--space-4);
   border: 1px solid color-mix(in srgb, var(--color-border-default) 92%, transparent);
   border-radius: var(--radius-section);
@@ -109,7 +113,8 @@
 }
 
 .native-module__status-command-actions .ui-button {
-  flex: 1 1 180px;
+  flex: 1 1 calc(var(--space-9) * 2);
+  min-width: calc(var(--space-9) * 2);
 }
 
 .native-module__status-card .ui-badge {
@@ -145,7 +150,7 @@
 
 .native-module__form-shell {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-3-5);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
@@ -162,8 +167,8 @@
 
 .native-module__form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 2 + var(--space-8)), 1fr));
+  gap: var(--space-3);
   align-items: end;
 }
 
@@ -171,6 +176,12 @@
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.native-module__form-actions .ui-button {
+  min-width: calc(var(--space-9) * 2);
 }
 
 .native-module__checkbox {
@@ -272,28 +283,64 @@
 
 .native-module__toolbar {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3-5);
   flex-wrap: wrap;
   margin-bottom: var(--space-3);
-  padding: var(--space-3);
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
   background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
 }
 
+.native-module__toolbar-primary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 2 + var(--space-6)), 1fr));
+  gap: var(--space-3);
+  flex: 1 1 calc(var(--space-9) * 4);
+  min-width: 0;
+}
+
+.native-module__toolbar-secondary {
+  display: flex;
+  flex: 1 1 calc(var(--space-9) * 3);
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .native-module__toolbar .ui-field {
-  flex: 1;
-  min-width: 160px;
-  max-width: 280px;
+  min-width: 0;
+  max-width: none;
+}
+
+.native-module__toolbar-summary {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+}
+
+.native-module__toolbar-summary-text {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--space-2-5);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .native-module__toolbar-actions {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-  margin-left: auto;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.native-module__toolbar-actions .ui-button {
+  min-width: calc(var(--space-9) * 2);
 }
 
 .native-module__list,
@@ -346,6 +393,15 @@
 
 .native-module__table-wrap {
   overflow-x: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-section);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
+}
+
+.native-module__table-wrap .ui-table {
+  min-width: max(100%, calc(var(--space-9) * 8));
+  border: none;
+  border-radius: 0;
 }
 
 .native-module__actions-cell {
@@ -379,12 +435,7 @@
 }
 
 .native-module__empty-state {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  border: 1px dashed var(--color-border-default);
-  border-radius: var(--radius-card);
-  background: var(--surface-panel-soft-alt);
+  min-height: calc(var(--space-9) * 2);
 }
 
 @media (max-width: 1180px) {
@@ -431,7 +482,7 @@
 
 .machine-operations {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3-5);
 }
 
 .machine-operations__header {
@@ -475,8 +526,8 @@
 
 .machine-operations__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 3 + var(--space-8)), 1fr));
+  gap: var(--space-3);
 }
 
 .machine-operations__card {
@@ -517,7 +568,7 @@
 .machine-operations__footer {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
   align-items: center;
 }
 
@@ -569,8 +620,12 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--space-2-5);
+  gap: var(--space-2);
   align-items: center;
+}
+
+.machine-operations__actions .ui-button {
+  min-width: calc(var(--space-9) * 2);
 }
 
 .machine-operations__presence-check {
@@ -617,14 +672,14 @@
 
 .schedule-records__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 3 + var(--space-8)), 1fr));
+  gap: var(--space-3);
 }
 
 .schedule-records__card {
   display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
   background:
@@ -682,7 +737,11 @@
 .schedule-records__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+
+.schedule-records__actions .ui-button {
+  min-width: calc(var(--space-9) * 2);
 }
 
 .delivery-reading {
@@ -691,7 +750,7 @@
 
 .delivery-reading__sections {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .delivery-reading__section {
@@ -726,15 +785,15 @@
 
 .delivery-reading__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 3 + var(--space-8)), 1fr));
+  gap: var(--space-3);
 }
 
 .delivery-reading__card {
   position: relative;
   display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
   background:
@@ -857,7 +916,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: center;
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border-subtle);
@@ -893,6 +952,11 @@
     border-color var(--duration-normal) var(--ease-standard),
     box-shadow var(--duration-normal) var(--ease-standard),
     background var(--duration-normal) var(--ease-standard);
+}
+
+.delivery-reading__close-button,
+.delivery-reading__actions .ui-button {
+  min-width: calc(var(--space-9) * 2);
 }
 
 .delivery-reading__close-button:hover {
@@ -1754,9 +1818,14 @@
 @media (max-width: 880px) {
   .native-module__status-bar,
   .native-module__form-grid,
-  .native-module__toolbar,
   .native-module__panels {
     grid-template-columns: 1fr;
+  }
+
+  .native-module__toolbar,
+  .native-module__toolbar-secondary {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .native-module__form-actions {
@@ -1791,10 +1860,6 @@
 }
 
 @media (max-width: 1180px) {
-  .native-module__form-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .schedule-records__grid {
     grid-template-columns: 1fr;
   }
@@ -1813,6 +1878,7 @@
 
   .native-module__toolbar-actions {
     justify-content: flex-start;
+    margin-left: 0;
   }
 
   .machine-checklist__footer {

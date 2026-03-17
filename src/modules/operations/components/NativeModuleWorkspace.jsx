@@ -1618,7 +1618,7 @@ function NativeModuleWorkspace({ route }) {
     <div className={`page-stack native-module-page native-module-page--${route.path}`}>
       <PageIntro eyebrow={route.eyebrow} title={route.title} description={route.description} />
 
-      <div className="card-grid">
+      <div className="card-grid native-module__kpi-grid">
         {metrics.map((metric) => (
           <MetricCard
             key={`${route.path}-${metric.label}`}
@@ -1627,6 +1627,7 @@ function NativeModuleWorkspace({ route }) {
             meta={metric.meta}
             badgeText={metric.badgeText}
             badgeClass={metric.badgeClass}
+            className="native-module__kpi-card"
           />
         ))}
       </div>
