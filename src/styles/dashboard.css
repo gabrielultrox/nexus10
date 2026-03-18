@@ -1,3 +1,17 @@
+.dashboard-shell {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
+  border-radius: var(--radius-shell);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--surface-panel) 97%, var(--surface-panel-soft-alt)));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent),
+    0 10px 20px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
+}
+
 .dashboard-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 3 + var(--space-5)), 1fr));
@@ -116,6 +130,8 @@
   display: grid;
   gap: var(--space-3);
   min-width: 0;
+  padding-top: var(--space-1);
+  border-top: 1px solid color-mix(in srgb, var(--surface-card-gloss) 12%, var(--color-border-subtle));
 }
 
 .dashboard-section-title {
@@ -126,6 +142,11 @@
   text-transform: uppercase;
   color: var(--color-text-muted);
   margin-bottom: var(--space-3);
+}
+
+.dashboard-chart-grid > .surface-card,
+.dashboard-summary-grid > .surface-card {
+  min-width: 0;
 }
 
 .dashboard-chart-card {
@@ -346,6 +367,10 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-shell {
+    padding: var(--space-3);
+  }
+
   .dashboard-chart-card {
     min-height: auto;
   }

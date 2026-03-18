@@ -128,18 +128,20 @@ function DashboardPage() {
         description="Visao central da operacao com indicadores, comportamento do turno e leitura rapida do status diario."
       />
 
-      <DashboardFilters
-        startDate={period.startDate}
-        endDate={period.endDate}
-        onChange={handlePeriodChange}
-        onSetPreset={handlePresetChange}
-      />
+      <section className="dashboard-shell">
+        <DashboardFilters
+          startDate={period.startDate}
+          endDate={period.endDate}
+          onChange={handlePeriodChange}
+          onSetPreset={handlePresetChange}
+        />
 
-      {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+        {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-      <DashboardKpiGrid items={kpis} />
-      <DashboardCharts charts={charts} />
-      <DashboardOperationalSummary operations={operations} />
+        <DashboardKpiGrid items={kpis} />
+        <DashboardCharts charts={charts} />
+        <DashboardOperationalSummary operations={operations} />
+      </section>
     </div>
   );
 }
