@@ -9,7 +9,7 @@ function DashboardOperationalSummary({ operations }) {
       <div className="dashboard-summary-grid">
         <SurfaceCard title="Escala Ativa">
           {operations.activeShift.length === 0 ? (
-            <div className="ops-empty">Nenhum entregador ativo no periodo.</div>
+            <div className="ops-empty ops-empty--inline">Nenhum entregador ativo</div>
           ) : (
             <div className="ops-list">
               {operations.activeShift.map((item) => (

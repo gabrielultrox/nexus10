@@ -1,36 +1,48 @@
 function NativeModuleStatusBar({
   syncModeLabel,
-  syncModeTone,
   pendingCount,
   resetLabel,
-  activityLabel,
+  recordsCount,
   isOnline,
   localOnlyMode,
+  errorMessage,
   onRetrySync,
   onToggleLocalMode,
   retryDisabled,
 }) {
-  const syncPrimaryLabel = localOnlyMode ? 'Local' : 'Compartilhada'
-  const networkPrimaryLabel = isOnline ? 'Online' : 'Offline'
-  const shouldShow = localOnlyMode || !isOnline || pendingCount > 0
+  const shouldShow = Boolean(errorMessage || localOnlyMode || !isOnline || pendingCount > 0)
 
   if (!shouldShow) {
     return null
   }
 
+  const syncState = errorMessage
+    ? 'Erro de sincronizacao'
+    : localOnlyMode
+      ? 'Somente local'
+      : pendingCount > 0
+        ? 'Pendencias em fila'
+        : syncModeLabel
+
+  const syncTone = errorMessage
+    ? 'native-module__status-dot--danger'
+    : localOnlyMode || pendingCount > 0
+      ? 'native-module__status-dot--warning'
+      : 'native-module__status-dot--success'
+
   return (
     <section className="native-module__status-bar">
       <div className="native-module__status-line">
         <article className="native-module__status-item">
-          <span className={`native-module__status-dot ${syncModeTone}`.replace('ui-badge', 'native-module__status-dot--')} />
-          <span className="native-module__status-item-label">Sincronizacao</span>
-          <strong className="native-module__status-item-value">{syncPrimaryLabel} · {syncModeLabel}</strong>
+          <span className={`native-module__status-dot ${syncTone}`} />
+          <span className="native-module__status-item-label">Estado</span>
+          <strong className="native-module__status-item-value">{syncState}</strong>
         </article>
 
         <article className="native-module__status-item">
           <span className={`native-module__status-dot ${isOnline ? 'native-module__status-dot--success' : 'native-module__status-dot--danger'}`} />
           <span className="native-module__status-item-label">Conexao</span>
-          <strong className="native-module__status-item-value">{networkPrimaryLabel}</strong>
+          <strong className="native-module__status-item-value">{isOnline ? 'Online' : 'Offline'}</strong>
         </article>
 
         <article className="native-module__status-item">
@@ -44,28 +56,31 @@ function NativeModuleStatusBar({
           <span className="native-module__status-item-label">Reset</span>
           <strong className="native-module__status-item-value">{resetLabel}</strong>
         </article>
-      </div>
 
-      <article className="native-module__status-actions">
-        <span className="native-module__status-inline-message">{activityLabel}</span>
-        <div className="native-module__status-command-actions">
+        <article className="native-module__status-item">
+          <span className="native-module__status-dot native-module__status-dot--info" />
+          <span className="native-module__status-item-label">Registros</span>
+          <strong className="native-module__status-item-value">{recordsCount} no dia</strong>
+        </article>
+
+        <div className="native-module__status-actions">
           <button
             type="button"
-            className="ui-button ui-button--ghost"
+            className="native-module__status-action"
             onClick={onToggleLocalMode}
           >
-            {localOnlyMode ? 'Voltar ao compartilhado' : 'Somente local'}
+            {localOnlyMode ? 'Compartilhado' : 'Somente local'}
           </button>
           <button
             type="button"
-            className="ui-button ui-button--secondary"
+            className="native-module__status-action"
             onClick={onRetrySync}
             disabled={retryDisabled}
           >
-            Reenviar pendencias
+            Reenviar
           </button>
         </div>
-      </article>
+      </div>
     </section>
   )
 }

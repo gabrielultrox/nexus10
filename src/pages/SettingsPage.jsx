@@ -126,44 +126,46 @@ function SettingsPage() {
 
   if (!settingsUnlocked) {
     return (
-      <div className="page-stack">
+      <div className="page-stack settings-page settings-page--locked">
         <PageIntro
           eyebrow="Sistema"
           title="Configuracoes protegidas"
           description="Digite a senha mestra para acessar os ajustes sensiveis do app."
         />
 
-        <SurfaceCard title="Senha mestra">
-          <form className="settings-lock-form" onSubmit={handleUnlockSettings}>
-            <div className="ui-field">
-              <label className="ui-label" htmlFor="settings-master-password">
-                Senha mestra
-              </label>
-              <input
-                id="settings-master-password"
-                className="ui-input"
-                type="password"
-                value={masterPassword}
-                onChange={(event) => setMasterPassword(event.target.value)}
-                placeholder="Digite a senha mestra"
-                autoComplete="current-password"
-              />
-            </div>
+        <div className="settings-lock-shell">
+          <SurfaceCard title="Senha mestra">
+            <form className="settings-lock-form" onSubmit={handleUnlockSettings}>
+              <div className="ui-field">
+                <label className="ui-label" htmlFor="settings-master-password">
+                  Senha mestra
+                </label>
+                <input
+                  id="settings-master-password"
+                  className="ui-input"
+                  type="password"
+                  value={masterPassword}
+                  onChange={(event) => setMasterPassword(event.target.value)}
+                  placeholder="Digite a senha mestra"
+                  autoComplete="current-password"
+                />
+              </div>
 
-            <p className="text-caption">
-              Esta tela protege PIN local, sons, tema e demais configuracoes sensiveis da operacao.
-            </p>
+              <p className="text-caption">
+                Esta tela protege PIN local, sons, tema e demais configuracoes sensiveis da operacao.
+              </p>
 
-            <div className="settings-pin-form__actions">
-              <button type="submit" className="ui-button ui-button--secondary">
-                Liberar configuracoes
-              </button>
-            </div>
+              <div className="settings-pin-form__actions">
+                <button type="submit" className="ui-button ui-button--secondary">
+                  Liberar configuracoes
+                </button>
+              </div>
 
-            {feedback ? <div className="auth-error auth-error--success">{feedback}</div> : null}
-            {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
-          </form>
-        </SurfaceCard>
+              {feedback ? <div className="auth-error auth-error--success">{feedback}</div> : null}
+              {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+            </form>
+          </SurfaceCard>
+        </div>
       </div>
     );
   }

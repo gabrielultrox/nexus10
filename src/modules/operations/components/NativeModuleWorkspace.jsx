@@ -331,8 +331,8 @@ function NativeModuleWorkspace({ route }) {
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(() => getManualModulePendingCount(syncModulePaths));
-  const [syncHistory, setSyncHistory] = useState(() => getManualModuleSyncHistory(syncModulePaths));
-  const [syncActivityLabel, setSyncActivityLabel] = useState(
+  const [, setSyncHistory] = useState(() => getManualModuleSyncHistory(syncModulePaths));
+  const [, setSyncActivityLabel] = useState(
     remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta',
   );
   const scheduleImageRef = useRef(null);
@@ -781,11 +781,6 @@ function NativeModuleWorkspace({ route }) {
     : remoteSyncReady
       ? 'Compartilhada'
       : 'Local'
-  const syncModeTone = pendingSyncCount > 0
-    ? 'ui-badge--warning'
-    : remoteSyncReady
-      ? 'ui-badge--success'
-      : 'ui-badge--special'
   const resetLabel = manager?.dailyResetHour != null
     ? `${String(manager.dailyResetHour).padStart(2, '0')}h`
     : 'Sem reset'
@@ -1618,30 +1613,31 @@ function NativeModuleWorkspace({ route }) {
     <div className={`page-stack native-module-page native-module-page--${route.path}`}>
       <PageIntro eyebrow={route.eyebrow} title={route.title} description={route.description} />
 
-      <div className="card-grid native-module__kpi-grid">
-        {metrics.map((metric) => (
-          <MetricCard
-            key={`${route.path}-${metric.label}`}
-            label={metric.label}
-            value={metric.value}
-            meta={metric.meta}
-            badgeText={metric.badgeText}
-            badgeClass={metric.badgeClass}
-            className="native-module__kpi-card"
-          />
-        ))}
-      </div>
+      {!manager ? (
+        <div className="card-grid native-module__kpi-grid">
+          {metrics.map((metric) => (
+            <MetricCard
+              key={`${route.path}-${metric.label}`}
+              label={metric.label}
+              value={metric.value}
+              meta={metric.meta}
+              badgeText={metric.badgeText}
+              badgeClass={metric.badgeClass}
+              className="native-module__kpi-card"
+            />
+          ))}
+        </div>
+      ) : null}
 
       {manager ? (
         <NativeModuleStatusBar
           syncModeLabel={syncModeLabel}
-          syncModeTone={syncModeTone}
           pendingCount={pendingSyncCount}
           resetLabel={resetLabel}
-          activityLabel={syncActivityLabel}
+          recordsCount={records.length}
           isOnline={isOnline}
           localOnlyMode={localOnlyMode}
-          syncHistory={syncHistory}
+          errorMessage={errorMessage}
           onRetrySync={handleRetrySync}
           onToggleLocalMode={handleToggleLocalMode}
           retryDisabled={!remoteSyncReady || pendingSyncCount === 0}

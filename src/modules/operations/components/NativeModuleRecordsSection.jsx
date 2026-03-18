@@ -394,95 +394,46 @@ function NativeModuleSchedule({
   )
 }
 
-function NativeModuleMachines({ records, onApplyAction, onDelete, onToggle }) {
+function NativeModuleMachines({ records, onDelete, onToggle }) {
   return (
     <div className="machine-operations">
-      <div className="machine-operations__header">
-        <div>
-          <span className="machine-operations__eyebrow">Checklist do dia</span>
-          <h3 className="machine-operations__title">Parque operacional</h3>
-          <p className="machine-operations__description">
-            Confira presenca, entregador vinculado e situacao da maquininha.
-          </p>
-        </div>
-        <div className="machine-operations__summary">
-          <span className="ui-badge ui-badge--success">
-            {records.filter((record) => record.status === 'Presente').length} presentes
-          </span>
-          <span className="ui-badge ui-badge--info">{records.length} dispositivos</span>
-        </div>
-      </div>
-
-      <div className="machine-operations__grid">
+      <div className="machine-operations__list">
         {records.map((record) => {
           const isPresent = record.status === 'Presente'
-          const hasProblem = ['Manutencao', 'Carga'].includes(record.machineStatus)
+          const statusLabel = isPresent ? 'Ativo' : 'Ausente'
+          const statusClass = isPresent ? 'ui-badge--success' : 'ui-badge--warning'
 
           return (
             <article
               key={record.id}
-              className={`machine-operations__card ${isPresent ? 'machine-operations__card--present' : 'machine-operations__card--absent'}`}
+              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}`}
             >
-              <div className="machine-operations__card-top">
-                <div className="machine-operations__identity">
-                  <span className="machine-operations__device-label">Maquininha</span>
-                  <strong className="machine-operations__device">{record.device}</strong>
-                </div>
-
-                <div className="machine-operations__badges">
-                  <span className={`ui-badge ${isPresent ? 'ui-badge--success' : 'ui-badge--warning'}`}>
-                    {isPresent ? 'Presente' : 'Ausente'}
-                  </span>
-                  <span className={`ui-badge ${hasProblem ? 'ui-badge--danger' : 'ui-badge--info'}`}>
-                    {record.machineStatus}
-                  </span>
-                </div>
-              </div>
-
-              <div className="machine-operations__meta-grid">
-                <div className="machine-operations__meta-item">
-                  <span>Entregador</span>
-                  <strong>{record.holder || 'Sem entregador'}</strong>
-                </div>
-                <div className="machine-operations__meta-item">
-                  <span>Modelo</span>
-                  <strong>{record.model}</strong>
-                </div>
-              </div>
-
-              <div className="machine-operations__footer">
-                <span className="machine-operations__updated">
-                  {record.updatedAt && record.updatedBy
-                    ? `${record.updatedBy} - ${record.updatedAt}`
-                    : 'Sem conferencia hoje'}
-                </span>
-
-                <div className="machine-operations__actions">
-                  <label
-                    className={`machine-operations__presence-check ${isPresent ? 'is-checked' : ''}`}
-                    htmlFor={`machine-check-${record.id}`}
-                  >
-                    <input
-                      id={`machine-check-${record.id}`}
-                      type="checkbox"
-                      checked={isPresent}
-                      onChange={() => onToggle(record.id)}
-                    />
-                    <span className="machine-operations__presence-box" aria-hidden="true" />
-                    <span>{isPresent ? 'Presente hoje' : 'Confirmar presenca'}</span>
-                  </label>
-
-                  {record.machineStatus !== 'Ativa' ? (
-                    <button type="button" className="ui-button ui-button--secondary" onClick={() => onApplyAction(record.id)}>
-                      Marcar ativa
-                    </button>
-                  ) : null}
-
-                  <button type="button" className="ui-button ui-button--danger" onClick={() => onDelete(record.id)}>
-                    Excluir
-                  </button>
-                </div>
-              </div>
+              <strong className="machine-operations__row-device">{record.device}</strong>
+              <span className="machine-operations__row-meta">{record.holder || 'Sem entregador'}</span>
+              <span className="machine-operations__row-meta">{record.model}</span>
+              <span className={`ui-badge ${statusClass}`}>{statusLabel}</span>
+              <label
+                className={`machine-operations__row-check ${isPresent ? 'is-checked' : ''}`}
+                htmlFor={`machine-check-${record.id}`}
+              >
+                <input
+                  id={`machine-check-${record.id}`}
+                  type="checkbox"
+                  checked={isPresent}
+                  onChange={() => onToggle(record.id)}
+                />
+                <span className="machine-operations__row-check-box" aria-hidden="true" />
+                <span className="machine-operations__row-check-label">Confirmar</span>
+              </label>
+              <button
+                type="button"
+                className="machine-operations__icon-button"
+                onClick={() => onDelete(record.id)}
+                aria-label={`Excluir ${record.device}`}
+                title="Excluir"
+              >
+                ×
+              </button>
             </article>
           )
         })}
@@ -692,7 +643,6 @@ function NativeModuleRecordsSection(props) {
       ) : isMachineChecklist ? (
         <NativeModuleMachines
           records={visibleMachineChecklistRecords}
-          onApplyAction={handleApplyAction}
           onDelete={handleDelete}
           onToggle={handleMachineChecklistToggle}
         />

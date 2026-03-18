@@ -4,6 +4,22 @@ import SurfaceCard from '../../../components/common/SurfaceCard'
 
 function NativeModuleField({ field, routePath, value, updateField }) {
   if (field.type === 'checkbox') {
+    if (routePath === 'delivery-reading') {
+      return (
+        <label className="native-module__inline-toggle" htmlFor={`${routePath}-${field.name}`}>
+          <input
+            id={`${routePath}-${field.name}`}
+            className="native-module__inline-toggle-input"
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(event) => updateField(field.name, event.target.checked)}
+          />
+          <span className="native-module__inline-toggle-box" aria-hidden="true" />
+          <span className="native-module__inline-toggle-label">{field.label}</span>
+        </label>
+      )
+    }
+
     return (
       <label className="native-module__checkbox" htmlFor={`${routePath}-${field.name}`}>
         <input
@@ -19,6 +35,40 @@ function NativeModuleField({ field, routePath, value, updateField }) {
           <small>{field.description ?? 'Marque esta opcao quando ela se aplicar ao registro.'}</small>
         </span>
       </label>
+    )
+  }
+
+  if (routePath === 'delivery-reading') {
+    if (field.type === 'select') {
+      return (
+        <select
+          id={`${routePath}-${field.name}`}
+          className="ui-select"
+          aria-label={field.label}
+          value={value ?? ''}
+          required={field.required !== false}
+          onChange={(event) => updateField(field.name, event.target.value)}
+        >
+          {field.options.map((option) => (
+            <option key={`${routePath}-${field.name}-${option}`} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      )
+    }
+
+    return (
+      <input
+        id={`${routePath}-${field.name}`}
+        className="ui-input"
+        aria-label={field.label}
+        type={field.type ?? 'text'}
+        value={value ?? ''}
+        placeholder={field.placeholder ?? field.label}
+        required={field.required !== false}
+        onChange={(event) => updateField(field.name, event.target.value)}
+      />
     )
   }
 
@@ -101,11 +151,14 @@ function NativeModuleFormCard({
 
         <form
           ref={formRef}
-          className={`native-module__form-grid${routePath === 'advances' ? ' native-module__form-grid--advances' : ''}`}
+          className={`native-module__form-grid${routePath === 'advances' ? ' native-module__form-grid--advances' : ''}${routePath === 'delivery-reading' ? ' native-module__form-grid--delivery-reading' : ''}`}
           onSubmit={onSubmit}
         >
           {managerWithResolvedFields.fields.map((field) => (
-            <div key={`${routePath}-${field.name}`} className="ui-field">
+            <div
+              key={`${routePath}-${field.name}`}
+              className={`ui-field${field.type === 'checkbox' ? ' ui-field--compact-toggle' : ''}`}
+            >
               <NativeModuleField
                 field={field}
                 routePath={routePath}
@@ -115,7 +168,7 @@ function NativeModuleFormCard({
             </div>
           ))}
 
-          <div className="native-module__form-actions">
+          <div className={`native-module__form-actions${routePath === 'delivery-reading' ? ' native-module__form-actions--inline' : ''}`}>
             {routePath === 'advances' ? (
               <button type="button" className="ui-button ui-button--ghost" onClick={onReset}>
                 Cancelar
