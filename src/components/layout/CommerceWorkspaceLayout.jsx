@@ -2,7 +2,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { useStore } from '../../contexts/StoreContext';
 import AssistantPanel from '../../modules/assistant/AssistantPanel';
 import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider';
 import { getRouteByPathname } from '../../utils/routeCatalog';
@@ -12,7 +11,6 @@ function CommerceWorkspaceLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
-  const { currentStoreId } = useStore();
   const route = getRouteByPathname(location.pathname);
   const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local';
   const isOrdersRoute = location.pathname.startsWith('/orders');
@@ -29,18 +27,14 @@ function CommerceWorkspaceLayout() {
 
         <header className="commerce-shell__header">
           <div className="commerce-shell__header-copy">
-            <p className="commerce-shell__eyebrow">{route.eyebrow}</p>
+            <p className="commerce-shell__eyebrow">{route.section} / {route.eyebrow}</p>
             <h1 className="commerce-shell__title">{route.title}</h1>
-            <p className="commerce-shell__description">{route.description}</p>
           </div>
 
           <div className="commerce-shell__header-actions">
             <div className="commerce-shell__status">
               <span className="status-dot" />
-              <div>
-                <strong>{operatorLabel}</strong>
-                <small>{currentStoreId ? `store ${currentStoreId}` : 'sessao local'}</small>
-              </div>
+              <strong>{operatorLabel}</strong>
             </div>
 
             <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>

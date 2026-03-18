@@ -37,9 +37,8 @@ function NotificationCenter() {
         aria-expanded={open}
         aria-label="Abrir notificacoes operacionais"
       >
-        <span className="notification-center__icon">NT</span>
-        <span className="notification-center__label">Alertas</span>
-        {unreadCount > 0 ? <span className="notification-center__count">{unreadCount}</span> : null}
+        <span className="notification-center__icon" aria-hidden="true" />
+        <span className="notification-center__count">{unreadCount}</span>
       </button>
 
       {open ? (
@@ -55,8 +54,8 @@ function NotificationCenter() {
           </div>
 
           {notifications.length === 0 ? (
-            <div className="entity-empty-state">
-              <p className="text-section-title">Sem alertas no momento</p>
+            <div className="module-empty-state">
+              <p className="module-empty-state__text">Sem alertas no momento</p>
             </div>
           ) : (
             <div className="notification-center__list">

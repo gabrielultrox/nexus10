@@ -6,68 +6,48 @@ function NativeModuleStatusBar({
   activityLabel,
   isOnline,
   localOnlyMode,
-  syncHistory,
   onRetrySync,
   onToggleLocalMode,
   retryDisabled,
 }) {
   const syncPrimaryLabel = localOnlyMode ? 'Local' : 'Compartilhada'
   const networkPrimaryLabel = isOnline ? 'Online' : 'Offline'
+  const shouldShow = localOnlyMode || !isOnline || pendingCount > 0
+
+  if (!shouldShow) {
+    return null
+  }
 
   return (
     <section className="native-module__status-bar">
-      <div className="native-module__status-grid">
-        <article className="native-module__status-card">
-          <span className="native-module__status-label">Sincronizacao</span>
-          <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{syncPrimaryLabel}</strong>
-            <span className={`ui-badge ${syncModeTone}`}>{syncModeLabel}</span>
-          </div>
+      <div className="native-module__status-line">
+        <article className="native-module__status-item">
+          <span className={`native-module__status-dot ${syncModeTone}`.replace('ui-badge', 'native-module__status-dot--')} />
+          <span className="native-module__status-item-label">Sincronizacao</span>
+          <strong className="native-module__status-item-value">{syncPrimaryLabel} · {syncModeLabel}</strong>
         </article>
 
-        <article className="native-module__status-card">
-          <span className="native-module__status-label">Conexao</span>
-          <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{networkPrimaryLabel}</strong>
-            <span className={`ui-badge ${isOnline ? 'ui-badge--success' : 'ui-badge--danger'}`}>
-              {localOnlyMode ? 'Modo local' : isOnline ? 'Conectado' : 'Sem rede'}
-            </span>
-          </div>
+        <article className="native-module__status-item">
+          <span className={`native-module__status-dot ${isOnline ? 'native-module__status-dot--success' : 'native-module__status-dot--danger'}`} />
+          <span className="native-module__status-item-label">Conexao</span>
+          <strong className="native-module__status-item-value">{networkPrimaryLabel}</strong>
         </article>
 
-        <article className="native-module__status-card">
-          <span className="native-module__status-label">Pendencias</span>
-          <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{pendingCount}</strong>
-            <span className={`ui-badge ${pendingCount > 0 ? 'ui-badge--warning' : 'ui-badge--success'}`}>
-              {pendingCount > 0 ? 'Fila ativa' : 'Em dia'}
-            </span>
-          </div>
+        <article className="native-module__status-item">
+          <span className={`native-module__status-dot ${pendingCount > 0 ? 'native-module__status-dot--warning' : 'native-module__status-dot--success'}`} />
+          <span className="native-module__status-item-label">Pendencias</span>
+          <strong className="native-module__status-item-value">{pendingCount}</strong>
         </article>
 
-        <article className="native-module__status-card">
-          <span className="native-module__status-label">Reset operacional</span>
-          <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{resetLabel}</strong>
-            <span className="ui-badge ui-badge--info">Turno</span>
-          </div>
+        <article className="native-module__status-item">
+          <span className="native-module__status-dot native-module__status-dot--info" />
+          <span className="native-module__status-item-label">Reset</span>
+          <strong className="native-module__status-item-value">{resetLabel}</strong>
         </article>
       </div>
 
-      <article className="native-module__status-card native-module__status-card--command">
-        <div className="native-module__status-command-copy">
-          <span className="native-module__status-label">Contingencia</span>
-          <strong className="native-module__status-value native-module__status-value--small">{activityLabel}</strong>
-          <div className="native-module__status-inline-badges">
-            <span className={`ui-badge ${localOnlyMode ? 'ui-badge--warning' : syncModeTone}`}>
-              {localOnlyMode ? 'Somente local' : 'Fluxo compartilhado'}
-            </span>
-            <span className={`ui-badge ${isOnline ? 'ui-badge--success' : 'ui-badge--danger'}`}>
-              {isOnline ? 'Rede ativa' : 'Sem rede'}
-            </span>
-          </div>
-        </div>
-
+      <article className="native-module__status-actions">
+        <span className="native-module__status-inline-message">{activityLabel}</span>
         <div className="native-module__status-command-actions">
           <button
             type="button"
@@ -84,22 +64,6 @@ function NativeModuleStatusBar({
           >
             Reenviar pendencias
           </button>
-        </div>
-
-        <div className="native-module__status-command-history">
-          <span className="native-module__status-label">Historico recente</span>
-          {syncHistory.length === 0 ? (
-            <strong className="native-module__status-value native-module__status-value--small">Sem reenvios recentes</strong>
-          ) : (
-            <div className="native-module__status-history">
-              {syncHistory.map((entry) => (
-                <div key={entry.id} className="native-module__status-history-item">
-                  <strong>{entry.flushedCount} reenviado(s)</strong>
-                  <span>{new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }).format(new Date(entry.createdAt))}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </article>
     </section>

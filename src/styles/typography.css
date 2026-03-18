@@ -99,3 +99,84 @@ h4,
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+.text-display,
+.text-section-title,
+.text-kpi,
+.text-page-title {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.text-display,
+.text-page-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-card-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.text-kpi,
+.text-metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.text-body {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted,
+.text-caption {
+  color: var(--text-muted);
+}
+
+.text-label,
+.text-overline,
+.text-mono {
+  font-family: var(--font-sans);
+}
+
+.text-label,
+.text-overline {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.text-caption {
+  font-size: 11px;
+}
+
+.text-mono {
+  font-size: 11px;
+}

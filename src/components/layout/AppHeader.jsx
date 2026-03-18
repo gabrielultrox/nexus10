@@ -15,16 +15,20 @@ function AppHeader() {
     <header className="app-header">
       <div className="app-header__inner">
         <div className="app-header__context">
-          <span className="app-header__context-kicker">{route.eyebrow ?? route.section ?? 'Sistema'}</span>
-          <strong className="app-header__context-copy">{route.title}</strong>
+          <span className="app-header__breadcrumb">
+            {route.section ?? 'Sistema'}
+            <span className="app-header__breadcrumb-separator">/</span>
+            <strong className="app-header__context-copy">{route.title}</strong>
+          </span>
         </div>
 
         <div className="app-header__actions">
           <div className="app-header__status">
             <span className="status-dot" />
-            <strong>{operatorLabel}</strong>
+            <span className="app-header__status-label">Conectado</span>
           </div>
           <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
+          <span className="app-header__user">{operatorLabel}</span>
           <NotificationCenter />
           <button type="button" className="ui-button ui-button--ghost" onClick={signOut}>
             Sair

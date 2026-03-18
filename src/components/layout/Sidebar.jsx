@@ -32,11 +32,7 @@ function Sidebar() {
                     `sidebar__link${isActive ? ' sidebar__link--active' : ''}`
                   }
                 >
-                  <span className="sidebar__icon">{item.icon}</span>
-                  <span className="sidebar__link-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.path.replace('/', '').toUpperCase()}</small>
-                  </span>
+                  <strong className="sidebar__link-label">{item.label}</strong>
                 </NavLink>
               ))}
             </div>

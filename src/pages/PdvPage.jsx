@@ -30,7 +30,6 @@ function PdvPage() {
             >
               <span className="pdv-hub-card__eyebrow">{route.eyebrow}</span>
               <strong className="pdv-hub-card__title">{route.label}</strong>
-              <span className="pdv-hub-card__description">{route.description}</span>
             </button>
           ))}
         </div>

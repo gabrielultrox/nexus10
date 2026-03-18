@@ -429,3 +429,171 @@
     gap: var(--space-4);
   }
 }
+
+.couriers-module,
+.couriers-overview,
+.couriers-panel,
+.couriers-register {
+  gap: var(--space-3);
+}
+
+.couriers-overview {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.couriers-overview__header,
+.couriers-panel__header,
+.couriers-register__intro {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.couriers-layout {
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--space-3);
+}
+
+.couriers-filters,
+.couriers-aside-list__item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  box-shadow: none;
+}
+
+.couriers-filters {
+  padding: var(--space-3);
+}
+
+.couriers-filters__checkbox {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  background: var(--bg-elevated);
+}
+
+.couriers-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.courier-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+
+.courier-card:hover {
+  transform: none;
+  border-color: var(--accent);
+  box-shadow: none;
+}
+
+.courier-card__identity {
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.courier-card__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-base);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.courier-card__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.courier-card__meta {
+  margin-top: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.courier-card__summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.courier-card__inline-metrics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.courier-card__inline-metrics span {
+  position: relative;
+}
+
+.courier-card__inline-metrics span + span::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+
+.courier-card__actions {
+  gap: 6px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.courier-card__action {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.courier-card__action--danger {
+  color: var(--danger);
+}
+
+.couriers-aside-list__item {
+  gap: 4px;
+  padding: var(--space-3);
+}
+
+.couriers-aside-list__item span {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+@media (max-width: 980px) {
+  .couriers-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .courier-card {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .courier-card__actions {
+    width: 100%;
+  }
+}
