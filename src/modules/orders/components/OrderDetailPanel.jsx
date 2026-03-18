@@ -32,7 +32,7 @@ function OrderDetailPanel({
       <div className="orders-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe do Pedido</p>
-          <p className="text-body">Leitura operacional do pedido, conversao em venda e impacto no turno.</p>
+          <p className="text-body">Status, conversao e impacto operacional.</p>
         </div>
 
         {selectedOrder ? (
@@ -113,7 +113,7 @@ function OrderDetailPanel({
             <div className="orders-domain__detail-card">
               <span>Status</span>
               <strong>{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</strong>
-              <small>{isSaleLaunched ? 'Pronto para consulta em vendas' : 'Aguardando conversao'}</small>
+              <small>{isSaleLaunched ? 'Disponivel em vendas' : 'Aguardando conversao'}</small>
             </div>
             <div className="orders-domain__detail-card">
               <span>Total</span>
@@ -174,7 +174,7 @@ function OrderDetailPanel({
                 </div>
                 <div className="orders-domain__timeline-step">
                   <strong>Impacto definitivo</strong>
-                  <p>{isSaleLaunched ? 'Somente a venda publicou estoque e financeiro' : 'Sem impacto em estoque ou financeiro'}</p>
+                  <p>{isSaleLaunched ? 'Estoque e financeiro publicados pela venda' : 'Sem impacto em estoque ou financeiro'}</p>
                 </div>
               </div>
             </div>

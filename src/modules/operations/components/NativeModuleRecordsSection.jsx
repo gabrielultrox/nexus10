@@ -400,9 +400,9 @@ function NativeModuleMachines({ records, onApplyAction, onDelete, onToggle }) {
       <div className="machine-operations__header">
         <div>
           <span className="machine-operations__eyebrow">Checklist do dia</span>
-          <h3 className="machine-operations__title">Parque operacional leve e direto</h3>
+          <h3 className="machine-operations__title">Parque operacional</h3>
           <p className="machine-operations__description">
-            Confira presenca, entregador vinculado e situacao da maquininha no mesmo card.
+            Confira presenca, entregador vinculado e situacao da maquininha.
           </p>
         </div>
         <div className="machine-operations__summary">

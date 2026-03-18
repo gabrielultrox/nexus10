@@ -11,13 +11,16 @@ function NativeModuleStatusBar({
   onToggleLocalMode,
   retryDisabled,
 }) {
+  const syncPrimaryLabel = localOnlyMode ? 'Local' : 'Compartilhada'
+  const networkPrimaryLabel = isOnline ? 'Online' : 'Offline'
+
   return (
     <section className="native-module__status-bar">
       <div className="native-module__status-grid">
         <article className="native-module__status-card">
           <span className="native-module__status-label">Sincronizacao</span>
           <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{syncModeLabel}</strong>
+            <strong className="native-module__status-value">{syncPrimaryLabel}</strong>
             <span className={`ui-badge ${syncModeTone}`}>{syncModeLabel}</span>
           </div>
         </article>
@@ -25,7 +28,7 @@ function NativeModuleStatusBar({
         <article className="native-module__status-card">
           <span className="native-module__status-label">Conexao</span>
           <div className="native-module__status-value-row">
-            <strong className="native-module__status-value">{isOnline ? 'Online' : 'Offline'}</strong>
+            <strong className="native-module__status-value">{networkPrimaryLabel}</strong>
             <span className={`ui-badge ${isOnline ? 'ui-badge--success' : 'ui-badge--danger'}`}>
               {localOnlyMode ? 'Modo local' : isOnline ? 'Conectado' : 'Sem rede'}
             </span>

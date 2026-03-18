@@ -19,7 +19,7 @@ function SalesDetailPanel({
       <div className="sales-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe da Venda</p>
-          <p className="text-body">Resumo executivo da venda, publicacao operacional e rastreio do lancamento.</p>
+          <p className="text-body">Resumo, publicacao e rastreio da venda.</p>
         </div>
 
         {selectedSale ? (
@@ -89,7 +89,7 @@ function SalesDetailPanel({
             <div className="sales-domain__detail-card">
               <span>Status</span>
               <strong>{statusMeta.label}</strong>
-              <small>{selectedSale.stockPosted ? 'Estoque publicado' : 'Aguardando postagem de estoque'}</small>
+              <small>{selectedSale.stockPosted ? 'Estoque publicado' : 'Aguardando estoque'}</small>
             </div>
             <div className="sales-domain__detail-card">
               <span>Pagamento</span>
@@ -131,11 +131,11 @@ function SalesDetailPanel({
                 </div>
                 <div className="sales-domain__timeline-step">
                   <strong>Estoque</strong>
-                  <p>{selectedSale.stockPosted ? 'Movimento aplicado no estoque' : 'Ainda nao publicado no estoque'}</p>
+                  <p>{selectedSale.stockPosted ? 'Movimento aplicado no estoque' : 'Ainda nao publicado'}</p>
                 </div>
                 <div className="sales-domain__timeline-step">
                   <strong>Financeiro</strong>
-                  <p>{selectedSale.financialPosted ? 'Receita registrada no financeiro' : 'Ainda nao publicada no financeiro'}</p>
+                  <p>{selectedSale.financialPosted ? 'Receita registrada no financeiro' : 'Ainda nao publicado'}</p>
                 </div>
                 <div className="sales-domain__timeline-step">
                   <strong>Auditoria</strong>

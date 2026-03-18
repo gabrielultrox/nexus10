@@ -75,7 +75,7 @@ function SalesFormPanel({
       <div className="sales-domain__detail-header">
         <div>
           <p className="text-section-title">Nova Venda</p>
-          <p className="text-body">Monte a venda em duas etapas, com itens primeiro e fechamento comercial depois.</p>
+          <p className="text-body">Itens primeiro. Fechamento depois.</p>
         </div>
       </div>
 
