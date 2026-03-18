@@ -4,17 +4,20 @@ import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import AssistantPanel from '../../modules/assistant/AssistantPanel';
 import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider';
-import { getRouteByPathname } from '../../utils/routeCatalog';
+import PageTabs from '../common/PageTabs';
 import ThemeToggle from '../theme/ThemeToggle';
 
 function CommerceWorkspaceLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
-  const route = getRouteByPathname(location.pathname);
   const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local';
   const isOrdersRoute = location.pathname.startsWith('/orders');
-  const isSalesRoute = location.pathname.startsWith('/sales');
+  const activeTab = isOrdersRoute ? 'orders' : 'sales';
+  const commerceTabs = [
+    { id: 'orders', label: 'Pedidos' },
+    { id: 'sales', label: 'Vendas' },
+  ];
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -27,11 +30,16 @@ function CommerceWorkspaceLayout() {
 
         <header className="commerce-shell__header">
           <div className="commerce-shell__header-copy">
-            <p className="commerce-shell__eyebrow">{route.section} / {route.eyebrow}</p>
-            <h1 className="commerce-shell__title">{route.title}</h1>
+            <p className="commerce-shell__eyebrow">PDV</p>
+            <h1 className="commerce-shell__title">{isOrdersRoute ? 'Pedidos' : 'Vendas'}</h1>
           </div>
 
           <div className="commerce-shell__header-actions">
+            <PageTabs
+              tabs={commerceTabs}
+              activeTab={activeTab}
+              onTabChange={(tabId) => navigate(tabId === 'orders' ? '/orders' : '/sales')}
+            />
             <div className="commerce-shell__status">
               <span className="status-dot" />
               <strong>{operatorLabel}</strong>
@@ -44,33 +52,6 @@ function CommerceWorkspaceLayout() {
             </button>
           </div>
         </header>
-
-        <section className="commerce-shell__rail">
-          <div className="commerce-shell__rail-copy">
-            <span className="commerce-shell__rail-kicker">Workspace</span>
-            <strong>Fluxo comercial dedicado</strong>
-          </div>
-
-          <div className="commerce-shell__rail-actions">
-            <button type="button" className="ui-button ui-button--ghost" onClick={() => navigate('/dashboard')}>
-              Voltar ao painel
-            </button>
-            <button
-              type="button"
-              className={`ui-button ${isOrdersRoute ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-              onClick={() => navigate('/orders')}
-            >
-              Pedidos
-            </button>
-            <button
-              type="button"
-              className={`ui-button ${isSalesRoute ? 'ui-button--secondary' : 'ui-button--ghost'}`}
-              onClick={() => navigate('/sales')}
-            >
-              Vendas
-            </button>
-          </div>
-        </section>
 
         <main className="commerce-shell__content">
           <div className="commerce-shell__content-inner">

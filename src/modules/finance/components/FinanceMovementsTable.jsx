@@ -16,8 +16,8 @@ function FinanceMovementsTable({ rows }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
+          {rows.map((row, index) => (
+            <tr key={row.id} className="ui-table__row-enter" style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}>
               <td>
                 <span className={`ui-badge ${getFinanceEntryBadge(row).badgeClass}`}>
                   {getFinanceEntryBadge(row).label}
@@ -31,7 +31,7 @@ function FinanceMovementsTable({ rows }) {
               >
                 {row.amount}
               </td>
-              <td>{isFinanceEntryActive(row) ? 'Ativa' : row.status}</td>
+              <td><span className={`ui-badge ${isFinanceEntryActive(row) ? 'ui-badge--success' : 'ui-badge--warning'}`}>{isFinanceEntryActive(row) ? 'Ativa' : row.status}</span></td>
               <td className="ui-table__cell--mono">{row.time}</td>
             </tr>
           ))}

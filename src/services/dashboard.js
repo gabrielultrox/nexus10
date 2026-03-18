@@ -111,10 +111,6 @@ function isOrderDelayed(order) {
   return (Date.now() - createdAt.getTime()) / 60000 >= delayedOrderThresholdMinutes;
 }
 
-function getToneByValue(value, warningThreshold = 0) {
-  return value > warningThreshold ? 'red' : 'cyan';
-}
-
 function getStatusBadgeClass(status) {
   const normalized = String(status ?? '').toLowerCase();
 
@@ -301,7 +297,6 @@ export function buildDashboardData({
   const openAdvances = operations.advanceRecords.filter((record) => record.status !== 'Baixado').length;
   const openOccurrences = operations.occurrenceRecords.filter((record) => record.status !== 'Resolvida' && record.status !== 'Fechada').length;
   const uncheckedMachines = operations.machineChecklist.filter((record) => record.status !== 'Presente').length;
-  const scheduleBase = activeCouriers.length > 0 ? activeCouriers : operations.courierRecords;
   const isSingleDay = startDate === endDate;
 
   return {
@@ -310,7 +305,7 @@ export function buildDashboardData({
         id: 'orders',
         label: isSingleDay ? 'Pedidos hoje' : 'Pedidos no periodo',
         value: formatInteger(ordersInPeriod.length),
-        meta: `${formatInteger(delayedOrders.length)} atrasados na leitura operacional`,
+        meta: delayedOrders.length > 0 ? 'na fila' : 'sem atraso',
         badgeText: delayedOrders.length > 0 ? 'atraso' : 'ok',
         badgeClass: delayedOrders.length > 0 ? 'ui-badge--warning' : 'ui-badge--success',
         tone: 'amber',
@@ -319,7 +314,7 @@ export function buildDashboardData({
         id: 'sales',
         label: isSingleDay ? 'Vendas hoje' : 'Vendas no periodo',
         value: formatInteger(totalSalesCount),
-        meta: `${formatCurrency(totalSold)} vendidos no recorte ativo`,
+        meta: 'lançadas',
         badgeText: 'comercial',
         badgeClass: 'ui-badge--info',
         tone: 'blue',
@@ -328,16 +323,16 @@ export function buildDashboardData({
         id: 'revenue',
         label: isSingleDay ? 'Faturamento hoje' : 'Faturamento',
         value: formatCurrency(totalIncome || totalSold),
-        meta: `${formatCurrency(totalExpense)} em saidas operacionais`,
+        meta: totalExpense > 0 ? 'financeiro ok' : 'sem saida',
         badgeText: 'financeiro',
         badgeClass: 'ui-badge--success',
-        tone: 'cyan',
+        tone: 'green',
       },
       {
         id: 'ticket',
         label: 'Ticket medio',
         value: formatCurrency(averageTicket),
-        meta: `${formatInteger(scheduleBase.length)} entregadores na base operacional`,
+        meta: 'media do turno',
         badgeText: 'media',
         badgeClass: 'ui-badge--special',
         tone: 'blue',
@@ -346,39 +341,39 @@ export function buildDashboardData({
         id: 'delayed',
         label: 'Pedidos atrasados',
         value: formatInteger(delayedOrders.length),
-        meta: 'pedidos abertos acima do limite operacional',
+        meta: delayedOrders.length > 0 ? 'acao agora' : 'estavel',
         badgeText: delayedOrders.length > 0 ? 'acao' : 'estavel',
         badgeClass: delayedOrders.length > 0 ? 'ui-badge--danger' : 'ui-badge--success',
-        tone: getToneByValue(delayedOrders.length),
+        tone: delayedOrders.length > 0 ? 'red' : 'green',
       },
       {
         id: 'couriers',
         label: 'Entregadores ativos',
         value: formatInteger(activeCouriers.length),
-        meta: `${formatInteger(scheduleBase.length)} nomes disponiveis na operacao`,
+        meta: 'escala ativa',
         badgeText: 'escala',
         badgeClass: 'ui-badge--info',
-        tone: 'cyan',
+        tone: 'blue',
       },
       {
         id: 'top-products',
         label: 'Top produtos',
         value: topProducts[0] ? formatInteger(topProducts[0].quantity) : '0',
         meta: topProducts[0]
-          ? `${summarizeProductName(topProducts[0].name)} lidera o periodo`
-          : 'aguardando vendas concluidas',
+          ? 'mix lider'
+          : 'sem venda',
         badgeText: 'mix',
         badgeClass: 'ui-badge--special',
-        tone: 'amber',
+        tone: 'blue',
       },
       {
         id: 'low-stock',
         label: 'Estoque baixo',
         value: formatInteger(lowStockItems.length),
-        meta: 'produtos no limite minimo ou abaixo dele',
+        meta: lowStockItems.length > 0 ? 'repor agora' : 'estoque ok',
         badgeText: lowStockItems.length > 0 ? 'alerta' : 'ok',
         badgeClass: lowStockItems.length > 0 ? 'ui-badge--danger' : 'ui-badge--success',
-        tone: lowStockItems.length > 0 ? 'red' : 'cyan',
+        tone: lowStockItems.length > 0 ? 'red' : 'green',
       },
     ],
     charts: {

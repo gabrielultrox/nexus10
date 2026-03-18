@@ -1,4 +1,69 @@
+import { useEffect, useRef, useState } from 'react'
+
 import SurfaceCard from '../../../components/common/SurfaceCard'
+
+function getStatusBadgeClass(value) {
+  const normalized = String(value ?? '').trim().toLowerCase()
+
+  if (
+    normalized.includes('retorn') ||
+    normalized.includes('retornou') ||
+    normalized.includes('validado') ||
+    normalized.includes('fechada') ||
+    normalized.includes('baixado') ||
+    normalized.includes('confirmado') ||
+    normalized.includes('ativo')
+  ) {
+    return 'ui-badge--success'
+  }
+
+  if (
+    normalized.includes('cancel') ||
+    normalized.includes('negad') ||
+    normalized.includes('erro') ||
+    normalized.includes('manutencao')
+  ) {
+    return 'ui-badge--danger'
+  }
+
+  if (
+    normalized.includes('pend') ||
+    normalized.includes('fila') ||
+    normalized.includes('reserva') ||
+    normalized.includes('aberto')
+  ) {
+    return 'ui-badge--warning'
+  }
+
+  return 'ui-badge--info'
+}
+
+function renderNativeModuleCell(column, cell, index) {
+  const normalizedColumn = String(column ?? '').toLowerCase()
+  const normalizedValue = String(cell ?? '').toLowerCase()
+
+  if (normalizedColumn.includes('status') || normalizedColumn.includes('estado') || normalizedColumn.includes('presenca')) {
+    return <span className={`ui-badge ${getStatusBadgeClass(cell)}`}>{cell}</span>
+  }
+
+  if (normalizedColumn.includes('valor')) {
+    return <span className="ui-table__cell--numeric ui-table__cell--strong">{cell}</span>
+  }
+
+  if (normalizedColumn.includes('destino') || normalizedColumn.includes('retorno') || normalizedColumn.includes('atualizacao')) {
+    return <span className="ui-table__cell--muted">{cell}</span>
+  }
+
+  if (index === 0) {
+    return <span className="ui-table__cell--strong">{cell}</span>
+  }
+
+  if (normalizedValue.includes('sem atualizacao') || normalizedValue.includes('aguardando retorno')) {
+    return <span className="ui-table__cell--muted">{cell}</span>
+  }
+
+  return cell
+}
 
 function ModuleEmptyState({ message }) {
   return (
@@ -25,6 +90,35 @@ function NativeModuleToolbar({
   onManualReset,
   onClearAll,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return undefined
+    }
+
+    function handlePointerDown(event) {
+      if (!menuRef.current?.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [menuOpen])
+
   if (!manager || manager.hideToolbar) {
     return null
   }
@@ -78,24 +172,73 @@ function NativeModuleToolbar({
 
         <div className="native-module__toolbar-actions">
           {routePath === 'schedule' ? (
-            <>
-              <button type="button" className="ui-button ui-button--secondary" onClick={onExportSchedule}>
+            <div className="native-module__toolbar-menu" ref={menuRef}>
+              <button type="button" className="ui-button ui-button--ghost" onClick={onExportSchedule}>
                 Exportar escala
               </button>
-              <button type="button" className="ui-button ui-button--secondary" onClick={onExportScheduleMachines}>
-                Exportar maquininhas usadas
+              <button
+                type="button"
+                className="native-module__toolbar-more"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Mais acoes"
+                onClick={() => setMenuOpen((current) => !current)}
+              >
+                ⋯
               </button>
-            </>
+
+              {menuOpen ? (
+                <div className="native-module__toolbar-dropdown" role="menu">
+                  <button
+                    type="button"
+                    className="native-module__toolbar-dropdown-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onExportScheduleMachines()
+                    }}
+                  >
+                    Exportar maquininhas usadas
+                  </button>
+                  <button
+                    type="button"
+                    className="native-module__toolbar-dropdown-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onExportBackup()
+                    }}
+                  >
+                    Exportar backup
+                  </button>
+                  {manager.manualResetLabel ? (
+                    <button
+                      type="button"
+                      className="native-module__toolbar-dropdown-item native-module__toolbar-dropdown-item--danger"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onManualReset()
+                      }}
+                    >
+                      {manager.manualResetLabel}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           ) : null}
           {routePath === 'machines' ? (
             <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
               Exportar presentes
             </button>
           ) : null}
-          <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
-            Exportar backup
-          </button>
-          {manager.manualResetLabel ? (
+          {routePath !== 'schedule' ? (
+            <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
+              Exportar backup
+            </button>
+          ) : null}
+          {manager.manualResetLabel && routePath !== 'schedule' ? (
             <button type="button" className="ui-button ui-button--ghost" onClick={onManualReset}>
               {manager.manualResetLabel}
             </button>
@@ -468,14 +611,17 @@ function NativeModuleTable({
         </thead>
         <tbody>
           {manager
-            ? visibleRecords.map((record) => {
+            ? visibleRecords.map((record, rowIndex) => {
               const row = manager.toRow(record)
 
               return (
-                <tr key={record.id}>
+                <tr key={record.id} className="ui-table__row-enter" style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}>
                   {row.map((cell, index) => (
-                    <td key={`${record.id}-${index}`} className={index === 0 ? 'ui-table__cell--strong' : undefined}>
-                      {cell}
+                    <td
+                      key={`${record.id}-${index}`}
+                      className={index === 0 ? 'ui-table__cell--strong' : undefined}
+                    >
+                      {renderNativeModuleCell(tableColumns[index], cell, index)}
                     </td>
                   ))}
                   <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}`}>
@@ -517,7 +663,7 @@ function NativeModuleTable({
                     {manager.returnActionLabel && record.status !== 'Retornou' ? (
                       <button
                         type="button"
-                        className="ui-button ui-button--success native-module__table-action"
+                        className="native-module__return-action"
                         onClick={() => onMarkReturned(record.id)}
                       >
                         {manager.returnActionLabel}
@@ -526,21 +672,29 @@ function NativeModuleTable({
                     {manager.allowDelete !== false ? (
                       <button
                         type="button"
-                        className="ui-button ui-button--danger native-module__table-action"
+                        className="native-module__delete-action"
                         onClick={() => onDelete(record.id)}
+                        aria-label="Excluir registro"
+                        title="Excluir"
                       >
-                        Excluir
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                          <path d="M6 2h4l.5 1H13v1H3V3h2.5L6 2Zm-1 4h1v6H5V6Zm3 0h1v6H8V6Zm3 0h-1v6h1V6Z" />
+                        </svg>
                       </button>
                     ) : null}
                   </td>
                 </tr>
               )
             })
-            : tableRows.map((row) => (
-              <tr key={`${routePath}-${row.join('-')}`}>
+            : tableRows.map((row, rowIndex) => (
+              <tr
+                key={`${routePath}-${row.join('-')}`}
+                className="ui-table__row-enter"
+                style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
+              >
                 {row.map((cell, index) => (
                   <td key={`${routePath}-${row[0]}-${index}`} className={index === 0 ? 'ui-table__cell--strong' : undefined}>
-                    {cell}
+                    {renderNativeModuleCell(tableColumns[index], cell, index)}
                   </td>
                 ))}
               </tr>

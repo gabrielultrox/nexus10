@@ -747,19 +747,20 @@ function OrdersModule({
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleOrders.map((order) => (
+                      {visibleOrders.map((order, index) => (
                         <tr
                           key={order.id}
-                          className={order.id === orderId ? 'entity-table__row--selected' : undefined}
+                          className={`ui-table__row-enter${order.id === orderId ? ' entity-table__row--selected' : ''}`}
+                          style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
                           onClick={() => onOpenDetail(order.id)}
                         >
                           <td className="ui-table__cell--strong">{order.number}</td>
                           <td>{order.origin}</td>
                           <td>{order.customerName}</td>
                           <td className="ui-table__cell--numeric">{order.total}</td>
-                          <td>{getOrderDomainStatusLabel(order.domainStatus)}</td>
-                          <td>{order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}</td>
-                          <td>{formatDateTime(order.createdAt)}</td>
+                          <td><span className={`ui-badge ${order.domainStatus === 'OPEN' ? 'ui-badge--warning' : order.domainStatus === 'DISPATCHED' || order.domainStatus === 'CONVERTED_TO_SALE' ? 'ui-badge--success' : 'ui-badge--danger'}`}>{getOrderDomainStatusLabel(order.domainStatus)}</span></td>
+                          <td><span className={`ui-badge ${order.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--info'}`}>{order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}</span></td>
+                          <td className="ui-table__cell--muted">{formatDateTime(order.createdAt)}</td>
                         </tr>
                       ))}
                     </tbody>

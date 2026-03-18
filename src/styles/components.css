@@ -719,3 +719,122 @@
   border: 1px solid var(--border);
   box-shadow: none;
 }
+
+.ui-select {
+  appearance: none;
+  min-height: 36px;
+  height: 36px;
+  padding-right: 36px;
+  background-color: var(--bg-elevated);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5L8 10L12 6.5' stroke='%23A1A1AA' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.ui-select::-ms-expand {
+  display: none;
+}
+
+.ui-input:focus,
+.ui-select:focus,
+.ui-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.ui-table td {
+  height: 44px;
+}
+
+.ui-table tbody tr:hover {
+  background: var(--accent-dim);
+}
+
+.ui-table {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ui-table th {
+  height: 36px;
+  padding: 0 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.ui-table td {
+  height: 44px;
+  padding: 0 16px;
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.ui-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ui-table__cell--muted,
+.ui-table__cell--mono {
+  color: var(--text-secondary);
+}
+
+.ui-table__cell--numeric {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-table tbody tr {
+  cursor: pointer;
+  transition: background 150ms ease;
+  animation: ui-row-enter 200ms ease both;
+  animation-delay: var(--row-delay, 0ms);
+}
+
+.ui-table tbody tr:nth-child(1) { --row-delay: 0ms; }
+.ui-table tbody tr:nth-child(2) { --row-delay: 40ms; }
+.ui-table tbody tr:nth-child(3) { --row-delay: 80ms; }
+.ui-table tbody tr:nth-child(4) { --row-delay: 120ms; }
+.ui-table tbody tr:nth-child(5) { --row-delay: 160ms; }
+.ui-table tbody tr:nth-child(6) { --row-delay: 200ms; }
+.ui-table tbody tr:nth-child(7),
+.ui-table tbody tr:nth-child(n + 8) { --row-delay: 240ms; }
+
+.ui-table__row-enter {
+  animation: ui-row-enter 200ms ease both;
+  animation-delay: var(--row-delay, 0ms);
+}
+
+@keyframes ui-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-table tbody tr,
+  .ui-table__row-enter {
+    animation: none;
+    transition: none;
+  }
+}

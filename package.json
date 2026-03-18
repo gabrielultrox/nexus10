@@ -16,6 +16,7 @@
     "preview": "vite preview",
     "deploy:preview": "vercel -y",
     "deploy:prod:manual": "vercel --prod -y",
+    "release:auto": "node scripts/release-auto.mjs",
     "test": "vitest run",
     "firebase:login": "firebase login",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules",

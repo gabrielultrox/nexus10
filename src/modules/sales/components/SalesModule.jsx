@@ -362,17 +362,22 @@ function SalesModule({
                   <table className="ui-table">
                     <thead><tr><th>Venda</th><th>Origem</th><th>Cliente</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Criada em</th></tr></thead>
                     <tbody>
-                      {visibleSales.map((sale) => {
+                      {visibleSales.map((sale, index) => {
                         const statusMeta = getSaleStatusMeta(sale.domainStatus);
                         return (
-                          <tr key={sale.id} className={sale.id === saleId ? 'entity-table__row--selected' : undefined} onClick={() => onOpenDetail(sale.id)}>
+                          <tr
+                            key={sale.id}
+                            className={`ui-table__row-enter${sale.id === saleId ? ' entity-table__row--selected' : ''}`}
+                            style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
+                            onClick={() => onOpenDetail(sale.id)}
+                          >
                             <td className="ui-table__cell--strong">{sale.number}</td>
-                            <td>{sale.source === 'ORDER' ? `Pedido ${sale.orderId ?? '-'}` : 'Venda direta'}</td>
+                            <td className="ui-table__cell--muted">{sale.source === 'ORDER' ? `Pedido ${sale.orderId ?? '-'}` : 'Venda direta'}</td>
                             <td>{sale.customerSnapshot?.name || 'Cliente avulso'}</td>
                             <td className="ui-table__cell--numeric">{formatCurrencyBRL(sale.totals?.total ?? 0)}</td>
-                            <td>{sale.paymentMethodLabel}</td>
+                            <td className="ui-table__cell--muted">{sale.paymentMethodLabel}</td>
                             <td><span className={`ui-badge ${statusMeta.badgeClass}`}>{statusMeta.label}</span></td>
-                            <td>{formatDateTime(sale.createdAtDate ?? sale.createdAt)}</td>
+                            <td className="ui-table__cell--muted">{formatDateTime(sale.createdAtDate ?? sale.createdAt)}</td>
                           </tr>
                         );
                       })}
