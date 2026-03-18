@@ -1,6 +1,6 @@
 .inventory-module {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-3);
 }
 
 .inventory-form-grid {
@@ -17,23 +17,21 @@
 
 .inventory-import {
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2-5);
   border: 1px dashed var(--color-border-default);
   border-radius: var(--radius-section);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 18%),
-    color-mix(in srgb, var(--surface-panel) 82%, transparent);
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
 }
 
 .inventory-import__copy {
   display: grid;
-  gap: var(--space-1-5);
+  gap: var(--space-1);
 }
 
 .inventory-import__actions {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .inventory-import__actions input[type='file'] {

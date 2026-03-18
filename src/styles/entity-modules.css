@@ -16,7 +16,7 @@
 
 .entity-form-shell__header {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
   gap: var(--space-3);
   align-items: start;
   min-width: 0;
@@ -27,7 +27,7 @@
   overflow: hidden;
   display: grid;
   gap: var(--space-1-5);
-  padding: var(--space-4);
+  padding: var(--space-3-5);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background:
@@ -54,7 +54,7 @@
 }
 
 .entity-form-hero__title {
-  max-width: 16ch;
+  max-width: 14ch;
   font-family: var(--font-title);
   font-size: clamp(1.3rem, 2.1vw, 1.8rem);
   line-height: 1.04;
@@ -76,6 +76,8 @@
 .entity-form-aside {
   display: grid;
   gap: var(--space-2);
+  align-content: start;
+  grid-auto-rows: min-content;
 }
 
 .entity-form-aside__card {
@@ -85,6 +87,7 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-panel);
   background: var(--surface-panel-soft-alt);
+  align-content: start;
 }
 
 .entity-form-aside__card strong {
@@ -92,6 +95,12 @@
   font-family: var(--font-sans);
   font-size: 1.05rem;
   line-height: 1;
+}
+
+.entity-form-aside__card .text-body {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .entity-form-aside__label {

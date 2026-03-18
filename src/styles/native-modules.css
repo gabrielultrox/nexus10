@@ -29,12 +29,14 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(calc(var(--space-9) * 3 + var(--space-2)), 0.95fr);
   gap: var(--space-3);
   align-items: stretch;
+  grid-auto-rows: min-content;
 }
 
 .native-module__status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-9) * 2 + var(--space-4)), 1fr));
   gap: var(--space-3);
+  align-content: start;
 }
 
 .native-module__status-card {
@@ -106,6 +108,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: stretch;
 }
 
 .native-module__status-command-actions .ui-button {
@@ -438,6 +441,16 @@
 
   .native-module__status-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .native-module__status-command-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .native-module__status-command-actions .ui-button {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -1871,6 +1884,10 @@
 @media (max-width: 640px) {
   .native-module__status-grid,
   .native-module__kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .native-module__status-command-actions {
     grid-template-columns: 1fr;
   }
 

@@ -54,8 +54,7 @@ function CommerceWorkspaceLayout() {
         <section className="commerce-shell__rail">
           <div className="commerce-shell__rail-copy">
             <span className="commerce-shell__rail-kicker">Workspace</span>
-            <strong>Pedidos e vendas em foco</strong>
-            <p>Fluxo dedicado, mais largo e sem dividir espaco com o restante do shell.</p>
+            <strong>Fluxo comercial dedicado</strong>
           </div>
 
           <div className="commerce-shell__rail-actions">
