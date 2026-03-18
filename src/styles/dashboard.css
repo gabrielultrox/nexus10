@@ -18,6 +18,10 @@
   gap: var(--space-3);
 }
 
+.dashboard-kpi-grid .ui-kpi-card {
+  min-height: calc(var(--space-9) * 1.55);
+}
+
 .dashboard-filters {
   display: flex;
   gap: var(--space-4);
@@ -147,6 +151,11 @@
 .dashboard-chart-grid > .surface-card,
 .dashboard-summary-grid > .surface-card {
   min-width: 0;
+}
+
+.dashboard-chart-grid > .surface-card .surface-card__title,
+.dashboard-summary-grid > .surface-card .surface-card__title {
+  color: color-mix(in srgb, var(--color-accent-cyan) 30%, var(--color-text-primary));
 }
 
 .dashboard-chart-card {
@@ -298,6 +307,10 @@
   padding: var(--space-4);
 }
 
+.ops-row .ui-badge {
+  align-self: flex-start;
+}
+
 .ops-row__title,
 .ops-metric__value,
 .bar-chart__value,
@@ -372,6 +385,10 @@
   }
 
   .dashboard-chart-card {
+    min-height: auto;
+  }
+
+  .dashboard-kpi-grid .ui-kpi-card {
     min-height: auto;
   }
 

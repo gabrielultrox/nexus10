@@ -34,6 +34,7 @@
   align-items: baseline;
   gap: var(--space-3);
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .workspace-header__eyebrow {
@@ -62,6 +63,7 @@
   justify-content: flex-end;
   gap: var(--space-2);
   flex-shrink: 0;
+  align-items: center;
 }
 
 .workspace-nav .page-tabs {
@@ -71,6 +73,11 @@
 
 .workspace-nav .page-tabs__tab {
   min-width: calc(var(--space-9) * 2 + var(--space-7));
+}
+
+.workspace-nav .page-tabs,
+.workspace-nav .ui-button {
+  min-height: 40px;
 }
 
 .workspace-shell--orders .workspace-nav .ui-button--primary,
@@ -124,6 +131,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
 }
 
 .orders-domain__layout {
@@ -385,6 +393,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
 }
 
 .sales-domain__toolbar {
@@ -599,6 +608,7 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   padding-bottom: var(--space-1);
+  align-items: center;
 }
 
 .orders-domain .surface-card,
@@ -1033,6 +1043,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
+  align-items: center;
 }
 
 .commerce-step__subtotal {
