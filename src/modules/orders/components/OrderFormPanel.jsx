@@ -77,6 +77,7 @@ function OrderFormPanel({
       <div className="orders-domain__detail-header">
         <div>
           <p className="text-section-title">{editingOrderId ? 'Editar Pedido' : 'Novo Pedido'}</p>
+          <p className="text-body">Monte os itens primeiro e finalize o pedido com os dados comerciais em seguida.</p>
         </div>
       </div>
 

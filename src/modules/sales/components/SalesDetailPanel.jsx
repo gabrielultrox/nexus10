@@ -19,6 +19,7 @@ function SalesDetailPanel({
       <div className="sales-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe da Venda</p>
+          <p className="text-body">Resumo executivo da venda, publicacao operacional e rastreio do lancamento.</p>
         </div>
 
         {selectedSale ? (
@@ -151,7 +152,10 @@ function SalesDetailPanel({
           </div>
 
           <div className="sales-domain__items-list">
-            <p className="text-label">Itens da venda</p>
+            <div className="sales-domain__items-header">
+              <p className="text-label">Itens da venda</p>
+              <span className="ui-badge ui-badge--special">{selectedSale.items?.length ?? 0} itens</span>
+            </div>
             {selectedSale.items?.map((item, index) => (
               <div key={`${item.productId || item.name}-${index}`} className="sales-domain__item-line">
                 <div>

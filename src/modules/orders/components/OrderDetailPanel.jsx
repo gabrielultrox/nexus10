@@ -32,6 +32,7 @@ function OrderDetailPanel({
       <div className="orders-domain__detail-header">
         <div>
           <p className="text-section-title">Detalhe do Pedido</p>
+          <p className="text-body">Leitura operacional do pedido, conversao em venda e impacto no turno.</p>
         </div>
 
         {selectedOrder ? (
@@ -186,7 +187,10 @@ function OrderDetailPanel({
           </div>
 
           <div className="orders-domain__items-list">
-            <p className="text-label">Itens do pedido</p>
+            <div className="orders-domain__items-header">
+              <p className="text-label">Itens do pedido</p>
+              <span className="ui-badge ui-badge--info">{selectedOrder.items?.length ?? 0} itens</span>
+            </div>
             {selectedOrder.items?.map((item, index) => (
               <div key={`${item.productId || item.productSnapshot?.name}-${index}`} className="orders-domain__item-line">
                 <div>
