@@ -17,6 +17,14 @@ const LAST_OPERATOR_STORAGE_KEY = 'nexus10.lastOperator';
 
 const operatorOptions = getOperatorOptions();
 
+function getTemporaryOperatorName() {
+  if (typeof window === 'undefined') {
+    return operatorOptions[0] ?? 'Gabriel';
+  }
+
+  return window.localStorage.getItem(LAST_OPERATOR_STORAGE_KEY) ?? operatorOptions[0] ?? 'Gabriel';
+}
+
 function buildLocalSession(profile) {
   return {
     uid: profile.uid,
@@ -34,6 +42,18 @@ function buildLocalSession(profile) {
   };
 }
 
+async function buildTemporarySession() {
+  const operatorName = getTemporaryOperatorName();
+  const profile = await resolveUserProfileByOperator(operatorName)
+    .catch(() => getDefaultUserProfile(operatorName));
+
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, operatorName);
+  }
+
+  return buildLocalSession(profile);
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +65,9 @@ export function AuthProvider({ children }) {
         const savedSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
 
         if (!savedSession) {
-          setSession(null);
+          const nextSession = await buildTemporarySession();
+          window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+          setSession(nextSession);
           return;
         }
 
@@ -61,8 +83,10 @@ export function AuthProvider({ children }) {
         setSession(nextSession);
       } catch (error) {
         console.error('Nao foi possivel restaurar a sessao local.', error);
-        setAuthError('Nao foi possivel restaurar a sessao local.');
-        setSession(null);
+        const nextSession = await buildTemporarySession();
+        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+        setAuthError('');
+        setSession(nextSession);
       } finally {
         setLoading(false);
       }
@@ -107,7 +131,9 @@ export function AuthProvider({ children }) {
         if (firebaseReady) {
           await clearRemoteSession().catch(() => null);
         }
-        setSession(null);
+        const nextSession = await buildTemporarySession();
+        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+        setSession(nextSession);
       },
       hasRole(requiredRoles = []) {
         return userHasRequiredRole(session, requiredRoles);
