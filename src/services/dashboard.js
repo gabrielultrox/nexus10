@@ -51,6 +51,18 @@ function summarizeProductName(name) {
   return `${words.slice(0, 3).join(' ')}...`
 }
 
+function toSentenceCase(value) {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (!normalized) {
+    return 'Produto'
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
 function buildDateLabel(date) {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
@@ -394,17 +406,15 @@ export function buildDashboardData({
       })),
       topProducts: topProducts.map((item) => ({
         id: item.id,
-        title: item.name,
-        description: `${formatInteger(item.quantity)} itens · ${formatCurrency(item.revenue)}`,
+        title: summarizeProductName(item.name),
+        description: formatCurrency(item.revenue),
         badgeText: formatInteger(item.quantity),
         badgeClass: 'ui-badge--info',
       })),
       lowStock: lowStockItems.slice(0, 5).map((item) => ({
         id: item.id,
-        title: item.productName ?? 'Produto',
-        description: `${formatInteger(item.currentStock)} em estoque · minimo ${formatInteger(item.minimumStock)}`,
-        badgeText: 'estoque',
-        badgeClass: 'ui-badge--danger',
+        title: toSentenceCase(item.productName ?? 'Produto'),
+        description: `${formatInteger(item.currentStock)} un.`,
       })),
       closing: [
         { id: 'income', label: 'Entradas', value: formatCurrency(totalIncome || totalSold) },

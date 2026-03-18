@@ -284,11 +284,8 @@
 }
 
 .ops-empty {
-  padding: var(--space-4);
-  border: 1px dashed var(--color-border-default);
-  border-radius: var(--radius-section);
-  color: var(--color-text-muted);
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .ops-row {
@@ -502,6 +499,240 @@
   .dashboard-kpi-grid,
   .dashboard-chart-grid,
   .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-chart-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dashboard-chart-grid > .surface-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  height: 220px;
+  overflow: hidden;
+}
+
+.dashboard-chart-grid > .surface-card .surface-card__title {
+  padding: 16px 16px 0;
+  border-bottom: 0;
+}
+
+.dashboard-chart-grid > .surface-card .surface-card__content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  padding: 0 16px 16px;
+}
+
+.trend-chart,
+.bar-chart {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.trend-chart__frame,
+.bar-chart__frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.trend-chart__svg,
+.bar-chart__plot {
+  height: 100%;
+}
+
+.trend-chart__svg {
+  border-radius: 0;
+  background:
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px),
+    transparent;
+  background-size: 100% 25%, 16.66% 100%, auto;
+}
+
+.trend-chart__stop--top {
+  stop-color: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.trend-chart__stop--bottom {
+  stop-color: transparent;
+}
+
+.trend-chart__line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.trend-chart__point {
+  fill: var(--accent);
+  cursor: pointer;
+}
+
+.trend-chart__axis,
+.bar-chart__axis {
+  display: grid;
+  grid-template-columns: repeat(var(--chart-columns, 6), minmax(0, 1fr));
+  gap: 8px;
+  min-height: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.trend-chart__axis span,
+.bar-chart__axis span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-chart__plot {
+  gap: 8px;
+  align-items: end;
+}
+
+.bar-chart__item {
+  justify-content: end;
+  gap: 0;
+}
+
+.bar-chart__bar {
+  max-width: 100%;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.dashboard-chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  min-width: 72px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  font-size: 12px;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+
+.dashboard-chart-tooltip--top-right {
+  top: 0;
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.dashboard-chart-tooltip__label {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.dashboard-chart-tooltip__value {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-summary-grid > .surface-card:first-child .surface-card__content {
+  min-height: 160px;
+}
+
+.ops-list--shift {
+  height: 100%;
+  align-content: start;
+}
+
+.ops-list--compact {
+  gap: 0;
+}
+
+.ops-empty--shift {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 160px;
+  text-align: center;
+}
+
+.ops-empty--compact {
+  padding: 10px 0;
+}
+
+.ops-row--simple,
+.ops-row--inline {
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.ops-list > .ops-row:last-child,
+.ops-list--compact > .ops-row:last-child {
+  border-bottom: 0;
+}
+
+.ops-row--inline {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.ops-row__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ops-row__main--danger {
+  gap: 6px;
+}
+
+.ops-row__title--small {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ops-row__value {
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ops-row__value--danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.ops-row__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-chart-grid {
     grid-template-columns: 1fr;
   }
 }

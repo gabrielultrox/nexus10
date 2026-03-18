@@ -13,17 +13,11 @@ function DashboardCharts({ charts }) {
 
       <div className="dashboard-chart-grid">
         <SurfaceCard title={primaryChart.title}>
-          <div className="dashboard-chart-card">
-            <p className="dashboard-chart-card__description">{primaryChart.description}</p>
-            {primaryChart.kind === 'trend' ? <TrendAreaChart data={primaryChart.data} /> : <HourlyBarChart data={primaryChart.data} />}
-          </div>
+          {primaryChart.kind === 'trend' ? <TrendAreaChart data={primaryChart.data} /> : <HourlyBarChart data={primaryChart.data} />}
         </SurfaceCard>
 
         <SurfaceCard title={secondaryChart.title}>
-          <div className="dashboard-chart-card">
-            <p className="dashboard-chart-card__description">{secondaryChart.description}</p>
-            {secondaryChart.kind === 'bar' ? <HourlyBarChart data={secondaryChart.data} /> : <TrendAreaChart data={secondaryChart.data} />}
-          </div>
+          {secondaryChart.kind === 'bar' ? <HourlyBarChart data={secondaryChart.data} /> : <TrendAreaChart data={secondaryChart.data} />}
         </SurfaceCard>
       </div>
     </section>
