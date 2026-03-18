@@ -307,6 +307,10 @@
 }
 
 @media (max-width: 768px) {
+  .entity-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .entity-form-grid {
     grid-template-columns: 1fr;
   }
@@ -314,5 +318,14 @@
   .entity-form-section--span-2,
   .entity-form-grid__wide {
     grid-column: 1 / -1;
+  }
+
+  .entity-table__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .entity-table__actions .ui-button {
+    width: 100%;
   }
 }

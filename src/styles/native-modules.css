@@ -119,6 +119,7 @@
 
 .native-module__status-card .ui-badge {
   max-width: 100%;
+  align-self: flex-start;
 }
 
 .native-module__status-history {
@@ -1829,6 +1830,11 @@
     grid-template-columns: 1fr;
   }
 
+  .native-module__status-grid,
+  .native-module__kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .native-module__toolbar,
   .native-module__toolbar-secondary {
     flex-direction: column;
@@ -1879,6 +1885,11 @@
 }
 
 @media (max-width: 640px) {
+  .native-module__status-grid,
+  .native-module__kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
   .native-module__form-copy {
     align-items: flex-start;
   }
@@ -1886,6 +1897,14 @@
   .native-module__toolbar-actions {
     justify-content: flex-start;
     margin-left: 0;
+    width: 100%;
+  }
+
+  .native-module__toolbar-actions .ui-button,
+  .native-module__status-command-actions .ui-button,
+  .native-module__form-actions .ui-button {
+    width: 100%;
+    min-width: 0;
   }
 
   .machine-checklist__footer {
