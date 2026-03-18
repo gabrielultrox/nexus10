@@ -2,7 +2,6 @@ function DashboardFilters({ startDate, endDate, onChange, onSetPreset }) {
   return (
     <section className="dashboard-filters">
       <div className="dashboard-filters__copy">
-        <span className="text-overline">Recorte</span>
         <strong className="dashboard-filters__title">Periodo operacional</strong>
       </div>
 

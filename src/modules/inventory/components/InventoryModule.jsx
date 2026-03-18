@@ -485,9 +485,9 @@ function InventoryModule() {
             <div className="entity-form-shell__header">
               <div className="entity-form-hero">
                 <span className="entity-form-hero__eyebrow">Ajuste operacional</span>
-                <h4 className="entity-form-hero__title">Ajuste o estoque com um fluxo mais simples</h4>
+                <h4 className="entity-form-hero__title">Movimente o estoque com rapidez</h4>
                 <p className="entity-form-hero__description">
-                  Registre entradas, saidas e ajustes absolutos com foco em conferencia rapida e rastreio claro.
+                  Registre entradas, saidas e ajustes absolutos com rastreio claro.
                 </p>
                 <div className="entity-form-hero__chips">
                   <span className="ui-badge ui-badge--warning">Ajuste imediato</span>
@@ -500,7 +500,7 @@ function InventoryModule() {
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Itens monitorados</span>
                   <strong>{String(metrics[0]?.value ?? '00')}</strong>
-                  <p className="text-body">Produtos acompanhados pelo painel atual.</p>
+                  <p className="text-body">Produtos acompanhados neste painel.</p>
                 </div>
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Saldo critico</span>
@@ -515,7 +515,7 @@ function InventoryModule() {
                 <div className="entity-form-section__header">
                   <span className="entity-form-section__eyebrow">Movimentacao</span>
                   <h4 className="entity-form-section__title">Registro manual</h4>
-                  <p className="entity-form-section__description">Selecione item, tipo e motivo do ajuste.</p>
+                  <p className="entity-form-section__description">Selecione item, tipo e motivo.</p>
                 </div>
 
                 <div className="entity-stack">
@@ -576,7 +576,7 @@ function InventoryModule() {
                 <div className="entity-form-section__header">
                   <span className="entity-form-section__eyebrow">Importacao</span>
                   <h4 className="entity-form-section__title">Carga por CSV</h4>
-                  <p className="entity-form-section__description">Ideal para conciliacao em lote e atualizacao rapida.</p>
+                  <p className="entity-form-section__description">Ideal para conciliacao em lote.</p>
                 </div>
 
                 <div className="inventory-import">
@@ -584,7 +584,7 @@ function InventoryModule() {
                     <p className="text-body">Aceita codigo, nome, estoque e preco. Produtos ausentes podem ser criados no processo.</p>
                     {csvPreview ? (
                       <p className="text-body">
-                        Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount} para criar, {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
+                        Previa: {csvPreview.importedCount} linha(s), {csvPreview.createdCount} para criar, {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
                       </p>
                     ) : null}
                   </div>
@@ -642,7 +642,7 @@ function InventoryModule() {
           <div className="entity-toolbar-shell entity-toolbar-shell--section">
             <div className="entity-toolbar-copy">
               <p className="text-section-title">Produtos e quantidade em estoque</p>
-              <p className="text-body">Leia a base inteira da loja com saldo atual, minimo e sinais de reposicao.</p>
+              <p className="text-body">Leia a base da loja com saldo atual, minimo e sinais de reposicao.</p>
             </div>
 
             <div className="entity-toolbar inventory-toolbar">
@@ -748,7 +748,7 @@ function InventoryModule() {
         <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Timeline do estoque</p>
-            <p className="text-body">Filtre por periodo ou texto para localizar rapidamente cada ajuste.</p>
+            <p className="text-body">Filtre por periodo ou texto para localizar cada ajuste.</p>
           </div>
 
           <div className="entity-toolbar inventory-toolbar inventory-toolbar--movements">

@@ -4,12 +4,12 @@ import DashboardSectionHeader from './DashboardSectionHeader';
 function DashboardOperationalSummary({ operations }) {
   return (
     <section className="dashboard-section">
-      <DashboardSectionHeader title="Resumo Operacional" />
+      <DashboardSectionHeader title="Operacao do turno" />
 
       <div className="dashboard-summary-grid">
         <SurfaceCard title="Escala Ativa">
           {operations.activeShift.length === 0 ? (
-            <div className="ops-empty">Nenhum entregador ativo na escala do periodo.</div>
+            <div className="ops-empty">Nenhum entregador ativo no periodo.</div>
           ) : (
             <div className="ops-list">
               {operations.activeShift.map((item) => (
@@ -29,7 +29,7 @@ function DashboardOperationalSummary({ operations }) {
 
         <SurfaceCard title="Top Produtos">
           {operations.topProducts.length === 0 ? (
-            <div className="ops-empty">As vendas concluidas vao alimentar este ranking automaticamente.</div>
+            <div className="ops-empty">As vendas concluidas alimentam este ranking.</div>
           ) : (
             <div className="ops-list">
               {operations.topProducts.map((item) => (
@@ -47,7 +47,7 @@ function DashboardOperationalSummary({ operations }) {
 
         <SurfaceCard title="Estoque Baixo">
           {operations.lowStock.length === 0 ? (
-            <div className="ops-empty">Nenhum produto esta no limite minimo de estoque.</div>
+            <div className="ops-empty">Nenhum produto esta no limite minimo.</div>
           ) : (
             <div className="ops-list">
               {operations.lowStock.map((item) => (

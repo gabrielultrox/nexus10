@@ -1,15 +1,13 @@
 .dashboard-shell {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
   border-radius: var(--radius-shell);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--surface-panel) 97%, var(--surface-panel-soft-alt)));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent),
-    0 10px 20px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 3%, transparent), transparent 16%),
+    color-mix(in srgb, var(--surface-panel) 98%, var(--surface-panel-soft-alt));
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
 }
 
 .dashboard-kpi-grid {
@@ -19,7 +17,7 @@
 }
 
 .dashboard-kpi-grid .ui-kpi-card {
-  min-height: calc(var(--space-9) * 1.55);
+  min-height: calc(var(--space-9) * 1.45);
 }
 
 .dashboard-filters {
@@ -28,13 +26,10 @@
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-3-5);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 18%),
-    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
 }
 
 .dashboard-filters__copy {
@@ -46,7 +41,7 @@
 .dashboard-filters__title {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.1;
 }
@@ -132,20 +127,20 @@
 
 .dashboard-section {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2-5);
   min-width: 0;
   padding-top: var(--space-1);
-  border-top: 1px solid color-mix(in srgb, var(--surface-card-gloss) 12%, var(--color-border-subtle));
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .dashboard-section-title {
   font-family: var(--font-sans);
-  font-size: var(--space-3);
+  font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .dashboard-chart-grid > .surface-card,
@@ -155,19 +150,20 @@
 
 .dashboard-chart-grid > .surface-card .surface-card__title,
 .dashboard-summary-grid > .surface-card .surface-card__title {
-  color: color-mix(in srgb, var(--color-accent-cyan) 30%, var(--color-text-primary));
+  color: color-mix(in srgb, var(--color-accent-cyan) 22%, var(--color-text-primary));
 }
 
 .dashboard-chart-card {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
   min-height: calc(var(--space-8) * 4);
 }
 
 .dashboard-chart-card__description {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
   color: var(--color-text-secondary);
+  font-size: 0.84rem;
 }
 
 .trend-chart,
@@ -216,11 +212,8 @@
 .ops-row,
 .ops-metric {
   border-radius: var(--radius-section);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 18%),
-    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
   border: 1px solid var(--color-border-subtle);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent);
 }
 
 .trend-chart__label {
@@ -232,8 +225,9 @@
 
 .trend-chart__label strong {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .bar-chart__plot {
@@ -268,8 +262,9 @@
 
 .bar-chart__value {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-size: 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .bar-chart__labels {
@@ -293,9 +288,7 @@
   border: 1px dashed var(--color-border-default);
   border-radius: var(--radius-section);
   color: var(--color-text-muted);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 6%, transparent), transparent 18%),
-    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
 }
 
 .ops-row {
@@ -304,7 +297,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-3);
-  padding: var(--space-4);
+  padding: var(--space-3-5);
 }
 
 .ops-row .ui-badge {
@@ -327,6 +320,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .ops-row__meta {
@@ -334,7 +328,7 @@
 }
 
 .ops-metric {
-  padding: var(--space-4);
+  padding: var(--space-3-5);
 }
 
 .ops-metric__label {
@@ -349,8 +343,9 @@
 
 .ops-metric__value {
   color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-family: var(--font-sans);
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {

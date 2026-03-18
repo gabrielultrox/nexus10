@@ -551,7 +551,7 @@ function ProductsModule() {
         <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Auditoria da importacao</p>
-            <p className="text-body">Revise primeiro os pontos que comprometem busca, filtro e uso no PDV.</p>
+            <p className="text-body">Priorize itens que atrapalham busca, filtro e venda.</p>
           </div>
           <div className="entity-form-actions entity-form-actions--inline">
             <button type="button" className="ui-button ui-button--ghost" onClick={handleNormalizeCategories} disabled={normalizingCategories || !can('catalog:write')}>
@@ -610,8 +610,8 @@ function ProductsModule() {
           <div className="entity-form-shell__header">
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">Catalogo ativo</span>
-              <h4 className="entity-form-hero__title">{editingProductId ? 'Atualize o produto em foco' : 'Cadastre produtos com um fluxo mais direto'}</h4>
-              <p className="entity-form-hero__description">Defina identidade, faixa comercial e saldo inicial com menos ruido e mais leitura operacional.</p>
+              <h4 className="entity-form-hero__title">{editingProductId ? 'Atualize o produto em foco' : 'Cadastre e revise o catalogo'}</h4>
+              <p className="entity-form-hero__description">Defina identidade, faixa comercial e saldo inicial de forma mais direta.</p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">SKU pronto para PDV</span>
                 <span className="ui-badge ui-badge--warning">Controle de minimo</span>
@@ -623,12 +623,12 @@ function ProductsModule() {
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Produtos ativos</span>
                   <strong>{String(metrics[1]?.value ?? '00')}</strong>
-                  <p className="text-body">Itens liberados para pedido, venda e consulta.</p>
+                  <p className="text-body">Itens liberados para pedido e venda.</p>
                 </div>
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Estoque baixo</span>
                   <strong>{String(metrics[2]?.value ?? '00')}</strong>
-                  <p className="text-body">Itens que pedem revisao antes de afetar o turno.</p>
+                  <p className="text-body">Itens que pedem revisao do saldo minimo.</p>
                 </div>
               </div>
           </div>
@@ -730,7 +730,7 @@ function ProductsModule() {
         <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Produtos com quantidade em estoque</p>
-            <p className="text-body">Use busca e filtros para localizar rapido o item e entender a saude do cadastro.</p>
+            <p className="text-body">Use busca e filtros para localizar o item e revisar a saude do cadastro.</p>
           </div>
           <div className="entity-toolbar entity-toolbar--filters">
             <div className="ui-field">
@@ -776,7 +776,7 @@ function ProductsModule() {
             <p className="text-body">
               {selectedProductIds.length > 0
                 ? `${selectedProductIds.length} produto(s) selecionado(s) para ajuste rapido.`
-                : 'Selecione produtos na tabela para aplicar categoria, minimo ou status em lote.'}
+                : 'Selecione itens da tabela para aplicar categoria, minimo ou status.'}
             </p>
           </div>
           <div className="entity-toolbar entity-toolbar--bulk">

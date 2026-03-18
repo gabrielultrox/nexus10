@@ -9,7 +9,7 @@ function DashboardCharts({ charts }) {
 
   return (
     <section className="dashboard-section">
-      <DashboardSectionHeader title="Leitura de Performance" />
+      <DashboardSectionHeader title="Performance" />
 
       <div className="dashboard-chart-grid">
         <SurfaceCard title={primaryChart.title}>
