@@ -23,16 +23,16 @@ body::before {
   background:
     linear-gradient(var(--surface-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--surface-grid-line) 1px, transparent 1px);
-  background-size: 100% 44px, 44px 100%;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 92%);
-  opacity: 0.22;
+  background-size: 100% calc(var(--space-8) + var(--space-1)), calc(var(--space-8) + var(--space-1)) 100%;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent 94%);
+  opacity: 0.3;
 }
 
 body::after {
   background:
-    radial-gradient(circle at center, var(--color-status-info-bg), transparent 45%),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 5%, transparent), transparent 18%, transparent 82%, color-mix(in srgb, var(--color-accent-amber) 5%, transparent)),
     repeating-linear-gradient(180deg, var(--surface-scanline) 0 1px, transparent 1px 4px);
-  opacity: 0.14;
+  opacity: 0.08;
 }
 
 #root {
@@ -89,16 +89,18 @@ body::after {
   padding: var(--space-3-5) var(--space-2-5);
   background: var(--gradient-sidebar);
   border-right: 1px solid var(--color-border-default);
-  backdrop-filter: blur(18px);
+  box-shadow:
+    inset -1px 0 0 color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 10%, transparent);
 }
 
 .sidebar__brand {
   display: flex;
   align-items: center;
   gap: var(--space-2-5);
-  padding: var(--space-1-5) var(--space-1);
+  padding: var(--space-2) var(--space-1);
   border-bottom: 1px solid var(--color-border-subtle);
-  padding-bottom: var(--space-2-5);
+  padding-bottom: var(--space-3);
   margin-bottom: var(--space-1);
 }
 
@@ -109,14 +111,14 @@ body::after {
   object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(
-    0 0 var(--space-2) color-mix(in srgb, var(--color-accent-red) 32%, transparent)
+    0 0 var(--space-1) color-mix(in srgb, var(--color-accent-red) 20%, transparent)
   );
 }
 
 .sidebar__title {
   font-family: var(--font-title);
   font-size: 0.96rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: none;
 }
 
@@ -154,10 +156,10 @@ body::after {
   align-items: center;
   gap: var(--space-2-5);
   padding: var(--space-2-5) var(--space-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-section);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-base);
   color: var(--color-text-secondary);
-  background: transparent;
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 72%, transparent);
   transition:
     background var(--transition-base),
     border-color var(--transition-base),
@@ -179,18 +181,20 @@ body::after {
 }
 
 .sidebar__link:hover {
-  background: var(--surface-panel-highlight);
+  background: color-mix(in srgb, var(--surface-panel-highlight) 78%, transparent);
   border-color: var(--color-border-default);
   color: var(--color-text-primary);
 }
 
 .sidebar__link--active {
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 24%),
-    var(--surface-panel-highlight);
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 18%),
+    color-mix(in srgb, var(--surface-panel-highlight) 80%, transparent);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 20%, var(--color-border-default));
   color: var(--color-text-primary);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+    0 8px 18px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
 }
 
 .sidebar__link--active::before {
@@ -234,7 +238,7 @@ body::after {
 
 .sidebar__link-copy strong {
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sidebar__link-copy small {
@@ -252,6 +256,7 @@ body::after {
   gap: var(--space-4);
   padding: var(--space-2-5) 0 var(--space-3);
   border-bottom: 1px solid var(--color-border-subtle);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--surface-card-gloss) 10%, transparent);
 }
 
 .app-header__context-copy {
@@ -259,6 +264,8 @@ body::after {
   font-family: var(--font-sans);
   font-size: 0.92rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .commerce-shell {
@@ -658,6 +665,7 @@ body::after {
   padding: var(--space-3) 0 var(--space-4);
   border-bottom: 1px solid var(--color-border-subtle);
   margin-bottom: var(--space-2);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--surface-card-gloss) 10%, transparent);
 }
 
 .page-intro::before {
@@ -676,10 +684,11 @@ body::after {
 
 .page-intro__title {
   margin: 0;
-  font-size: 1.28rem;
+  font-size: 1.24rem;
   font-family: var(--font-title);
   line-height: 1.1;
   color: var(--color-text-primary);
+  letter-spacing: 0.02em;
 }
 
 .page-intro__description {
@@ -693,12 +702,13 @@ body::after {
   margin-bottom: var(--space-4);
   overflow-x: auto;
   scrollbar-width: thin;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--surface-card-gloss) 10%, transparent);
 }
 
 .page-tabs__tab {
   position: relative;
   padding: var(--space-2) var(--space-4);
-  background: transparent;
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 42%, transparent);
   border: 0;
   border-bottom: calc(var(--border-thin) * 2) solid transparent;
   color: var(--color-text-muted);
@@ -720,7 +730,9 @@ body::after {
 .page-tabs__tab--active {
   color: var(--color-accent-cyan);
   border-bottom-color: var(--color-accent-cyan);
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 84%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 82%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 84%, transparent);
 }
 
 .card-grid {
@@ -733,11 +745,13 @@ body::after {
   display: grid;
   min-width: 0;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 24%),
-    color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 18%),
+    color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 10%, transparent),
+    0 10px 22px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
   overflow: hidden;
 }
 
@@ -748,7 +762,8 @@ body::after {
   font-size: var(--space-3-5);
   font-weight: 600;
   color: var(--color-text-primary);
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .surface-card__content {
@@ -764,9 +779,11 @@ body::after {
   align-items: center;
   justify-content: center;
   padding: var(--space-6) var(--space-5);
-  border: 1px dashed var(--color-border-subtle);
-  border-radius: var(--radius-section);
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 72%, transparent);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-base);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 70%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 72%, transparent);
 }
 
 .module-empty-state__text {

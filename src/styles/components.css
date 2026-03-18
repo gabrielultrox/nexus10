@@ -2,12 +2,13 @@
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
-    color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 18%),
+    color-mix(in srgb, var(--surface-panel-strong) 99%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent),
+    0 10px 18px color-mix(in srgb, var(--color-shadow-rgb) 5%, transparent);
 }
 
 .ui-card::before,
@@ -15,10 +16,10 @@
   content: '';
   position: absolute;
   inset: 0 auto auto 0;
-  width: 38%;
+  width: 26%;
   height: 1px;
   background: linear-gradient(90deg, var(--color-accent-cyan), transparent);
-  opacity: 0.34;
+  opacity: 0.18;
 }
 
 .ui-card--interactive {
@@ -32,15 +33,17 @@
 .ui-card--interactive:hover {
   transform: translateY(calc(var(--border-thin) * -1));
   border-color: var(--color-border-strong);
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 5%, transparent),
+    0 12px 20px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
 }
 
 .ui-table {
   width: 100%;
   border-collapse: collapse;
-  background: color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-strong) 99%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
-  border-radius: var(--radius-section);
+  border-radius: var(--radius-base);
   overflow: hidden;
   table-layout: auto;
   min-width: max(100%, 760px);
@@ -49,15 +52,15 @@
 .ui-table th {
   padding: var(--space-3) var(--space-3-5);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
-    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 20%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 99%, transparent);
   border-bottom: var(--border-thin) solid var(--color-border-default);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: left;
-  color: color-mix(in srgb, var(--color-accent-cyan) 72%, var(--color-text-muted));
+  color: color-mix(in srgb, var(--color-accent-cyan) 46%, var(--color-text-muted));
   white-space: nowrap;
 }
 
@@ -74,11 +77,13 @@
 }
 
 .ui-table tbody tr:hover {
-  background: color-mix(in srgb, var(--surface-panel-highlight) 86%, transparent);
+  background: color-mix(in srgb, var(--surface-panel-highlight) 70%, transparent);
 }
 
 .entity-table__row--selected {
-  background: color-mix(in srgb, var(--surface-panel-highlight) 72%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 18%),
+    color-mix(in srgb, var(--surface-panel-highlight) 66%, transparent);
 }
 
 .ui-input,
@@ -88,7 +93,7 @@
   min-height: 40px;
   padding: 9px 14px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 28%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 24%),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--color-bg-input));
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-field);
@@ -96,8 +101,8 @@
   font-size: 0.94rem;
   outline: none;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--surface-card-gloss) 18%, transparent),
-    0 8px 18px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent),
+    0 6px 14px color-mix(in srgb, var(--color-shadow-rgb) 4%, transparent);
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base),
@@ -117,7 +122,7 @@
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-cyan) 50%),
     linear-gradient(135deg, var(--color-accent-cyan) 50%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 28%, transparent), transparent 34%);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 24%);
   background-position:
     calc(100% - 18px) calc(50% - 1px),
     calc(100% - 12px) calc(50% - 1px),
@@ -141,7 +146,7 @@
   box-shadow:
     var(--shadow-focus),
     0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 18%, transparent),
-    0 14px 28px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
+    0 10px 18px color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
   transform: translateY(-1px);
 }
 
@@ -174,7 +179,6 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  overflow: hidden;
   white-space: nowrap;
   transition:
     transform var(--transition-fast),
@@ -184,27 +188,8 @@
     box-shadow var(--transition-base);
 }
 
-.ui-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      115deg,
-      transparent,
-      color-mix(in srgb, var(--color-static-white) 14%, transparent),
-      transparent 65%
-    );
-  transform: translateX(-140%);
-  transition: transform var(--transition-slow);
-}
-
 .ui-button:hover {
   transform: translateY(-1px);
-}
-
-.ui-button:hover::before {
-  transform: translateX(120%);
 }
 
 .ui-button:active {
@@ -212,15 +197,23 @@
 }
 
 .ui-button--primary {
-  background: linear-gradient(135deg, var(--color-accent-amber), var(--color-accent-amber-strong));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 6%, transparent), transparent 36%),
+    linear-gradient(135deg, var(--color-accent-amber), var(--color-accent-amber-strong));
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-accent-amber) 14%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 10%, transparent),
+    0 8px 16px color-mix(in srgb, var(--color-accent-amber) 10%, transparent);
 }
 
 .ui-button--secondary {
-  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-cyan-strong));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 6%, transparent), transparent 36%),
+    linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-cyan-strong));
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-accent-cyan) 14%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 10%, transparent),
+    0 8px 16px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
 }
 
 .ui-button--ghost {
@@ -266,7 +259,7 @@
   min-height: calc(var(--space-4) + var(--border-thin));
   padding: var(--space-1) var(--space-2-5);
   border: var(--border-thin) solid transparent;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-field);
   font-family: var(--font-mono);
   font-size: 0.58rem;
   letter-spacing: 0.12em;
@@ -313,12 +306,13 @@
   gap: var(--space-1);
   padding: var(--space-3-5) var(--space-4);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 24%),
-    color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 18%),
+    color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent),
+    0 10px 18px color-mix(in srgb, var(--color-shadow-rgb) 5%, transparent);
   transition:
     transform var(--transition-base),
     border-color var(--transition-base),
@@ -335,7 +329,9 @@
 .ui-kpi-card:hover {
   transform: translateY(calc(var(--border-thin) * -1));
   border-color: var(--color-border-strong);
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 5%, transparent),
+    0 12px 20px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
 }
 
 .ui-kpi-card__label {
