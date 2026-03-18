@@ -548,10 +548,10 @@ function ProductsModule() {
       </div>
 
       <SurfaceCard title="Higiene da base">
-        <div className="entity-toolbar-shell">
+        <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Auditoria da importacao</p>
-            <p className="text-body">Revise duplicidades, texto suspeito, categoria e estoque minimo antes de usar o catalogo no PDV.</p>
+            <p className="text-body">Revise primeiro os pontos que comprometem busca, filtro e uso no PDV.</p>
           </div>
           <div className="entity-form-actions entity-form-actions--inline">
             <button type="button" className="ui-button ui-button--ghost" onClick={handleNormalizeCategories} disabled={normalizingCategories || !can('catalog:write')}>
@@ -570,7 +570,7 @@ function ProductsModule() {
           <MetricCard label="Categoria vazia" value={String(catalogAudit.uncategorized.length).padStart(2, '0')} meta="itens sem categoria definida" badgeText="catalogo" badgeClass="ui-badge--danger" />
         </div>
 
-        <div className="entity-table-wrap">
+        <div className="entity-table-wrap entity-table-wrap--dense">
           <table className="ui-table">
             <thead>
               <tr>
@@ -611,7 +611,7 @@ function ProductsModule() {
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">Catalogo ativo</span>
               <h4 className="entity-form-hero__title">{editingProductId ? 'Atualize o produto em foco' : 'Cadastre produtos com um fluxo mais direto'}</h4>
-              <p className="entity-form-hero__description">Organize preco, custo, estoque e classificacao em um fluxo claro para a operacao ganhar velocidade no cadastro.</p>
+              <p className="entity-form-hero__description">Defina identidade, faixa comercial e saldo inicial com menos ruido e mais leitura operacional.</p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">SKU pronto para PDV</span>
                 <span className="ui-badge ui-badge--warning">Controle de minimo</span>
@@ -620,17 +620,17 @@ function ProductsModule() {
             </div>
 
             <div className="entity-form-aside">
-              <div className="entity-form-aside__card">
-                <span className="entity-form-aside__label">Produtos ativos</span>
-                <strong>{String(metrics[1]?.value ?? '00')}</strong>
-                <p className="text-body">Itens disponiveis agora para uso no PDV e nos pedidos.</p>
+                <div className="entity-form-aside__card">
+                  <span className="entity-form-aside__label">Produtos ativos</span>
+                  <strong>{String(metrics[1]?.value ?? '00')}</strong>
+                  <p className="text-body">Itens liberados para pedido, venda e consulta.</p>
+                </div>
+                <div className="entity-form-aside__card">
+                  <span className="entity-form-aside__label">Estoque baixo</span>
+                  <strong>{String(metrics[2]?.value ?? '00')}</strong>
+                  <p className="text-body">Itens que pedem revisao antes de afetar o turno.</p>
+                </div>
               </div>
-              <div className="entity-form-aside__card">
-                <span className="entity-form-aside__label">Estoque baixo</span>
-                <strong>{String(metrics[2]?.value ?? '00')}</strong>
-                <p className="text-body">Produtos que merecem revisao antes de faltar no turno.</p>
-              </div>
-            </div>
           </div>
 
           <div className="entity-form-actions entity-form-actions--inline">
@@ -727,12 +727,12 @@ function ProductsModule() {
       </SurfaceCard>
 
       <SurfaceCard title="Lista completa da loja">
-        <div className="entity-toolbar-shell">
+        <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Produtos com quantidade em estoque</p>
-            <p className="text-body">Consulte toda a base com saude do cadastro, categoria, preco, custo e saldo atual.</p>
+            <p className="text-body">Use busca e filtros para localizar rapido o item e entender a saude do cadastro.</p>
           </div>
-          <div className="entity-toolbar">
+          <div className="entity-toolbar entity-toolbar--filters">
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-search">Buscar</label>
               <input id="products-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome, categoria, SKU ou codigo de barras" />
@@ -770,7 +770,7 @@ function ProductsModule() {
           </div>
         </div>
 
-        <div className="entity-toolbar-shell">
+        <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Edicao em lote simples</p>
             <p className="text-body">
@@ -779,7 +779,7 @@ function ProductsModule() {
                 : 'Selecione produtos na tabela para aplicar categoria, minimo ou status em lote.'}
             </p>
           </div>
-          <div className="entity-toolbar">
+          <div className="entity-toolbar entity-toolbar--bulk">
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-bulk-category">Categoria</label>
               <input id="products-bulk-category" className="ui-input" value={bulkState.category} onChange={(event) => updateBulkField('category', event.target.value)} placeholder="Categoria padrao" />
@@ -816,7 +816,7 @@ function ProductsModule() {
             <p className="module-empty-state__text">Nenhum produto encontrado</p>
           </div>
         ) : (
-          <div className="entity-table-wrap">
+          <div className="entity-table-wrap entity-table-wrap--dense">
             <table className="ui-table">
               <thead>
                 <tr>

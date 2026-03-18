@@ -448,9 +448,8 @@ function InventoryModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Estoque">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Firebase nao configurado</p>
         </div>
       </SurfaceCard>
     );
@@ -459,9 +458,8 @@ function InventoryModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Estoque">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione uma store antes de operar o estoque.</p>
+        <div className="module-empty-state">
+          <p className="module-empty-state__text">Nenhuma store ativa</p>
         </div>
       </SurfaceCard>
     );
@@ -489,7 +487,7 @@ function InventoryModule() {
                 <span className="entity-form-hero__eyebrow">Ajuste operacional</span>
                 <h4 className="entity-form-hero__title">Ajuste o estoque com um fluxo mais simples</h4>
                 <p className="entity-form-hero__description">
-                  Registre entradas, saidas e ajustes absolutos em uma estrutura direta, feita para conferencia rapida.
+                  Registre entradas, saidas e ajustes absolutos com foco em conferencia rapida e rastreio claro.
                 </p>
                 <div className="entity-form-hero__chips">
                   <span className="ui-badge ui-badge--warning">Ajuste imediato</span>
@@ -502,12 +500,12 @@ function InventoryModule() {
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Itens monitorados</span>
                   <strong>{String(metrics[0]?.value ?? '00')}</strong>
-                  <p className="text-body">Produtos acompanhados pelo controle de estoque atual.</p>
+                  <p className="text-body">Produtos acompanhados pelo painel atual.</p>
                 </div>
                 <div className="entity-form-aside__card">
                   <span className="entity-form-aside__label">Saldo critico</span>
                   <strong>{String(metrics[2]?.value ?? '00')}</strong>
-                  <p className="text-body">Itens que merecem atencao antes de impactar a operacao.</p>
+                  <p className="text-body">Itens que pedem acao antes de afetar a operacao.</p>
                 </div>
               </div>
             </div>
@@ -517,7 +515,7 @@ function InventoryModule() {
                 <div className="entity-form-section__header">
                   <span className="entity-form-section__eyebrow">Movimentacao</span>
                   <h4 className="entity-form-section__title">Registro manual</h4>
-                  <p className="entity-form-section__description">Selecione o item, o tipo de ajuste e o motivo da alteracao.</p>
+                  <p className="entity-form-section__description">Selecione item, tipo e motivo do ajuste.</p>
                 </div>
 
                 <div className="entity-stack">
@@ -578,12 +576,12 @@ function InventoryModule() {
                 <div className="entity-form-section__header">
                   <span className="entity-form-section__eyebrow">Importacao</span>
                   <h4 className="entity-form-section__title">Carga por CSV</h4>
-                  <p className="entity-form-section__description">Ideal para conciliacao em lote ou migracao da base.</p>
+                  <p className="entity-form-section__description">Ideal para conciliacao em lote e atualizacao rapida.</p>
                 </div>
 
                 <div className="inventory-import">
                   <div className="inventory-import__copy">
-                    <p className="text-body">Aceita planilhas com codigo, nome, estoque e preco. Produtos ausentes sao criados automaticamente.</p>
+                    <p className="text-body">Aceita codigo, nome, estoque e preco. Produtos ausentes podem ser criados no processo.</p>
                     {csvPreview ? (
                       <p className="text-body">
                         Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount} para criar, {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
@@ -606,7 +604,7 @@ function InventoryModule() {
                     </button>
                   </div>
                   {csvPreview?.errors?.length > 0 ? (
-                    <div className="entity-table-wrap">
+                    <div className="entity-table-wrap entity-table-wrap--dense">
                       <table className="ui-table">
                         <thead>
                           <tr>
@@ -641,10 +639,10 @@ function InventoryModule() {
         </SurfaceCard>
 
       <SurfaceCard title="Lista completa da loja">
-          <div className="entity-toolbar-shell">
+          <div className="entity-toolbar-shell entity-toolbar-shell--section">
             <div className="entity-toolbar-copy">
               <p className="text-section-title">Produtos e quantidade em estoque</p>
-              <p className="text-body">Veja toda a base da loja com saldo atual, minimo e alerta de reposicao.</p>
+              <p className="text-body">Leia a base inteira da loja com saldo atual, minimo e sinais de reposicao.</p>
             </div>
 
             <div className="entity-toolbar inventory-toolbar">
@@ -692,16 +690,15 @@ function InventoryModule() {
           </div>
 
           {loading ? (
-            <div className="entity-empty-state">
-              <p className="text-section-title">Carregando estoque...</p>
+            <div className="module-empty-state">
+              <p className="module-empty-state__text">Carregando estoque</p>
             </div>
           ) : visibleInventoryItems.length === 0 ? (
-            <div className="entity-empty-state">
-              <p className="text-section-title">Nenhum item encontrado</p>
-              <p className="text-body">Cadastre produtos ou ajuste os filtros para localizar o saldo.</p>
+            <div className="module-empty-state">
+              <p className="module-empty-state__text">Nenhum item encontrado</p>
             </div>
           ) : (
-            <div className="entity-table-wrap">
+            <div className="entity-table-wrap entity-table-wrap--dense">
               <table className="ui-table">
                 <thead>
                   <tr>
@@ -748,10 +745,10 @@ function InventoryModule() {
         </SurfaceCard>
 
       <SurfaceCard title="Historico de movimentacao">
-        <div className="entity-toolbar-shell">
+        <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Timeline do estoque</p>
-            <p className="text-body">Filtre o historico por periodo ou texto para localizar cada ajuste sem perder contexto.</p>
+            <p className="text-body">Filtre por periodo ou texto para localizar rapidamente cada ajuste.</p>
           </div>
 
           <div className="entity-toolbar inventory-toolbar inventory-toolbar--movements">
@@ -791,12 +788,11 @@ function InventoryModule() {
         </div>
 
         {visibleMovements.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Nenhuma movimentacao encontrada</p>
-            <p className="text-body">As vendas, ajustes manuais e importacoes CSV vao aparecer aqui.</p>
+          <div className="module-empty-state">
+            <p className="module-empty-state__text">Nenhuma movimentacao encontrada</p>
           </div>
         ) : (
-          <div className="entity-table-wrap">
+          <div className="entity-table-wrap entity-table-wrap--dense">
             <table className="ui-table">
               <thead>
                 <tr>
