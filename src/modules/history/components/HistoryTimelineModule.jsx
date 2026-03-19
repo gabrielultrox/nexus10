@@ -116,17 +116,17 @@ function buildQueryFilter(searchParams) {
 
 function buildSelectedDay(searchParams, availableDays) {
   const requestedDay = searchParams.get('data') ?? searchParams.get('day') ?? 'hoje';
+  const todayKey = getTodayKey();
 
   if (requestedDay === 'hoje') {
-    const todayKey = getTodayKey();
-    return availableDays.includes(todayKey) ? todayKey : availableDays[0] ?? '';
+    return todayKey;
   }
 
   if (availableDays.includes(requestedDay)) {
     return requestedDay;
   }
 
-  return availableDays[0] ?? '';
+  return availableDays[0] ?? todayKey;
 }
 
 function groupEventsByHour(events) {
@@ -313,7 +313,8 @@ function HistoryTimelineModule() {
       ? allEvents
       : allEvents.filter((event) => nextFilter.modulePaths.includes(event.modulePath));
     const nextDays = Array.from(new Set(nextEvents.map((event) => toDayKey(event.timestamp)).filter(Boolean))).sort((left, right) => right.localeCompare(left));
-    const nextDay = nextDays.includes(selectedDay) ? selectedDay : (nextDays.includes(getTodayKey()) ? getTodayKey() : nextDays[0] ?? '');
+    const todayKey = getTodayKey();
+    const nextDay = nextDays.includes(selectedDay) ? selectedDay : (nextDays.includes(todayKey) ? todayKey : nextDays[0] ?? todayKey);
 
     updateParams(filterId, nextDay);
   }
@@ -370,6 +371,7 @@ function HistoryTimelineModule() {
                 <button
                   type="button"
                   className="history-module__calendar-arrow"
+                  disabled={availableDays.length === 0 || availableDays.indexOf(selectedDay) === availableDays.length - 1}
                   onClick={() => {
                     const currentIndex = availableDays.indexOf(selectedDay);
                     const nextDay = currentIndex < availableDays.length - 1 ? availableDays[currentIndex + 1] : selectedDay;
@@ -385,6 +387,7 @@ function HistoryTimelineModule() {
                 <button
                   type="button"
                   className="history-module__calendar-arrow"
+                  disabled={availableDays.length === 0 || availableDays.indexOf(selectedDay) <= 0}
                   onClick={() => {
                     const currentIndex = availableDays.indexOf(selectedDay);
                     const nextDay = currentIndex > 0 ? availableDays[currentIndex - 1] : selectedDay;

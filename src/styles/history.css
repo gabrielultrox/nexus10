@@ -75,6 +75,11 @@
   cursor: pointer;
 }
 
+.history-module__calendar-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .history-module__weekday-row {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

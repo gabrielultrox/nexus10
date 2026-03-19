@@ -693,7 +693,7 @@ function CashModule() {
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
         {syncMessage ? <div className="cash-module__sync-note">{syncMessage}</div> : null}
 
-        <form className="cash-module__form" onSubmit={handleSubmit}>
+        <form className={`cash-module__form cash-module__form--${activeTab.id}`} onSubmit={handleSubmit}>
           {activeTab.id === 'closing' ? (
             <div className="cash-module__closing-summary">
               <div className="cash-module__closing-row">
