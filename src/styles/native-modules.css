@@ -366,6 +366,7 @@
   flex: 1 1 calc(var(--space-9) * 3);
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
   min-width: 0;
 }
@@ -376,17 +377,21 @@
 }
 
 .native-module__toolbar-summary {
-  display: grid;
-  gap: var(--space-1);
-  align-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .native-module__toolbar-summary-text {
   color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .native-module__toolbar-actions {
@@ -2664,6 +2669,19 @@
   flex-wrap: nowrap;
 }
 
+.native-module__delivery-form-row .ui-select-shell {
+  width: 160px;
+  flex: 0 0 160px;
+}
+
+.native-module__delivery-form-row .ui-toggle {
+  flex: 0 0 auto;
+}
+
+.native-module__delivery-form-row .ui-toggle__label {
+  white-space: nowrap;
+}
+
 .native-module__delivery-code-input {
   width: 160px;
   flex: 0 0 160px;
@@ -3082,7 +3100,6 @@
 
 .schedule-grid__table {
   display: grid;
-  grid-template-columns: 120px repeat(auto-fit, minmax(180px, 1fr));
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -3125,12 +3142,16 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: stretch;
   gap: 8px;
   background: rgba(239, 68, 68, 0.04);
 }
 
 .schedule-grid__slot--empty {
   border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: left;
   color: var(--text-muted);
   cursor: pointer;
@@ -3152,6 +3173,10 @@
   color: inherit;
   cursor: pointer;
   text-align: left;
+}
+
+.schedule-grid__entry .ui-badge {
+  flex-shrink: 0;
 }
 
 .schedule-grid__entry-name {

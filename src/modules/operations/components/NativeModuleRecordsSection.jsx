@@ -461,7 +461,10 @@ function NativeModuleSchedule({
 
       {viewMode === 'grid' ? (
         <div className="schedule-grid">
-          <div className="schedule-grid__table">
+          <div
+            className="schedule-grid__table"
+            style={{ gridTemplateColumns: `120px repeat(${scheduleDays.length}, minmax(180px, 1fr))` }}
+          >
             <div className="schedule-grid__head-cell schedule-grid__head-cell--window">Janela</div>
             {scheduleDays.map((day) => (
               <div key={day.key} className="schedule-grid__head-cell">
