@@ -9,6 +9,7 @@ function getStatusBadgeClass(value) {
 
   if (
     normalized.includes('retorn') ||
+    normalized.includes('conclu') ||
     normalized.includes('retornou') ||
     normalized.includes('validado') ||
     normalized.includes('fechada') ||

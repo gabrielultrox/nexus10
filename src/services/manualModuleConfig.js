@@ -230,7 +230,7 @@ export const manualModuleConfigs = {
         name: 'status',
         label: 'Estado',
         type: 'select',
-        options: ['Pendente', 'Liberado', 'Recebido', 'Retornou'],
+        options: ['Pendente', 'Liberado', 'Recebido', 'Concluido'],
       },
     ],
     returnActionLabel: 'Marcar retorno',
@@ -256,7 +256,7 @@ export const manualModuleConfigs = {
     markReturned(record, context = {}) {
       return {
         ...record,
-        status: 'Retornou',
+        status: 'Concluido',
         returnedAt: context.returnedAt ?? record.returnedAt ?? '',
         returnedBy: context.returnedBy ?? record.returnedBy ?? '',
       };
