@@ -38,6 +38,13 @@ function formatHourLabel(hour) {
   return `${String(hour).padStart(2, '0')}h`;
 }
 
+function getScheduleEntryTime(value) {
+  return String(value ?? '')
+    .replace(/\s+/g, '')
+    .split('-')[0]
+    .trim()
+}
+
 function summarizeProductName(name) {
   const words = String(name ?? '')
     .trim()
@@ -413,7 +420,7 @@ export function buildDashboardData({
       activeShift: activeCouriers.slice(0, 5).map((record) => ({
         id: record.id,
         name: record.courier,
-        role: record.window ?? 'Janela nao informada',
+        role: getScheduleEntryTime(record.window) || 'Entrada nao informada',
         machine: record.machine ?? 'Sem maquininha',
         statusLabel: record.status ?? 'Confirmado',
         statusClass: getStatusBadgeClass(record.status),

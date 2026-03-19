@@ -26,7 +26,7 @@ export const routeDefinitions = [
     section: 'Operacao',
     eyebrow: 'Operacao',
     title: 'Escala do dia',
-    description: 'Escala manual dos entregadores por janela e apoio do turno.',
+    description: 'Escala manual dos entregadores por horario de entrada e apoio do turno.',
     requiredRoles: ['operador'],
   },
   {

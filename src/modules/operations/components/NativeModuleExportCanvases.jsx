@@ -10,6 +10,13 @@ function NativeModuleExportCanvases({
   session,
   presentMachineChecklistRecords,
 }) {
+  function getScheduleEntryTime(windowLabel = '') {
+    return String(windowLabel)
+      .replace(/\s+/g, '')
+      .split('-')[0]
+      .trim()
+  }
+
   return (
     <>
       {routePath === 'schedule' ? (
@@ -46,8 +53,8 @@ function NativeModuleExportCanvases({
                   </div>
                   <div className="schedule-export-image__card-body">
                     <p>
-                      <span>Janela</span>
-                      <strong>{record.window}</strong>
+                      <span>Entrada</span>
+                      <strong>{getScheduleEntryTime(record.window)}</strong>
                     </p>
                     <p>
                       <span>Maquininha do dia</span>

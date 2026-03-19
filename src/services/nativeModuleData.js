@@ -4,34 +4,34 @@ const moduleContentByPath = {
   schedule: {
     metrics: [
       { label: 'Entregadores escalados', value: '03', meta: 'Escala manual do dia em andamento', badgeText: 'online', badgeClass: 'ui-badge--success' },
-      { label: 'Janelas confirmadas', value: '92%', meta: '2 janelas ainda precisam de reforco', badgeText: 'alerta', badgeClass: 'ui-badge--warning' },
+      { label: 'Entradas confirmadas', value: '92%', meta: '2 entradas ainda precisam de reforco', badgeText: 'alerta', badgeClass: 'ui-badge--warning' },
       { label: 'Ajustes pendentes', value: '04', meta: 'Revisar a escala antes de 19:30', badgeText: 'fila', badgeClass: 'ui-badge--info' },
     ],
     panels: [
       {
-        title: 'Janelas do turno',
+        title: 'Entradas do turno',
         items: [
-          { label: '18:00 - 20:00', value: '6 entregadores', tone: 'success' },
-          { label: '20:00 - 22:00', value: '8 entregadores', tone: 'info' },
-          { label: '22:00 - 00:00', value: '4 entregadores', tone: 'warning' },
+          { label: '18:00', value: '6 entregadores', tone: 'success' },
+          { label: '20:00', value: '8 entregadores', tone: 'info' },
+          { label: '22:00', value: '4 entregadores', tone: 'warning' },
         ],
       },
       {
         title: 'Ajustes recentes',
         timeline: [
           { title: 'Reforco noturno confirmado', meta: '2 entregadores adicionados ao turno ha 8 min' },
-          { title: 'Escala do jantar revisada', meta: 'Janela principal ganhou uma rota de apoio extra' },
-          { title: 'Fila de pausa redistribuida', meta: 'Despacho manteve 100% das janelas de entrega abertas' },
+          { title: 'Escala do jantar revisada', meta: 'Entrada principal ganhou uma rota de apoio extra' },
+          { title: 'Fila de pausa redistribuida', meta: 'Despacho manteve 100% das entradas de entrega abertas' },
         ],
       },
     ],
     table: {
       title: 'Escala do dia',
-      columns: ['Entregador', 'Janela', 'Maquininha', 'Status'],
+      columns: ['Entregador', 'Entrada', 'Maquininha', 'Status'],
       rows: [
-        ['Moizes', '18:00 - 22:00', 'Maq. 03', 'Confirmado'],
-        ['Tito', '19:00 - 23:00', 'Maq. 05', 'Em rota'],
-        ['Bianca Freitas', '20:00 - 00:00', 'Maq. 11', 'Reserva'],
+        ['Moizes', '18:00', 'Maq. 03', 'Confirmado'],
+        ['Tito', '19:00', 'Maq. 05', 'Em rota'],
+        ['Bianca Freitas', '20:00', 'Maq. 11', 'Reserva'],
       ],
     },
   },

@@ -59,14 +59,14 @@ export const manualModuleConfigs = {
     dailyResetHour: 3,
     manualResetLabel: 'Resetar escala',
     formTitle: 'Adicionar entregador na escala',
-    formDescription: 'Monte a escala do dia por entregador, janela e maquininha do dia.',
+    formDescription: 'Monte a escala do dia por entregador, horario de entrada e maquininha do dia.',
     submitLabel: 'Adicionar na escala',
     emptyTitle: 'Nenhum entregador escalado',
     emptyDescription: 'Cadastre os entregadores da escala do dia para organizar o turno manualmente.',
-    columns: ['Entregador', 'Janela', 'Maquininha do dia', 'Status', 'Ultima atualizacao'],
+    columns: ['Entregador', 'Entrada', 'Maquininha do dia', 'Status', 'Ultima atualizacao'],
     fields: [
       { name: 'courier', label: 'Entregador', type: 'select', options: [] },
-      { name: 'window', label: 'Janela', placeholder: '18:00 - 22:00' },
+      { name: 'window', label: 'Horario de entrada', placeholder: '18:00' },
       { name: 'machine', label: 'Maquininha do dia', type: 'select', options: [] },
       {
         name: 'status',
@@ -77,10 +77,12 @@ export const manualModuleConfigs = {
     ],
     initialRecords: [],
     createRecord(values, context = {}) {
+      const entryTime = values.window.trim().replace(/\s+/g, '').split('-')[0] ?? values.window.trim();
+
       return {
         id: createId('schedule'),
         courier: values.courier.trim(),
-        window: values.window.trim(),
+        window: entryTime,
         machine: values.machine.trim() || 'Sem maquininha',
         status: values.status,
         updatedAt: context.updatedAt ?? '',

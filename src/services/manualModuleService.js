@@ -120,6 +120,21 @@ function resolveAuditLabel(record) {
   return formatAuditTime(record.updatedAtClient);
 }
 
+function normalizeScheduleEntryTime(value) {
+  const resolved = resolveTextValue(value)
+
+  if (!resolved) {
+    return ''
+  }
+
+  const [entryTime] = resolved
+    .replace(/\s+/g, '')
+    .split('-')
+    .filter(Boolean)
+
+  return entryTime ?? resolved
+}
+
 function normalizeRecord(record) {
   const textFields = [
     'courier',
@@ -151,7 +166,9 @@ function normalizeRecord(record) {
 
   textFields.forEach((field) => {
     if (field in normalizedRecord) {
-      normalizedRecord[field] = resolveTextValue(normalizedRecord[field]);
+      normalizedRecord[field] = field === 'window'
+        ? normalizeScheduleEntryTime(normalizedRecord[field])
+        : resolveTextValue(normalizedRecord[field]);
     }
   });
 

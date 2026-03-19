@@ -7,7 +7,7 @@ import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 
 const ROW_EXIT_DURATION_MS = 200
-const DEFAULT_SCHEDULE_WINDOWS = ['10:00-14:00', '14:00-18:00', '18:00-22:00']
+const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
 
 function getStatusBadgeClass(value) {
   const normalized = String(value ?? '').trim().toLowerCase()
@@ -129,7 +129,18 @@ function getContextHistoryLink(routePath) {
 }
 
 function normalizeScheduleWindow(windowLabel = '') {
-  return String(windowLabel).replace(/\s+/g, '').trim().toLowerCase()
+  return String(windowLabel)
+    .replace(/\s+/g, '')
+    .split('-')[0]
+    .trim()
+    .toLowerCase()
+}
+
+function formatScheduleEntryTime(windowLabel = '') {
+  return String(windowLabel)
+    .replace(/\s+/g, '')
+    .split('-')[0]
+    .trim()
 }
 
 function NativeModuleToolbar({
@@ -439,7 +450,7 @@ function NativeModuleSchedule({
       <div className="schedule-records__header">
         <div>
           <p className="schedule-records__eyebrow">Painel de turno</p>
-          <strong className="schedule-records__title">Cobertura por janela</strong>
+          <strong className="schedule-records__title">Cobertura por entrada</strong>
         </div>
         <div className="schedule-records__view-toggle" role="tablist" aria-label="Visualizacao da escala">
           <button
@@ -465,7 +476,7 @@ function NativeModuleSchedule({
             className="schedule-grid__table"
             style={{ gridTemplateColumns: `120px repeat(${scheduleDays.length}, minmax(180px, 1fr))` }}
           >
-            <div className="schedule-grid__head-cell schedule-grid__head-cell--window">Janela</div>
+            <div className="schedule-grid__head-cell schedule-grid__head-cell--window">Entrada</div>
             {scheduleDays.map((day) => (
               <div key={day.key} className="schedule-grid__head-cell">
                 {day.label}
@@ -474,7 +485,7 @@ function NativeModuleSchedule({
 
             {scheduleWindows.map((windowLabel) => (
               <div key={windowLabel} className="schedule-grid__row-group">
-                <div className="schedule-grid__window-cell">{windowLabel}</div>
+                <div className="schedule-grid__window-cell">{formatScheduleEntryTime(windowLabel)}</div>
                 {scheduleDays.map((day) => {
                   const matchingRecords = records.filter((record) => (
                     normalizeScheduleWindow(record.window) === normalizeScheduleWindow(windowLabel)
@@ -533,8 +544,8 @@ function NativeModuleSchedule({
 
               <div className="schedule-records__meta">
                 <div className="schedule-records__meta-item">
-                  <span>Janela</span>
-                  <strong>{record.window}</strong>
+                  <span>Entrada</span>
+                  <strong>{formatScheduleEntryTime(record.window)}</strong>
                 </div>
                 <div className="schedule-records__meta-item">
                   <span>Atualizacao</span>
