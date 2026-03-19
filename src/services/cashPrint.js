@@ -160,16 +160,12 @@ function buildPrintHtml(entry) {
         <div class="receipt__subline">${escapeHtml(createdAt)}</div>
       </section>
     </main>
-    <script>
-      window.addEventListener('load', () => window.print());
-      window.addEventListener('afterprint', () => window.close());
-    </script>
   </body>
 </html>`;
 }
 
 export function printCashReceipt(entry) {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=420,height=860');
+  const printWindow = window.open('', '_blank', 'width=420,height=860');
 
   if (!printWindow) {
     throw new Error('Nao foi possivel abrir a janela de impressao.');
@@ -179,4 +175,24 @@ export function printCashReceipt(entry) {
   printWindow.document.write(buildPrintHtml(entry));
   printWindow.document.close();
   printWindow.document.title = entry.receiptCode || 'Recibo de caixa';
+  printWindow.focus();
+
+  const triggerPrint = () => {
+    try {
+      printWindow.focus();
+      printWindow.print();
+    } catch {
+      // Ignore print invocation errors to avoid blocking the shell.
+    }
+  };
+
+  printWindow.onload = () => {
+    triggerPrint();
+  };
+
+  printWindow.onafterprint = () => {
+    printWindow.close();
+  };
+
+  printWindow.setTimeout(triggerPrint, 350);
 }
