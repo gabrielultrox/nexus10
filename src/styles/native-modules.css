@@ -2837,6 +2837,44 @@
   color: var(--danger);
 }
 
+.native-module__toolbar--schedule .native-module__toolbar-secondary {
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.native-module__toolbar--schedule .native-module__toolbar-summary {
+  margin-left: 0;
+  justify-content: flex-end;
+}
+
+.native-module__toolbar--schedule .native-module__toolbar-actions {
+  margin-left: 0;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.native-module__toolbar--schedule .native-module__toolbar-actions .ui-button {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .native-module__toolbar--schedule .native-module__toolbar-secondary {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .native-module__toolbar--schedule .native-module__toolbar-summary,
+  .native-module__toolbar--schedule .native-module__toolbar-actions {
+    justify-content: flex-start;
+  }
+
+  .native-module__toolbar--schedule .native-module__toolbar-actions {
+    flex-wrap: wrap;
+  }
+}
+
 .native-module__actions-cell {
   display: flex;
   align-items: center;

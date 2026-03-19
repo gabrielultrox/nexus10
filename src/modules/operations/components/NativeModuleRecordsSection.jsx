@@ -196,7 +196,7 @@ function NativeModuleToolbar({
   const historyLink = getContextHistoryLink(routePath)
 
   return (
-    <div className="native-module__toolbar">
+    <div className={`native-module__toolbar native-module__toolbar--${routePath}`}>
       <div className="native-module__toolbar-primary">
         <div className="ui-field">
           <label className="ui-label" htmlFor={`${routePath}-search`}>
