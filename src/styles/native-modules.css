@@ -2432,9 +2432,19 @@
 }
 
 .machine-operations__row-device {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 28%, var(--color-border-default));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, var(--surface-elevated));
   color: var(--color-text-primary);
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.96rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .machine-operations__row-meta {
