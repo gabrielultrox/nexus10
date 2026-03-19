@@ -767,11 +767,12 @@ function NativeModuleTable({
                         </button>
                       </div>
                     ) : null}
-                    {manager.actionLabel && routePath !== 'delivery-reading' ? (
+                    {manager.actionLabel ? (
                       <button
                         type="button"
                         className="ui-button ui-button--secondary native-module__table-action"
                         onClick={() => onApplyAction(record.id)}
+                        disabled={exitingIds.has(record.id)}
                       >
                         {manager.getActionLabel?.(record) ?? manager.actionLabel}
                       </button>

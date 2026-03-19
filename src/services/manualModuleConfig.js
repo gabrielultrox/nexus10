@@ -124,7 +124,7 @@ export const manualModuleConfigs = {
         description: 'Marque apenas quando a entrega ja tiver sido fechada.',
       },
     ],
-    actionLabel: 'Marcar fechada',
+    actionLabel: 'Fechar entrega',
     initialRecords: [],
     createRecord(values, context = {}) {
       const isClosed = Boolean(values.closed);
@@ -164,7 +164,7 @@ export const manualModuleConfigs = {
       };
     },
     getActionLabel(record) {
-      return record.closed ? 'Fechada' : 'Marcar fechada';
+      return record.closed ? 'Fechada' : 'Fechar entrega';
     },
   },
   machines: {
