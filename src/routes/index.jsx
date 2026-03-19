@@ -13,7 +13,7 @@ const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'));
 const CouriersPage = lazy(() => import('../pages/CouriersPage'));
 const CustomersPage = lazy(() => import('../pages/CustomersPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
-const FinancePage = lazy(() => import('../pages/FinancePage'));
+const CashPage = lazy(() => import('../pages/CashPage'));
 const InventoryPage = lazy(() => import('../pages/InventoryPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const NativeModulePage = lazy(() => import('../pages/NativeModulePage'));
@@ -53,8 +53,8 @@ function getRouteElement(route) {
         return withRouteSuspense(<AnalysisPage />);
       case 'audit-log':
         return withRouteSuspense(<AuditLogPage />);
-      case 'finance':
-        return withRouteSuspense(<FinancePage />);
+      case 'cash':
+        return withRouteSuspense(<CashPage />);
       case 'inventory':
         return withRouteSuspense(<InventoryPage />);
       case 'orders':
@@ -117,6 +117,7 @@ const routes = [
           { path: 'monthly-report', element: <Navigate to="/analysis?screen=monthly-report" replace /> },
           { path: 'orders-hour', element: <Navigate to="/analysis?screen=orders-hour" replace /> },
           { path: 'ratings', element: <Navigate to="/analysis?screen=ratings" replace /> },
+          { path: 'finance', element: <Navigate to="/cash" replace /> },
           { path: 'couriers', element: <Navigate to="/couriers/consulta" replace /> },
           { path: 'couriers/consulta', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
           { path: 'couriers/cadastro', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },

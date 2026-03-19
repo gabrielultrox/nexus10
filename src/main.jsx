@@ -21,6 +21,7 @@ import './styles/settings.css';
 import './styles/dashboard.css';
 import './styles/orders.css';
 import './styles/finance.css';
+import './styles/cash.css';
 import './styles/couriers.css';
 import './styles/native-modules.css';
 import './styles/system-boot.css';

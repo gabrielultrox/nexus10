@@ -40,13 +40,13 @@ export const routeDefinitions = [
     requiredRoles: ['operador'],
   },
   {
-    path: 'finance',
-    label: 'Fechamento',
+    path: 'cash',
+    label: 'Caixa',
     icon: '04',
     section: 'Financeiro',
     eyebrow: 'Financeiro',
-    title: 'Fechamento',
-    description: 'Conferencia operacional e financeira do turno com leitura consolidada.',
+    title: 'Caixa',
+    description: 'Abertura, sangria, suprimento e fechamento do caixa com historico operacional.',
     requiredRoles: ['gerente'],
   },
   {
