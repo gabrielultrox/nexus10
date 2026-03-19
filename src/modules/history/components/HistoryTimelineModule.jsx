@@ -71,6 +71,7 @@ function buildEventChips(event) {
   const details = String(event.details ?? '');
   const action = String(event.action ?? '').toLowerCase();
   const modulePath = String(event.modulePath ?? '');
+  const target = String(event.target ?? '');
 
   const amountMatch = details.match(/R\$\s?[\d.]+,\d{2}/);
   const courierMatch = details.match(/Entregador:\s*([^|]+)/i);
@@ -81,16 +82,91 @@ function buildEventChips(event) {
   pushChip(chips, courierMatch?.[1], 'info');
   pushChip(chips, machineMatch?.[1], 'special');
 
-  if (action.includes('confirmou retorno')) {
-    pushChip(chips, 'Concluido', 'success');
+  if (modulePath === 'cash' && !amountMatch) {
+    const targetAmountMatch = target.match(/R\$\s?[\d.]+,\d{2}/);
+    pushChip(chips, targetAmountMatch?.[0], 'success');
   }
 
-  if (action.includes('marcou presente')) {
-    pushChip(chips, 'Presente', 'success');
+  if (modulePath === 'cash') {
+    if (target.startsWith('ABR-') || action.includes('abertura')) {
+      pushChip(chips, 'Abertura', 'info');
+    }
+
+    if (target.startsWith('SAN-') || action.includes('sangria')) {
+      pushChip(chips, 'Sangria', 'warning');
+    }
+
+    if (target.startsWith('SUP-') || action.includes('suprimento')) {
+      pushChip(chips, 'Suprimento', 'success');
+    }
+
+    if (target.startsWith('RET-') || action.includes('retirada')) {
+      pushChip(chips, 'Retirada', 'special');
+    }
+
+    if (target.startsWith('FEC-') || action.includes('fechamento')) {
+      pushChip(chips, 'Fechamento', 'danger');
+    }
   }
 
-  if (action.includes('desmarcou')) {
-    pushChip(chips, 'Ausente', 'warning');
+  if (modulePath === 'change') {
+    if (action.includes('confirmou retorno')) {
+      pushChip(chips, 'Concluido', 'success');
+    } else if (action.includes('criou')) {
+      pushChip(chips, 'Pendente', 'warning');
+    }
+  }
+
+  if (modulePath === 'advances') {
+    if (action.includes('criou')) {
+      pushChip(chips, 'Em aberto', 'warning');
+    }
+
+    if (action.includes('baixar vale')) {
+      pushChip(chips, 'Baixado', 'success');
+    }
+  }
+
+  if (modulePath === 'discounts') {
+    if (action.includes('criou')) {
+      pushChip(chips, 'Pendente', 'warning');
+    }
+
+    if (action.includes('validar')) {
+      pushChip(chips, 'Validado', 'success');
+    }
+  }
+
+  if (modulePath === 'delivery-reading') {
+    if (action.includes('criou')) {
+      pushChip(chips, 'Lida', 'info');
+    }
+
+    if (action.includes('marcar fechada')) {
+      pushChip(chips, 'Fechada', 'success');
+    }
+  }
+
+  if (modulePath === 'machines' || modulePath === 'machine-history') {
+    if (action.includes('marcou presente')) {
+      pushChip(chips, 'Presente', 'success');
+    }
+
+    if (action.includes('desmarcou')) {
+      pushChip(chips, 'Ausente', 'warning');
+    }
+
+    if (details.toLowerCase().includes('carga')) {
+      pushChip(chips, 'Carga', 'warning');
+    }
+
+    if (details.toLowerCase().includes('manutenc')) {
+      pushChip(chips, 'Manutencao', 'danger');
+    }
+  }
+
+  if (modulePath === 'schedule' && action.includes('alterou maquininha do dia')) {
+    pushChip(chips, 'Maquininha do dia', 'special');
   }
 
   if (action.includes('reset')) {
@@ -113,12 +189,7 @@ function buildEventChips(event) {
     pushChip(chips, 'Atualizado', 'special');
   }
 
-  if (modulePath === 'cash' && !amountMatch) {
-    const targetAmountMatch = String(event.target ?? '').match(/R\$\s?[\d.]+,\d{2}/);
-    pushChip(chips, targetAmountMatch?.[0], 'success');
-  }
-
-  if (modulePath === 'machines') {
+  if (modulePath === 'machines' || modulePath === 'machine-history') {
     pushChip(chips, statusMatch?.[1], 'special');
   }
 
