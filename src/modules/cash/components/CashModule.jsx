@@ -338,6 +338,9 @@ function CashModule() {
   const isCashOpen = cashState.status === 'aberto';
   const pendingCount = Number(cashState.pendingCount ?? 0) || 0;
   const closingDisabled = !isCashOpen || pendingCount > 0;
+  const openingBlockedMessage = activeTab.id === 'opening' && isCashOpen
+    ? `O caixa ja foi aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cashState.openedAt))}. Use as outras operacoes ou siga para o fechamento.`
+    : '';
 
   useEffect(() => {
     if (!isCashOpen && activeTab.id !== 'opening') {
@@ -379,6 +382,10 @@ function CashModule() {
   }, [balanceDelta, cashState, currentStoreId, isCashOpen, tenantId]);
 
   function handleTabChange(tabId) {
+    if (tabId === 'opening' && isCashOpen) {
+      toast.warning('O caixa ja foi aberto');
+    }
+
     if (tabId !== 'opening' && !isCashOpen) {
       toast.warning('Abra o caixa primeiro');
       setSearchParams((currentParams) => {
@@ -691,6 +698,7 @@ function CashModule() {
 
       <SurfaceCard title={activeTab.title}>
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+        {openingBlockedMessage ? <div className="cash-module__inline-warning">{openingBlockedMessage}</div> : null}
         {syncMessage ? <div className="cash-module__sync-note">{syncMessage}</div> : null}
 
         <form className={`cash-module__form cash-module__form--${activeTab.id}`} onSubmit={handleSubmit}>
