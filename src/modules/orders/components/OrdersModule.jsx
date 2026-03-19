@@ -139,6 +139,18 @@ function OrdersModule({
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const initializedViewRef = useRef('');
+  const [freshOrderIds, setFreshOrderIds] = useState(() => new Set());
+  const previousVisibleOrderIdsRef = useRef([]);
+  const freshTimeoutsRef = useRef(new Map());
+
+  useEffect(() => {
+    const freshTimeouts = freshTimeoutsRef.current;
+
+    return () => {
+      freshTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      freshTimeouts.clear();
+    };
+  }, []);
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -242,6 +254,55 @@ function OrdersModule({
       return matchesSearch && matchesStatus;
     });
   }, [internalOrders, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    const previousIds = previousVisibleOrderIdsRef.current;
+    const nextIds = visibleOrders.map((order) => order.id);
+    const nextIdSet = new Set(nextIds);
+    const freshIds = nextIds.filter((id) => !previousIds.includes(id));
+
+    if (freshIds.length > 0) {
+      setFreshOrderIds((current) => {
+        const next = new Set(current);
+        freshIds.forEach((id) => next.add(id));
+        return next;
+      });
+
+      freshIds.forEach((id) => {
+        const existingTimeout = freshTimeoutsRef.current.get(id);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+
+        const timeoutId = setTimeout(() => {
+          setFreshOrderIds((current) => {
+            if (!current.has(id)) {
+              return current;
+            }
+
+            const next = new Set(current);
+            next.delete(id);
+            return next;
+          });
+          freshTimeoutsRef.current.delete(id);
+        }, 600);
+
+        freshTimeoutsRef.current.set(id, timeoutId);
+      });
+    }
+
+    setFreshOrderIds((current) => {
+      const next = new Set();
+      current.forEach((id) => {
+        if (nextIdSet.has(id)) {
+          next.add(id);
+        }
+      });
+      return next.size === current.size ? current : next;
+    });
+
+    previousVisibleOrderIdsRef.current = nextIds;
+  }, [visibleOrders]);
 
   const selectedOrder = useMemo(
     () => internalOrders.find((order) => order.id === orderId) ?? null,
@@ -750,7 +811,7 @@ function OrdersModule({
                       {visibleOrders.map((order, index) => (
                         <tr
                           key={order.id}
-                          className={`ui-table__row-enter${order.id === orderId ? ' entity-table__row--selected' : ''}`}
+                          className={`${freshOrderIds.has(order.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter'}${order.id === orderId ? ' entity-table__row--selected' : ''}`}
                           style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
                           onClick={() => onOpenDetail(order.id)}
                         >

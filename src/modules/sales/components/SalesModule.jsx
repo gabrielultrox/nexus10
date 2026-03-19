@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
@@ -49,6 +49,18 @@ function SalesModule({
   const [formState, setFormState] = useState(() => createInitialFormState());
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [freshSaleIds, setFreshSaleIds] = useState(() => new Set());
+  const previousVisibleSaleIdsRef = useRef([]);
+  const freshTimeoutsRef = useRef(new Map());
+
+  useEffect(() => {
+    const freshTimeouts = freshTimeoutsRef.current;
+
+    return () => {
+      freshTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      freshTimeouts.clear();
+    };
+  }, []);
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -186,6 +198,55 @@ function SalesModule({
         && matchesSearch;
     });
   }, [endDate, sales, searchTerm, startDate, statusFilter]);
+
+  useEffect(() => {
+    const previousIds = previousVisibleSaleIdsRef.current;
+    const nextIds = visibleSales.map((sale) => sale.id);
+    const nextIdSet = new Set(nextIds);
+    const freshIds = nextIds.filter((id) => !previousIds.includes(id));
+
+    if (freshIds.length > 0) {
+      setFreshSaleIds((current) => {
+        const next = new Set(current);
+        freshIds.forEach((id) => next.add(id));
+        return next;
+      });
+
+      freshIds.forEach((id) => {
+        const existingTimeout = freshTimeoutsRef.current.get(id);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+
+        const timeoutId = setTimeout(() => {
+          setFreshSaleIds((current) => {
+            if (!current.has(id)) {
+              return current;
+            }
+
+            const next = new Set(current);
+            next.delete(id);
+            return next;
+          });
+          freshTimeoutsRef.current.delete(id);
+        }, 600);
+
+        freshTimeoutsRef.current.set(id, timeoutId);
+      });
+    }
+
+    setFreshSaleIds((current) => {
+      const next = new Set();
+      current.forEach((id) => {
+        if (nextIdSet.has(id)) {
+          next.add(id);
+        }
+      });
+      return next.size === current.size ? current : next;
+    });
+
+    previousVisibleSaleIdsRef.current = nextIds;
+  }, [visibleSales]);
 
   const selectedSale = useMemo(
     () => sales.find((sale) => sale.id === saleId) ?? null,
@@ -367,7 +428,7 @@ function SalesModule({
                         return (
                           <tr
                             key={sale.id}
-                            className={`ui-table__row-enter${sale.id === saleId ? ' entity-table__row--selected' : ''}`}
+                            className={`${freshSaleIds.has(sale.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter'}${sale.id === saleId ? ' entity-table__row--selected' : ''}`}
                             style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
                             onClick={() => onOpenDetail(sale.id)}
                           >
