@@ -704,6 +704,7 @@ function NativeModuleWorkspace({ route }) {
   const statusField = managerWithResolvedFields?.fields.find((field) => field.name === 'status');
   const scheduleMachineField = managerWithResolvedFields?.fields.find((field) => field.name === 'machine');
   const scheduleMachineOptions = scheduleMachineField?.options ?? ['Sem maquininha'];
+  const visibleMetrics = route.path === 'machines' ? metrics.slice(0, 2) : metrics;
   const visibleRecords = useMemo(() => {
     if (!manager) {
       return [];
@@ -1631,9 +1632,9 @@ function NativeModuleWorkspace({ route }) {
     <div className={`page-stack native-module-page native-module-page--${route.path}`}>
       <PageIntro eyebrow={route.eyebrow} title={route.title} description={route.description} />
 
-      {!manager ? (
+      {!manager || route.path === 'machines' ? (
         <div className="card-grid native-module__kpi-grid">
-          {metrics.map((metric) => (
+          {visibleMetrics.map((metric) => (
             <MetricCard
               key={`${route.path}-${metric.label}`}
               label={metric.label}
