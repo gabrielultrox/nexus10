@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import StatusBadge from '../../../components/ui/StatusBadge'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 
@@ -53,12 +54,24 @@ function canShowReturnAction(record) {
   )
 }
 
-function renderNativeModuleCell(column, cell, index) {
+function renderNativeModuleCell(routePath, column, cell, index) {
   const normalizedColumn = String(column ?? '').toLowerCase()
   const normalizedValue = String(cell ?? '').toLowerCase()
 
   if (normalizedColumn.includes('status') || normalizedColumn.includes('estado') || normalizedColumn.includes('presenca')) {
     return <span className={`ui-badge ${getStatusBadgeClass(cell)}`}>{cell}</span>
+  }
+
+  if (routePath === 'delivery-reading' && normalizedColumn.includes('turbo')) {
+    return <StatusBadge status={normalizedValue === 'sim' ? 'turbo' : 'padrao'} size="md" />
+  }
+
+  if (routePath === 'delivery-reading' && normalizedColumn.includes('fechada')) {
+    return <StatusBadge status={normalizedValue === 'sim' ? 'confirmado' : 'pendente'} size="md" />
+  }
+
+  if (routePath === 'delivery-reading' && normalizedColumn.includes('turno')) {
+    return <span className="ui-table__cell--muted">{cell}</span>
   }
 
   if (normalizedColumn.includes('valor')) {
@@ -335,153 +348,6 @@ function NativeModuleMachineHistory({ groups }) {
   )
 }
 
-function NativeModuleDeliveryReading({
-  openRecords,
-  closedRecords,
-  recentlyClosedRecordId,
-  formatAuditText,
-  onApplyAction,
-  onDelete,
-  exitingIds,
-}) {
-  return (
-    <div className="delivery-reading">
-      <div className="delivery-reading__sections">
-        <section className="delivery-reading__section delivery-reading__section--open">
-          <header className="delivery-reading__section-header">
-            <div>
-              <p className="delivery-reading__section-eyebrow">Fila lida</p>
-              <h3 className="delivery-reading__section-title">Entregas lidas</h3>
-            </div>
-            <span className="ui-badge ui-badge--warning">{openRecords.length}</span>
-          </header>
-
-          {openRecords.length === 0 ? (
-            <ModuleEmptyState message="Nenhuma entrega lida em aberto" />
-          ) : (
-            <div className="delivery-reading__grid">
-              {openRecords.map((record) => (
-                <article
-                  key={record.id}
-                  className={`delivery-reading__card delivery-reading__card--open ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closing' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
-                >
-                  <div className="delivery-reading__top">
-                    <div>
-                      <p className="delivery-reading__eyebrow">Entrega lida</p>
-                      <strong className="delivery-reading__code">{record.deliveryCode}</strong>
-                    </div>
-                    <div className="delivery-reading__badge-stack">
-                      {record.turbo ? (
-                        <span className="delivery-reading__turbo-badge">Turbo</span>
-                      ) : null}
-                      <span className="ui-badge ui-badge--warning">{record.status}</span>
-                    </div>
-                  </div>
-
-                  <div className="delivery-reading__meta">
-                    <div className="delivery-reading__meta-item">
-                      <span>Entregador</span>
-                      <strong>{record.courier}</strong>
-                    </div>
-                    <div className="delivery-reading__meta-item">
-                      <span>Leitura</span>
-                      <strong>{formatAuditText(record)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="delivery-reading__actions">
-                    <button
-                      type="button"
-                      className="delivery-reading__close-button"
-                      onClick={() => onApplyAction(record.id)}
-                    >
-                      <span className="delivery-reading__close-icon" aria-hidden="true" />
-                      <span>Fechar entrega</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="ui-button ui-button--danger"
-                      disabled={exitingIds.has(record.id)}
-                      onClick={() => onDelete(record.id)}
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="delivery-reading__section delivery-reading__section--closed">
-          <header className="delivery-reading__section-header">
-            <div>
-              <p className="delivery-reading__section-eyebrow">Fechamento</p>
-              <h3 className="delivery-reading__section-title">Entregas fechadas</h3>
-            </div>
-            <span className="ui-badge ui-badge--success">{closedRecords.length}</span>
-          </header>
-
-          {closedRecords.length === 0 ? (
-            <ModuleEmptyState message="Nenhuma entrega fechada ainda" />
-          ) : (
-            <div className="delivery-reading__grid">
-              {closedRecords.map((record) => (
-                <article
-                  key={record.id}
-                  className={`delivery-reading__card delivery-reading__card--closed ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closed-fresh' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
-                >
-                  <div className="delivery-reading__top">
-                    <div>
-                      <p className="delivery-reading__eyebrow">Entrega fechada</p>
-                      <strong className="delivery-reading__code">{record.deliveryCode}</strong>
-                    </div>
-                    <div className="delivery-reading__badge-stack">
-                      {record.turbo ? (
-                        <span className="delivery-reading__turbo-badge">Turbo</span>
-                      ) : null}
-                      <span className="ui-badge ui-badge--success">{record.status}</span>
-                    </div>
-                  </div>
-
-                  <div className="delivery-reading__meta">
-                    <div className="delivery-reading__meta-item">
-                      <span>Entregador</span>
-                      <strong>{record.courier}</strong>
-                    </div>
-                    <div className="delivery-reading__meta-item">
-                      <span>Fechamento</span>
-                      <strong>{formatAuditText(record)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="delivery-reading__actions">
-                    <label className="delivery-reading__check is-checked">
-                      <input type="checkbox" checked readOnly />
-                      <span className="delivery-reading__check-box" aria-hidden="true" />
-                      <span>Fechada no fluxo</span>
-                    </label>
-
-                    <button
-                      type="button"
-                      className="ui-button ui-button--danger"
-                      disabled={exitingIds.has(record.id)}
-                      onClick={() => onDelete(record.id)}
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-    </div>
-  )
-}
-
 function NativeModuleSchedule({
   records,
   scheduleMachineDrafts,
@@ -634,6 +500,7 @@ function NativeModuleTable({
   onMarkReturned,
   onDelete,
   exitingIds,
+  freshRecordId,
 }) {
   return (
     <div className="native-module__table-wrap">
@@ -653,18 +520,23 @@ function NativeModuleTable({
               return (
                 <tr
                   key={record.id}
-                  className={`ui-table__row-enter${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
-                  style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
+                  className={`${record.id === freshRecordId ? 'ui-table__row-fresh-top' : 'ui-table__row-enter'}${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
+                  style={{
+                    '--row-delay': `${Math.min(rowIndex * 40, 240)}ms`,
+                    '--row-flash-color': routePath === 'delivery-reading'
+                      ? 'rgba(34, 197, 94, 0.08)'
+                      : undefined,
+                  }}
                 >
                   {row.map((cell, index) => (
                     <td
                       key={`${record.id}-${index}`}
                       className={index === 0 ? 'ui-table__cell--strong' : undefined}
                     >
-                      {renderNativeModuleCell(tableColumns[index], cell, index)}
+                      {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
                     </td>
                   ))}
-                  <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible' : ''}`}>
+                  <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}>
                     {routePath === 'schedule' ? (
                       <div className="native-module__inline-editor">
                         <Select
@@ -694,7 +566,7 @@ function NativeModuleTable({
                         </button>
                       </div>
                     ) : null}
-                    {manager.actionLabel ? (
+                    {manager.actionLabel && routePath !== 'delivery-reading' ? (
                       <button
                         type="button"
                         className="ui-button ui-button--secondary native-module__table-action"
@@ -739,7 +611,7 @@ function NativeModuleTable({
               >
                 {row.map((cell, index) => (
                   <td key={`${routePath}-${row[0]}-${index}`} className={index === 0 ? 'ui-table__cell--strong' : undefined}>
-                    {renderNativeModuleCell(tableColumns[index], cell, index)}
+                    {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
                   </td>
                 ))}
               </tr>
@@ -759,12 +631,8 @@ function NativeModuleRecordsSection(props) {
     records,
     tableRows,
     machineHistoryGroups,
-    visibleOpenDeliveryRecords,
-    visibleClosedDeliveryRecords,
-    recentlyClosedRecordId,
     visibleRecords,
     visibleMachineChecklistRecords,
-    formatAuditText,
     handleApplyAction,
     handleDelete,
     handleMachineChecklistToggle,
@@ -786,10 +654,10 @@ function NativeModuleRecordsSection(props) {
   handleClearAll,
   tableColumns,
     handleMarkReturned,
+    freshRecordId,
   } = props
 
   const isMachineHistory = route.path === 'machine-history'
-  const isDeliveryReading = route.path === 'delivery-reading'
   const isSchedule = route.path === 'schedule'
   const isMachineChecklist = route.path === 'machines'
   const [exitingIds, setExitingIds] = useState(() => new Set())
@@ -808,8 +676,6 @@ function NativeModuleRecordsSection(props) {
     const visibleIds = new Set([
       ...visibleRecords.map((record) => record.id),
       ...visibleMachineChecklistRecords.map((record) => record.id),
-      ...visibleOpenDeliveryRecords.map((record) => record.id),
-      ...visibleClosedDeliveryRecords.map((record) => record.id),
     ])
 
     setExitingIds((current) => {
@@ -821,7 +687,7 @@ function NativeModuleRecordsSection(props) {
       })
       return next.size === current.size ? current : next
     })
-  }, [visibleRecords, visibleMachineChecklistRecords, visibleOpenDeliveryRecords, visibleClosedDeliveryRecords])
+  }, [visibleRecords, visibleMachineChecklistRecords])
 
   function clearExitingId(recordId) {
     setExitingIds((current) => {
@@ -889,16 +755,6 @@ function NativeModuleRecordsSection(props) {
         <ModuleEmptyState
           message={records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
         />
-      ) : isDeliveryReading ? (
-        <NativeModuleDeliveryReading
-          openRecords={visibleOpenDeliveryRecords}
-          closedRecords={visibleClosedDeliveryRecords}
-          recentlyClosedRecordId={recentlyClosedRecordId}
-          formatAuditText={formatAuditText}
-          onApplyAction={handleApplyAction}
-          onDelete={requestDelete}
-          exitingIds={exitingIds}
-        />
       ) : isSchedule ? (
         <NativeModuleSchedule
           records={visibleRecords}
@@ -931,6 +787,7 @@ function NativeModuleRecordsSection(props) {
           onMarkReturned={handleMarkReturned}
           onDelete={requestDelete}
           exitingIds={exitingIds}
+          freshRecordId={freshRecordId}
         />
       )}
     </SurfaceCard>

@@ -15,6 +15,44 @@ function getCurrentDateTimeLocal() {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function getShiftLabel(timestamp) {
+  const date = timestamp ? new Date(timestamp) : new Date();
+  const hours = Number.isNaN(date.getHours()) ? new Date().getHours() : date.getHours();
+
+  if (hours < 6) {
+    return 'Madrugada';
+  }
+
+  if (hours < 12) {
+    return 'Manha';
+  }
+
+  if (hours < 18) {
+    return 'Tarde';
+  }
+
+  return 'Noite';
+}
+
+function formatRecordDateTime(timestamp, fallback = 'Agora') {
+  if (!timestamp) {
+    return fallback;
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
 export const manualModuleConfigs = {
   schedule: {
     storageKey: 'nexus-module-schedule',
@@ -65,7 +103,7 @@ export const manualModuleConfigs = {
     submitLabel: 'Registrar leitura',
     emptyTitle: 'Nenhuma leitura registrada',
     emptyDescription: 'Use esta area para registrar rapidamente as entregas lidas para o time.',
-    columns: ['Codigo', 'Entregador', 'Estado', 'Ultima atualizacao'],
+    columns: ['Codigo', 'Entregador', 'Turno', 'Turbo', 'Fechada', 'Registrado em'],
     fields: [
       { name: 'deliveryCode', label: 'Codigo da entrega', placeholder: 'Ex: 10452', required: true },
       { name: 'courier', label: 'Entregador', type: 'select', options: [], required: true },
@@ -89,6 +127,7 @@ export const manualModuleConfigs = {
     createRecord(values, context = {}) {
       const isClosed = Boolean(values.closed);
       const isTurbo = Boolean(values.turbo);
+      const createdAtClient = new Date().toISOString();
 
       return {
         id: createId('delivery-reading'),
@@ -97,16 +136,21 @@ export const manualModuleConfigs = {
         turbo: isTurbo,
         closed: isClosed,
         status: isClosed ? 'Fechada' : 'Lida',
+        turn: getShiftLabel(createdAtClient),
+        createdAtClient,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
       };
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
-
-      return [record.deliveryCode, record.courier, record.status, updateLabel];
+      return [
+        record.deliveryCode,
+        record.courier,
+        record.turn ?? getShiftLabel(record.createdAtClient),
+        record.turbo ? 'Sim' : 'Nao',
+        record.closed ? 'Sim' : 'Nao',
+        formatRecordDateTime(record.createdAtClient),
+      ];
     },
     applyAction(record, context = {}) {
       return {

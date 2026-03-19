@@ -826,6 +826,13 @@
   animation-delay: var(--row-delay, 0ms), 0ms;
 }
 
+.ui-table__row-fresh-top {
+  animation:
+    ui-row-enter-top 250ms ease both,
+    ui-row-flash 800ms ease;
+  animation-delay: 0ms, 0ms;
+}
+
 @keyframes ui-row-enter {
   from {
     opacity: 0;
@@ -838,9 +845,21 @@
   }
 }
 
+@keyframes ui-row-enter-top {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes ui-row-flash {
   from {
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    background: var(--row-flash-color, color-mix(in srgb, var(--accent) 8%, transparent));
   }
 
   to {
@@ -851,7 +870,8 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-table tbody tr,
   .ui-table__row-enter,
-  .ui-table__row-fresh {
+  .ui-table__row-fresh,
+  .ui-table__row-fresh-top {
     animation: none;
     transition: none;
   }
@@ -1052,6 +1072,66 @@
 
 .form-row > * {
   min-width: 0;
+}
+
+.ui-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-toggle--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ui-toggle__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ui-toggle__track {
+  position: relative;
+  width: 30px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--border);
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ui-toggle__thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: #fff;
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+}
+
+.ui-toggle__input:focus-visible + .ui-toggle__track {
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.ui-toggle__input:checked + .ui-toggle__track {
+  background: var(--accent);
+}
+
+.ui-toggle__input:checked + .ui-toggle__track .ui-toggle__thumb {
+  transform: translateX(13px);
+}
+
+.ui-toggle__label {
+  font-size: 11px;
+  line-height: 1;
 }
 
 .toast-viewport {

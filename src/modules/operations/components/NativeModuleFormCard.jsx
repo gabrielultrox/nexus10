@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import FormRow from '../../../components/ui/FormRow'
 import Select from '../../../components/ui/Select'
+import Toggle from '../../../components/ui/Toggle'
 
 function NativeModuleField({ field, routePath, value, updateField }) {
   if (field.type === 'checkbox') {
@@ -127,10 +129,19 @@ function NativeModuleFormCard({
   onSubmit,
   onReset,
   updateField,
+  isSubmitting = false,
+  focusFieldKey = 0,
+  invalidFieldName = '',
 }) {
   const formRef = useRef(null)
+  const deliveryCodeInputRef = useRef(null)
 
   useEffect(() => {
+    if (routePath === 'delivery-reading') {
+      deliveryCodeInputRef.current?.focus()
+      return
+    }
+
     if (!formRef.current) {
       return
     }
@@ -139,8 +150,112 @@ function NativeModuleFormCard({
     firstField?.focus()
   }, [routePath])
 
+  useEffect(() => {
+    if (routePath !== 'delivery-reading') {
+      return
+    }
+
+    deliveryCodeInputRef.current?.focus()
+  }, [focusFieldKey, routePath])
+
   if (!managerWithResolvedFields || managerWithResolvedFields.hideForm) {
     return null
+  }
+
+  if (routePath === 'delivery-reading') {
+    const codeValue = formValues.deliveryCode ?? ''
+    const courierField = managerWithResolvedFields.fields.find((field) => field.name === 'courier')
+
+    return (
+      <SurfaceCard title={manager.formTitle}>
+        <div className="native-module__form-shell">
+          <div className="native-module__form-copy">
+            <span className="ui-badge ui-badge--info">{recordsLength} registros do dia</span>
+          </div>
+
+          <form
+            className="native-module__delivery-form"
+            onSubmit={onSubmit}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                onReset()
+                return
+              }
+
+              if (event.key === 'Enter' && event.target instanceof HTMLElement && event.target.tagName !== 'BUTTON') {
+                event.preventDefault()
+                event.currentTarget.requestSubmit()
+              }
+            }}
+          >
+            <FormRow className="native-module__delivery-form-row">
+              <input
+                ref={deliveryCodeInputRef}
+                id="delivery-reading-deliveryCode"
+                className={`ui-input native-module__delivery-code-input${invalidFieldName === 'deliveryCode' ? ' is-invalid' : ''}`}
+                type="text"
+                inputMode="numeric"
+                aria-label="Codigo"
+                value={codeValue}
+                placeholder="Codigo ex: 10452"
+                onChange={(event) => updateField('deliveryCode', event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && codeValue.trim()) {
+                    event.currentTarget.form?.requestSubmit()
+                  }
+                }}
+              />
+
+              <Select
+                id="delivery-reading-courier"
+                className="ui-select native-module__delivery-courier-select"
+                aria-label="Entregador"
+                value={formValues.courier ?? ''}
+                onChange={(event) => updateField('courier', event.target.value)}
+              >
+                {(courierField?.options ?? []).map((option) => (
+                  <option key={`delivery-reading-courier-${option}`} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+
+              <Toggle
+                id="delivery-reading-turbo"
+                label="Turbo"
+                checked={Boolean(formValues.turbo)}
+                tabIndex={-1}
+                onChange={(checked) => updateField('turbo', checked)}
+              />
+
+              <Toggle
+                id="delivery-reading-closed"
+                label="Fechada"
+                checked={Boolean(formValues.closed)}
+                tabIndex={-1}
+                onChange={(checked) => updateField('closed', checked)}
+              />
+
+              <button
+                type="submit"
+                className="ui-button ui-button--primary native-module__delivery-submit"
+                disabled={isSubmitting || codeValue.trim().length === 0}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="native-module__button-spinner" aria-hidden="true" />
+                    <span>Registrando...</span>
+                  </>
+                ) : (
+                  manager.submitLabel
+                )}
+              </button>
+            </FormRow>
+          </form>
+        </div>
+      </SurfaceCard>
+    )
   }
 
   return (

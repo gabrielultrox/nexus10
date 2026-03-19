@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 
 import MetricCard from '../../../components/common/MetricCard';
 import PageIntro from '../../../components/common/PageIntro';
+import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../services/courierService';
@@ -41,6 +42,7 @@ import NativeModuleRecordsSection from './NativeModuleRecordsSection';
 import NativeModuleStatusBar from './NativeModuleStatusBar';
 
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/;
+const DELIVERY_READING_LAST_COURIER_KEY = 'leitura_last_entregador';
 
 function buildInitialFormState(config) {
   if (!config) {
@@ -60,6 +62,18 @@ function buildInitialFormState(config) {
           : '');
     return accumulator;
   }, {});
+}
+
+function buildDeliveryReadingFormState(config, preferredCourier = '') {
+  const baseState = buildInitialFormState(config);
+
+  return {
+    ...baseState,
+    courier: preferredCourier || baseState.courier || '',
+    deliveryCode: '',
+    turbo: false,
+    closed: false,
+  };
 }
 
 function sanitizeManualRecords(records) {
@@ -259,6 +273,38 @@ function formatAuditText(record, fallback = 'Sem atualizacao') {
   return actorLabel || timeLabel || fallback;
 }
 
+function getActiveScheduleCouriers() {
+  return Array.from(
+    new Set(
+      sanitizeManualRecords(loadResettableLocalRecords('nexus-module-schedule', [], 3))
+        .map((record) => record?.courier?.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function getPreferredDeliveryCourier(options) {
+  const validOptions = options.filter((option) => option && !option.toLowerCase().includes('cadastre'));
+
+  if (validOptions.length === 0) {
+    return '';
+  }
+
+  const activeScheduleCouriers = getActiveScheduleCouriers();
+
+  if (activeScheduleCouriers.length === 1 && validOptions.includes(activeScheduleCouriers[0])) {
+    return activeScheduleCouriers[0];
+  }
+
+  const lastCourier = localStorage.getItem(DELIVERY_READING_LAST_COURIER_KEY) ?? '';
+
+  if (lastCourier && validOptions.includes(lastCourier)) {
+    return lastCourier;
+  }
+
+  return validOptions[0] ?? '';
+}
+
 function buildMachineChecklistRecords(machineRecords, checklist = [], currentRecords = []) {
   return machineRecords.map((machine) => {
     const savedState = checklist.find((item) => item.id === machine.id);
@@ -288,6 +334,7 @@ function shouldUseLocalFallback(error) {
 function NativeModuleWorkspace({ route }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
+  const toast = useToast();
   const content = getNativeModuleContent(route);
   const manager = getManualModuleConfig(route.path);
   const [isOnline, setIsOnline] = useState(() => window.navigator.onLine);
@@ -330,6 +377,10 @@ function NativeModuleWorkspace({ route }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
+  const [freshRecordId, setFreshRecordId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusFieldKey, setFocusFieldKey] = useState(0);
+  const [invalidFieldName, setInvalidFieldName] = useState('');
   const [pendingSyncCount, setPendingSyncCount] = useState(() => getManualModulePendingCount(syncModulePaths));
   const [, setSyncHistory] = useState(() => getManualModuleSyncHistory(syncModulePaths));
   const [, setSyncActivityLabel] = useState(
@@ -434,12 +485,20 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
-    setFormValues(buildInitialFormState(managerWithResolvedFields));
+    if (route.path === 'delivery-reading') {
+      const courierField = managerWithResolvedFields.fields.find((field) => field.name === 'courier');
+      const preferredCourier = getPreferredDeliveryCourier(courierField?.options ?? []);
+      setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier));
+    } else {
+      setFormValues(buildInitialFormState(managerWithResolvedFields));
+    }
     setSearchTerm('');
     setStatusFilter('all');
     setErrorMessage('');
     setScheduleMachineDrafts({});
     setRecentlyClosedRecordId(null);
+    setFreshRecordId(null);
+    setInvalidFieldName('');
   }, [manager, managerWithResolvedFields, route.path]);
 
   useEffect(() => {
@@ -558,6 +617,30 @@ function NativeModuleWorkspace({ route }) {
 
     return () => window.clearTimeout(timeoutId);
   }, [recentlyClosedRecordId]);
+
+  useEffect(() => {
+    if (!freshRecordId) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFreshRecordId(null);
+    }, 900);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [freshRecordId]);
+
+  useEffect(() => {
+    if (!invalidFieldName) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setInvalidFieldName('');
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [invalidFieldName]);
 
   const metrics = useMemo(() => {
     if (route.path === 'machines') {
@@ -708,14 +791,25 @@ function NativeModuleWorkspace({ route }) {
       return [];
     }
 
-    return records.filter((record) => {
+    const filteredRecords = records.filter((record) => {
       const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
       const matchesSearch = searchTerm.trim().length === 0
         || manager.toRow(record).join(' ').toLowerCase().includes(searchTerm.trim().toLowerCase());
 
       return matchesStatus && matchesSearch;
     });
-  }, [manager, records, searchTerm, statusFilter]);
+
+    if (route.path !== 'delivery-reading') {
+      return filteredRecords;
+    }
+
+    return [...filteredRecords].sort((left, right) => {
+      const leftTimestamp = new Date(left.createdAtClient ?? 0).getTime();
+      const rightTimestamp = new Date(right.createdAtClient ?? 0).getTime();
+
+      return rightTimestamp - leftTimestamp;
+    });
+  }, [manager, records, route.path, searchTerm, statusFilter]);
 
   const tableColumns = manager ? [...manager.columns, 'Acoes'] : content.table.columns;
   const tableRows = manager ? visibleRecords.map((record) => manager.toRow(record)) : content.table.rows;
@@ -785,6 +879,10 @@ function NativeModuleWorkspace({ route }) {
     : 'Sem reset'
 
   function updateField(name, value) {
+    if (route.path === 'delivery-reading' && name === 'deliveryCode' && invalidFieldName === 'deliveryCode') {
+      setInvalidFieldName('');
+    }
+
     setFormValues((current) => ({
       ...current,
       [name]: value,
@@ -844,6 +942,18 @@ function NativeModuleWorkspace({ route }) {
   }
 
   function resetManagedForm() {
+    if (route.path === 'delivery-reading') {
+      const preferredCourier = formValues.courier?.trim()
+        || getPreferredDeliveryCourier(
+          managerWithResolvedFields?.fields.find((field) => field.name === 'courier')?.options ?? [],
+        );
+
+      setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier));
+      setFocusFieldKey((current) => current + 1);
+      setInvalidFieldName('');
+      return;
+    }
+
     setFormValues(buildInitialFormState(managerWithResolvedFields));
   }
 
@@ -1110,12 +1220,22 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
+    if (route.path === 'delivery-reading' && !String(formValues.deliveryCode ?? '').trim()) {
+      setErrorMessage('Informe o codigo da entrega.');
+      setInvalidFieldName('deliveryCode');
+      setFocusFieldKey((current) => current + 1);
+      toast.error('Informe o codigo da entrega.');
+      playError();
+      return;
+    }
+
     const newRecord = {
       ...manager.createRecord(formValues, buildAuditContext(session)),
       createdAtClient: new Date().toISOString(),
     };
 
     try {
+      setIsSubmitting(true);
       await saveRecordWithFallback({
         modulePath: route.path,
         storageKey: manager.storageKey,
@@ -1126,7 +1246,24 @@ function NativeModuleWorkspace({ route }) {
         },
       });
 
-      setFormValues(buildInitialFormState(managerWithResolvedFields));
+      if (route.path === 'delivery-reading') {
+        const preferredCourier = formValues.courier?.trim()
+          || getPreferredDeliveryCourier(
+            managerWithResolvedFields.fields.find((field) => field.name === 'courier')?.options ?? [],
+          );
+
+        if (preferredCourier) {
+          localStorage.setItem(DELIVERY_READING_LAST_COURIER_KEY, preferredCourier);
+        }
+
+        setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier));
+        setFreshRecordId(newRecord.id);
+        setFocusFieldKey((current) => current + 1);
+        toast.success(`Leitura registrada - codigo ${newRecord.deliveryCode}`);
+      } else {
+        setFormValues(buildInitialFormState(managerWithResolvedFields));
+      }
+
       setErrorMessage('');
       playSuccess();
       appendAuditEvent({
@@ -1139,7 +1276,14 @@ function NativeModuleWorkspace({ route }) {
       });
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel salvar o registro.');
+      if (route.path === 'delivery-reading') {
+        setInvalidFieldName('deliveryCode');
+        setFocusFieldKey((current) => current + 1);
+        toast.error(error.message ?? 'Nao foi possivel registrar a leitura.');
+      }
       playError();
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -1670,6 +1814,9 @@ function NativeModuleWorkspace({ route }) {
         onSubmit={handleSubmit}
         onReset={resetManagedForm}
         updateField={updateField}
+        isSubmitting={isSubmitting}
+        focusFieldKey={focusFieldKey}
+        invalidFieldName={invalidFieldName}
       />
 
       {!manager ? (
@@ -1715,6 +1862,7 @@ function NativeModuleWorkspace({ route }) {
         handleClearAll={handleClearAll}
         tableColumns={tableColumns}
         handleMarkReturned={handleMarkReturned}
+        freshRecordId={freshRecordId}
       />
 
       <NativeModuleExportCanvases
