@@ -6,6 +6,7 @@ import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { formatCurrencyBRL } from '../../../services/commerce';
+import { subscribeToCouriers } from '../../../services/courierService';
 import { loadResettableLocalRecords, saveResettableLocalRecords } from '../../../services/localAccess';
 import {
   clearManualModuleRecords,
@@ -126,7 +127,7 @@ function sortRecords(records) {
   });
 }
 
-function buildCashRecord(tab, amount, note, operatorName) {
+function buildCashRecord(tab, amount, note, operatorName, courierName = '') {
   const createdAt = new Date().toISOString();
 
   return {
@@ -137,6 +138,7 @@ function buildCashRecord(tab, amount, note, operatorName) {
     amountLabel: formatCurrencyBRL(amount),
     note: note.trim(),
     operatorName,
+    courierName: courierName.trim(),
     receiptCode: buildReceiptCode(tab.codePrefix),
     createdAtClient: createdAt,
     updatedAtClient: createdAt,
@@ -182,6 +184,7 @@ function CashHistoryTable({ records, onPrint, onDelete }) {
                 <div className="cash-module__history-type">
                   <span>{record.kindLabel}</span>
                   <small>{record.receiptCode}</small>
+                  {record.courierName ? <small>{record.courierName}</small> : null}
                 </div>
               </td>
               <td className="ui-table__cell--numeric">{record.amountLabel}</td>
@@ -223,6 +226,8 @@ function CashModule() {
   const activeTabId = searchParams.get('tab') ?? CASH_TABS[0].id;
   const activeTab = CASH_TABS.find((tab) => tab.id === activeTabId) ?? CASH_TABS[0];
   const [records, setRecords] = useState(() => loadResettableLocalRecords(CASH_STORAGE_KEY, [], CASH_RESET_HOUR));
+  const [couriers, setCouriers] = useState([]);
+  const [selectedCourier, setSelectedCourier] = useState('');
   const [valueInput, setValueInput] = useState('');
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -249,6 +254,16 @@ function CashModule() {
     return unsubscribe;
   }, [currentStoreId]);
 
+  useEffect(() => subscribeToCouriers(
+    currentStoreId,
+    (nextCouriers) => {
+      setCouriers(nextCouriers);
+    },
+    () => {
+      setCouriers([]);
+    },
+  ), [currentStoreId]);
+
   const totalAmountByTab = useMemo(() => {
     return CASH_TABS.reduce((accumulator, tab) => {
       const total = records
@@ -264,6 +279,14 @@ function CashModule() {
     () => records.reduce((sum, record) => sum + Number(record.amount ?? 0), 0),
     [records],
   );
+  const courierOptions = useMemo(
+    () => couriers
+      .map((courier) => courier?.name?.trim())
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right, 'pt-BR')),
+    [couriers],
+  );
+  const requiresCourier = activeTab.id === 'courier-withdrawal';
 
   function handleTabChange(tabId) {
     setSearchParams((currentParams) => {
@@ -308,6 +331,11 @@ function CashModule() {
       return;
     }
 
+    if (requiresCourier && !selectedCourier.trim()) {
+      setErrorMessage('Selecione o entregador da retirada.');
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage('');
 
@@ -316,12 +344,14 @@ function CashModule() {
       amount,
       note,
       session?.operatorName ?? session?.displayName ?? 'Operador local',
+      selectedCourier,
     );
 
     try {
       await persistRecords([nextRecord, ...records], nextRecord);
       setValueInput('');
       setNote('');
+      setSelectedCourier('');
     } finally {
       setIsSaving(false);
     }
@@ -396,6 +426,27 @@ function CashModule() {
 
         <form className="cash-module__form" onSubmit={handleSubmit}>
           <div className="cash-module__form-grid">
+            {requiresCourier ? (
+              <div className="ui-field cash-module__form-field--wide">
+                <label className="ui-label" htmlFor="cash-courier">
+                  Entregador
+                </label>
+                <select
+                  id="cash-courier"
+                  className="ui-select"
+                  value={selectedCourier}
+                  onChange={(event) => setSelectedCourier(event.target.value)}
+                >
+                  <option value="">Selecione o entregador</option>
+                  {courierOptions.map((courierName) => (
+                    <option key={courierName} value={courierName}>
+                      {courierName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
             <div className="ui-field">
               <label className="ui-label" htmlFor="cash-value">
                 Valor
@@ -429,6 +480,7 @@ function CashModule() {
               type="button"
               className="ui-button ui-button--ghost"
               onClick={() => {
+                setSelectedCourier('');
                 setValueInput('');
                 setNote('');
                 setErrorMessage('');

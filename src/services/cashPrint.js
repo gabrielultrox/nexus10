@@ -34,9 +34,10 @@ function formatPrintableDate(value) {
 
 function buildReceiptText(entry) {
   const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0);
+  const courierLine = entry.courierName?.trim() ? ` Entregador: ${entry.courierName.trim()}.` : '';
   const observation = entry.note?.trim() ? ` Observacao: ${entry.note.trim()}.` : '';
 
-  return `Recebi de ${CASH_RECEIPT_META.brand} a importancia de ${amountLabel}, referente a ${entry.kindLabel?.toLowerCase()}. Operador responsavel: ${entry.operatorName}.${observation}`;
+  return `Recebi de ${CASH_RECEIPT_META.brand} a importancia de ${amountLabel}, referente a ${entry.kindLabel?.toLowerCase()}.${courierLine} Operador responsavel: ${entry.operatorName}.${observation}`;
 }
 
 function buildPrintHtml(entry) {
@@ -44,6 +45,7 @@ function buildPrintHtml(entry) {
   const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0);
   const note = entry.note?.trim() || 'Sem observacao';
   const operatorName = entry.operatorName || 'Operador local';
+  const courierName = entry.courierName?.trim() || '';
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -268,6 +270,11 @@ function buildPrintHtml(entry) {
             <span class="receipt__label">Operador</span>
             <span class="receipt__data">${escapeHtml(operatorName)}</span>
           </div>
+          ${courierName ? `
+          <div class="receipt__row">
+            <span class="receipt__label">Entregador</span>
+            <span class="receipt__data">${escapeHtml(courierName)}</span>
+          </div>` : ''}
           <div class="receipt__row">
             <span class="receipt__label">Data</span>
             <span class="receipt__data">${escapeHtml(createdAt)}</span>
