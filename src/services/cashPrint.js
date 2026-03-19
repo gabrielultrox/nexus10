@@ -42,6 +42,8 @@ function buildReceiptText(entry) {
 function buildPrintHtml(entry) {
   const createdAt = formatPrintableDate(entry.createdAtClient);
   const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0);
+  const note = entry.note?.trim() || 'Sem observacao';
+  const operatorName = entry.operatorName || 'Operador local';
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -52,7 +54,7 @@ function buildPrintHtml(entry) {
     <style>
       @page {
         size: 80mm 297mm;
-        margin: 4mm;
+        margin: 2.5mm;
       }
 
       * {
@@ -69,94 +71,211 @@ function buildPrintHtml(entry) {
       }
 
       body {
-        width: 72mm;
+        width: auto;
+        font-family: "Arial", "Helvetica Neue", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       .receipt {
-        display: grid;
-        gap: 8mm;
+        display: block;
         width: 100%;
-        padding: 4mm 0;
+        padding: 2mm 0 4mm;
       }
 
-      .receipt__header,
-      .receipt__body,
-      .receipt__footer {
+      .receipt__section + .receipt__section {
+        margin-top: 4mm;
+      }
+
+      .receipt__header {
         display: grid;
-        gap: 3mm;
+        gap: 1.6mm;
         text-align: center;
       }
 
       .receipt__brand {
-        font-size: 4.2mm;
+        font-size: 4.1mm;
         font-weight: 700;
-        line-height: 1.15;
+        letter-spacing: 0.02em;
+        line-height: 1.2;
       }
 
       .receipt__subline,
-      .receipt__meta,
-      .receipt__body p,
-      .receipt__signature {
-        font-size: 3.1mm;
+      .receipt__legal,
+      .receipt__body-copy,
+      .receipt__signature-copy {
+        font-size: 3mm;
         line-height: 1.4;
       }
 
+      .receipt__legal {
+        color: #2b2b2b;
+      }
+
       .receipt__title {
-        margin: 3mm 0 0;
-        font-size: 5.2mm;
+        margin: 1.5mm 0 0;
+        font-size: 5mm;
         font-weight: 700;
+        letter-spacing: 0.08em;
       }
 
       .receipt__divider {
         width: 100%;
-        border-top: 0.3mm solid #111;
+        border-top: 0.28mm solid #111;
       }
 
-      .receipt__body {
-        gap: 4mm;
+      .receipt__summary {
+        padding: 2.8mm 0;
+        border-top: 0.28mm solid #111;
+        border-bottom: 0.28mm solid #111;
+        text-align: center;
+      }
+
+      .receipt__type {
+        font-size: 3mm;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
       }
 
       .receipt__value {
-        font-size: 4.4mm;
+        margin-top: 1.4mm;
+        font-size: 6mm;
         font-weight: 700;
+        line-height: 1;
       }
 
-      .receipt__signature {
+      .receipt__details {
+        display: grid;
+        gap: 0;
+        margin-top: 3.4mm;
+      }
+
+      .receipt__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 3mm;
+        padding: 1.7mm 0;
+        border-bottom: 0.2mm solid #d4d4d4;
+      }
+
+      .receipt__row:last-child {
+        border-bottom: 0;
+      }
+
+      .receipt__label {
+        flex: 0 0 21mm;
+        font-size: 2.7mm;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .receipt__data {
+        flex: 1;
+        font-size: 3mm;
+        line-height: 1.4;
+        text-align: right;
+        word-break: break-word;
+      }
+
+      .receipt__body-copy {
+        margin: 3.2mm 0 0;
+        text-align: left;
+      }
+
+      .receipt__note {
+        margin-top: 3mm;
+        padding: 2.6mm 2.8mm;
+        border: 0.24mm dashed #111;
+      }
+
+      .receipt__note-title {
+        margin-bottom: 1.5mm;
+        font-size: 2.7mm;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .receipt__sign {
         margin-top: 10mm;
+        padding-top: 3mm;
+        border-top: 0.28mm solid #111;
+        text-align: center;
+      }
+
+      .receipt__footer {
+        display: grid;
+        gap: 1.4mm;
+        text-align: center;
       }
 
       @media screen {
         body {
           margin: 0 auto;
-          padding: 6mm 0;
+          padding: 6mm 3mm 10mm;
+          background: #f2f2f2;
+        }
+
+        .receipt {
+          max-width: 80mm;
+          margin: 0 auto;
+          padding: 4mm;
+          background: #fff;
+          box-shadow: 0 0 0 1px #d9d9d9;
         }
       }
     </style>
   </head>
   <body>
     <main class="receipt">
-      <section class="receipt__header">
+      <section class="receipt__header receipt__section">
         <div class="receipt__brand">${escapeHtml(CASH_RECEIPT_META.brand)}</div>
         <div class="receipt__subline">${escapeHtml(CASH_RECEIPT_META.phone)}</div>
-        <div class="receipt__divider"></div>
+        <div class="receipt__legal">${escapeHtml(CASH_RECEIPT_META.document)}</div>
         <h1 class="receipt__title">RECIBO</h1>
       </section>
 
-      <section class="receipt__body">
-        <p>${escapeHtml(buildReceiptText(entry))}</p>
+      <section class="receipt__summary receipt__section">
+        <div class="receipt__type">${escapeHtml(entry.kindLabel)}</div>
         <div class="receipt__value">${escapeHtml(amountLabel)}</div>
-        <div class="receipt__meta">
-          Documento: ${escapeHtml(entry.receiptCode)}<br />
-          Tipo: ${escapeHtml(entry.kindLabel)}<br />
-          Data/Hora: ${escapeHtml(createdAt)}
-        </div>
-        <p class="receipt__signature">Por ser verdade firmo o presente.<br />${escapeHtml(CASH_RECEIPT_META.cityLine)}, ${escapeHtml(createdAt)}</p>
       </section>
 
-      <section class="receipt__footer">
+      <section class="receipt__section">
+        <div class="receipt__details">
+          <div class="receipt__row">
+            <span class="receipt__label">Documento</span>
+            <span class="receipt__data">${escapeHtml(entry.receiptCode)}</span>
+          </div>
+          <div class="receipt__row">
+            <span class="receipt__label">Operador</span>
+            <span class="receipt__data">${escapeHtml(operatorName)}</span>
+          </div>
+          <div class="receipt__row">
+            <span class="receipt__label">Data</span>
+            <span class="receipt__data">${escapeHtml(createdAt)}</span>
+          </div>
+        </div>
+
+        <p class="receipt__body-copy">${escapeHtml(buildReceiptText(entry))}</p>
+
+        <div class="receipt__note">
+          <div class="receipt__note-title">Observacao</div>
+          <div class="receipt__body-copy">${escapeHtml(note)}</div>
+        </div>
+
+        <div class="receipt__sign">
+          <div class="receipt__signature-copy">________________________________</div>
+          <div class="receipt__signature-copy">Assinatura do responsavel</div>
+        </div>
+      </section>
+
+      <section class="receipt__footer receipt__section">
         <div class="receipt__divider"></div>
         <div class="receipt__brand">${escapeHtml(CASH_RECEIPT_META.brand)}</div>
-        <div class="receipt__subline">${escapeHtml(CASH_RECEIPT_META.document)}</div>
+        <div class="receipt__subline">${escapeHtml(CASH_RECEIPT_META.cityLine)}</div>
         <div class="receipt__subline">${escapeHtml(createdAt)}</div>
       </section>
     </main>
