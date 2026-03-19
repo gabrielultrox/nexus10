@@ -16,6 +16,8 @@ import {
   updateCustomer,
 } from '../../../services/customerService';
 import { playError, playSuccess } from '../../../services/soundManager';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const initialFormState = {
   name: '',
@@ -410,9 +412,7 @@ function CustomersModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Clientes">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Firebase nao configurado</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -420,9 +420,7 @@ function CustomersModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Clientes">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Nenhuma store ativa</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     );
   }
@@ -483,7 +481,7 @@ function CustomersModule() {
             >
               {seeding ? 'Preparando base...' : 'Popular base inicial'}
             </button>
-            <select
+            <Select
               className="ui-select"
               value={csvMode}
               onChange={(event) => setCsvMode(event.target.value)}
@@ -491,7 +489,7 @@ function CustomersModule() {
               <option value="all">CSV: criar e atualizar</option>
               <option value="create_only">CSV: criar novos</option>
               <option value="update_only">CSV: atualizar existentes</option>
-            </select>
+            </Select>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -561,10 +559,10 @@ function CustomersModule() {
 
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="customer-status">Status</label>
-                  <select id="customer-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                  <Select id="customer-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
                     <option value="active">Ativo</option>
                     <option value="inactive">Inativo</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -640,23 +638,19 @@ function CustomersModule() {
 
             <div className="ui-field">
               <label className="ui-label" htmlFor="customers-status-filter">Status</label>
-              <select id="customers-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <Select id="customers-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
-              </select>
+              </Select>
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="module-empty-state">
-            <p className="module-empty-state__text">Carregando clientes</p>
-          </div>
+          <EmptyState message="Carregando clientes" />
         ) : visibleCustomers.length === 0 ? (
-          <div className="module-empty-state">
-            <p className="module-empty-state__text">Nenhum cliente encontrado</p>
-          </div>
+          <EmptyState message="Nenhum cliente encontrado" />
         ) : (
           <div className="entity-table-wrap">
             <table className="ui-table">
@@ -698,3 +692,5 @@ function CustomersModule() {
 }
 
 export default CustomersModule;
+
+

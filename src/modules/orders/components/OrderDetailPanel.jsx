@@ -5,6 +5,7 @@ import {
   getPaymentMethodLabel,
 } from '../../../services/commerce'
 import { printOrderTicket } from '../../../services/commercePrint'
+import EmptyState from '../../../components/ui/EmptyState';
 
 function OrderDetailPanel({
   selectedOrder,
@@ -78,11 +79,9 @@ function OrderDetailPanel({
       </div>
 
       {!selectedOrder ? (
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">
-            {isLoading ? 'Carregando...' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
-          </p>
-        </div>
+        <EmptyState
+          message={isLoading ? 'Carregando...' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
+        />
       ) : (
         <div className="orders-domain__detail">
           <div className="commerce-detail-band">
@@ -208,3 +207,4 @@ function OrderDetailPanel({
 }
 
 export default OrderDetailPanel
+

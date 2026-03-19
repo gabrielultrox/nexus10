@@ -1,4 +1,5 @@
 import { orderOriginOptions, orderStatusOptions } from '../schemas/orderSchema';
+import Select from '../../../components/ui/Select';
 
 function OrdersFilters({ filters, onChange }) {
   function updateFilter(field, value) {
@@ -28,7 +29,7 @@ function OrdersFilters({ filters, onChange }) {
         <label className="ui-label" htmlFor="order-status">
           Status
         </label>
-        <select
+        <Select
           id="order-status"
           className="ui-select"
           value={filters.status}
@@ -39,14 +40,14 @@ function OrdersFilters({ filters, onChange }) {
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="ui-field">
         <label className="ui-label" htmlFor="order-origin">
           Origem
         </label>
-        <select
+        <Select
           id="order-origin"
           className="ui-select"
           value={filters.origin}
@@ -57,7 +58,7 @@ function OrdersFilters({ filters, onChange }) {
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <label className="orders-filters__checkbox">
@@ -73,3 +74,5 @@ function OrdersFilters({ filters, onChange }) {
 }
 
 export default OrdersFilters;
+
+

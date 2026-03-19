@@ -18,6 +18,8 @@ import {
   updateProduct,
 } from '../../../services/productService'
 import { playError, playSuccess } from '../../../services/soundManager'
+import Select from '../../../components/ui/Select'
+import EmptyState from '../../../components/ui/EmptyState';
 
 const initialFormState = {
   name: '',
@@ -515,9 +517,7 @@ function ProductsModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Produtos">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Firebase nao configurado</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     )
   }
@@ -525,9 +525,7 @@ function ProductsModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Produtos">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Nenhuma store ativa</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     )
   }
@@ -690,10 +688,10 @@ function ProductsModule() {
                 </div>
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="product-status">Status</label>
-                  <select id="product-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                  <Select id="product-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
                     <option value="active">Ativo</option>
                     <option value="inactive">Inativo</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -739,24 +737,24 @@ function ProductsModule() {
             </div>
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-category-filter">Categoria</label>
-              <select id="products-category-filter" className="ui-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <Select id="products-category-filter" className="ui-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
                 <option value="all">Todas</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-status-filter">Status</label>
-              <select id="products-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <Select id="products-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
-              </select>
+              </Select>
             </div>
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-quality-filter">Qualidade</label>
-              <select id="products-quality-filter" className="ui-select" value={qualityFilter} onChange={(event) => setQualityFilter(event.target.value)}>
+              <Select id="products-quality-filter" className="ui-select" value={qualityFilter} onChange={(event) => setQualityFilter(event.target.value)}>
                 <option value="all">Todos</option>
                 <option value="missing-price">Sem preco</option>
                 <option value="missing-cost">Sem custo</option>
@@ -765,7 +763,7 @@ function ProductsModule() {
                 <option value="duplicate-name">Nome duplicado</option>
                 <option value="suspicious">Texto suspeito</option>
                 <option value="uncategorized">Sem categoria</option>
-              </select>
+              </Select>
             </div>
           </div>
         </div>
@@ -790,11 +788,11 @@ function ProductsModule() {
             </div>
             <div className="ui-field">
               <label className="ui-label" htmlFor="products-bulk-status">Status</label>
-              <select id="products-bulk-status" className="ui-select" value={bulkState.status} onChange={(event) => updateBulkField('status', event.target.value)}>
+              <Select id="products-bulk-status" className="ui-select" value={bulkState.status} onChange={(event) => updateBulkField('status', event.target.value)}>
                 <option value="keep">Manter atual</option>
                 <option value="active">Ativar</option>
                 <option value="inactive">Inativar</option>
-              </select>
+              </Select>
             </div>
             <div className="entity-form-actions entity-form-actions--inline">
               <button type="button" className="ui-button ui-button--ghost" onClick={resetBulkForm}>
@@ -808,13 +806,9 @@ function ProductsModule() {
         </div>
 
         {loading ? (
-          <div className="module-empty-state">
-            <p className="module-empty-state__text">Carregando produtos</p>
-          </div>
+          <EmptyState message="Carregando produtos" />
         ) : visibleProducts.length === 0 ? (
-          <div className="module-empty-state">
-            <p className="module-empty-state__text">Nenhum produto encontrado</p>
-          </div>
+          <EmptyState message="Nenhum produto encontrado" />
         ) : (
           <div className="entity-table-wrap entity-table-wrap--dense">
             <table className="ui-table">
@@ -894,3 +888,5 @@ function ProductsModule() {
 }
 
 export default ProductsModule
+
+

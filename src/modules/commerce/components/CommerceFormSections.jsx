@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce'
+import Select from '../../../components/ui/Select'
 
 function normalizeSearchToken(value) {
   return String(value ?? '')
@@ -202,11 +203,11 @@ export function CommerceIdentitySection({
       <div className="entity-stack">
         <div className="ui-field">
           <label className="ui-label" htmlFor={channelId}>{channelLabel}</label>
-          <select id={channelId} className="ui-select" value={channelValue} onChange={(event) => onFieldChange(channelField, event.target.value)}>
+          <Select id={channelId} className="ui-select" value={channelValue} onChange={(event) => onFieldChange(channelField, event.target.value)}>
             {channelOptions.map((channel) => (
               <option key={channel} value={channel}>{getChannelLabel(channel)}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="ui-field">
@@ -222,11 +223,11 @@ export function CommerceIdentitySection({
 
         <div className="ui-field">
           <label className="ui-label" htmlFor={paymentId}>Forma de pagamento</label>
-          <select id={paymentId} className="ui-select" value={paymentValue} onChange={(event) => onFieldChange('paymentMethod', event.target.value)}>
+          <Select id={paymentId} className="ui-select" value={paymentValue} onChange={(event) => onFieldChange('paymentMethod', event.target.value)}>
             {paymentOptions.map((paymentMethod) => (
               <option key={paymentMethod} value={paymentMethod}>{getPaymentMethodLabel(paymentMethod)}</option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
     </div>
@@ -610,3 +611,5 @@ export function CommerceFinishStep({
     </section>
   )
 }
+
+

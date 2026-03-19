@@ -5,6 +5,8 @@ import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useStore } from '../../../contexts/StoreContext';
 import { subscribeToAuditLogs } from '../../../services/auditLog';
 import { firebaseReady } from '../../../services/firebase';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 function asDate(value) {
   if (!value) {
@@ -165,10 +167,7 @@ function AuditLogModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Audit log">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar auditoria persistida.</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -176,10 +175,7 @@ function AuditLogModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Audit log">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione uma store antes de consultar o audit log.</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     );
   }
@@ -214,7 +210,7 @@ function AuditLogModule() {
 
           <div className="ui-field">
             <label className="ui-label" htmlFor="audit-log-entity">Entidade</label>
-            <select
+            <Select
               id="audit-log-entity"
               className="ui-select"
               value={entityFilter}
@@ -224,7 +220,7 @@ function AuditLogModule() {
               {entityTypes.map((entityType) => (
                 <option key={entityType} value={entityType}>{entityType}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="ui-field">
@@ -255,14 +251,9 @@ function AuditLogModule() {
 
       <SurfaceCard title="Eventos auditados">
         {loading ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Carregando audit log...</p>
-          </div>
+          <EmptyState message="Carregando audit log..." />
         ) : visibleEvents.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Nenhum evento encontrado</p>
-            <p className="text-body">Os eventos auditados dos modulos reais vao aparecer aqui automaticamente.</p>
-          </div>
+          <EmptyState message="Nenhum evento encontrado" />
         ) : (
           <div className="entity-table-wrap">
             <table className="ui-table">
@@ -297,3 +288,5 @@ function AuditLogModule() {
 }
 
 export default AuditLogModule;
+
+

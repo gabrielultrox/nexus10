@@ -16,6 +16,8 @@ import {
   subscribeToManualModuleRecords,
 } from '../../../services/manualModuleService';
 import { printCashReceipt } from '../../../services/cashPrint';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const CASH_STORAGE_KEY = 'nexus-module-cash';
 const CASH_RESET_HOUR = 3;
@@ -159,9 +161,7 @@ function CashMetricCard({ label, value, meta }) {
 function CashHistoryTable({ records, onPrint, onDelete }) {
   if (records.length === 0) {
     return (
-      <div className="module-empty-state">
-        <p className="module-empty-state__text">Nenhum lancamento de caixa hoje</p>
-      </div>
+      <EmptyState message="Nenhum lancamento de caixa hoje" />
     );
   }
 
@@ -463,7 +463,7 @@ function CashModule() {
                 <label className="ui-label" htmlFor="cash-courier">
                   Entregador
                 </label>
-                <select
+                <Select
                   id="cash-courier"
                   className="ui-select"
                   value={selectedCourier}
@@ -475,7 +475,7 @@ function CashModule() {
                       {courierName}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             ) : null}
 
@@ -557,3 +557,5 @@ function CashModule() {
 }
 
 export default CashModule;
+
+

@@ -1,3 +1,25 @@
+import UIMetricCard from '../ui/MetricCard';
+
+function resolveVariantFromBadgeClass(badgeClass = '') {
+  if (badgeClass.includes('warning')) {
+    return 'warning';
+  }
+
+  if (badgeClass.includes('danger')) {
+    return 'danger';
+  }
+
+  if (badgeClass.includes('success')) {
+    return 'success';
+  }
+
+  if (badgeClass.includes('info')) {
+    return 'info';
+  }
+
+  return 'neutral';
+}
+
 function MetricCard({
   label,
   value,
@@ -6,18 +28,23 @@ function MetricCard({
   badgeClass,
   className = '',
   valueClassName = '',
+  delta,
+  description,
+  variant,
 }) {
   return (
-    <article className={`ui-kpi-card ${className}`.trim()}>
-      <div className="ui-kpi-card__top">
-        <p className="ui-kpi-card__label">{label}</p>
-        {badgeText ? <span className={`ui-badge ${badgeClass}`}>{badgeText}</span> : null}
-      </div>
-
-      <div className={`ui-kpi-card__value ${valueClassName}`.trim()}>{value}</div>
-      {meta ? <p className="ui-kpi-card__meta">{meta}</p> : null}
-    </article>
+    <UIMetricCard
+      label={label}
+      value={value}
+      delta={delta}
+      description={description ?? meta}
+      variant={variant ?? resolveVariantFromBadgeClass(badgeClass)}
+      badge={badgeText}
+      className={className}
+      valueClassName={valueClassName}
+    />
   );
 }
 
 export default MetricCard;
+

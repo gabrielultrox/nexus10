@@ -8,6 +8,7 @@ import { buildPdvReportCsv, buildPdvReportData, subscribeToReportSources } from 
 import { playError, playSuccess } from '../../../services/soundManager';
 import ReportBarChart from './ReportBarChart';
 import ReportStatList from './ReportStatList';
+import EmptyState from '../../../components/ui/EmptyState';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', {
@@ -175,10 +176,7 @@ function PosReportsModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Relatorios do PDV">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar os relatorios reais.</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -186,10 +184,7 @@ function PosReportsModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Relatorios do PDV">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione uma store para carregar vendas, pedidos, produtos e financeiro.</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     );
   }
@@ -246,9 +241,7 @@ function PosReportsModule() {
 
       {loading ? (
         <SurfaceCard title="Relatorios em tempo real">
-          <div className="entity-empty-state">
-            <p className="text-section-title">Carregando metricas reais...</p>
-          </div>
+          <EmptyState message="Carregando metricas reais..." />
         </SurfaceCard>
       ) : (
         <>
@@ -306,10 +299,7 @@ function PosReportsModule() {
 
             <SurfaceCard title="Resumo diario">
               {reportData.salesByDay.length === 0 ? (
-                <div className="entity-empty-state">
-                  <p className="text-section-title">Sem vendas no periodo</p>
-                  <p className="text-body">Ajuste o periodo para gerar a leitura diaria do PDV.</p>
-                </div>
+                <EmptyState message="Sem vendas no periodo" />
               ) : (
                 <div className="entity-table-wrap">
                   <table className="ui-table">
@@ -341,3 +331,4 @@ function PosReportsModule() {
 }
 
 export default PosReportsModule;
+

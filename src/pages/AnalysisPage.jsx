@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import SurfaceCard from '../components/common/SurfaceCard'
 import NativeModuleWorkspace from '../modules/operations/components/NativeModuleWorkspace'
 import { routeDefinitions } from '../utils/routeCatalog'
+import Select from '../components/ui/Select'
 
 const ANALYSIS_ROUTE_IDS = ['reports', 'monthly-report', 'orders-hour', 'ratings']
 
@@ -37,7 +38,7 @@ function AnalysisPage() {
             <label className="ui-label" htmlFor="analysis-screen-select">
               Tela
             </label>
-            <select
+            <Select
               id="analysis-screen-select"
               className="ui-select"
               value={activeRoute.path}
@@ -48,7 +49,7 @@ function AnalysisPage() {
                   {route.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
       </SurfaceCard>
@@ -59,3 +60,5 @@ function AnalysisPage() {
 }
 
 export default AnalysisPage
+
+

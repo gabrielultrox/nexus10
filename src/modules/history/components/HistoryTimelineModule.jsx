@@ -5,6 +5,8 @@ import MetricCard from '../../../components/common/MetricCard';
 import PageTabs from '../../../components/common/PageTabs';
 import SurfaceCard from '../../../components/common/SurfaceCard';
 import { loadAuditEvents } from '../../../services/localAudit';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const HISTORY_TABS = [
   { id: 'all', label: 'Tudo', modulePaths: [] },
@@ -398,7 +400,7 @@ function HistoryTimelineModule() {
                 <label className="ui-label" htmlFor="history-month">
                   Mes
                 </label>
-                <select
+                <Select
                   id="history-month"
                   className="ui-select"
                   value={selectedMonth}
@@ -409,7 +411,7 @@ function HistoryTimelineModule() {
                       {formatMonthLabel(monthKey)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="history-module__weekday-row">
@@ -436,17 +438,13 @@ function HistoryTimelineModule() {
               </div>
             </div>
           ) : (
-            <div className="module-empty-state">
-              <p className="module-empty-state__text">Nenhum dia registrado</p>
-            </div>
+            <EmptyState message="Nenhum dia registrado" />
           )}
         </SurfaceCard>
 
         <SurfaceCard title={selectedDay ? `Atividades de ${formatDayLabel(selectedDay)}` : 'Atividades'}>
           {visibleEvents.length === 0 ? (
-            <div className="module-empty-state">
-              <p className="module-empty-state__text">Nenhuma atividade nesta categoria</p>
-            </div>
+            <EmptyState message="Nenhuma atividade nesta categoria" />
           ) : (
             <div className="history-module__timeline">
               {visibleEvents.map((event) => {
@@ -489,3 +487,5 @@ function HistoryTimelineModule() {
 }
 
 export default HistoryTimelineModule;
+
+

@@ -1,3 +1,4 @@
+import Select from '../../../components/ui/Select';
 import {
   courierShiftOptions,
   courierStatusOptions,
@@ -31,7 +32,7 @@ function CouriersFilters({ filters, onChange }) {
         <label className="ui-label" htmlFor="courier-status">
           Status
         </label>
-        <select
+        <Select
           id="courier-status"
           className="ui-select"
           value={filters.status}
@@ -42,14 +43,14 @@ function CouriersFilters({ filters, onChange }) {
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="ui-field">
         <label className="ui-label" htmlFor="courier-shift">
           Turno
         </label>
-        <select
+        <Select
           id="courier-shift"
           className="ui-select"
           value={filters.shift}
@@ -60,7 +61,7 @@ function CouriersFilters({ filters, onChange }) {
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <label className="couriers-filters__checkbox">
@@ -76,3 +77,5 @@ function CouriersFilters({ filters, onChange }) {
 }
 
 export default CouriersFilters;
+
+

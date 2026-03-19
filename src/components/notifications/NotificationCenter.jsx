@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useNotifications } from '../../contexts/NotificationsContext';
+import EmptyState from '../ui/EmptyState';
 
 function formatDateTime(value) {
   const dateValue = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
@@ -54,9 +55,7 @@ function NotificationCenter() {
           </div>
 
           {notifications.length === 0 ? (
-            <div className="module-empty-state">
-              <p className="module-empty-state__text">Sem alertas no momento</p>
-            </div>
+            <EmptyState message="Sem alertas no momento" />
           ) : (
             <div className="notification-center__list">
               {notifications.map((notification) => (
@@ -85,3 +84,4 @@ function NotificationCenter() {
 }
 
 export default NotificationCenter;
+

@@ -18,6 +18,8 @@ import { storeUserOptions } from '../../../services/localUsers';
 import FinanceIndicators from './FinanceIndicators';
 import FinanceMovementsTable from './FinanceMovementsTable';
 import FinanceSummaryCards from './FinanceSummaryCards';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const initialExpenseForm = {
   description: '',
@@ -427,10 +429,7 @@ function FinanceModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Financeiro">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Firebase nao configurado</p>
-          <p className="text-body">Configure as variaveis VITE_FIREBASE_* para usar persistencia real.</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -438,10 +437,7 @@ function FinanceModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Financeiro">
-        <div className="entity-empty-state">
-          <p className="text-section-title">Nenhuma store ativa</p>
-          <p className="text-body">Selecione uma store antes de operar o financeiro.</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     );
   }
@@ -529,7 +525,7 @@ function FinanceModule() {
             </div>
             <div className="ui-field">
               <label className="ui-label" htmlFor="finance-expense-cashier">Caixa</label>
-              <select
+              <Select
                 id="finance-expense-cashier"
                 className="ui-select"
                 value={expenseForm.cashierName}
@@ -539,7 +535,7 @@ function FinanceModule() {
                 {storeUserOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="ui-field finance-form-grid__wide">
               <label className="ui-label" htmlFor="finance-expense-date">Data e hora</label>
@@ -563,7 +559,7 @@ function FinanceModule() {
           <form className="finance-form-grid" onSubmit={handleClosureSubmit}>
             <div className="ui-field">
               <label className="ui-label" htmlFor="finance-closure-cashier">Caixa</label>
-              <select
+              <Select
                 id="finance-closure-cashier"
                 className="ui-select"
                 value={closureForm.cashierName}
@@ -573,7 +569,7 @@ function FinanceModule() {
                 {storeUserOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="ui-field">
               <label className="ui-label">Entradas</label>
@@ -611,14 +607,9 @@ function FinanceModule() {
         </div>
 
         {loading ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Carregando financeiro...</p>
-          </div>
+          <EmptyState message="Carregando financeiro..." />
         ) : movementRows.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Nenhuma movimentacao encontrada</p>
-            <p className="text-body">As entradas de vendas e as saidas manuais do periodo aparecerao aqui.</p>
-          </div>
+          <EmptyState message="Nenhuma movimentacao encontrada" />
         ) : (
           <FinanceMovementsTable rows={movementRows} />
         )}
@@ -628,3 +619,5 @@ function FinanceModule() {
 }
 
 export default FinanceModule;
+
+

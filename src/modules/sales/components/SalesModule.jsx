@@ -17,6 +17,8 @@ import {
   updateSaleStatus,
 } from '../../../services/sales';
 import { playError, playSuccess } from '../../../services/soundManager';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 import SalesDetailPanel from './SalesDetailPanel';
 import SalesFormPanel from './SalesFormPanel';
 import {
@@ -372,9 +374,7 @@ function SalesModule({
   if (!firebaseReady || !currentStoreId) {
     return (
       <SurfaceCard title="Vendas">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">{firebaseReady ? 'Nenhuma loja ativa' : 'Firebase nao configurado'}</p>
-        </div>
+        <EmptyState message={firebaseReady ? 'Nenhuma loja ativa' : 'Firebase nao configurado'} />
       </SurfaceCard>
     );
   }
@@ -396,12 +396,12 @@ function SalesModule({
               </div>
               <div className="ui-field">
                 <label className="ui-label" htmlFor="sales-status">Status</label>
-                <select id="sales-status" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <Select id="sales-status" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                   <option value="all">Todos</option>
                   <option value="POSTED">Lancadas</option>
                   <option value="REVERSED">Estornadas</option>
                   <option value="CANCELLED">Canceladas</option>
-                </select>
+                </Select>
               </div>
               <div className="ui-field">
                 <label className="ui-label" htmlFor="sales-start-date">Inicio</label>
@@ -415,9 +415,9 @@ function SalesModule({
 
             <div className="sales-domain__list-shell sales-domain__list-shell--full">
               {loading ? (
-                <div className="module-empty-state"><p className="module-empty-state__text">Carregando vendas</p></div>
+                <EmptyState message="Carregando vendas" />
               ) : visibleSales.length === 0 ? (
-                <div className="module-empty-state"><p className="module-empty-state__text">Nenhuma venda encontrada</p></div>
+                <EmptyState message="Nenhuma venda encontrada" />
               ) : (
                 <div className="entity-table-wrap">
                   <table className="ui-table">
@@ -458,9 +458,7 @@ function SalesModule({
 
           {showCreateLoading ? (
             <SurfaceCard title="Nova venda">
-              <div className="module-empty-state">
-                <p className="module-empty-state__text">Carregando apoio do formulario</p>
-              </div>
+              <EmptyState message="Carregando apoio do formulario" />
             </SurfaceCard>
           ) : (
             <SalesFormPanel
@@ -506,3 +504,5 @@ function SalesModule({
 }
 
 export default SalesModule;
+
+

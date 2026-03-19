@@ -1,3 +1,5 @@
+import EmptyState from '../../../components/ui/EmptyState';
+
 function ReportBarChart({
   title,
   items,
@@ -17,9 +19,7 @@ function ReportBarChart({
 
         <div className="report-chart__list">
           {items.length === 0 ? (
-            <div className="entity-empty-state">
-              <p className="text-section-title">Sem dados no periodo</p>
-            </div>
+            <EmptyState message="Sem dados no periodo" />
           ) : items.map((item) => {
             const numericValue = item.value ?? item.total ?? item.quantity ?? 0;
             const width = resolvedMaxValue > 0 ? Math.max((numericValue / resolvedMaxValue) * 100, 6) : 0;
@@ -44,3 +44,4 @@ function ReportBarChart({
 }
 
 export default ReportBarChart;
+

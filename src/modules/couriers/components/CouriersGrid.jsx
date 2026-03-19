@@ -1,11 +1,10 @@
 import CourierCard from './CourierCard';
+import EmptyState from '../../../components/ui/EmptyState';
 
 function CouriersGrid({ couriers, onDelete }) {
   if (couriers.length === 0) {
     return (
-      <div className="module-empty-state">
-        <p className="module-empty-state__text">Nenhum entregador encontrado</p>
-      </div>
+      <EmptyState message="Nenhum entregador encontrado" />
     );
   }
 
@@ -19,3 +18,4 @@ function CouriersGrid({ couriers, onDelete }) {
 }
 
 export default CouriersGrid;
+

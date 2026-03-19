@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import Select from '../../../components/ui/Select'
 
 function NativeModuleField({ field, routePath, value, updateField }) {
   if (field.type === 'checkbox') {
@@ -41,7 +42,7 @@ function NativeModuleField({ field, routePath, value, updateField }) {
   if (routePath === 'delivery-reading') {
     if (field.type === 'select') {
       return (
-        <select
+        <Select
           id={`${routePath}-${field.name}`}
           className="ui-select"
           aria-label={field.label}
@@ -54,7 +55,7 @@ function NativeModuleField({ field, routePath, value, updateField }) {
               {option}
             </option>
           ))}
-        </select>
+        </Select>
       )
     }
 
@@ -79,7 +80,7 @@ function NativeModuleField({ field, routePath, value, updateField }) {
       </label>
 
       {field.type === 'select' ? (
-        <select
+        <Select
           id={`${routePath}-${field.name}`}
           className="ui-select"
           value={value ?? ''}
@@ -91,7 +92,7 @@ function NativeModuleField({ field, routePath, value, updateField }) {
               {option}
             </option>
           ))}
-        </select>
+        </Select>
       ) : field.type === 'textarea' ? (
         <textarea
           id={`${routePath}-${field.name}`}
@@ -185,3 +186,5 @@ function NativeModuleFormCard({
 }
 
 export default NativeModuleFormCard
+
+

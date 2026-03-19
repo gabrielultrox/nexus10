@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import Select from '../../../components/ui/Select'
+import EmptyState from '../../../components/ui/EmptyState'
 
 const ROW_EXIT_DURATION_MS = 200
 
@@ -79,11 +81,7 @@ function renderNativeModuleCell(column, cell, index) {
 }
 
 function ModuleEmptyState({ message }) {
-  return (
-    <div className="module-empty-state native-module__empty-state">
-      <p className="module-empty-state__text">{message}</p>
-    </div>
-  )
+  return <EmptyState message={message} />
 }
 
 function getPrefersReducedMotion() {
@@ -168,7 +166,7 @@ function NativeModuleToolbar({
             <label className="ui-label" htmlFor={`${routePath}-status-filter`}>
               Filtrar status
             </label>
-            <select
+            <Select
               id={`${routePath}-status-filter`}
               className="ui-select"
               value={statusFilter}
@@ -180,7 +178,7 @@ function NativeModuleToolbar({
                   {option}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         ) : null}
       </div>
@@ -526,7 +524,7 @@ function NativeModuleSchedule({
                 <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>
                   Maquininha do dia
                 </label>
-                <select
+                <Select
                   id={`schedule-machine-${record.id}`}
                   className="ui-select"
                   value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
@@ -537,7 +535,7 @@ function NativeModuleSchedule({
                       {option}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="schedule-records__actions">
@@ -669,7 +667,7 @@ function NativeModuleTable({
                   <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible' : ''}`}>
                     {routePath === 'schedule' ? (
                       <div className="native-module__inline-editor">
-                        <select
+                        <Select
                           className="ui-select native-module__inline-select"
                           value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
                           onChange={(event) => onDraftChange(record.id, event.target.value)}
@@ -679,7 +677,7 @@ function NativeModuleTable({
                               {option}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                         <button
                           type="button"
                           className="ui-button ui-button--secondary native-module__table-action"
@@ -940,3 +938,5 @@ function NativeModuleRecordsSection(props) {
 }
 
 export default NativeModuleRecordsSection
+
+

@@ -1,3 +1,5 @@
+import EmptyState from '../../../components/ui/EmptyState';
+
 function ReportStatList({
   title,
   items,
@@ -13,9 +15,7 @@ function ReportStatList({
         </header>
 
         {items.length === 0 ? (
-          <div className="entity-empty-state">
-            <p className="text-section-title">Sem dados no periodo</p>
-          </div>
+          <EmptyState message="Sem dados no periodo" />
         ) : (
           <div className="report-list__items">
             {items.map((item, index) => (
@@ -38,3 +38,4 @@ function ReportStatList({
 }
 
 export default ReportStatList;
+

@@ -23,6 +23,7 @@ import { countCouriersByStatus, filterCouriers } from '../utils/courierFilters';
 import CouriersFilters from './CouriersFilters';
 import CouriersGrid from './CouriersGrid';
 import CouriersStats from './CouriersStats';
+import Select from '../../../components/ui/Select';
 
 const initialFilters = {
   search: '',
@@ -454,7 +455,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                     <label className="ui-label" htmlFor="courier-machine-register">
                       Maquininha fixa
                   </label>
-                  <select
+                  <Select
                     id="courier-machine-register"
                     className="ui-select"
                     value={form.machine}
@@ -466,14 +467,14 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="courier-shift-register">
                     Turno
                   </label>
-                  <select
+                  <Select
                     id="courier-shift-register"
                     className="ui-select"
                     value={form.shift}
@@ -486,14 +487,14 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                           {option.label}
                         </option>
                       ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="courier-status-register">
                     Status
                   </label>
-                  <select
+                  <Select
                     id="courier-status-register"
                     className="ui-select"
                     value={form.status}
@@ -506,7 +507,7 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                           {option.label}
                         </option>
                       ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="ui-field couriers-register__field--wide">
@@ -591,3 +592,5 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
 }
 
 export default CouriersModule;
+
+

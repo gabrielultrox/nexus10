@@ -5,6 +5,7 @@ import ThemeToggle from '../components/theme/ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess';
 import { playError, playSuccess } from '../services/soundManager';
+import Select from '../components/ui/Select';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -246,7 +247,7 @@ function LoginPage() {
                 <label className="ui-label" htmlFor="login-operator">
                   Operador
                 </label>
-                <select
+                <Select
                   id="login-operator"
                   className="ui-input"
                   value={formState.operatorName}
@@ -258,7 +259,7 @@ function LoginPage() {
                       {operatorName}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="ui-field">
@@ -290,3 +291,5 @@ function LoginPage() {
 }
 
 export default LoginPage;
+
+

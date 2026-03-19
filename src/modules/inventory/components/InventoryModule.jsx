@@ -15,6 +15,8 @@ import {
 } from '../../../services/inventory';
 import { subscribeToProducts } from '../../../services/productService';
 import { playError, playSuccess } from '../../../services/soundManager';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const initialAdjustmentState = {
   productId: '',
@@ -448,9 +450,7 @@ function InventoryModule() {
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Estoque">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Firebase nao configurado</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -458,9 +458,7 @@ function InventoryModule() {
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Estoque">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Nenhuma store ativa</p>
-        </div>
+        <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
     );
   }
@@ -521,7 +519,7 @@ function InventoryModule() {
                 <div className="entity-stack">
                   <div className="ui-field">
                     <label className="ui-label" htmlFor="inventory-product">Produto</label>
-                    <select
+                    <Select
                       id="inventory-product"
                       className="ui-select"
                       value={adjustmentState.productId}
@@ -530,12 +528,12 @@ function InventoryModule() {
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>{product.name}</option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
 
                   <div className="ui-field">
                     <label className="ui-label" htmlFor="inventory-movement-type">Tipo</label>
-                    <select
+                    <Select
                       id="inventory-movement-type"
                       className="ui-select"
                       value={adjustmentState.movementType}
@@ -544,7 +542,7 @@ function InventoryModule() {
                       <option value="manual_in">Entrada manual</option>
                       <option value="manual_out">Saida manual</option>
                       <option value="manual_set">Ajuste absoluto</option>
-                    </select>
+                    </Select>
                   </div>
 
                   <div className="ui-field">
@@ -589,7 +587,7 @@ function InventoryModule() {
                     ) : null}
                   </div>
                   <div className="inventory-import__actions">
-                    <select
+                    <Select
                       className="ui-select"
                       value={csvMode}
                       onChange={(event) => setCsvMode(event.target.value)}
@@ -597,7 +595,7 @@ function InventoryModule() {
                       <option value="all">Criar e atualizar</option>
                       <option value="create_only">Criar novos</option>
                       <option value="update_only">Atualizar existentes</option>
-                    </select>
+                    </Select>
                     <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} />
                     <button type="button" className="ui-button ui-button--ghost" onClick={handleCsvImport} disabled={saving || !csvFile || !can('inventory:write')}>
                       Importar estoque
@@ -659,7 +657,7 @@ function InventoryModule() {
 
               <div className="ui-field">
                 <label className="ui-label" htmlFor="inventory-status-filter">Status</label>
-                <select
+                <Select
                   id="inventory-status-filter"
                   className="ui-select"
                   value={statusFilter}
@@ -668,12 +666,12 @@ function InventoryModule() {
                   <option value="all">Todos</option>
                   <option value="low">Estoque baixo</option>
                   <option value="ok">Normal</option>
-                </select>
+                </Select>
               </div>
 
               <div className="ui-field">
                 <label className="ui-label" htmlFor="inventory-quality-filter">Qualidade</label>
-                <select
+                <Select
                   id="inventory-quality-filter"
                   className="ui-select"
                   value={qualityFilter}
@@ -684,19 +682,15 @@ function InventoryModule() {
                   <option value="missing-cost">Sem custo</option>
                   <option value="missing-minimum">Sem minimo</option>
                   <option value="inactive">Inativos</option>
-                </select>
+                </Select>
               </div>
             </div>
           </div>
 
           {loading ? (
-            <div className="module-empty-state">
-              <p className="module-empty-state__text">Carregando estoque</p>
-            </div>
+            <EmptyState message="Carregando estoque" />
           ) : visibleInventoryItems.length === 0 ? (
-            <div className="module-empty-state">
-              <p className="module-empty-state__text">Nenhum item encontrado</p>
-            </div>
+            <EmptyState message="Nenhum item encontrado" />
           ) : (
             <div className="entity-table-wrap entity-table-wrap--dense">
               <table className="ui-table">
@@ -788,9 +782,7 @@ function InventoryModule() {
         </div>
 
         {visibleMovements.length === 0 ? (
-          <div className="module-empty-state">
-            <p className="module-empty-state__text">Nenhuma movimentacao encontrada</p>
-          </div>
+          <EmptyState message="Nenhuma movimentacao encontrada" />
         ) : (
           <div className="entity-table-wrap entity-table-wrap--dense">
             <table className="ui-table">
@@ -827,3 +819,5 @@ function InventoryModule() {
 }
 
 export default InventoryModule;
+
+

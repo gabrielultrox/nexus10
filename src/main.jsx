@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { StoreProvider } from './contexts/StoreContext';
+import { ToastProvider } from './hooks/useToast';
 import { ThemeProvider } from './hooks/useTheme';
 import { registerPwa } from './services/pwa';
 import { setupRuntimeRecovery } from './services/runtimeRecovery';
@@ -43,7 +44,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <StoreProvider>
             <NotificationsProvider>
-              <App />
+              <ToastProvider>
+                <App />
+              </ToastProvider>
             </NotificationsProvider>
           </StoreProvider>
         </AuthProvider>
@@ -51,3 +54,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+

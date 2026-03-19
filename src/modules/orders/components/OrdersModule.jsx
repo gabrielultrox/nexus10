@@ -21,6 +21,8 @@ import { subscribeToProducts } from '../../../services/productService';
 import { playError, playSuccess } from '../../../services/soundManager';
 import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
+import Select from '../../../components/ui/Select';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const statusOptions = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED'];
 const sourceOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD'];
@@ -638,9 +640,7 @@ function OrdersModule({
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Pedidos">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Firebase nao configurado</p>
-        </div>
+        <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
     );
   }
@@ -648,9 +648,7 @@ function OrdersModule({
   if (!currentStoreId) {
     return (
       <SurfaceCard title="Pedidos">
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">Nenhuma loja ativa</p>
-        </div>
+        <EmptyState message="Nenhuma loja ativa" />
       </SurfaceCard>
     );
   }
@@ -769,7 +767,7 @@ function OrdersModule({
 
                 <div className="ui-field">
                   <label className="ui-label" htmlFor="orders-status-filter">Status</label>
-                  <select
+                  <Select
                     id="orders-status-filter"
                     className="ui-select"
                     value={statusFilter}
@@ -779,20 +777,16 @@ function OrdersModule({
                     {statusOptions.map((status) => (
                       <option key={status} value={status}>{getOrderDomainStatusLabel(status)}</option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
 
             <div className="orders-domain__list-shell orders-domain__list-shell--full">
               {loading ? (
-                <div className="module-empty-state">
-                  <p className="module-empty-state__text">Carregando pedidos</p>
-                </div>
+                <EmptyState message="Carregando pedidos" />
               ) : visibleOrders.length === 0 ? (
-                <div className="module-empty-state">
-                  <p className="module-empty-state__text">Nenhum pedido encontrado</p>
-                </div>
+                <EmptyState message="Nenhum pedido encontrado" />
               ) : (
                 <div className="entity-table-wrap">
                   <table className="ui-table">
@@ -840,9 +834,7 @@ function OrdersModule({
 
           {showFormLoading ? (
             <SurfaceCard title={editingOrderId ? 'Editar pedido' : 'Novo pedido'}>
-              <div className="module-empty-state">
-                <p className="module-empty-state__text">Carregando apoio do formulario</p>
-              </div>
+              <EmptyState message="Carregando apoio do formulario" />
             </SurfaceCard>
           ) : (
             <OrderFormPanel
@@ -893,3 +885,5 @@ function OrdersModule({
 }
 
 export default OrdersModule;
+
+

@@ -2,6 +2,7 @@ import { formatCurrencyBRL } from '../../../services/commerce'
 import { printSaleTicket } from '../../../services/commercePrint'
 import { getSaleStatusMeta } from '../../../services/sales'
 import { formatDateTime } from './salesModuleHelpers'
+import EmptyState from '../../../components/ui/EmptyState';
 
 function SalesDetailPanel({
   selectedSale,
@@ -52,11 +53,9 @@ function SalesDetailPanel({
       </div>
 
       {!selectedSale ? (
-        <div className="module-empty-state">
-          <p className="module-empty-state__text">
-            {isLoading ? 'Carregando...' : requestedSaleId ? 'Venda nao encontrada' : 'Selecione uma venda'}
-          </p>
-        </div>
+        <EmptyState
+          message={isLoading ? 'Carregando...' : requestedSaleId ? 'Venda nao encontrada' : 'Selecione uma venda'}
+        />
       ) : (
         <div className="sales-domain__detail">
           <div className="commerce-detail-band">
@@ -173,3 +172,4 @@ function SalesDetailPanel({
 }
 
 export default SalesDetailPanel
+
