@@ -124,6 +124,16 @@
   color: var(--text-secondary);
 }
 
+.history-module__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.history-module__chips .ui-badge {
+  min-height: 20px;
+}
+
 .history-module__entry-details {
   font-size: 12px;
   color: var(--text-muted);

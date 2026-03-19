@@ -52,6 +52,79 @@ function formatTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
+function pushChip(chips, value, tone = 'info') {
+  if (!value) {
+    return;
+  }
+
+  const normalizedLabel = String(value).trim();
+
+  if (!normalizedLabel || chips.some((chip) => chip.label === normalizedLabel)) {
+    return;
+  }
+
+  chips.push({ label: normalizedLabel, tone });
+}
+
+function buildEventChips(event) {
+  const chips = [];
+  const details = String(event.details ?? '');
+  const action = String(event.action ?? '').toLowerCase();
+  const modulePath = String(event.modulePath ?? '');
+
+  const amountMatch = details.match(/R\$\s?[\d.]+,\d{2}/);
+  const courierMatch = details.match(/Entregador:\s*([^|]+)/i);
+  const machineMatch = details.match(/maquininha(?: fixa| do dia)?\s+([^|]+)/i);
+  const statusMatch = details.match(/Checklist atualizado para\s+(.+)/i);
+
+  pushChip(chips, amountMatch?.[0], 'success');
+  pushChip(chips, courierMatch?.[1], 'info');
+  pushChip(chips, machineMatch?.[1], 'special');
+
+  if (action.includes('confirmou retorno')) {
+    pushChip(chips, 'Concluido', 'success');
+  }
+
+  if (action.includes('marcou presente')) {
+    pushChip(chips, 'Presente', 'success');
+  }
+
+  if (action.includes('desmarcou')) {
+    pushChip(chips, 'Ausente', 'warning');
+  }
+
+  if (action.includes('reset')) {
+    pushChip(chips, 'Reset', 'danger');
+  }
+
+  if (action.includes('limpou')) {
+    pushChip(chips, 'Limpo', 'warning');
+  }
+
+  if (action.includes('excluiu')) {
+    pushChip(chips, 'Exclusao', 'danger');
+  }
+
+  if (action.includes('criou') || action.includes('cadastrou') || action.includes('registrar')) {
+    pushChip(chips, 'Novo', 'info');
+  }
+
+  if (action.includes('atualizou') || action.includes('alterou')) {
+    pushChip(chips, 'Atualizado', 'special');
+  }
+
+  if (modulePath === 'cash' && !amountMatch) {
+    const targetAmountMatch = String(event.target ?? '').match(/R\$\s?[\d.]+,\d{2}/);
+    pushChip(chips, targetAmountMatch?.[0], 'success');
+  }
+
+  if (modulePath === 'machines') {
+    pushChip(chips, statusMatch?.[1], 'special');
+  }
+
+  return chips.slice(0, 3);
+}
+
 function buildCalendarDays(monthKey, daysWithEvents) {
   if (!monthKey) {
     return [];
@@ -305,24 +378,37 @@ function HistoryTimelineModule() {
             </div>
           ) : (
             <div className="history-module__timeline">
-              {visibleEvents.map((event) => (
-                <article key={event.id} className="history-module__entry">
-                  <div className="history-module__entry-time">{formatTime(event.timestamp)}</div>
-                  <div className="history-module__entry-content">
-                    <div className="history-module__entry-header">
-                      <strong>{event.action}</strong>
-                      <span className="ui-badge ui-badge--info">{event.module}</span>
+              {visibleEvents.map((event) => {
+                const eventChips = buildEventChips(event);
+
+                return (
+                  <article key={event.id} className="history-module__entry">
+                    <div className="history-module__entry-time">{formatTime(event.timestamp)}</div>
+                    <div className="history-module__entry-content">
+                      <div className="history-module__entry-header">
+                        <strong>{event.action}</strong>
+                        <span className="ui-badge ui-badge--info">{event.module}</span>
+                      </div>
+                      <p className="history-module__entry-meta">
+                        {event.actor}
+                        {event.target ? ` · ${event.target}` : ''}
+                      </p>
+                      {eventChips.length > 0 ? (
+                        <div className="history-module__chips">
+                          {eventChips.map((chip) => (
+                            <span key={`${event.id}-${chip.label}`} className={`ui-badge ui-badge--${chip.tone}`}>
+                              {chip.label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      {event.details ? (
+                        <p className="history-module__entry-details">{event.details}</p>
+                      ) : null}
                     </div>
-                    <p className="history-module__entry-meta">
-                      {event.actor}
-                      {event.target ? ` · ${event.target}` : ''}
-                    </p>
-                    {event.details ? (
-                      <p className="history-module__entry-details">{event.details}</p>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </SurfaceCard>
