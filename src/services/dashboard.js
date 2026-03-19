@@ -1,4 +1,4 @@
-import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEntries } from './finance';
+﻿import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEntries } from './finance';
 import { isOrderClosedStatus, isSalePosted } from './commerce';
 import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase';
 import { subscribeToInventoryItems } from './inventory';
@@ -329,7 +329,7 @@ export function buildDashboardData({
         id: 'sales',
         label: isSingleDay ? 'Vendas hoje' : 'Vendas no periodo',
         value: formatInteger(totalSalesCount),
-        meta: 'lançadas',
+        meta: 'lancadas',
         badgeText: 'comercial',
         badgeClass: 'ui-badge--info',
         tone: 'blue',
@@ -446,3 +446,4 @@ export function buildDashboardData({
     },
   };
 }
+

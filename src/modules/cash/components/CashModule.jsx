@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import CaixaStatusBar from '../../../components/caixa/CaixaStatusBar';
@@ -842,7 +842,7 @@ function CashModule() {
       <SurfaceCard title="Historico de caixa">
         <div className="cash-module__history-toolbar">
           <span className="cash-module__history-counter">
-            {`${records.length} visiveis · ${records.length} no dia`}
+            {`${records.length} visiveis - ${records.length} no dia`}
           </span>
 
           <div className="cash-module__history-toolbar-actions">
@@ -872,5 +872,7 @@ function CashModule() {
 }
 
 export default CashModule;
+
+
 
 

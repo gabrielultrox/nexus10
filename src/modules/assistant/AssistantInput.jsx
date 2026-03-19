@@ -21,7 +21,7 @@ function AssistantInput({ disabled, onSend }) {
       <input
         className="assistant-input__field"
         value={value}
-        placeholder="Pergunte à NEXA"
+        placeholder="Pergunte a NEXA"
         onChange={(event) => setValue(event.target.value)}
         disabled={disabled}
       />
