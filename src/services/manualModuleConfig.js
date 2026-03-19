@@ -356,6 +356,7 @@ export const manualModuleConfigs = {
   },
   discounts: {
     storageKey: 'nexus-module-discounts',
+    dailyResetHour: 3,
     formTitle: 'Registrar desconto',
     formDescription: 'Cadastre descontos operacionais com motivo e acompanhe o status da validacao.',
     submitLabel: 'Registrar desconto',
@@ -404,6 +405,7 @@ export const manualModuleConfigs = {
   },
   occurrences: {
     storageKey: 'nexus-module-occurrences',
+    dailyResetHour: 3,
     formTitle: 'Registrar ocorrencia',
     formDescription: 'Documente eventos operacionais com tipo, responsavel e estado de tratamento.',
     submitLabel: 'Registrar ocorrencia',
