@@ -54,7 +54,7 @@ function buildPrintHtml(entry) {
     <style>
       @page {
         size: 80mm 297mm;
-        margin: 2.5mm;
+        margin: 2mm;
       }
 
       * {
@@ -80,7 +80,9 @@ function buildPrintHtml(entry) {
       .receipt {
         display: block;
         width: 100%;
-        padding: 2mm 0 4mm;
+        max-width: 76mm;
+        padding: 1.5mm 0 4mm;
+        margin: 0 auto;
       }
 
       .receipt__section + .receipt__section {
@@ -94,7 +96,7 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__brand {
-        font-size: 4.1mm;
+        font-size: 3.8mm;
         font-weight: 700;
         letter-spacing: 0.02em;
         line-height: 1.2;
@@ -104,7 +106,7 @@ function buildPrintHtml(entry) {
       .receipt__legal,
       .receipt__body-copy,
       .receipt__signature-copy {
-        font-size: 3mm;
+        font-size: 2.75mm;
         line-height: 1.4;
       }
 
@@ -114,7 +116,7 @@ function buildPrintHtml(entry) {
 
       .receipt__title {
         margin: 1.5mm 0 0;
-        font-size: 5mm;
+        font-size: 4.6mm;
         font-weight: 700;
         letter-spacing: 0.08em;
       }
@@ -125,14 +127,14 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__summary {
-        padding: 2.8mm 0;
+        padding: 2.4mm 0;
         border-top: 0.28mm solid #111;
         border-bottom: 0.28mm solid #111;
         text-align: center;
       }
 
       .receipt__type {
-        font-size: 3mm;
+        font-size: 2.65mm;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -140,7 +142,7 @@ function buildPrintHtml(entry) {
 
       .receipt__value {
         margin-top: 1.4mm;
-        font-size: 6mm;
+        font-size: 5.3mm;
         font-weight: 700;
         line-height: 1;
       }
@@ -152,10 +154,9 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 3mm;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.6mm;
         padding: 1.7mm 0;
         border-bottom: 0.2mm solid #d4d4d4;
       }
@@ -165,24 +166,25 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__label {
-        flex: 0 0 21mm;
-        font-size: 2.7mm;
+        font-size: 2.45mm;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
 
       .receipt__data {
-        flex: 1;
-        font-size: 3mm;
+        font-size: 2.85mm;
         line-height: 1.4;
-        text-align: right;
+        text-align: left;
         word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       .receipt__body-copy {
         margin: 3.2mm 0 0;
         text-align: left;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       .receipt__note {
@@ -193,7 +195,7 @@ function buildPrintHtml(entry) {
 
       .receipt__note-title {
         margin-bottom: 1.5mm;
-        font-size: 2.7mm;
+        font-size: 2.45mm;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
