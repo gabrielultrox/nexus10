@@ -1449,21 +1449,33 @@ function NativeModuleWorkspace({ route }) {
     }
 
     const { updatedAt: returnedAt, updatedBy: returnedBy } = buildAuditContext(session);
+    const targetRecord = records.find((item) => item.id === recordId);
+    const nextRecord = targetRecord ? manager.markReturned(targetRecord, { returnedAt, returnedBy }) : null;
 
-    setRecords((current) => current.map((record) => (
-      record.id === recordId
-        ? manager.markReturned(record, { returnedAt, returnedBy })
-        : record
-    )));
-    playSuccess();
-    const record = records.find((item) => item.id === recordId);
-    appendAuditEvent({
-      module: route.title,
-      modulePath: route.path,
-      actor: returnedBy,
-      action: 'Confirmou retorno',
-      target: record?.origin ?? 'troco',
-      details: `Retorno confirmado em ${route.title}`,
+    if (!nextRecord) {
+      return;
+    }
+
+    saveRecordWithFallback({
+      record: nextRecord,
+      onLocalApply: () => {
+        setRecords((current) => current.map((record) => (
+          record.id === recordId ? nextRecord : record
+        )));
+      },
+    }).then(() => {
+      playSuccess();
+      appendAuditEvent({
+        module: route.title,
+        modulePath: route.path,
+        actor: returnedBy,
+        action: 'Confirmou retorno',
+        target: targetRecord?.origin ?? 'troco',
+        details: `Retorno confirmado em ${route.title}`,
+      });
+    }).catch(() => {
+      playError();
+      setErrorMessage('Nao foi possivel atualizar o retorno do troco.');
     });
   }
 
