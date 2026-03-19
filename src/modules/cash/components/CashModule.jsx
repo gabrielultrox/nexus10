@@ -44,6 +44,14 @@ const CASH_TABS = [
     codePrefix: 'SUP',
   },
   {
+    id: 'courier-withdrawal',
+    label: 'Retirada de entregador',
+    title: 'Registrar retirada de entregador',
+    submitLabel: 'Registrar retirada',
+    receiptLabel: 'Retirada de entregador',
+    codePrefix: 'RET',
+  },
+  {
     id: 'closing',
     label: 'Fechamento de caixa',
     title: 'Registrar fechamento de caixa',
