@@ -233,7 +233,7 @@ export const manualModuleConfigs = {
         options: ['Pendente', 'Liberado', 'Recebido', 'Retornou'],
       },
     ],
-    returnActionLabel: 'OK retorno',
+    returnActionLabel: 'Marcar retorno',
     initialRecords: [],
     createRecord(values) {
       return {
