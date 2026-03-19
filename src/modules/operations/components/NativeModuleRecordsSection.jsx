@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
@@ -872,8 +872,39 @@ function NativeModuleRecordsSection(props) {
   const isMachineHistory = route.path === 'machine-history'
   const isSchedule = route.path === 'schedule'
   const isMachineChecklist = route.path === 'machines'
+  const isDeliveryReading = route.path === 'delivery-reading'
   const [exitingIds, setExitingIds] = useState(() => new Set())
+  const [deliveryReadingTab, setDeliveryReadingTab] = useState('open')
   const exitTimeoutsRef = useRef(new Map())
+
+  const deliveryReadingCounts = useMemo(() => {
+    if (!isDeliveryReading) {
+      return { open: 0, closed: 0 }
+    }
+
+    return visibleRecords.reduce((accumulator, record) => {
+      if (record.closed) {
+        accumulator.closed += 1
+      } else {
+        accumulator.open += 1
+      }
+
+      return accumulator
+    }, { open: 0, closed: 0 })
+  }, [isDeliveryReading, visibleRecords])
+
+  const deliveryReadingVisibleRecords = useMemo(() => {
+    if (!isDeliveryReading) {
+      return visibleRecords
+    }
+
+    return visibleRecords.filter((record) => (
+      deliveryReadingTab === 'closed' ? Boolean(record.closed) : !record.closed
+    ))
+  }, [deliveryReadingTab, isDeliveryReading, visibleRecords])
+
+  const displayedRecords = isDeliveryReading ? deliveryReadingVisibleRecords : visibleRecords
+  const displayedVisibleCount = isDeliveryReading ? deliveryReadingVisibleRecords.length : visibleCount
 
   useEffect(() => {
     const exitTimeouts = exitTimeoutsRef.current
@@ -886,7 +917,7 @@ function NativeModuleRecordsSection(props) {
 
   useEffect(() => {
     const visibleIds = new Set([
-      ...visibleRecords.map((record) => record.id),
+      ...displayedRecords.map((record) => record.id),
       ...visibleMachineChecklistRecords.map((record) => record.id),
     ])
 
@@ -899,7 +930,7 @@ function NativeModuleRecordsSection(props) {
       })
       return next.size === current.size ? current : next
     })
-  }, [visibleRecords, visibleMachineChecklistRecords])
+  }, [displayedRecords, visibleMachineChecklistRecords])
 
   function clearExitingId(recordId) {
     setExitingIds((current) => {
@@ -949,7 +980,7 @@ function NativeModuleRecordsSection(props) {
         statusFilter={statusFilter}
         setSearchTerm={setSearchTerm}
         setStatusFilter={setStatusFilter}
-        visibleCount={visibleCount}
+        visibleCount={displayedVisibleCount}
         recordsLength={records.length}
         onExportSchedule={handleExportScheduleImage}
         onExportScheduleMachines={handleExportScheduleMachinesImage}
@@ -961,15 +992,36 @@ function NativeModuleRecordsSection(props) {
 
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
+      {isDeliveryReading ? (
+        <div className="delivery-reading__list-tabs" role="tablist" aria-label="Filtrar leituras por estado">
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${deliveryReadingTab === 'open' ? ' is-active' : ''}`}
+            onClick={() => setDeliveryReadingTab('open')}
+          >
+            <span>Lidas</span>
+            <span className="delivery-reading__list-tab-count">{deliveryReadingCounts.open}</span>
+          </button>
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${deliveryReadingTab === 'closed' ? ' is-active' : ''}`}
+            onClick={() => setDeliveryReadingTab('closed')}
+          >
+            <span>Fechadas</span>
+            <span className="delivery-reading__list-tab-count">{deliveryReadingCounts.closed}</span>
+          </button>
+        </div>
+      ) : null}
+
       {isMachineHistory ? (
         <NativeModuleMachineHistory groups={machineHistoryGroups} />
-      ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : (!isSchedule && tableRows.length === 0)) && manager) ? (
+      ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : (!isSchedule && displayedRecords.length === 0)) && manager) ? (
         <ModuleEmptyState
           message={records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
         />
       ) : isSchedule ? (
         <NativeModuleSchedule
-          records={visibleRecords}
+          records={displayedRecords}
           scheduleMachineDrafts={scheduleMachineDrafts}
           scheduleMachineOptions={scheduleMachineOptions}
           onDraftChange={handleScheduleMachineDraftChange}
@@ -996,7 +1048,7 @@ function NativeModuleRecordsSection(props) {
           tableColumns={tableColumns}
           tableRows={tableRows}
           manager={manager}
-          visibleRecords={visibleRecords}
+          visibleRecords={displayedRecords}
           scheduleMachineDrafts={scheduleMachineDrafts}
           scheduleMachineOptions={scheduleMachineOptions}
           onDraftChange={handleScheduleMachineDraftChange}
