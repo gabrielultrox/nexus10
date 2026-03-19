@@ -804,21 +804,28 @@ export function CommerceFinishStep({
         <div className="entity-stack">
           <CommerceTotalsSection {...totalsProps} />
           <div className="entity-form-section commerce-panel commerce-panel--summary">
-            <div className="entity-form-section__header">
-              <span className="entity-form-section__eyebrow">Resumo</span>
-              <p className="entity-form-section__title">Itens da operacao</p>
+            <div className="commerce-step__summary-header">
+              <span className="commerce-step__summary-eyebrow">Resumo</span>
+              <p className="commerce-step__summary-title">Itens da operacao</p>
             </div>
 
-            <div className="entity-stack">
-              {summaryItems.map((item) => (
-                <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__summary-item">
-                  <div className="commerce-step__summary-copy">
-                    <span>{item.name}</span>
-                    <small>{item.quantity} x {formatCurrencyBRL(item.unitPrice)}</small>
-                  </div>
-                  <strong>{formatCurrencyBRL(item.totalPrice)}</strong>
-                </div>
-              ))}
+            <div className="commerce-step__summary-body">
+              {summaryItems.length === 0 ? (
+                <div className="commerce-step__summary-empty">Nenhum item adicionado</div>
+              ) : (
+                <>
+                  {summaryItems.map((item) => (
+                    <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__summary-item">
+                      <div className="commerce-step__summary-copy">
+                        <span>{item.name}</span>
+                        <small>{item.quantity}x {formatCurrencyBRL(item.unitPrice)}</small>
+                      </div>
+                      <strong>{formatCurrencyBRL(item.totalPrice)}</strong>
+                    </div>
+                  ))}
+                </>
+              )}
+
               <div className="commerce-step__total-final">
                 <span>Total final</span>
                 <strong>{formatCurrencyBRL(totalFinal)}</strong>
