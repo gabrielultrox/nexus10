@@ -639,7 +639,7 @@ export function CommerceItemsStep({
           <strong>Preco unit.</strong>
           <strong>Desconto</strong>
           <strong>Total</strong>
-          <span />
+          <strong className="commerce-step__actions-heading">Acoes</strong>
         </div>
 
         {validItems.length === 0 ? (
@@ -659,7 +659,7 @@ export function CommerceItemsStep({
                 <button type="button" className="ui-button ui-button--ghost commerce-step__edit-button" onClick={() => handleEditItem(item)}>
                   Editar
                 </button>
-                <button type="button" className="ui-button ui-button--danger commerce-step__remove-button" onClick={() => onRemoveItem(item.itemIndex)}>
+                <button type="button" className="ui-button commerce-step__remove-button" aria-label="Remover item" onClick={() => onRemoveItem(item.itemIndex)}>
                   x
                 </button>
               </div>
