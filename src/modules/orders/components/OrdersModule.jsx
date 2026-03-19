@@ -23,6 +23,7 @@ import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
+import { useToast } from '../../../hooks/useToast';
 
 const statusOptions = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED'];
 const sourceOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD'];
@@ -128,6 +129,7 @@ function OrdersModule({
 }) {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
+  const toast = useToast();
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -142,6 +144,7 @@ function OrdersModule({
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const initializedViewRef = useRef('');
   const [freshOrderIds, setFreshOrderIds] = useState(() => new Set());
+  const [pendingAction, setPendingAction] = useState(null);
   const previousVisibleOrderIdsRef = useRef([]);
   const freshTimeoutsRef = useRef(new Map());
 
@@ -390,33 +393,65 @@ function OrdersModule({
       {
         label: 'Pedidos',
         value: String(internalOrders.length).padStart(2, '0'),
-        meta: 'registros comerciais e operacionais da loja',
+        description: 'total dominio',
         badgeText: 'dominio',
-        badgeClass: 'ui-badge--info',
+        variant: 'neutral',
       },
       {
         label: 'Abertos',
         value: String(open).padStart(2, '0'),
-        meta: 'prontos para expedicao ou ajuste',
+        description: 'na fila',
         badgeText: 'fila',
-        badgeClass: 'ui-badge--warning',
+        variant: 'warning',
       },
       {
         label: 'Despachados',
         value: String(dispatched).padStart(2, '0'),
-        meta: 'pedidos com operacao concluida',
+        description: 'em envio',
         badgeText: 'envio',
-        badgeClass: 'ui-badge--special',
+        variant: 'info',
       },
       {
         label: 'Viraram venda',
         value: String(converted).padStart(2, '0'),
-        meta: 'conversoes sem impacto em estoque ou financeiro',
+        description: 'concluido',
         badgeText: 'venda',
-        badgeClass: 'ui-badge--success',
+        variant: 'success',
       },
     ];
   }, [internalOrders]);
+
+  function getInlineActionConfig(order) {
+    if (order.domainStatus === 'OPEN') {
+      return {
+        kind: 'launch-sale',
+        label: 'Lancar venda',
+        tone: 'success',
+        confirmMessage: `Confirmar lancamento do pedido ${order.number} como venda?`,
+        successMessage: `Venda lancada — ${order.number}`,
+      };
+    }
+
+    if (order.domainStatus === 'DISPATCHED') {
+      return {
+        kind: 'confirm-delivery',
+        label: 'Confirmar entrega',
+        tone: 'info',
+        confirmMessage: `Confirmar entrega do pedido ${order.number}?`,
+        successMessage: `Entrega confirmada — ${order.number}`,
+      };
+    }
+
+    return null;
+  }
+
+  function getListStatusLabel(order) {
+    if (order.domainStatus === 'CONVERTED_TO_SALE') {
+      return 'Venda lancada';
+    }
+
+    return getOrderDomainStatusLabel(order.domainStatus);
+  }
 
   function resetForm() {
     setFormState(createInitialFormState());
@@ -595,8 +630,8 @@ function OrdersModule({
     }
   }
 
-  async function handleConvertToSale() {
-    if (!selectedOrder || !currentStoreId) {
+  async function handleConvertToSale(order = selectedOrder, options = {}) {
+    if (!order || !currentStoreId) {
       return;
     }
 
@@ -614,7 +649,7 @@ function OrdersModule({
       const saleId = await convertOrderToSale({
         storeId: currentStoreId,
         tenantId,
-        orderId: selectedOrder.id,
+        orderId: order.id,
         createdBy: session,
       });
       await recordAuditLog({
@@ -623,18 +658,33 @@ function OrdersModule({
         actor: buildAuditActor(session),
         action: 'order.converted_to_sale',
         entityType: 'order',
-        entityId: selectedOrder.id,
-        description: `Pedido ${selectedOrder.number} gerou a venda ${saleId}.`,
+        entityId: order.id,
+        description: `Pedido ${order.number} gerou a venda ${saleId}.`,
       });
-      await refreshSelectedOrder(selectedOrder.id);
+      await refreshSelectedOrder(order.id);
       setFeedbackMessage(`Venda ${saleId} gerada com sucesso.`);
+      if (options.toastMessage) {
+        toast.success(options.toastMessage);
+      }
       playSuccess();
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel gerar a venda.'));
+      if (options.errorToastMessage) {
+        toast.error(options.errorToastMessage);
+      }
       playError();
     } finally {
       setActing(false);
     }
+  }
+
+  async function handleInlineActionConfirm(order, actionConfig, event) {
+    event.stopPropagation();
+    await handleConvertToSale(order, {
+      toastMessage: actionConfig.successMessage,
+      errorToastMessage: `Falha ao atualizar ${order.number}`,
+    });
+    setPendingAction(null);
   }
 
   if (!firebaseReady) {
@@ -736,9 +786,9 @@ function OrdersModule({
                 key={metric.label}
                 label={metric.label}
                 value={metric.value}
-                meta={metric.meta}
+                description={metric.description}
                 badgeText={metric.badgeText}
-                badgeClass={metric.badgeClass}
+                variant={metric.variant}
               />
             ))}
           </div>
@@ -799,25 +849,88 @@ function OrdersModule({
                         <th>Status</th>
                         <th>Venda</th>
                         <th>Criado em</th>
+                        <th>Acao</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleOrders.map((order, index) => (
-                        <tr
-                          key={order.id}
-                          className={`${freshOrderIds.has(order.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter'}${order.id === orderId ? ' entity-table__row--selected' : ''}`}
-                          style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
-                          onClick={() => onOpenDetail(order.id)}
-                        >
-                          <td className="ui-table__cell--strong">{order.number}</td>
-                          <td>{order.origin}</td>
-                          <td>{order.customerName}</td>
-                          <td className="ui-table__cell--numeric">{order.total}</td>
-                          <td><span className={`ui-badge ${order.domainStatus === 'OPEN' ? 'ui-badge--warning' : order.domainStatus === 'DISPATCHED' || order.domainStatus === 'CONVERTED_TO_SALE' ? 'ui-badge--success' : 'ui-badge--danger'}`}>{getOrderDomainStatusLabel(order.domainStatus)}</span></td>
-                          <td><span className={`ui-badge ${order.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--info'}`}>{order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}</span></td>
-                          <td className="ui-table__cell--muted">{formatDateTime(order.createdAt)}</td>
-                        </tr>
-                      ))}
+                      {visibleOrders.map((order, index) => {
+                        const actionConfig = getInlineActionConfig(order);
+                        const isPendingAction = pendingAction?.orderId === order.id;
+
+                        return (
+                          <tr
+                            key={order.id}
+                            className={[
+                              freshOrderIds.has(order.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter',
+                              order.id === orderId ? 'entity-table__row--selected' : '',
+                              isPendingAction ? 'orders-domain__row--action-open' : '',
+                            ].filter(Boolean).join(' ')}
+                            style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
+                            onClick={() => onOpenDetail(order.id)}
+                          >
+                            <td className="ui-table__cell--strong">{order.number}</td>
+                            <td>{order.origin}</td>
+                            <td>{order.customerName}</td>
+                            <td className="ui-table__cell--numeric">{order.total}</td>
+                            <td>
+                              <span className={`ui-badge ${order.domainStatus === 'OPEN' ? 'ui-badge--warning' : order.domainStatus === 'DISPATCHED' ? 'ui-badge--info' : order.domainStatus === 'CONVERTED_TO_SALE' ? 'ui-badge--success' : 'ui-badge--danger'}`}>
+                                {getListStatusLabel(order)}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`ui-badge ${order.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--info'}`}>
+                                {order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}
+                              </span>
+                            </td>
+                            <td className="ui-table__cell--muted">{formatDateTime(order.createdAt)}</td>
+                            <td className="orders-domain__action-cell">
+                              <div className={`orders-domain__row-actions ${isPendingAction ? 'orders-domain__row-actions--visible' : ''}`}>
+                                {actionConfig ? (
+                                  isPendingAction ? (
+                                    <div className="orders-domain__inline-confirm" onClick={(event) => event.stopPropagation()}>
+                                      <p>{actionConfig.confirmMessage}</p>
+                                      <div className="orders-domain__inline-confirm-actions">
+                                        <button
+                                          type="button"
+                                          className="orders-domain__inline-button"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setPendingAction(null);
+                                          }}
+                                        >
+                                          Cancelar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
+                                          onClick={(event) => handleInlineActionConfirm(order, actionConfig, event)}
+                                        >
+                                          Confirmar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        setPendingAction({ orderId: order.id, kind: actionConfig.kind });
+                                      }}
+                                    >
+                                      {actionConfig.label}
+                                    </button>
+                                  )
+                                ) : order.domainStatus === 'CONVERTED_TO_SALE' ? (
+                                  <span className="orders-domain__row-complete">Concluido</span>
+                                ) : (
+                                  <span className="orders-domain__row-complete">--</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

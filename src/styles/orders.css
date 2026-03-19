@@ -1410,3 +1410,100 @@
   background: var(--bg-surface);
   border-radius: var(--radius-sm);
 }
+
+.orders-domain__action-cell {
+  width: 220px;
+}
+
+.orders-domain__row-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 30px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.orders-domain .ui-table tbody tr:hover .orders-domain__row-actions,
+.orders-domain__row--action-open .orders-domain__row-actions,
+.orders-domain .ui-table tbody tr:focus-within .orders-domain__row-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.orders-domain__inline-button {
+  min-height: 26px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.orders-domain__inline-button:hover {
+  color: var(--text-primary);
+  border-color: var(--color-border-default);
+}
+
+.orders-domain__inline-button:active {
+  transform: scale(0.97);
+}
+
+.orders-domain__inline-button--success {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.orders-domain__inline-button--success:hover {
+  background: rgba(34, 197, 94, 0.18);
+  color: #22c55e;
+}
+
+.orders-domain__inline-button--info {
+  border-color: rgba(107, 138, 255, 0.2);
+  background: rgba(107, 138, 255, 0.1);
+  color: var(--accent);
+}
+
+.orders-domain__inline-button--info:hover {
+  background: rgba(107, 138, 255, 0.18);
+  color: var(--accent);
+}
+
+.orders-domain__inline-confirm {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 220px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.orders-domain__inline-confirm p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.orders-domain__inline-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.orders-domain__row-complete {
+  color: var(--text-muted);
+  font-size: 12px;
+}

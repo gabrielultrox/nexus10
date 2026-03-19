@@ -264,10 +264,10 @@ function SalesModule({
     const volume = posted.reduce((total, sale) => total + Number(sale.totals?.total ?? 0), 0);
 
     return [
-      { label: 'Vendas', value: String(sales.length).padStart(2, '0'), meta: 'eventos reais que movem estoque e financeiro', badgeText: 'posted', badgeClass: 'ui-badge--info' },
-      { label: 'Lancadas', value: String(posted.length).padStart(2, '0'), meta: 'impacto efetivo registrado no sistema', badgeText: 'ok', badgeClass: 'ui-badge--success' },
-      { label: 'Estornadas/canceladas', value: String(reversed.length + cancelled.length).padStart(2, '0'), meta: 'casos que revertem ou bloqueiam o efeito da venda', badgeText: 'revisao', badgeClass: 'ui-badge--warning' },
-      { label: 'Volume lancado', value: formatCurrencyBRL(volume), meta: 'total das vendas postadas', badgeText: 'financeiro', badgeClass: 'ui-badge--special' },
+      { label: 'Vendas', value: String(sales.length).padStart(2, '0'), description: 'total dominio', badgeText: 'dominio', variant: 'neutral' },
+      { label: 'Lancadas', value: String(posted.length).padStart(2, '0'), description: 'concluido', badgeText: 'ok', variant: 'success' },
+      { label: 'Estornadas/canceladas', value: String(reversed.length + cancelled.length).padStart(2, '0'), description: 'em revisao', badgeText: 'revisao', variant: 'warning' },
+      { label: 'Volume lancado', value: formatCurrencyBRL(volume), description: 'financeiro', badgeText: 'volume', variant: 'success' },
     ];
   }, [sales]);
 
