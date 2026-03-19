@@ -139,17 +139,6 @@ function renderItems(items) {
     .join('')
 }
 
-function renderChecklist(model) {
-  return `
-    <div class="print-ticket__checklist">
-      <div><span>Status</span><strong>${escapeHtml(model.status)}</strong></div>
-      <div><span>Canal</span><strong>${escapeHtml(model.source)}</strong></div>
-      <div><span>Pagamento</span><strong>${escapeHtml(model.payment)}</strong></div>
-      <div><span>Atualizado</span><strong>${escapeHtml(model.updatedAt)}</strong></div>
-    </div>
-  `
-}
-
 function renderTotals(totals) {
   return totals
     .map(
@@ -171,13 +160,16 @@ function buildPrintHtml(model) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(model.title)}</title>
     <style>
-      @page {
-        size: 80mm 297mm;
-        margin: 4mm;
+      :root {
+        --paper-width: 80mm;
+        --safe-width: 68mm;
+        --safe-top: 2mm;
+        --safe-bottom: 4mm;
       }
 
-      :root {
-        color-scheme: light;
+      @page {
+        size: 80mm 297mm;
+        margin: 0;
       }
 
       * {
@@ -194,90 +186,87 @@ function buildPrintHtml(model) {
       }
 
       body {
-        width: 72mm;
+        width: var(--paper-width);
+        font-family: Arial, sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       .print-ticket {
-        display: grid;
-        gap: 3mm;
-        width: 100%;
-        padding: 1mm 0;
+        display: block;
+        width: var(--safe-width);
+        max-width: var(--safe-width);
+        margin: 0 auto;
+        padding: var(--safe-top) 0 var(--safe-bottom);
+      }
+
+      .print-ticket__section + .print-ticket__section {
+        margin-top: 3mm;
       }
 
       .print-ticket__header,
       .print-ticket__section,
       .print-ticket__totals,
       .print-ticket__footer {
-        border: 0.35mm solid #d2dae8;
-        border-radius: 2.4mm;
-        padding: 2.6mm;
-        background: linear-gradient(180deg, rgba(247, 250, 255, 0.98), rgba(255, 255, 255, 1));
-      }
-
-      .print-ticket__header {
         display: grid;
-        gap: 2mm;
+        gap: 1.4mm;
       }
 
       .print-ticket__eyebrow,
       .print-ticket__brand,
       .print-ticket__label,
-      .print-ticket__meta span,
       .print-ticket__notes-label {
         display: block;
-        color: #4b84a9;
-        font-family: "Share Tech Mono", "Consolas", monospace;
-        font-size: 2.6mm;
-        letter-spacing: 0.18em;
+        color: #3f3f46;
+        font-family: Arial, sans-serif;
+        font-size: 2.45mm;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
       }
 
       .print-ticket__brand {
-        color: #0f172a;
-        letter-spacing: 0.12em;
+        color: #111827;
+        font-size: 3.6mm;
+        letter-spacing: 0.02em;
+        text-align: center;
       }
 
       .print-ticket__title {
-        margin: 1.6mm 0 0;
-        font-family: "Syne", "Segoe UI", sans-serif;
-        font-size: 6.4mm;
-        line-height: 1.02;
+        margin: 0.6mm 0 0;
+        font-family: Arial, sans-serif;
+        font-size: 4.3mm;
+        line-height: 1.15;
+        text-align: center;
       }
 
       .print-ticket__subtitle {
         margin: 0;
-        color: #475569;
-        font-size: 3.1mm;
+        color: #52525b;
+        font-size: 2.8mm;
+        text-align: center;
       }
 
       .print-ticket__meta {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2mm;
+        grid-template-columns: 1fr;
+        gap: 0.6mm;
         margin-top: 2.4mm;
       }
 
-      .print-ticket__checklist {
+      .print-ticket__meta div,
+      .print-ticket__identity-line,
+      .print-ticket__address-line {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.6mm 2mm;
-        padding: 2mm;
-        border: 0.25mm dashed #d8e2ee;
-        border-radius: 2mm;
-        background: rgba(248, 251, 255, 0.9);
+        gap: 0.4mm;
+        padding: 1.3mm 0;
+        border-bottom: 0.2mm solid #d4d4d4;
       }
 
-      .print-ticket__checklist div {
-        display: grid;
-        gap: 0.6mm;
-      }
-
-      .print-ticket__checklist span {
-        color: #4b84a9;
-        font-family: "Share Tech Mono", "Consolas", monospace;
-        font-size: 2.4mm;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+      .print-ticket__meta div:last-child,
+      .print-ticket__identity-line:last-child,
+      .print-ticket__address-line:last-child {
+        border-bottom: 0;
       }
 
       .print-ticket__meta strong,
@@ -285,14 +274,14 @@ function buildPrintHtml(model) {
       .print-ticket__address strong,
       .print-ticket__item strong,
       .print-ticket__total-row strong {
-        color: #0f172a;
+        color: #111827;
       }
 
       .print-ticket__identity,
       .print-ticket__address,
       .print-ticket__notes {
         display: grid;
-        gap: 1.4mm;
+        gap: 0;
       }
 
       .print-ticket__identity p,
@@ -302,26 +291,30 @@ function buildPrintHtml(model) {
       .print-ticket__empty,
       .print-ticket__footer p {
         margin: 0;
-        color: #475569;
-        font-size: 3.2mm;
+        color: #52525b;
+        font-size: 2.8mm;
         line-height: 1.45;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       .print-ticket__items {
         display: grid;
         gap: 0;
+        margin-top: 1.2mm;
       }
 
       .print-ticket__items-head {
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 2mm;
-        padding-bottom: 1.6mm;
-        border-bottom: 0.25mm dashed #d8e2ee;
-        color: #4b84a9;
-        font-family: "Share Tech Mono", "Consolas", monospace;
-        font-size: 2.4mm;
-        letter-spacing: 0.12em;
+        padding-bottom: 1.4mm;
+        border-bottom: 0.24mm solid #111;
+        color: #3f3f46;
+        font-family: Arial, sans-serif;
+        font-size: 2.35mm;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
       }
 
@@ -330,8 +323,8 @@ function buildPrintHtml(model) {
         grid-template-columns: 1fr auto;
         gap: 2mm;
         align-items: start;
-        padding: 2mm 0;
-        border-bottom: 0.25mm dashed #d8e2ee;
+        padding: 1.6mm 0;
+        border-bottom: 0.2mm solid #d4d4d4;
       }
 
       .print-ticket__item:last-child {
@@ -340,17 +333,21 @@ function buildPrintHtml(model) {
 
       .print-ticket__item-main {
         display: grid;
-        gap: 0.8mm;
+        gap: 0.6mm;
+        min-width: 0;
       }
 
       .print-ticket__item-total {
-        font-size: 3.2mm;
+        font-size: 2.9mm;
         white-space: nowrap;
       }
 
       .print-ticket__totals {
         display: grid;
         gap: 0;
+        margin-top: 2mm;
+        padding-top: 1.4mm;
+        border-top: 0.24mm solid #111;
       }
 
       .print-ticket__total-row {
@@ -358,10 +355,10 @@ function buildPrintHtml(model) {
         justify-content: space-between;
         gap: 2mm;
         align-items: center;
-        padding: 1.8mm 0;
-        border-bottom: 0.25mm dashed #d8e2ee;
-        font-size: 3.1mm;
-        color: #475569;
+        padding: 1.3mm 0;
+        border-bottom: 0.2mm solid #d4d4d4;
+        font-size: 2.8mm;
+        color: #52525b;
       }
 
       .print-ticket__total-row:last-child {
@@ -369,28 +366,38 @@ function buildPrintHtml(model) {
       }
 
       .print-ticket__total-row--grand {
-        padding-top: 2.4mm;
-        font-size: 3.6mm;
+        padding-top: 1.8mm;
+        font-size: 3.1mm;
       }
 
       .print-ticket__total-row--grand strong {
-        font-size: 4.4mm;
+        font-size: 4.1mm;
       }
 
       .print-ticket__footer {
         display: grid;
-        gap: 1.6mm;
+        gap: 1.2mm;
+        margin-top: 2.6mm;
+        padding-top: 1.8mm;
+        border-top: 0.24mm solid #111;
       }
 
       .print-ticket__footer-note {
-        padding-top: 1.8mm;
-        border-top: 0.25mm dashed #d8e2ee;
+        padding-top: 1.2mm;
+        border-top: 0.2mm dashed #8c8c8c;
       }
 
       @media screen {
         body {
           margin: 0 auto;
-          padding: 4mm 0;
+          padding: 4mm 0 10mm;
+          background: #f2f2f2;
+        }
+
+        .print-ticket {
+          background: #fff;
+          box-shadow: 0 0 0 1px #d9d9d9;
+          padding: 4mm;
         }
       }
     </style>
@@ -420,22 +427,29 @@ function buildPrintHtml(model) {
             <strong>${escapeHtml(model.createdAt)}</strong>
           </div>
         </div>
-        ${renderChecklist(model)}
       </section>
 
       <section class="print-ticket__section print-ticket__identity">
         <span class="print-ticket__label">Cliente</span>
-        <strong>${escapeHtml(model.customer)}</strong>
-        <p>${escapeHtml(model.customerPhone)}</p>
-        <p>Codigo interno: ${escapeHtml(model.secondaryCode)}</p>
+        <div class="print-ticket__identity-line">
+          <strong>${escapeHtml(model.customer)}</strong>
+          <p>${escapeHtml(model.customerPhone)}</p>
+        </div>
+        <div class="print-ticket__identity-line">
+          <p>Codigo interno: ${escapeHtml(model.secondaryCode)}</p>
+        </div>
       </section>
 
       <section class="print-ticket__section print-ticket__address">
         <span class="print-ticket__label">Entrega</span>
-        <strong>${escapeHtml(model.addressLine)}</strong>
-        <p>${escapeHtml(model.neighborhood)}</p>
-        <p>${escapeHtml(model.reference)}</p>
-        <p>${escapeHtml(model.complement)}</p>
+        <div class="print-ticket__address-line">
+          <strong>${escapeHtml(model.addressLine)}</strong>
+          <p>${escapeHtml(model.neighborhood)}</p>
+        </div>
+        <div class="print-ticket__address-line">
+          <p>${escapeHtml(model.reference)}</p>
+          <p>${escapeHtml(model.complement)}</p>
+        </div>
       </section>
 
       <section class="print-ticket__section">
@@ -462,20 +476,12 @@ function buildPrintHtml(model) {
         <p>Impressao operacional para conferencia rapida.</p>
       </section>
     </main>
-    <script>
-      window.addEventListener('load', () => {
-        window.print();
-      });
-      window.addEventListener('afterprint', () => {
-        window.close();
-      });
-    </script>
   </body>
 </html>`
 }
 
 function openPrintWindow(html, title) {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=460,height=880')
+  const printWindow = window.open('', '_blank', 'width=460,height=880')
 
   if (!printWindow) {
     throw new Error('Nao foi possivel abrir a janela de impressao.')
@@ -485,6 +491,26 @@ function openPrintWindow(html, title) {
   printWindow.document.write(html)
   printWindow.document.close()
   printWindow.document.title = title
+  printWindow.focus()
+
+  const triggerPrint = () => {
+    try {
+      printWindow.focus()
+      printWindow.print()
+    } catch {
+      // Ignore print invocation errors to avoid blocking the shell.
+    }
+  }
+
+  printWindow.onload = () => {
+    triggerPrint()
+  }
+
+  printWindow.onafterprint = () => {
+    printWindow.close()
+  }
+
+  printWindow.setTimeout(triggerPrint, 350)
 }
 
 export function printOrderTicket(order) {
