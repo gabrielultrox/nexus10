@@ -629,6 +629,37 @@
   transform: none;
 }
 
+.ui-button:disabled,
+.ui-button[disabled] {
+  cursor: not-allowed;
+  opacity: 1;
+  box-shadow: none;
+}
+
+.ui-button--primary:disabled,
+.ui-button--primary[disabled],
+.ui-button--secondary:disabled,
+.ui-button--secondary[disabled] {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-elevated));
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  color: var(--text-muted);
+}
+
+.ui-button--ghost:disabled,
+.ui-button--ghost[disabled],
+.ui-button--danger:disabled,
+.ui-button--danger[disabled],
+.ui-button--success:disabled,
+.ui-button--success[disabled],
+.ui-button--warning:disabled,
+.ui-button--warning[disabled],
+.ui-button--info:disabled,
+.ui-button--info[disabled] {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
 .ui-button--primary,
 .ui-button--secondary {
   background: var(--accent);
