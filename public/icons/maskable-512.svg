@@ -1,36 +1,57 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Nexus</title>
-  <desc id="desc">Logo minimalista do Nexus com monograma em N dentro de um quadrado arredondado.</desc>
+  <desc id="desc">Marca industrial-tech do Nexus com monograma N em painel escuro.</desc>
   <defs>
-    <linearGradient id="tileBorder" x1="120" y1="96" x2="392" y2="416" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#EDE9FE"/>
-      <stop offset="1" stop-color="#C4B5FD"/>
+    <linearGradient id="panelFill" x1="108" y1="96" x2="404" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171C28"/>
+      <stop offset="1" stop-color="#0F131D"/>
     </linearGradient>
-    <linearGradient id="markGradient" x1="168" y1="356" x2="344" y2="164" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#4C1D95"/>
-      <stop offset="0.52" stop-color="#6D28D9"/>
-      <stop offset="1" stop-color="#A78BFA"/>
+    <linearGradient id="panelStroke" x1="124" y1="108" x2="392" y2="404" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#44506B"/>
+      <stop offset="1" stop-color="#242B3B"/>
     </linearGradient>
-    <filter id="outerGlow" x="40" y="40" width="432" height="432" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <linearGradient id="markFill" x1="156" y1="360" x2="356" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4ED8"/>
+      <stop offset="0.52" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#67E8F9"/>
+    </linearGradient>
+    <linearGradient id="markEdge" x1="188" y1="336" x2="338" y2="162" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#93C5FD"/>
+      <stop offset="1" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <filter id="panelGlow" x="64" y="64" width="384" height="384" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-      <feGaussianBlur stdDeviation="18" result="effect1_foregroundBlur_1_1"/>
+      <feGaussianBlur stdDeviation="16" result="effect1_foregroundBlur_1_1"/>
+    </filter>
+    <filter id="accentGlow" x="130" y="126" width="248" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_1_1"/>
     </filter>
   </defs>
 
-  <g filter="url(#outerGlow)">
-    <rect x="112" y="112" width="288" height="288" rx="72" fill="#8B5CF6" fill-opacity="0.12"/>
+  <g filter="url(#panelGlow)">
+    <rect x="96" y="96" width="320" height="320" rx="84" fill="#3B82F6" fill-opacity="0.12"/>
   </g>
 
-  <rect x="96" y="96" width="320" height="320" rx="80" fill="#FFFFFF"/>
-  <rect x="98" y="98" width="316" height="316" rx="78" stroke="url(#tileBorder)" stroke-width="4"/>
+  <rect x="96" y="96" width="320" height="320" rx="84" fill="url(#panelFill)"/>
+  <rect x="98" y="98" width="316" height="316" rx="82" stroke="url(#panelStroke)" stroke-width="4"/>
 
-  <path d="M176 340V172" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M176 172L336 340" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M336 340V172" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M152 156H216L308 276V156H360V356H296L204 236V356H152V156Z" fill="url(#markFill)"/>
 
-  <circle cx="176" cy="172" r="11" fill="#8B5CF6"/>
-  <circle cx="176" cy="340" r="11" fill="#6D28D9"/>
-  <circle cx="336" cy="172" r="11" fill="#A78BFA"/>
-  <circle cx="336" cy="340" r="11" fill="#7C3AED"/>
+  <path d="M152 356V156" stroke="url(#markEdge)" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+  <path d="M308 156V356" stroke="url(#markEdge)" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+  <path d="M212 160L304 278" stroke="url(#markEdge)" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+
+  <g opacity="0.48">
+    <path d="M136 188H174" stroke="#2A3144" stroke-width="4" stroke-linecap="round"/>
+    <path d="M338 324H376" stroke="#2A3144" stroke-width="4" stroke-linecap="round"/>
+    <path d="M160 388H206" stroke="#2A3144" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#accentGlow)">
+    <circle cx="212" cy="160" r="10" fill="#E0F2FE"/>
+    <circle cx="304" cy="278" r="11" fill="#67E8F9"/>
+  </g>
 </svg>
