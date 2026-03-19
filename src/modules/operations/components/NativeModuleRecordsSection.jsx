@@ -41,6 +41,16 @@ function getStatusBadgeClass(value) {
   return 'ui-badge--info'
 }
 
+function canShowReturnAction(record) {
+  const normalized = String(record?.status ?? '').trim().toLowerCase()
+
+  return !(
+    normalized.includes('retorn') ||
+    normalized.includes('conclu') ||
+    normalized.includes('recebid')
+  )
+}
+
 function renderNativeModuleCell(column, cell, index) {
   const normalizedColumn = String(column ?? '').toLowerCase()
   const normalizedValue = String(cell ?? '').toLowerCase()
@@ -695,10 +705,10 @@ function NativeModuleTable({
                         {manager.getActionLabel?.(record) ?? manager.actionLabel}
                       </button>
                     ) : null}
-                    {manager.returnActionLabel && record.status !== 'Retornou' ? (
-                      <button
-                        type="button"
-                        className="native-module__return-action"
+                    {manager.returnActionLabel && canShowReturnAction(record) ? (
+                        <button
+                          type="button"
+                          className="native-module__return-action"
                         disabled={exitingIds.has(record.id)}
                         onClick={() => onMarkReturned(record.id)}
                       >
