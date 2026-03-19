@@ -258,7 +258,7 @@ export const manualModuleConfigs = {
     submitLabel: 'Registrar troco',
     emptyTitle: 'Nenhum troco registrado',
     emptyDescription: 'Use este painel para lancar trocos liberados, pendentes ou devolvidos.',
-    columns: ['Origem', 'Entregador', 'Valor', 'Estado', 'Retorno'],
+    columns: ['Operador', 'Entregador', 'Valor', 'Estado', 'Retorno'],
     fields: [
       {
         name: 'origin',
