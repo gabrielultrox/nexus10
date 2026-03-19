@@ -32,6 +32,7 @@ const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX'];
 function createEmptyItem() {
   return {
     productId: '',
+    productSnapshot: null,
     quantity: '1',
     unitPrice: '',
   };
@@ -113,6 +114,14 @@ function mapOrderToForm(order) {
     items: Array.isArray(order.items) && order.items.length > 0
       ? order.items.map((item) => ({
         productId: item.productId ?? item.productSnapshot?.id ?? '',
+        productSnapshot: item.productSnapshot
+          ? {
+            id: item.productSnapshot.id ?? item.productId ?? '',
+            name: item.productSnapshot.name ?? 'Produto',
+            category: item.productSnapshot.category ?? '',
+            sku: item.productSnapshot.sku ?? '',
+          }
+          : null,
         quantity: String(item.quantity ?? 1),
         unitPrice: String(item.unitPrice ?? 0),
       }))
@@ -123,6 +132,7 @@ function mapOrderToForm(order) {
 function OrdersModule({
   orderId,
   viewMode,
+  formResetToken,
   onOpenDetail,
   onOpenEdit,
   onOpenList,
@@ -319,7 +329,7 @@ function OrdersModule({
   const showDetailLoading = viewMode === 'detail' && loading && Boolean(orderId) && !selectedOrder;
 
   useEffect(() => {
-    const nextViewKey = `${viewMode}:${orderId ?? 'new'}`;
+    const nextViewKey = `${viewMode}:${orderId ?? 'new'}:${formResetToken ?? 'default'}`;
 
     if (initializedViewRef.current === nextViewKey) {
       return;
@@ -335,7 +345,7 @@ function OrdersModule({
       setFormState(mapOrderToForm(selectedOrder));
       initializedViewRef.current = nextViewKey;
     }
-  }, [orderId, selectedOrder, viewMode]);
+  }, [formResetToken, orderId, selectedOrder, viewMode]);
 
   const selectedCustomer = useMemo(
     () => customers.find((customer) => customer.id === formState.customerId) ?? null,
@@ -352,6 +362,7 @@ function OrdersModule({
       return {
         key: `${item.productId || 'item'}-${index}`,
         product,
+        productSnapshot: item.productSnapshot ?? null,
         productId: item.productId,
         quantity,
         unitPrice,
@@ -455,6 +466,8 @@ function OrdersModule({
 
   function resetForm() {
     setFormState(createInitialFormState());
+    setErrorMessage('');
+    setFeedbackMessage('');
   }
 
   function updateAddressField(field, value) {
@@ -491,6 +504,14 @@ function OrdersModule({
           return {
             ...item,
             productId: value,
+            productSnapshot: product
+              ? {
+                id: product.id,
+                name: product.name ?? 'Produto',
+                category: product.category ?? '',
+                sku: product.sku ?? '',
+              }
+              : null,
             unitPrice: product ? String(product.price ?? 0) : '',
           };
         }
@@ -533,7 +554,7 @@ function OrdersModule({
   }
 
   function buildPayload() {
-    if (draftItems.some((item) => !item.productId || !item.product)) {
+    if (draftItems.some((item) => !item.productId)) {
       throw new Error('Selecione um produto valido para todos os itens.');
     }
 
@@ -551,10 +572,10 @@ function OrdersModule({
       items: draftItems.map((item) => ({
         productId: item.productId,
         productSnapshot: {
-          id: item.product?.id ?? item.productId,
-          name: item.product?.name ?? 'Produto',
-          category: item.product?.category ?? '',
-          sku: item.product?.sku ?? '',
+          id: item.product?.id ?? item.productSnapshot?.id ?? item.productId,
+          name: item.product?.name ?? item.productSnapshot?.name ?? 'Produto',
+          category: item.product?.category ?? item.productSnapshot?.category ?? '',
+          sku: item.product?.sku ?? item.productSnapshot?.sku ?? '',
         },
         quantity: item.quantity,
         unitPrice: item.unitPrice,

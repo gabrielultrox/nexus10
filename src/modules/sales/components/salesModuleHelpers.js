@@ -4,6 +4,7 @@ export const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX']
 export function createEmptyItem() {
   return {
     productId: '',
+    productSnapshot: null,
     quantity: '1',
     unitPrice: '',
   };

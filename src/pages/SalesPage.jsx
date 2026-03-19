@@ -23,7 +23,9 @@ function SalesPage() {
     }
 
     if (tabId === 'form') {
-      navigate('/sales/new');
+      navigate('/sales/new', {
+        state: { resetNonce: Date.now() },
+      });
       return;
     }
 
@@ -55,7 +57,8 @@ function SalesPage() {
       <SalesModule
         saleId={saleId ?? null}
         viewMode={viewMode}
-        onOpenCreate={() => navigate('/sales/new')}
+        formResetToken={location.state?.resetNonce ?? null}
+        onOpenCreate={() => navigate('/sales/new', { state: { resetNonce: Date.now() } })}
         onOpenDetail={(nextSaleId) => navigate(`/sales/${nextSaleId}`)}
         onOpenList={() => navigate('/sales')}
       />

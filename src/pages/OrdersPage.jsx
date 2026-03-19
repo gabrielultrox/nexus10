@@ -26,7 +26,9 @@ function OrdersPage() {
     }
 
     if (tabId === 'form') {
-      navigate('/orders/new');
+      navigate('/orders/new', {
+        state: { resetNonce: Date.now() },
+      });
       return;
     }
 
@@ -66,7 +68,8 @@ function OrdersPage() {
       <OrdersModule
         orderId={orderId ?? null}
         viewMode={viewMode}
-        onOpenCreate={() => navigate('/orders/new')}
+        formResetToken={location.state?.resetNonce ?? null}
+        onOpenCreate={() => navigate('/orders/new', { state: { resetNonce: Date.now() } })}
         onOpenDetail={(nextOrderId) => navigate(`/orders/${nextOrderId}`)}
         onOpenEdit={(nextOrderId) => navigate(`/orders/${nextOrderId}/edit`)}
         onOpenList={() => navigate('/orders')}

@@ -32,6 +32,7 @@ import {
 function SalesModule({
   saleId,
   viewMode,
+  formResetToken,
   onOpenDetail,
   onOpenList,
 }) {
@@ -160,6 +161,7 @@ function SalesModule({
       return {
         key: `${item.productId || 'item'}-${index}`,
         product,
+        productSnapshot: item.productSnapshot ?? null,
         productId: item.productId,
         quantity,
         unitPrice,
@@ -273,13 +275,15 @@ function SalesModule({
 
   function resetForm() {
     setFormState(createInitialFormState());
+    setErrorMessage('');
+    setFeedbackMessage('');
   }
 
   useEffect(() => {
     if (viewMode === 'create') {
       setFormState(createInitialFormState());
     }
-  }, [viewMode]);
+  }, [formResetToken, viewMode]);
 
   function handleCustomerChange(customerId) {
     const customer = customers.find((entry) => entry.id === customerId) ?? null;
@@ -296,7 +300,7 @@ function SalesModule({
   }
 
   function buildPayload() {
-    if (draftItems.some((item) => !item.productId || !item.product)) {
+    if (draftItems.some((item) => !item.productId)) {
       throw new Error('Selecione um produto valido para todos os itens.');
     }
 
@@ -304,7 +308,7 @@ function SalesModule({
       channel: formState.channel,
       customerId: selectedCustomer?.id ?? null,
       customerSnapshot: selectedCustomer ? { id: selectedCustomer.id, name: selectedCustomer.name, phone: selectedCustomer.phoneDisplay ?? selectedCustomer.phone ?? '', neighborhood: selectedCustomer.neighborhood ?? '' } : undefined,
-      items: draftItems.map((item) => ({ productId: item.productId, productSnapshot: { id: item.product?.id ?? item.productId, name: item.product?.name ?? 'Produto', category: item.product?.category ?? '', sku: item.product?.sku ?? '' }, quantity: item.quantity, unitPrice: item.unitPrice, totalPrice: item.totalPrice })),
+      items: draftItems.map((item) => ({ productId: item.productId, productSnapshot: { id: item.product?.id ?? item.productSnapshot?.id ?? item.productId, name: item.product?.name ?? item.productSnapshot?.name ?? 'Produto', category: item.product?.category ?? item.productSnapshot?.category ?? '', sku: item.product?.sku ?? item.productSnapshot?.sku ?? '' }, quantity: item.quantity, unitPrice: item.unitPrice, totalPrice: item.totalPrice })),
       totals: calculatedTotals,
       paymentMethod: formState.paymentMethod,
       payment: { method: formState.paymentMethod, label: getPaymentMethodLabel(formState.paymentMethod), amount: calculatedTotals.total },
@@ -475,7 +479,29 @@ function SalesModule({
               onFieldChange={(field, value) => setFormState((current) => ({ ...current, [field]: value }))}
               onAddressChange={(field, value) => setFormState((current) => ({ ...current, address: { ...current.address, [field]: value } }))}
               onTotalsChange={(field, value) => setFormState((current) => ({ ...current, totals: { ...current.totals, [field]: value } }))}
-              onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex !== index ? item : field === 'productId' ? { ...item, productId: value, unitPrice: String(products.find((entry) => entry.id === value)?.price ?? '') } : { ...item, [field]: value }) }))}
+              onItemChange={(index, field, value) => setFormState((current) => ({ ...current, items: current.items.map((item, itemIndex) => {
+                if (itemIndex !== index) {
+                  return item;
+                }
+
+                if (field === 'productId') {
+                  const product = products.find((entry) => entry.id === value);
+
+                  return {
+                    ...item,
+                    productId: value,
+                    productSnapshot: product ? {
+                      id: product.id,
+                      name: product.name ?? 'Produto',
+                      category: product.category ?? '',
+                      sku: product.sku ?? '',
+                    } : null,
+                    unitPrice: String(product?.price ?? ''),
+                  };
+                }
+
+                return { ...item, [field]: value };
+              }) }))}
               onAddItem={() => setFormState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
               onRemoveItem={(index) => setFormState((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }))}
             />
