@@ -7,6 +7,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { formatCurrencyBRL } from '../../../services/commerce';
 import { subscribeToCouriers } from '../../../services/courierService';
+import { appendAuditEvent } from '../../../services/localAudit';
 import { loadResettableLocalRecords, saveResettableLocalRecords } from '../../../services/localAccess';
 import {
   clearManualModuleRecords,
@@ -349,6 +350,18 @@ function CashModule() {
 
     try {
       await persistRecords([nextRecord, ...records], nextRecord);
+      appendAuditEvent({
+        module: 'Caixa',
+        modulePath: 'cash',
+        actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+        action: activeTab.submitLabel,
+        target: nextRecord.receiptCode,
+        details: [
+          nextRecord.amountLabel,
+          nextRecord.courierName ? `Entregador: ${nextRecord.courierName}` : '',
+          nextRecord.note ? `Obs: ${nextRecord.note}` : '',
+        ].filter(Boolean).join(' | '),
+      });
       setValueInput('');
       setNote('');
       setSelectedCourier('');
@@ -358,6 +371,7 @@ function CashModule() {
   }
 
   async function handleDelete(recordId) {
+    const targetRecord = records.find((record) => record.id === recordId);
     const nextRecords = records.filter((record) => record.id !== recordId);
     setRecords(nextRecords);
     saveResettableLocalRecords(CASH_STORAGE_KEY, nextRecords, CASH_RESET_HOUR);
@@ -373,6 +387,15 @@ function CashModule() {
       console.error('Nao foi possivel remover o lancamento de caixa remotamente.', error);
       setSyncMessage('Exclusao mantida localmente');
     }
+
+    appendAuditEvent({
+      module: 'Caixa',
+      modulePath: 'cash',
+      actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+      action: 'Excluiu lancamento',
+      target: targetRecord?.receiptCode ?? 'Lancamento de caixa',
+      details: targetRecord?.amountLabel ?? '',
+    });
   }
 
   async function handleClearHistory() {
@@ -392,6 +415,15 @@ function CashModule() {
       console.error('Nao foi possivel limpar o historico remoto do caixa.', error);
       setSyncMessage('Historico limpo localmente');
     }
+
+    appendAuditEvent({
+      module: 'Caixa',
+      modulePath: 'cash',
+      actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+      action: 'Limpou historico do dia',
+      target: 'Caixa',
+      details: 'Historico operacional do dia foi reiniciado.',
+    });
   }
 
   return (

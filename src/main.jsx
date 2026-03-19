@@ -30,6 +30,7 @@ import './styles/sales.css';
 import './styles/reports.css';
 import './styles/inventory.css';
 import './styles/audit-log.css';
+import './styles/history.css';
 
 registerPwa();
 setupRuntimeRecovery();
