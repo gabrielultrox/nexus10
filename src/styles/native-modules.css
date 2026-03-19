@@ -247,25 +247,34 @@
   background: transparent;
 }
 
+.native-module-page--advances .surface-card:first-of-type .surface-card__content {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--space-9) * 6 + var(--space-8)));
+  justify-content: start;
+  align-items: start;
+}
+
 .native-module-page--advances .native-module__form-shell {
-  max-width: 780px;
-  margin: 0 auto;
-  padding: var(--space-6-5);
-  border-radius: var(--radius-shell);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 58%, transparent), transparent 26%),
-    var(--surface-elevated);
-  box-shadow: 0 30px 80px color-mix(in srgb, var(--color-shadow-rgb) 18%, transparent);
+  width: min(100%, calc(var(--space-9) * 6 + var(--space-8)));
+  max-width: none;
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-section);
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
+  box-shadow: none;
 }
 
 .native-module-page--advances .native-module__form-copy {
-  padding-bottom: var(--space-3);
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .native-module__form-grid--advances {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .native-module-page--advances .native-module__form-grid .ui-field:first-child,
@@ -275,8 +284,34 @@
 
 .native-module-page--advances .native-module__form-actions {
   grid-column: 1 / -1;
-  padding-top: var(--space-3);
+  padding-top: var(--space-2);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+.native-module-page--advances .surface-card:first-of-type .surface-card__title {
+  padding-bottom: var(--space-2-5);
+}
+
+.native-module-page--advances .native-module__form-grid .ui-field {
+  gap: var(--space-1);
+}
+
+.native-module-page--advances .native-module__form-grid .ui-label {
+  font-size: 0.66rem;
+}
+
+@media (max-width: 900px) {
+  .native-module-page--advances .surface-card:first-of-type .surface-card__content {
+    grid-template-columns: 1fr;
+  }
+
+  .native-module-page--advances .native-module__form-shell {
+    width: 100%;
+  }
+
+  .native-module__form-grid--advances {
+    grid-template-columns: 1fr;
+  }
 }
 
 .native-module__toolbar {
