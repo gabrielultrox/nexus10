@@ -252,17 +252,22 @@
 }
 
 .native-module-page--advances .surface-card:first-of-type .surface-card__content,
-.native-module-page--discounts .surface-card:first-of-type .surface-card__content,
-.native-module-page--change .surface-card:first-of-type .surface-card__content {
+.native-module-page--discounts .surface-card:first-of-type .surface-card__content {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--space-9) * 6 + var(--space-8)));
   justify-content: start;
   align-items: start;
 }
 
+.native-module-page--change .surface-card:first-of-type .surface-card__content {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--space-9) * 6 + var(--space-9)));
+  justify-content: start;
+  align-items: start;
+}
+
 .native-module-page--advances .native-module__form-shell,
-.native-module-page--discounts .native-module__form-shell,
-.native-module-page--change .native-module__form-shell {
+.native-module-page--discounts .native-module__form-shell {
   width: min(100%, calc(var(--space-9) * 6 + var(--space-8)));
   max-width: none;
   margin: 0;
@@ -272,14 +277,32 @@
   box-shadow: none;
 }
 
+.native-module-page--change .native-module__form-shell {
+  width: min(100%, calc(var(--space-9) * 6 + var(--space-9)));
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
 .native-module-page--advances .native-module__form-copy,
-.native-module-page--discounts .native-module__form-copy,
-.native-module-page--change .native-module__form-copy {
+.native-module-page--discounts .native-module__form-copy {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.native-module-page--change .native-module__form-copy {
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 0;
 }
 
 .native-module__form-grid--advances {
@@ -297,10 +320,15 @@
 }
 
 .native-module-page--advances .native-module__form-actions,
-.native-module-page--discounts .native-module__form-actions,
-.native-module-page--change .native-module__form-actions {
+.native-module-page--discounts .native-module__form-actions {
   grid-column: 1 / -1;
   padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.native-module-page--change .native-module__form-actions {
+  grid-column: 1 / -1;
+  padding-top: var(--space-3);
   border-top: 1px solid var(--color-border-subtle);
 }
 
