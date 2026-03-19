@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import CaixaStatusBar from '../../../components/caixa/CaixaStatusBar';
 import PageTabs from '../../../components/common/PageTabs';
@@ -806,6 +806,9 @@ function CashModule() {
           </span>
 
           <div className="cash-module__history-toolbar-actions">
+            <Link to="/history?modulo=cash&data=hoje" className="native-module__history-link">
+              Ver historico do caixa
+            </Link>
             {records.length > 0 ? (
               <button
                 type="button"

@@ -16,7 +16,8 @@ function DashboardKpiCard({ item }) {
       meta={item.meta}
       badgeText={item.badgeText}
       badgeClass={item.badgeClass}
-      className={`dashboard-kpi-card dashboard-kpi-card--${item.tone}`}
+      variant={item.variant}
+      className={`dashboard-kpi-card dashboard-kpi-card--${item.tone}${item.pulse ? ' dashboard-kpi-card--pulse' : ''}`}
       valueClassName={valueClassName}
     />
   );

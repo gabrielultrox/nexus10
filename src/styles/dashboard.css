@@ -863,6 +863,20 @@
   gap: 0;
 }
 
+.dashboard-kpi-card--pulse .ui-kpi-card__badge::before {
+  animation: dashboard-pulse 2s infinite;
+}
+
+@keyframes dashboard-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
 .ops-row--simple,
 .ops-row--inline {
   padding: 10px 0;

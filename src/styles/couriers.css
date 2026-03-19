@@ -747,6 +747,13 @@
   cursor: pointer;
 }
 
+.couriers-panel__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .courier-card__title-row {
   display: flex;
   align-items: center;

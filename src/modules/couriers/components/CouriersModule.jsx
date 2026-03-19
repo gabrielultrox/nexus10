@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import SurfaceCard from '../../../components/common/SurfaceCard';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -451,9 +452,14 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
                     Busque por nome, turno, status ou maquininha fixa e abra o perfil do entregador sem disputar espaco com o cadastro.
                   </p>
                 </div>
-                <span className="ui-badge ui-badge--special">
-                  {filteredCouriers.length} de {couriers.length}
-                </span>
+                <div className="couriers-panel__header-actions">
+                  <Link to="/history?modulo=couriers&data=hoje" className="native-module__history-link">
+                    Ver historico do time
+                  </Link>
+                  <span className="ui-badge ui-badge--special">
+                    {filteredCouriers.length} de {couriers.length}
+                  </span>
+                </div>
               </div>
 
               <CouriersFilters filters={filters} onChange={setFilters} />

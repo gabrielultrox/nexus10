@@ -1,29 +1,54 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import MetricCard from '../../../components/common/MetricCard';
-import PageTabs from '../../../components/common/PageTabs';
 import SurfaceCard from '../../../components/common/SurfaceCard';
-import { loadAuditEvents } from '../../../services/localAudit';
-import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
+import { loadAuditEvents } from '../../../services/localAudit';
 
-const HISTORY_TABS = [
-  { id: 'all', label: 'Tudo', modulePaths: [] },
-  { id: 'cash', label: 'Caixa', modulePaths: ['cash'] },
-  { id: 'machines', label: 'Maquininhas', modulePaths: ['machines', 'machine-history'] },
-  { id: 'couriers', label: 'Entregadores', modulePaths: ['couriers'] },
-  { id: 'schedule', label: 'Escala', modulePaths: ['schedule'] },
+const PRIMARY_HISTORY_FILTERS = [
+  { id: 'all', label: 'Todos', modulePaths: [] },
   { id: 'delivery-reading', label: 'Leitura', modulePaths: ['delivery-reading'] },
+  { id: 'schedule', label: 'Escala', modulePaths: ['schedule'] },
   { id: 'advances', label: 'Vales', modulePaths: ['advances'] },
   { id: 'discounts', label: 'Descontos', modulePaths: ['discounts'] },
   { id: 'change', label: 'Trocos', modulePaths: ['change'] },
-  { id: 'map', label: 'Mapa', modulePaths: ['map'] },
-  { id: 'occurrences', label: 'Ocorrencias', modulePaths: ['occurrences'] },
+  { id: 'orders', label: 'Pedidos', modulePaths: ['orders'] },
+  { id: 'sales', label: 'Vendas', modulePaths: ['sales'] },
+  { id: 'cash', label: 'Caixa', modulePaths: ['cash'] },
 ];
+
+const CONTEXT_HISTORY_FILTERS = [
+  { id: 'couriers', label: 'Entregadores', modulePaths: ['couriers'] },
+  { id: 'machines', label: 'Hardware', modulePaths: ['machines', 'machine-history'] },
+];
+
+const ALL_HISTORY_FILTERS = [...PRIMARY_HISTORY_FILTERS, ...CONTEXT_HISTORY_FILTERS];
+
+const MODULE_TONE_MAP = {
+  cash: 'success',
+  'delivery-reading': 'info',
+  schedule: 'info',
+  advances: 'warning',
+  discounts: 'warning',
+  change: 'warning',
+  orders: 'danger',
+  sales: 'success',
+  couriers: 'neutral',
+  machines: 'info',
+  'machine-history': 'info',
+};
 
 function toDayKey(timestamp) {
   return String(timestamp ?? '').slice(0, 10);
+}
+
+function getTodayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function formatDayLabel(dayKey) {
@@ -39,14 +64,6 @@ function formatDayLabel(dayKey) {
   }).format(new Date(`${dayKey}T12:00:00`)).replace(/\./g, '');
 }
 
-function formatMonthLabel(monthKey) {
-  const [year, month] = String(monthKey).split('-');
-  return new Intl.DateTimeFormat('pt-BR', {
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(`${year}-${month}-01T12:00:00`));
-}
-
 function formatTime(timestamp) {
   return new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
@@ -54,187 +71,97 @@ function formatTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
-function pushChip(chips, value, tone = 'info') {
-  if (!value) {
-    return;
-  }
-
-  const normalizedLabel = String(value).trim();
-
-  if (!normalizedLabel || chips.some((chip) => chip.label === normalizedLabel)) {
-    return;
-  }
-
-  chips.push({ label: normalizedLabel, tone });
+function buildModuleTone(modulePath) {
+  return MODULE_TONE_MAP[modulePath] ?? 'neutral';
 }
 
-function buildEventChips(event) {
-  const chips = [];
-  const details = String(event.details ?? '');
-  const action = String(event.action ?? '').toLowerCase();
-  const modulePath = String(event.modulePath ?? '');
-  const target = String(event.target ?? '');
-
-  const amountMatch = details.match(/R\$\s?[\d.]+,\d{2}/);
-  const courierMatch = details.match(/Entregador:\s*([^|]+)/i);
-  const machineMatch = details.match(/maquininha(?: fixa| do dia)?\s+([^|]+)/i);
-  const statusMatch = details.match(/Checklist atualizado para\s+(.+)/i);
-
-  pushChip(chips, amountMatch?.[0], 'success');
-  pushChip(chips, courierMatch?.[1], 'info');
-  pushChip(chips, machineMatch?.[1], 'special');
-
-  if (modulePath === 'cash' && !amountMatch) {
-    const targetAmountMatch = target.match(/R\$\s?[\d.]+,\d{2}/);
-    pushChip(chips, targetAmountMatch?.[0], 'success');
-  }
-
-  if (modulePath === 'cash') {
-    if (target.startsWith('ABR-') || action.includes('abertura')) {
-      pushChip(chips, 'Abertura', 'info');
-    }
-
-    if (target.startsWith('SAN-') || action.includes('sangria')) {
-      pushChip(chips, 'Sangria', 'warning');
-    }
-
-    if (target.startsWith('SUP-') || action.includes('suprimento')) {
-      pushChip(chips, 'Suprimento', 'success');
-    }
-
-    if (target.startsWith('RET-') || action.includes('retirada')) {
-      pushChip(chips, 'Retirada', 'special');
-    }
-
-    if (target.startsWith('FEC-') || action.includes('fechamento')) {
-      pushChip(chips, 'Fechamento', 'danger');
-    }
-  }
-
-  if (modulePath === 'change') {
-    if (action.includes('confirmou retorno')) {
-      pushChip(chips, 'Concluido', 'success');
-    } else if (action.includes('criou')) {
-      pushChip(chips, 'Pendente', 'warning');
-    }
-  }
-
-  if (modulePath === 'advances') {
-    if (action.includes('criou')) {
-      pushChip(chips, 'Em aberto', 'warning');
-    }
-
-    if (action.includes('baixar vale')) {
-      pushChip(chips, 'Baixado', 'success');
-    }
-  }
-
-  if (modulePath === 'discounts') {
-    if (action.includes('criou')) {
-      pushChip(chips, 'Pendente', 'warning');
-    }
-
-    if (action.includes('validar')) {
-      pushChip(chips, 'Validado', 'success');
-    }
-  }
-
-  if (modulePath === 'delivery-reading') {
-    if (action.includes('criou')) {
-      pushChip(chips, 'Lida', 'info');
-    }
-
-    if (action.includes('marcar fechada')) {
-      pushChip(chips, 'Fechada', 'success');
-    }
-  }
-
-  if (modulePath === 'machines' || modulePath === 'machine-history') {
-    if (action.includes('marcou presente')) {
-      pushChip(chips, 'Presente', 'success');
-    }
-
-    if (action.includes('desmarcou')) {
-      pushChip(chips, 'Ausente', 'warning');
-    }
-
-    if (details.toLowerCase().includes('carga')) {
-      pushChip(chips, 'Carga', 'warning');
-    }
-
-    if (details.toLowerCase().includes('manutenc')) {
-      pushChip(chips, 'Manutencao', 'danger');
-    }
-  }
-
-  if (modulePath === 'schedule' && action.includes('alterou maquininha do dia')) {
-    pushChip(chips, 'Maquininha do dia', 'special');
-  }
-
-  if (action.includes('reset')) {
-    pushChip(chips, 'Reset', 'danger');
-  }
-
-  if (action.includes('limpou')) {
-    pushChip(chips, 'Limpo', 'warning');
-  }
-
-  if (action.includes('excluiu')) {
-    pushChip(chips, 'Exclusao', 'danger');
-  }
-
-  if (action.includes('criou') || action.includes('cadastrou') || action.includes('registrar')) {
-    pushChip(chips, 'Novo', 'info');
-  }
-
-  if (action.includes('atualizou') || action.includes('alterou')) {
-    pushChip(chips, 'Atualizado', 'special');
-  }
-
-  if (modulePath === 'machines' || modulePath === 'machine-history') {
-    pushChip(chips, statusMatch?.[1], 'special');
-  }
-
-  return chips.slice(0, 3);
-}
-
-function buildCalendarDays(monthKey, daysWithEvents) {
-  if (!monthKey) {
-    return [];
-  }
-
-  const [yearValue, monthValue] = monthKey.split('-').map(Number);
-  const monthDate = new Date(yearValue, monthValue - 1, 1);
-  const firstDayIndex = (monthDate.getDay() + 6) % 7;
-  const daysInMonth = new Date(yearValue, monthValue, 0).getDate();
-  const calendarDays = [];
+function buildCalendarDays(baseDayKey, eventsByDay) {
+  const referenceDay = baseDayKey ? new Date(`${baseDayKey}T12:00:00`) : new Date();
+  const year = referenceDay.getFullYear();
+  const month = referenceDay.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const firstDayIndex = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
 
   for (let index = 0; index < firstDayIndex; index += 1) {
-    calendarDays.push({ id: `pad-start-${index}`, empty: true });
+    days.push({ id: `pad-${index}`, empty: true });
   }
 
   for (let day = 1; day <= daysInMonth; day += 1) {
-    const dayKey = `${monthKey}-${String(day).padStart(2, '0')}`;
-    calendarDays.push({
+    const dayKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayEvents = eventsByDay.get(dayKey) ?? [];
+    const tones = Array.from(new Set(dayEvents.map((event) => buildModuleTone(event.modulePath)))).slice(0, 3);
+
+    days.push({
       id: dayKey,
       dayKey,
       label: String(day).padStart(2, '0'),
-      hasEntry: daysWithEvents.has(dayKey),
+      tones,
+      hasEntry: tones.length > 0,
     });
   }
 
-  while (calendarDays.length % 7 !== 0) {
-    calendarDays.push({ id: `pad-end-${calendarDays.length}`, empty: true });
+  while (days.length % 7 !== 0) {
+    days.push({ id: `pad-end-${days.length}`, empty: true });
   }
 
-  return calendarDays;
+  return days;
+}
+
+function buildQueryFilter(searchParams) {
+  const requested = searchParams.get('modulo') ?? searchParams.get('screen') ?? 'all';
+  return ALL_HISTORY_FILTERS.find((filter) => filter.id === requested) ?? PRIMARY_HISTORY_FILTERS[0];
+}
+
+function buildSelectedDay(searchParams, availableDays) {
+  const requestedDay = searchParams.get('data') ?? searchParams.get('day') ?? 'hoje';
+
+  if (requestedDay === 'hoje') {
+    const todayKey = getTodayKey();
+    return availableDays.includes(todayKey) ? todayKey : availableDays[0] ?? '';
+  }
+
+  if (availableDays.includes(requestedDay)) {
+    return requestedDay;
+  }
+
+  return availableDays[0] ?? '';
+}
+
+function groupEventsByHour(events) {
+  const groups = [];
+
+  events.forEach((event) => {
+    const hourKey = formatTime(event.timestamp).slice(0, 2);
+    const displayHour = `${hourKey}:00`;
+    const existingGroup = groups.find((group) => group.hour === displayHour);
+
+    if (existingGroup) {
+      existingGroup.events.push(event);
+      return;
+    }
+
+    groups.push({
+      hour: displayHour,
+      events: [event],
+    });
+  });
+
+  return groups;
+}
+
+function buildEventText(event) {
+  const target = event.target ? ` · ${event.target}` : '';
+  return `${event.action}${target}`;
 }
 
 function HistoryTimelineModule() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allEvents, setAllEvents] = useState(() => loadAuditEvents());
-  const activeTabId = searchParams.get('screen') ?? HISTORY_TABS[0].id;
-  const activeTab = HISTORY_TABS.find((tab) => tab.id === activeTabId) ?? HISTORY_TABS[0];
+  const [collapsedHours, setCollapsedHours] = useState({});
+
+  const activeFilter = useMemo(() => buildQueryFilter(searchParams), [searchParams]);
 
   useEffect(() => {
     function refreshEvents() {
@@ -248,49 +175,64 @@ function HistoryTimelineModule() {
   }, []);
 
   const filteredEvents = useMemo(() => {
-    if (activeTab.modulePaths.length === 0) {
+    if (activeFilter.modulePaths.length === 0) {
       return allEvents;
     }
 
-    return allEvents.filter((event) => activeTab.modulePaths.includes(event.modulePath));
-  }, [activeTab.modulePaths, allEvents]);
+    return allEvents.filter((event) => activeFilter.modulePaths.includes(event.modulePath));
+  }, [activeFilter.modulePaths, allEvents]);
 
   const availableDays = useMemo(
     () => Array.from(new Set(filteredEvents.map((event) => toDayKey(event.timestamp)).filter(Boolean))).sort((left, right) => right.localeCompare(left)),
     [filteredEvents],
   );
-  const selectedDay = searchParams.get('day') ?? availableDays[0] ?? '';
-  const selectedMonth = searchParams.get('month') ?? selectedDay.slice(0, 7) ?? availableDays[0]?.slice(0, 7) ?? '';
+
+  const selectedDay = useMemo(
+    () => buildSelectedDay(searchParams, availableDays),
+    [availableDays, searchParams],
+  );
 
   useEffect(() => {
-    if (!availableDays.length) {
+    if (!selectedDay) {
       return;
     }
 
-    if (!selectedDay || !availableDays.includes(selectedDay)) {
-      setSearchParams((currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
-        nextParams.set('screen', activeTab.id);
-        nextParams.set('day', availableDays[0]);
-        nextParams.set('month', availableDays[0].slice(0, 7));
-        return nextParams;
-      });
-    }
-  }, [activeTab.id, availableDays, selectedDay, setSearchParams]);
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set('modulo', activeFilter.id);
+      nextParams.set('data', selectedDay);
+      return nextParams;
+    });
+  }, [activeFilter.id, selectedDay, setSearchParams]);
 
   const visibleEvents = useMemo(
-    () => filteredEvents.filter((event) => toDayKey(event.timestamp) === selectedDay),
+    () => filteredEvents
+      .filter((event) => toDayKey(event.timestamp) === selectedDay)
+      .sort((left, right) => right.timestamp.localeCompare(left.timestamp)),
     [filteredEvents, selectedDay],
   );
 
-  const availableMonths = useMemo(
-    () => Array.from(new Set(availableDays.map((dayKey) => dayKey.slice(0, 7)))).sort((left, right) => right.localeCompare(left)),
-    [availableDays],
-  );
-  const activeDaysSet = useMemo(() => new Set(availableDays), [availableDays]);
+  const eventsByDay = useMemo(() => {
+    const nextMap = new Map();
+
+    filteredEvents.forEach((event) => {
+      const dayKey = toDayKey(event.timestamp);
+      const currentEvents = nextMap.get(dayKey) ?? [];
+      currentEvents.push(event);
+      nextMap.set(dayKey, currentEvents);
+    });
+
+    return nextMap;
+  }, [filteredEvents]);
+
   const calendarDays = useMemo(
-    () => buildCalendarDays(selectedMonth, activeDaysSet),
-    [activeDaysSet, selectedMonth],
+    () => buildCalendarDays(selectedDay || getTodayKey(), eventsByDay),
+    [eventsByDay, selectedDay],
+  );
+
+  const groupedEvents = useMemo(
+    () => groupEventsByHour(visibleEvents),
+    [visibleEvents],
   );
 
   const metrics = useMemo(() => {
@@ -307,9 +249,9 @@ function HistoryTimelineModule() {
       },
       {
         id: 'events',
-        label: 'Eventos da categoria',
+        label: 'Eventos filtrados',
         value: String(filteredEvents.length).padStart(2, '0'),
-        meta: 'historico visivel',
+        meta: 'na timeline',
         badgeText: 'eventos',
         badgeClass: 'ui-badge--success',
       },
@@ -317,59 +259,80 @@ function HistoryTimelineModule() {
         id: 'actors',
         label: 'Operadores',
         value: String(actors.size).padStart(2, '0'),
-        meta: 'atores envolvidos',
+        meta: 'na leitura',
         badgeText: 'atores',
         badgeClass: 'ui-badge--special',
       },
     ];
   }, [availableDays.length, filteredEvents]);
 
-  function handleTabChange(tabId) {
-    const nextTab = HISTORY_TABS.find((tab) => tab.id === tabId) ?? HISTORY_TABS[0];
-    const nextEvents = nextTab.modulePaths.length === 0
-      ? allEvents
-      : allEvents.filter((event) => nextTab.modulePaths.includes(event.modulePath));
-    const nextDays = Array.from(new Set(nextEvents.map((event) => toDayKey(event.timestamp)).filter(Boolean))).sort((left, right) => right.localeCompare(left));
-    const nextDay = nextDays[0] ?? '';
-
+  const updateParams = useCallback((nextFilterId, nextDay) => {
     setSearchParams((currentParams) => {
       const nextParams = new URLSearchParams(currentParams);
-      nextParams.set('screen', tabId);
+      nextParams.set('modulo', nextFilterId);
+      nextParams.set('data', nextDay);
+      return nextParams;
+    });
+  }, [setSearchParams]);
 
-      if (nextDay) {
-        nextParams.set('day', nextDay);
-        nextParams.set('month', nextDay.slice(0, 7));
-      } else {
-        nextParams.delete('day');
-        nextParams.delete('month');
+  const handleDayChange = useCallback((dayKey) => {
+    updateParams(activeFilter.id, dayKey);
+  }, [activeFilter.id, updateParams]);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+        return;
       }
 
-      return nextParams;
-    });
+      const currentIndex = availableDays.indexOf(selectedDay);
+
+      if (currentIndex === -1) {
+        return;
+      }
+
+      const nextIndex = event.key === 'ArrowLeft'
+        ? Math.min(currentIndex + 1, availableDays.length - 1)
+        : Math.max(currentIndex - 1, 0);
+
+      if (nextIndex === currentIndex) {
+        return;
+      }
+
+      event.preventDefault();
+      handleDayChange(availableDays[nextIndex]);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [availableDays, handleDayChange, selectedDay]);
+
+  function handleFilterChange(filterId) {
+    const nextFilter = ALL_HISTORY_FILTERS.find((filter) => filter.id === filterId) ?? PRIMARY_HISTORY_FILTERS[0];
+    const nextEvents = nextFilter.modulePaths.length === 0
+      ? allEvents
+      : allEvents.filter((event) => nextFilter.modulePaths.includes(event.modulePath));
+    const nextDays = Array.from(new Set(nextEvents.map((event) => toDayKey(event.timestamp)).filter(Boolean))).sort((left, right) => right.localeCompare(left));
+    const nextDay = nextDays.includes(selectedDay) ? selectedDay : (nextDays.includes(getTodayKey()) ? getTodayKey() : nextDays[0] ?? '');
+
+    updateParams(filterId, nextDay);
+  }
+  function handleHourToggle(hourKey) {
+    setCollapsedHours((current) => ({
+      ...current,
+      [hourKey]: !current[hourKey],
+    }));
   }
 
-  function handleDayChange(dayKey) {
-    setSearchParams((currentParams) => {
-      const nextParams = new URLSearchParams(currentParams);
-      nextParams.set('screen', activeTab.id);
-      nextParams.set('day', dayKey);
-      nextParams.set('month', dayKey.slice(0, 7));
-      return nextParams;
-    });
-  }
+  const visibleFilterChips = useMemo(() => {
+    const baseFilters = [...PRIMARY_HISTORY_FILTERS];
 
-  function handleMonthChange(monthKey) {
-    const nextDay = availableDays.find((dayKey) => dayKey.startsWith(monthKey))
-      ?? `${monthKey}-01`;
+    if (!PRIMARY_HISTORY_FILTERS.some((filter) => filter.id === activeFilter.id) && activeFilter.id !== 'all') {
+      baseFilters.push(activeFilter);
+    }
 
-    setSearchParams((currentParams) => {
-      const nextParams = new URLSearchParams(currentParams);
-      nextParams.set('screen', activeTab.id);
-      nextParams.set('month', monthKey);
-      nextParams.set('day', nextDay);
-      return nextParams;
-    });
-  }
+    return baseFilters;
+  }, [activeFilter]);
 
   return (
     <section className="history-module">
@@ -386,32 +349,53 @@ function HistoryTimelineModule() {
         ))}
       </div>
 
-      <PageTabs
-        tabs={HISTORY_TABS}
-        activeTab={activeTab.id}
-        onTabChange={handleTabChange}
-      />
+      <div className="history-module__chips" role="tablist" aria-label="Filtro rapido do historico">
+        {visibleFilterChips.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className={`history-module__chip${activeFilter.id === filter.id ? ' is-active' : ''}`}
+            onClick={() => handleFilterChange(filter.id)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
 
       <div className="history-module__layout">
         <SurfaceCard title="Calendario operacional">
-          {availableMonths.length > 0 ? (
+          {calendarDays.length > 0 ? (
             <div className="history-module__calendar">
-              <div className="ui-field">
-                <label className="ui-label" htmlFor="history-month">
-                  Mes
-                </label>
-                <Select
-                  id="history-month"
-                  className="ui-select"
-                  value={selectedMonth}
-                  onChange={(event) => handleMonthChange(event.target.value)}
+              <div className="history-module__calendar-nav">
+                <button
+                  type="button"
+                  className="history-module__calendar-arrow"
+                  onClick={() => {
+                    const currentIndex = availableDays.indexOf(selectedDay);
+                    const nextDay = currentIndex < availableDays.length - 1 ? availableDays[currentIndex + 1] : selectedDay;
+                    if (nextDay && nextDay !== selectedDay) {
+                      handleDayChange(nextDay);
+                    }
+                  }}
+                  aria-label="Dia anterior"
                 >
-                  {availableMonths.map((monthKey) => (
-                    <option key={monthKey} value={monthKey}>
-                      {formatMonthLabel(monthKey)}
-                    </option>
-                  ))}
-                </Select>
+                  ←
+                </button>
+                <strong>{selectedDay ? formatDayLabel(selectedDay) : 'Sem data'}</strong>
+                <button
+                  type="button"
+                  className="history-module__calendar-arrow"
+                  onClick={() => {
+                    const currentIndex = availableDays.indexOf(selectedDay);
+                    const nextDay = currentIndex > 0 ? availableDays[currentIndex - 1] : selectedDay;
+                    if (nextDay && nextDay !== selectedDay) {
+                      handleDayChange(nextDay);
+                    }
+                  }}
+                  aria-label="Proximo dia"
+                >
+                  →
+                </button>
               </div>
 
               <div className="history-module__weekday-row">
@@ -428,10 +412,17 @@ function HistoryTimelineModule() {
                     <button
                       key={day.id}
                       type="button"
-                      className={`history-module__calendar-day${day.dayKey === selectedDay ? ' history-module__calendar-day--selected' : ''}${day.hasEntry ? ' history-module__calendar-day--active' : ''}`}
+                      className={`history-module__calendar-day${day.dayKey === selectedDay ? ' history-module__calendar-day--selected' : ''}`}
                       onClick={() => handleDayChange(day.dayKey)}
                     >
-                      {day.label}
+                      <span>{day.label}</span>
+                      <span className="history-module__calendar-dots" aria-hidden="true">
+                        {day.hasEntry
+                          ? day.tones.map((tone) => (
+                            <span key={`${day.id}-${tone}`} className={`history-module__calendar-dot history-module__calendar-dot--${tone}`} />
+                          ))
+                          : null}
+                      </span>
                     </button>
                   )
                 ))}
@@ -444,38 +435,42 @@ function HistoryTimelineModule() {
 
         <SurfaceCard title={selectedDay ? `Atividades de ${formatDayLabel(selectedDay)}` : 'Atividades'}>
           {visibleEvents.length === 0 ? (
-            <EmptyState message="Nenhuma atividade nesta categoria" />
+            <EmptyState message="Nenhuma atividade neste dia" />
           ) : (
-            <div className="history-module__timeline">
-              {visibleEvents.map((event) => {
-                const eventChips = buildEventChips(event);
+            <div key={`${activeFilter.id}-${selectedDay}`} className="history-module__timeline history-module__timeline--animated">
+              {groupedEvents.map((group) => {
+                const isCollapsible = group.events.length > 5;
+                const isCollapsed = Boolean(collapsedHours[group.hour]);
+                const visibleGroupEvents = isCollapsible && isCollapsed ? group.events.slice(0, 5) : group.events;
 
                 return (
-                  <article key={event.id} className="history-module__entry">
-                    <div className="history-module__entry-time">{formatTime(event.timestamp)}</div>
-                    <div className="history-module__entry-content">
-                      <div className="history-module__entry-header">
-                        <strong>{event.action}</strong>
-                        <span className="ui-badge ui-badge--info">{event.module}</span>
-                      </div>
-                      <p className="history-module__entry-meta">
-                        {event.actor}
-                        {event.target ? ` · ${event.target}` : ''}
-                      </p>
-                      {eventChips.length > 0 ? (
-                        <div className="history-module__chips">
-                          {eventChips.map((chip) => (
-                            <span key={`${event.id}-${chip.label}`} className={`ui-badge ui-badge--${chip.tone}`}>
-                              {chip.label}
-                            </span>
-                          ))}
-                        </div>
+                  <section key={group.hour} className="history-module__hour-group">
+                    <header className="history-module__hour-header">
+                      <strong>{group.hour}</strong>
+                      {isCollapsible ? (
+                        <button
+                          type="button"
+                          className="history-module__hour-toggle"
+                          onClick={() => handleHourToggle(group.hour)}
+                        >
+                          {isCollapsed ? `Mostrar ${group.events.length - 5} mais` : 'Ocultar'}
+                        </button>
                       ) : null}
-                      {event.details ? (
-                        <p className="history-module__entry-details">{event.details}</p>
-                      ) : null}
+                    </header>
+
+                    <div className="history-module__hour-events">
+                      {visibleGroupEvents.map((event) => (
+                        <article key={event.id} className="history-module__entry">
+                          <span className="history-module__entry-time">{formatTime(event.timestamp)}</span>
+                          <div className="history-module__entry-content">
+                            <span className={`ui-badge ui-badge--${buildModuleTone(event.modulePath)}`}>{event.module}</span>
+                            <p className="history-module__entry-description">{buildEventText(event)}</p>
+                            {event.details ? <p className="history-module__entry-details">{event.details}</p> : null}
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
+                  </section>
                 );
               })}
             </div>
@@ -487,5 +482,3 @@ function HistoryTimelineModule() {
 }
 
 export default HistoryTimelineModule;
-
-

@@ -352,6 +352,8 @@ export function buildDashboardData({
         meta: delayedOrders.length > 0 ? 'acao agora' : 'estavel',
         badgeText: delayedOrders.length > 0 ? 'acao' : 'estavel',
         badgeClass: delayedOrders.length > 0 ? 'ui-badge--danger' : 'ui-badge--success',
+        variant: delayedOrders.length > 0 ? 'danger' : 'neutral',
+        pulse: delayedOrders.length > 0,
         tone: delayedOrders.length > 0 ? 'red' : 'green',
       },
       {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
 import StatusBadge from '../../../components/ui/StatusBadge'
@@ -108,6 +109,25 @@ function getExitDuration() {
   return getPrefersReducedMotion() ? 0 : ROW_EXIT_DURATION_MS
 }
 
+function getContextHistoryLink(routePath) {
+  const links = {
+    'delivery-reading': {
+      to: '/history?modulo=delivery-reading&data=hoje',
+      label: 'Ver historico de leituras',
+    },
+    machines: {
+      to: '/history?modulo=machines&data=hoje',
+      label: 'Ver historico de hardware',
+    },
+    advances: {
+      to: '/history?modulo=advances&data=hoje',
+      label: 'Ver historico de vales',
+    },
+  }
+
+  return links[routePath] ?? null
+}
+
 function normalizeScheduleWindow(windowLabel = '') {
   return String(windowLabel).replace(/\s+/g, '').trim().toLowerCase()
 }
@@ -162,6 +182,8 @@ function NativeModuleToolbar({
     return null
   }
 
+  const historyLink = getContextHistoryLink(routePath)
+
   return (
     <div className="native-module__toolbar">
       <div className="native-module__toolbar-primary">
@@ -210,6 +232,11 @@ function NativeModuleToolbar({
         </div>
 
         <div className="native-module__toolbar-actions">
+          {historyLink ? (
+            <Link to={historyLink.to} className="native-module__history-link">
+              {historyLink.label}
+            </Link>
+          ) : null}
           {routePath === 'schedule' ? (
             <div className="native-module__toolbar-menu" ref={menuRef}>
               <button type="button" className="ui-button ui-button--ghost" onClick={onExportSchedule}>
