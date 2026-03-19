@@ -86,17 +86,17 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__section + .receipt__section {
-        margin-top: 4mm;
+        margin-top: 3mm;
       }
 
       .receipt__header {
         display: grid;
-        gap: 1.6mm;
+        gap: 1.2mm;
         text-align: center;
       }
 
       .receipt__brand {
-        font-size: 3.8mm;
+        font-size: 3.6mm;
         font-weight: 700;
         letter-spacing: 0.02em;
         line-height: 1.2;
@@ -115,34 +115,35 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__title {
-        margin: 1.5mm 0 0;
-        font-size: 4.6mm;
+        margin: 1mm 0 0;
+        font-size: 4.2mm;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.12em;
       }
 
       .receipt__divider {
         width: 100%;
-        border-top: 0.28mm solid #111;
+        border-top: 0.24mm solid #111;
       }
 
       .receipt__summary {
-        padding: 2.4mm 0;
+        padding: 2.2mm 0;
         border-top: 0.28mm solid #111;
         border-bottom: 0.28mm solid #111;
         text-align: center;
       }
 
       .receipt__type {
-        font-size: 2.65mm;
+        font-size: 2.45mm;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.12em;
+        color: #2b2b2b;
       }
 
       .receipt__value {
-        margin-top: 1.4mm;
-        font-size: 5.3mm;
+        margin-top: 1.1mm;
+        font-size: 5mm;
         font-weight: 700;
         line-height: 1;
       }
@@ -157,7 +158,7 @@ function buildPrintHtml(entry) {
         display: grid;
         grid-template-columns: 1fr;
         gap: 0.6mm;
-        padding: 1.7mm 0;
+        padding: 1.3mm 0;
         border-bottom: 0.2mm solid #d4d4d4;
       }
 
@@ -181,29 +182,30 @@ function buildPrintHtml(entry) {
       }
 
       .receipt__body-copy {
-        margin: 3.2mm 0 0;
+        margin: 2.4mm 0 0;
         text-align: left;
         word-break: break-word;
         overflow-wrap: anywhere;
       }
 
       .receipt__note {
-        margin-top: 3mm;
-        padding: 2.6mm 2.8mm;
-        border: 0.24mm dashed #111;
+        margin-top: 2.4mm;
+        padding-top: 1.8mm;
+        border-top: 0.2mm dashed #8c8c8c;
       }
 
       .receipt__note-title {
-        margin-bottom: 1.5mm;
+        margin-bottom: 1mm;
         font-size: 2.45mm;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
+        color: #2b2b2b;
       }
 
       .receipt__sign {
-        margin-top: 10mm;
-        padding-top: 3mm;
+        margin-top: 8mm;
+        padding-top: 2.6mm;
         border-top: 0.28mm solid #111;
         text-align: center;
       }
@@ -237,6 +239,7 @@ function buildPrintHtml(entry) {
         <div class="receipt__brand">${escapeHtml(CASH_RECEIPT_META.brand)}</div>
         <div class="receipt__subline">${escapeHtml(CASH_RECEIPT_META.phone)}</div>
         <div class="receipt__legal">${escapeHtml(CASH_RECEIPT_META.document)}</div>
+        <div class="receipt__divider"></div>
         <h1 class="receipt__title">RECIBO</h1>
       </section>
 
