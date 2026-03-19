@@ -16,6 +16,7 @@ import {
 } from '../services/firebase';
 import { subscribeToInventoryItems } from '../services/inventory';
 import {
+  ADVANCES_REMINDER_STORAGE_KEY,
   dismissNotification,
   loadNotifications,
   markAllNotificationsAsRead,
@@ -25,14 +26,19 @@ import {
   notifyImportantError,
   notifyLowStock,
   notifyNewOrder,
+  notifyOpenAdvancesReminder,
   notifySaleCompleted,
 } from '../services/notifications';
 import { subscribeToSales } from '../services/sales';
 import { FIRESTORE_COLLECTIONS } from '../services/firestoreCollections';
+import { manualModuleConfigs } from '../services/manualModuleConfig';
+import { subscribeToManualModuleRecords } from '../services/manualModuleService';
 import { playNotification } from '../services/soundManager';
 
 const NotificationsContext = createContext(null);
 const delayedOrderThresholdMinutes = 35;
+const advancesReminderHour = 23;
+const advancesReminderMinute = 30;
 
 function asDate(value) {
   if (!value) {
@@ -56,13 +62,40 @@ function isOrderDelayed(order) {
   return (Date.now() - createdAt.getTime()) / 60000 >= delayedOrderThresholdMinutes;
 }
 
+function getTodayKey(value = new Date()) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getNextAdvancesReminderTime(now = new Date()) {
+  const nextRun = new Date(now);
+  nextRun.setHours(advancesReminderHour, advancesReminderMinute, 0, 0);
+
+  if (nextRun <= now) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+
+  return nextRun;
+}
+
+function shouldRunAdvancesReminder(now = new Date()) {
+  const gateTime = new Date(now);
+  gateTime.setHours(advancesReminderHour, advancesReminderMinute, 0, 0);
+  return now >= gateTime;
+}
+
 export function NotificationsProvider({ children }) {
   const { currentStoreId, tenantId } = useStore();
   const [notifications, setNotifications] = useState(() => loadNotifications());
+  const [advanceRecords, setAdvanceRecords] = useState([]);
   const ordersInitializedRef = useRef(false);
   const salesInitializedRef = useRef(false);
   const inventoryInitializedRef = useRef(false);
   const knownSaleIdsRef = useRef(new Set());
+  const advancesReminderTimeoutRef = useRef(null);
 
   useEffect(() => {
     function syncNotifications() {
@@ -81,6 +114,87 @@ export function NotificationsProvider({ children }) {
     window.addEventListener(NOTIFICATIONS_EVENT, handleNotificationsUpdated);
     return () => window.removeEventListener(NOTIFICATIONS_EVENT, handleNotificationsUpdated);
   }, []);
+
+  useEffect(() => {
+    if (!currentStoreId) {
+      setAdvanceRecords([]);
+      return undefined;
+    }
+
+    const advancesConfig = manualModuleConfigs.advances;
+
+    return subscribeToManualModuleRecords({
+      storeId: currentStoreId,
+      modulePath: 'advances',
+      storageKey: advancesConfig.storageKey,
+      initialRecords: advancesConfig.initialRecords,
+      dailyResetHour: advancesConfig.dailyResetHour ?? null,
+      onData: setAdvanceRecords,
+      onError: (error) => notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
+    });
+  }, [currentStoreId]);
+
+  useEffect(() => {
+    function markReminderAsSent(todayKey) {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      window.localStorage.setItem(ADVANCES_REMINDER_STORAGE_KEY, todayKey);
+    }
+
+    function getLastReminderDate() {
+      if (typeof window === 'undefined') {
+        return '';
+      }
+
+      return window.localStorage.getItem(ADVANCES_REMINDER_STORAGE_KEY) ?? '';
+    }
+
+    function maybeNotifyOpenAdvances() {
+      const now = new Date();
+      const todayKey = getTodayKey(now);
+      const openAdvancesCount = advanceRecords.filter((record) => record.status !== 'Baixado').length;
+
+      if (!shouldRunAdvancesReminder(now) || openAdvancesCount === 0) {
+        return;
+      }
+
+      if (getLastReminderDate() === todayKey) {
+        return;
+      }
+
+      const notification = notifyOpenAdvancesReminder({ openCount: openAdvancesCount });
+
+      if (notification) {
+        markReminderAsSent(todayKey);
+      }
+    }
+
+    function scheduleNextReminderCheck() {
+      if (advancesReminderTimeoutRef.current) {
+        clearTimeout(advancesReminderTimeoutRef.current);
+      }
+
+      const nextRun = getNextAdvancesReminderTime();
+      const delay = Math.max(1000, nextRun.getTime() - Date.now());
+
+      advancesReminderTimeoutRef.current = window.setTimeout(() => {
+        maybeNotifyOpenAdvances();
+        scheduleNextReminderCheck();
+      }, delay);
+    }
+
+    maybeNotifyOpenAdvances();
+    scheduleNextReminderCheck();
+
+    return () => {
+      if (advancesReminderTimeoutRef.current) {
+        clearTimeout(advancesReminderTimeoutRef.current);
+        advancesReminderTimeoutRef.current = null;
+      }
+    };
+  }, [advanceRecords]);
 
   useEffect(() => {
     function handleWindowError(event) {

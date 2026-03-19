@@ -2,6 +2,7 @@ import { loadLocalRecords, saveLocalRecords } from './localAccess';
 
 export const NOTIFICATIONS_STORAGE_KEY = 'nexus-operational-notifications';
 export const NOTIFICATIONS_EVENT = 'nexus:notifications-updated';
+export const ADVANCES_REMINDER_STORAGE_KEY = 'nexus-advances-reminder-last-date';
 
 function createNotificationId() {
   return `notification-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -150,6 +151,23 @@ export function notifyImportantError(message) {
     message: normalizedMessage,
     metadata: {
       route: null,
+    },
+  }));
+}
+
+export function notifyOpenAdvancesReminder({ openCount }) {
+  const count = Number(openCount ?? 0);
+  const label = count === 1 ? '1 vale em aberto' : `${count} vales em aberto`;
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  return pushNotification(createNotification({
+    eventKey: `advances-reminder-${todayKey}`,
+    type: 'warning',
+    title: 'Descontar vales do entregador',
+    message: `${label}. Confira e desconte do entregador antes do fechamento.`,
+    metadata: {
+      route: '/advances',
+      openCount: count,
     },
   }));
 }
