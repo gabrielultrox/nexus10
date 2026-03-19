@@ -206,6 +206,7 @@ export const manualModuleConfigs = {
   },
   change: {
     storageKey: 'nexus-module-change',
+    dailyResetHour: 3,
     formTitle: 'Registrar troco',
     formDescription: 'Controle solicitacoes, reposicoes e retornos de troco diretamente no turno.',
     submitLabel: 'Registrar troco',
@@ -264,6 +265,7 @@ export const manualModuleConfigs = {
   },
   advances: {
     storageKey: 'nexus-module-advances',
+    dailyResetHour: 3,
     formTitle: 'Registrar vale',
     formDescription: 'Registre o vale do entregador com valor, data e motivo de forma direta.',
     submitLabel: 'Registrar vale',

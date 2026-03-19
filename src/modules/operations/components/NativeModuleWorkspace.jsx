@@ -891,6 +891,7 @@ function NativeModuleWorkspace({ route }) {
         dailyResetHour,
         record,
       });
+      onLocalApply();
       refreshPendingSyncCount()
       refreshSyncHistory()
       setSyncActivityLabel('Sincronizado em tempo real')
@@ -933,6 +934,7 @@ function NativeModuleWorkspace({ route }) {
         modulePath,
         recordId,
       });
+      onLocalApply();
       refreshPendingSyncCount()
       refreshSyncHistory()
       setSyncActivityLabel('Exclusao sincronizada')
@@ -979,6 +981,7 @@ function NativeModuleWorkspace({ route }) {
         initialRecords,
         dailyResetHour,
       });
+      onLocalApply();
       refreshPendingSyncCount()
       refreshSyncHistory()
       setSyncActivityLabel('Limpeza sincronizada')
@@ -1457,6 +1460,9 @@ function NativeModuleWorkspace({ route }) {
     }
 
     saveRecordWithFallback({
+      modulePath: route.path,
+      storageKey: manager.storageKey,
+      dailyResetHour: manager.dailyResetHour ?? null,
       record: nextRecord,
       onLocalApply: () => {
         setRecords((current) => current.map((record) => (
