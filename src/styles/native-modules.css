@@ -2753,7 +2753,7 @@
   justify-content: flex-end;
   gap: var(--space-2);
   opacity: 1;
-  min-width: 152px;
+  min-width: 184px;
   transition: opacity 150ms ease;
 }
 
@@ -2762,9 +2762,11 @@
 }
 
 .native-module__table-action {
-  min-height: 28px;
-  padding: 0 10px;
-  font-size: 11px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2772,21 +2774,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 3px 10px;
+  min-height: 32px;
+  padding: 0 12px;
   white-space: nowrap;
-  border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-elevated));
   color: var(--success);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 120ms ease, transform 120ms ease;
 }
 
 .native-module__return-action:hover {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
+  background: color-mix(in srgb, var(--success) 18%, var(--bg-elevated));
 }
 
 .native-module__return-action:active {
@@ -2810,6 +2812,21 @@
     color 120ms ease,
     border-color 120ms ease,
     background 120ms ease;
+}
+
+.native-module-page--advances .native-module__actions-cell,
+.native-module-page--discounts .native-module__actions-cell,
+.native-module-page--change .native-module__actions-cell {
+  gap: 10px;
+}
+
+.native-module-page--advances .native-module__table-action,
+.native-module-page--discounts .native-module__table-action,
+.native-module-page--change .native-module__table-action,
+.native-module-page--advances .native-module__return-action,
+.native-module-page--discounts .native-module__return-action,
+.native-module-page--change .native-module__return-action {
+  min-width: 120px;
 }
 
 .native-module__delete-action:hover {
