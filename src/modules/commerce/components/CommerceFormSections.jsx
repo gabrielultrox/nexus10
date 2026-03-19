@@ -176,6 +176,168 @@ function SearchSelectField({
   )
 }
 
+function ProductPickerDialog({
+  open,
+  products,
+  selectedProductId,
+  onClose,
+  onSelect,
+}) {
+  const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const searchRef = useRef(null)
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = normalizeSearchToken(query)
+
+    const base = normalizedQuery
+      ? products.filter((option) => {
+          const haystack = [
+            option.name,
+            option.category,
+            option.sku,
+            option.barcode,
+          ]
+            .join(' ')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+
+          return haystack.includes(normalizedQuery)
+        })
+      : products
+
+    return base.slice(0, 120)
+  }, [products, query])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const selectedIndex = Math.max(
+      filteredProducts.findIndex((product) => product.id === selectedProductId),
+      0,
+    )
+
+    setActiveIndex(selectedIndex)
+
+    const nextFrame = window.requestAnimationFrame(() => {
+      searchRef.current?.focus()
+      searchRef.current?.select?.()
+    })
+
+    return () => window.cancelAnimationFrame(nextFrame)
+  }, [filteredProducts, open, selectedProductId])
+
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      return undefined
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActiveIndex((current) => Math.min(current + 1, Math.max(filteredProducts.length - 1, 0)))
+        return
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActiveIndex((current) => Math.max(current - 1, 0))
+        return
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        const target = filteredProducts[activeIndex]
+        if (target) {
+          onSelect(target)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeIndex, filteredProducts, onClose, onSelect, open])
+
+  if (!open) {
+    return null
+  }
+
+  return (
+    <div className="commerce-picker" role="dialog" aria-modal="true" aria-label="Pesquisar produtos">
+      <button type="button" className="commerce-picker__backdrop" onClick={onClose} aria-label="Fechar pesquisa de produtos" />
+
+      <div className="commerce-picker__panel">
+        <div className="commerce-picker__header">
+          <div>
+            <span className="commerce-picker__eyebrow">Pesquisa</span>
+            <strong className="commerce-picker__title">Itens da operacao</strong>
+          </div>
+          <button type="button" className="ui-button ui-button--ghost commerce-picker__close" onClick={onClose}>
+            Esc
+          </button>
+        </div>
+
+        <div className="commerce-picker__search">
+          <input
+            ref={searchRef}
+            className="ui-input"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setActiveIndex(0)
+            }}
+            placeholder="Buscar por codigo, nome, categoria ou codigo de barras"
+          />
+          <span className="commerce-picker__hint">F9 pesquisa</span>
+        </div>
+
+        <div className="commerce-picker__table-wrap">
+          <div className="commerce-picker__table commerce-picker__table--header">
+            <span>Produto</span>
+            <span>Descricao</span>
+            <span>Unid.</span>
+            <span>A vista</span>
+          </div>
+
+          {filteredProducts.length === 0 ? (
+            <div className="commerce-picker__empty">Nenhum produto encontrado.</div>
+          ) : (
+            filteredProducts.map((product, index) => (
+              <button
+                key={product.id}
+                type="button"
+                className={`commerce-picker__table commerce-picker__row${index === activeIndex ? ' commerce-picker__row--active' : ''}`}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => onSelect(product)}
+              >
+                <span>{product.sku || product.barcode || product.id.slice(0, 6)}</span>
+                <span className="commerce-picker__description">{product.name}</span>
+                <span>{product.unit || 'UN'}</span>
+                <span>{formatCurrencyBRL(Number(product.price ?? 0))}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CommerceIdentitySection({
   eyebrow,
   title,
@@ -250,6 +412,7 @@ export function CommerceItemsStep({
   onAdvance,
   hasValidItems,
   subtotal,
+  onCancel,
 }) {
   const productRefs = useRef([])
   const quantityRef = useRef(null)
@@ -259,6 +422,7 @@ export function CommerceItemsStep({
   const pendingFocusIndex = useRef(null)
   const queuedEditItemRef = useRef(null)
   const didInitialFocus = useRef(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const currentItemIndex = Math.max(items.length - 1, 0)
   const currentItem = items[currentItemIndex] ?? {}
   const validItems = draftItems.map((item, index) => ({ ...item, itemIndex: index })).filter((item) => item.productId)
@@ -296,6 +460,12 @@ export function CommerceItemsStep({
 
   useEffect(() => {
     function handleKeydown(event) {
+      if (event.key === 'F9') {
+        event.preventDefault()
+        setPickerOpen(true)
+        return
+      }
+
       if (event.key === 'F12' && hasValidItems) {
         event.preventDefault()
         onAdvance()
@@ -308,6 +478,14 @@ export function CommerceItemsStep({
 
   function focusCurrentProduct(index = currentItemIndex) {
     productRefs.current[index]?.focus()
+  }
+
+  function handleProductSelect(product) {
+    onItemChange(currentItemIndex, 'productId', product.id)
+    setPickerOpen(false)
+    window.requestAnimationFrame(() => {
+      quantityRef.current?.focus()
+    })
   }
 
   function focusNextRequiredField(item = currentItem) {
@@ -411,15 +589,30 @@ export function CommerceItemsStep({
         </div>
 
         <div className="commerce-step__input-row">
-          <SearchSelectField
-            inputRef={(element) => { productRefs.current[currentItemIndex] = element }}
-            options={products}
-            value={currentItem.productId ?? ''}
-            onChange={(productId) => onItemChange(currentItemIndex, 'productId', productId)}
-            entityLabel="Produto"
-            placeholder="Buscar produto"
-            onKeyDown={handleEntryKeyDown('product')}
-          />
+          <div className="commerce-product-search commerce-product-search--trigger">
+            <button
+              ref={(element) => { productRefs.current[currentItemIndex] = element }}
+              type="button"
+              className="ui-input commerce-product-search__trigger"
+              onClick={() => setPickerOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setPickerOpen(true)
+                  return
+                }
+
+                handleEntryKeyDown('product')(event)
+              }}
+            >
+              <span className={currentItem.productId ? '' : 'commerce-product-search__placeholder'}>
+                {currentItem.productId
+                  ? buildOptionLabel(products.find((product) => product.id === currentItem.productId) ?? {}, 'Produto')
+                  : 'F9 - Pesquisar produto'}
+              </span>
+              <span className="commerce-product-search__shortcut">F9</span>
+            </button>
+          </div>
           <input ref={quantityRef} className="ui-input" type="number" min="1" step="1" placeholder="Qtd" value={currentItem.quantity ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'quantity', event.target.value)} onKeyDown={handleEntryKeyDown('quantity')} />
           <input ref={unitPriceRef} className="ui-input" type="number" min="0" step="0.01" placeholder="Valor" value={currentItem.unitPrice ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'unitPrice', event.target.value)} onKeyDown={handleEntryKeyDown('price')} />
           <input ref={discountRef} className="ui-input" type="number" min="0" step="0.01" placeholder="Desc. %" value={currentItem.discountPercent ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'discountPercent', event.target.value)} onKeyDown={handleEntryKeyDown('discount')} tabIndex={-1} />
@@ -471,10 +664,30 @@ export function CommerceItemsStep({
 
       <div className="commerce-step__footer">
         <div className="commerce-step__subtotal">Subtotal: {formatCurrencyBRL(subtotal)}</div>
-        <button type="button" className="ui-button ui-button--primary" disabled={!hasValidItems} onClick={onAdvance}>
-          Avancar {'->'}
-        </button>
+        <div className="commerce-step__footer-actions">
+          {onCancel ? (
+            <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>
+              Voltar
+            </button>
+          ) : null}
+          <button type="button" className="ui-button ui-button--primary" disabled={!hasValidItems} onClick={onAdvance}>
+            Avancar {'->'}
+          </button>
+        </div>
       </div>
+
+      <ProductPickerDialog
+        open={pickerOpen}
+        products={products}
+        selectedProductId={currentItem.productId ?? ''}
+        onClose={() => {
+          setPickerOpen(false)
+          window.requestAnimationFrame(() => {
+            focusCurrentProduct()
+          })
+        }}
+        onSelect={handleProductSelect}
+      />
     </section>
   )
 }

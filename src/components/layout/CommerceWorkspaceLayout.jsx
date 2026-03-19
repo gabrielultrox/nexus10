@@ -34,6 +34,13 @@ function CommerceWorkspaceLayout() {
             </div>
 
             <div className="commerce-shell__header-actions">
+              <button
+                type="button"
+                className="commerce-shell__back-button"
+                onClick={() => navigate('/dashboard')}
+              >
+                Voltar ao app
+              </button>
               {commerceTabs.map((tab) => {
                 const isActive = tab.id === activeTab;
 

@@ -94,6 +94,7 @@ function SalesFormPanel({
             subtotal={calculatedTotals.subtotal}
             hasValidItems={hasValidItems}
             onAdvance={() => setStep(2)}
+            onCancel={onCancel}
           />
         ) : (
           <form ref={formRef} className="commerce-wizard__form" onSubmit={onSubmit}>
