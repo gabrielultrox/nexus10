@@ -52,9 +52,17 @@ function buildPrintHtml(entry) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(entry.receiptCode || 'Recibo de caixa')}</title>
     <style>
+      :root {
+        --paper-width: 80mm;
+        --safe-width: 68mm;
+        --safe-side: 6mm;
+        --safe-top: 2mm;
+        --safe-bottom: 4mm;
+      }
+
       @page {
         size: 80mm 297mm;
-        margin: 2mm;
+        margin: 0;
       }
 
       * {
@@ -71,7 +79,8 @@ function buildPrintHtml(entry) {
       }
 
       body {
-        width: auto;
+        width: var(--paper-width);
+        padding: 0;
         font-family: "Arial", "Helvetica Neue", sans-serif;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -79,9 +88,9 @@ function buildPrintHtml(entry) {
 
       .receipt {
         display: block;
-        width: 100%;
-        max-width: 76mm;
-        padding: 1.5mm 0 4mm;
+        width: var(--safe-width);
+        max-width: var(--safe-width);
+        padding: var(--safe-top) 0 var(--safe-bottom);
         margin: 0 auto;
       }
 
@@ -224,7 +233,8 @@ function buildPrintHtml(entry) {
         }
 
         .receipt {
-          max-width: 80mm;
+          width: var(--safe-width);
+          max-width: var(--safe-width);
           margin: 0 auto;
           padding: 4mm;
           background: #fff;
