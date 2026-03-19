@@ -15,8 +15,8 @@ const SUBSYSTEMS = [
 ];
 
 const PARTICLE_COUNT = 18;
-const BOOT_DURATION_MS = 3200;
-const FADE_DURATION_MS = 520;
+const BOOT_DURATION_MS = 1800;
+const FADE_DURATION_MS = 280;
 
 function createParticles() {
   return Array.from({ length: PARTICLE_COUNT }, (_, index) => ({

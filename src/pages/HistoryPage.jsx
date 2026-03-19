@@ -7,7 +7,7 @@ function HistoryPage() {
       <PageIntro
         eyebrow="Historico"
         title="Historico operacional"
-        description="Calendario por dia e leitura separada por categoria da operacao."
+        description="Calendario, filtros e timeline por modulo."
       />
 
       <HistoryTimelineModule />

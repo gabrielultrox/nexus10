@@ -693,9 +693,9 @@ body::after {
 .page-intro {
   display: flex;
   align-items: baseline;
-  gap: var(--space-2-5);
+  gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-2-5) 0 var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
   border-bottom: 1px solid var(--color-border-subtle);
   margin-bottom: var(--space-1);
 }
@@ -705,22 +705,24 @@ body::after {
 }
 
 .page-intro__eyebrow {
-  margin-bottom: 0;
-  color: var(--color-accent-cyan);
-  font-family: var(--font-mono);
-  font-size: var(--space-2-5);
-  letter-spacing: 0.18em;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .page-intro__title {
   margin: 0;
-  font-size: 1.18rem;
-  font-family: var(--font-title);
+  font-size: 1.12rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
   line-height: 1.1;
   color: var(--color-text-primary);
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 .page-intro__description {
@@ -1291,7 +1293,7 @@ body::after {
 
 .page-intro__copy {
   display: grid;
-  gap: 2px;
+  gap: 3px;
 }
 
 .page-intro__title {
@@ -1307,6 +1309,7 @@ body::after {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.4;
+  max-width: 52ch;
 }
 
 .page-tabs {

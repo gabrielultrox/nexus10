@@ -127,7 +127,7 @@ function DashboardPage() {
       <PageIntro
         eyebrow="Overview"
         title="Dashboard Operacional"
-        description="Visao central da operacao com indicadores, comportamento do turno e leitura rapida do status diario."
+        description="Indicadores, alertas e leitura rapida do turno."
       />
 
       <section className="dashboard-shell">

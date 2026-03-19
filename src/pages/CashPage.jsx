@@ -5,8 +5,9 @@ function CashPage() {
   return (
     <div className="page-stack">
       <PageIntro
+        eyebrow="Financeiro"
         title="Caixa"
-        description="Abertura, sangria, suprimento e fechamento com historico e recibo do dia."
+        description="Abertura, movimentos e fechamento do dia."
       />
 
       <CashModule />
