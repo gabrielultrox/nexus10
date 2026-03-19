@@ -3,6 +3,57 @@
   gap: var(--space-3);
 }
 
+.caixa-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-bottom-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.caixa-status-bar__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.caixa-status-bar__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.caixa-status-bar__dot--open {
+  background: var(--success);
+}
+
+.caixa-status-bar__dot--closed {
+  background: var(--danger);
+}
+
+.caixa-status-bar__text,
+.caixa-status-bar__balance {
+  font-size: 12px;
+}
+
+.caixa-status-bar__text {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.caixa-status-bar__balance {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
 .cash-module__metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -21,19 +72,72 @@
   gap: var(--space-3);
 }
 
-.cash-module__form-grid {
-  display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  gap: var(--space-3);
-  align-items: start;
+.cash-module__form-row {
+  align-items: end;
 }
 
-.cash-module__form-field--wide {
+.cash-module__row-field {
   min-width: 0;
 }
 
-.cash-module__form-field--wide .ui-textarea {
-  min-height: 96px;
+.cash-module__row-field--courier,
+.cash-module__row-field--value {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.cash-module__row-field--note {
+  flex: 1;
+}
+
+.cash-module__confirm {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.cash-module__confirm-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.cash-module__confirm-copy strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.cash-module__confirm-copy span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cash-module__closing-summary {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.cash-module__closing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.cash-module__closing-row strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cash-module__closing-row--total {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
 }
 
 .cash-module__form-actions {
@@ -83,12 +187,19 @@
 
 @media (max-width: 900px) {
   .cash-module__metrics,
-  .cash-module__form-grid {
+  .cash-module__form-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
+  .caixa-status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--space-3);
+  }
+
   .cash-module__history-toolbar {
     flex-direction: column;
     align-items: flex-start;
@@ -97,5 +208,10 @@
   .cash-module__form-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .cash-module__row-field--courier,
+  .cash-module__row-field--value {
+    width: 100%;
   }
 }
