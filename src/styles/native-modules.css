@@ -2479,24 +2479,29 @@
 }
 
 .machine-operations__icon-button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-xs);
-  background: transparent;
-  color: var(--color-text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
 }
 
 .machine-operations__icon-button:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-border-default);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-elevated));
 }
 
 @media (max-width: 760px) {
@@ -2713,11 +2718,6 @@
   min-height: 44px;
 }
 
-.machine-operations__icon-button {
-  border: 0;
-  background: transparent;
-}
-
 @media (max-width: 900px) {
   .native-module__toolbar {
     flex-direction: column;
@@ -2794,16 +2794,16 @@
 }
 
 .native-module__delete-action {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
-  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
   transition:
@@ -2814,8 +2814,8 @@
 
 .native-module__delete-action:hover {
   color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 24%, var(--color-border-subtle));
-  background: color-mix(in srgb, var(--danger) 8%, var(--surface-elevated));
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-elevated));
 }
 
 .native-module__delete-action:disabled,
@@ -2829,14 +2829,14 @@
 }
 
 .native-module__delete-action svg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
 .machine-operations__icon-button svg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
