@@ -662,14 +662,103 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--danger);
+  color: var(--text-muted);
   cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.courier-card__icon-action:hover {
+  color: var(--danger);
 }
 
 .courier-card__icon-action svg {
   width: 16px;
   height: 16px;
   fill: currentColor;
+}
+
+.couriers-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.couriers-group {
+  display: grid;
+  gap: 10px;
+}
+
+.couriers-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.couriers-group__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.couriers-group__title {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.couriers-group__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.couriers-group__count--info {
+  background: rgba(107, 138, 255, 0.12);
+  color: var(--accent);
+}
+
+.couriers-group__count--success {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+}
+
+.couriers-group__count--neutral {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+}
+
+.couriers-group__toggle {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.courier-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.courier-card__activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(107, 138, 255, 0.12);
 }
 
 @media (max-width: 760px) {
@@ -681,5 +770,10 @@
   .courier-card__actions {
     width: auto;
     opacity: 1;
+  }
+
+  .couriers-group__header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

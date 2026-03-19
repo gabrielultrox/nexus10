@@ -11,7 +11,7 @@ import {
   subscribeToCouriers,
 } from '../../../services/courierService';
 import { appendAuditEvent } from '../../../services/localAudit';
-import { loadLocalRecords, saveLocalRecords } from '../../../services/localAccess';
+import { loadLocalRecords, loadResettableLocalRecords, saveLocalRecords } from '../../../services/localAccess';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
 import { saveManualModuleRecord, subscribeToManualModuleRecords } from '../../../services/manualModuleService';
 import {
@@ -59,8 +59,10 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
   const [filters, setFilters] = useState(initialFilters);
   const [manualCouriers, setManualCouriers] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
   const [machineRecords, setMachineRecords] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords));
+  const [scheduleRecords, setScheduleRecords] = useState(() => loadResettableLocalRecords('nexus-module-schedule', [], 3));
   const [form, setForm] = useState(initialCourierForm);
   const [errorMessage, setErrorMessage] = useState('');
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const canSyncCouriers = Boolean(firebaseReady && currentStoreId);
 
@@ -88,6 +90,17 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
     },
   }), [currentStoreId]);
 
+  useEffect(() => subscribeToManualModuleRecords({
+    storeId: currentStoreId,
+    modulePath: 'schedule',
+    storageKey: 'nexus-module-schedule',
+    initialRecords: [],
+    dailyResetHour: 3,
+    onData: (records) => {
+      setScheduleRecords(records);
+    },
+  }), [currentStoreId]);
+
   useEffect(() => {
     saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, manualCouriers);
   }, [manualCouriers]);
@@ -105,10 +118,85 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
     () => buildMachineOptions(machineRecords),
     [machineRecords],
   );
+  const activeScheduleCouriers = useMemo(
+    () => new Set(scheduleRecords.map((record) => record?.courier?.trim()).filter(Boolean)),
+    [scheduleRecords],
+  );
+  const activeDeliveryCouriers = useMemo(
+    () => new Set(
+      scheduleRecords
+        .filter((record) => String(record?.status ?? '').toLowerCase().includes('rota'))
+        .map((record) => record?.courier?.trim())
+        .filter(Boolean),
+    ),
+    [scheduleRecords],
+  );
   const editingCourier = useMemo(
     () => (editingCourierId ? findCourierById(couriers, editingCourierId) : null),
     [couriers, editingCourierId],
   );
+  const groupedCouriers = useMemo(() => {
+    const groups = {
+      active: [],
+      available: [],
+      off: [],
+    };
+
+    filteredCouriers.forEach((courier) => {
+      const courierName = courier.name?.trim();
+      const isOnDelivery = courier.status === 'on_route'
+        || (courierName && activeDeliveryCouriers.has(courierName));
+      const isScheduled = courierName && activeScheduleCouriers.has(courierName);
+
+      if (isOnDelivery) {
+        groups.active.push(courier);
+        return;
+      }
+
+      if (isScheduled) {
+        groups.available.push(courier);
+        return;
+      }
+
+      groups.off.push(courier);
+    });
+
+    return groups;
+  }, [activeDeliveryCouriers, activeScheduleCouriers, filteredCouriers]);
+
+  useEffect(() => {
+    setCollapsedGroups((current) => ({
+      ...current,
+      off: groupedCouriers.off.length > 5 ? current.off ?? true : false,
+    }));
+  }, [groupedCouriers.off.length]);
+
+  const courierGroups = useMemo(() => [
+    {
+      id: 'active',
+      title: 'EM ENTREGA AGORA',
+      tone: 'info',
+      couriers: groupedCouriers.active,
+      collapsed: false,
+      collapsible: false,
+    },
+    {
+      id: 'available',
+      title: 'DISPONIVEL NO TURNO',
+      tone: 'success',
+      couriers: groupedCouriers.available,
+      collapsed: false,
+      collapsible: false,
+    },
+    {
+      id: 'off',
+      title: 'FORA DO TURNO / SEM ESCALA',
+      tone: 'neutral',
+      couriers: groupedCouriers.off,
+      collapsed: groupedCouriers.off.length > 5 ? Boolean(collapsedGroups.off) : false,
+      collapsible: groupedCouriers.off.length > 5,
+    },
+  ], [collapsedGroups.off, groupedCouriers]);
 
   const stats = useMemo(
     () => [
@@ -257,6 +345,13 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
     onFinishEditing?.();
   }
 
+  function handleToggleGroup(groupId) {
+    setCollapsedGroups((current) => ({
+      ...current,
+      [groupId]: !current[groupId],
+    }));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     const timestamp = new Date().toISOString();
@@ -362,7 +457,12 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
               </div>
 
               <CouriersFilters filters={filters} onChange={setFilters} />
-              <CouriersGrid couriers={filteredCouriers} onDelete={handleDelete} />
+              <CouriersGrid
+                couriers={filteredCouriers}
+                groups={courierGroups}
+                onDelete={handleDelete}
+                onToggleGroup={handleToggleGroup}
+              />
             </div>
           </SurfaceCard>
         </div>

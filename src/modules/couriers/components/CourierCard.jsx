@@ -2,18 +2,21 @@ import { Link } from 'react-router-dom';
 
 import { courierShiftMap, courierStatusMap } from '../schemas/courierSchema';
 
-function CourierCard({ courier, onDelete }) {
+function CourierCard({ courier, onDelete, showActivityIndicator = false }) {
   const status = courierStatusMap[courier.status];
   const initial = courier.name?.trim()?.charAt(0)?.toUpperCase() ?? '?';
   const machineLabel =
     courier.machine && courier.machine !== 'Sem maquininha' ? courier.machine : 'Sem maquininha';
 
   return (
-    <article className="ui-card ui-card--interactive courier-card">
+    <article className={`ui-card ui-card--interactive courier-card${showActivityIndicator ? ' courier-card--active' : ''}`}>
       <div className="courier-card__identity">
         <div className="courier-card__avatar">{initial}</div>
         <div className="courier-card__identity-copy">
-          <h2 className="courier-card__title">{courier.name}</h2>
+          <div className="courier-card__title-row">
+            <h2 className="courier-card__title">{courier.name}</h2>
+            {showActivityIndicator ? <span className="courier-card__activity-dot" aria-hidden="true" /> : null}
+          </div>
           <p className="courier-card__meta">{courier.phone}</p>
         </div>
       </div>
@@ -37,7 +40,7 @@ function CourierCard({ courier, onDelete }) {
         </Link>
         <button
           type="button"
-          className="courier-card__icon-action courier-card__icon-action--danger"
+          className="courier-card__icon-action"
           onClick={() => onDelete?.(courier.id)}
           aria-label={`Remover ${courier.name}`}
           title="Remover"

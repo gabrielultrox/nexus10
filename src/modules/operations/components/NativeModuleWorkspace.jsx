@@ -376,6 +376,7 @@ function NativeModuleWorkspace({ route }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [errorMessage, setErrorMessage] = useState('');
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
+  const [highlightedScheduleRecordId, setHighlightedScheduleRecordId] = useState('');
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
   const [freshRecordId, setFreshRecordId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -496,6 +497,7 @@ function NativeModuleWorkspace({ route }) {
     setStatusFilter('all');
     setErrorMessage('');
     setScheduleMachineDrafts({});
+    setHighlightedScheduleRecordId('');
     setRecentlyClosedRecordId(null);
     setFreshRecordId(null);
     setInvalidFieldName('');
@@ -887,6 +889,19 @@ function NativeModuleWorkspace({ route }) {
       ...current,
       [name]: value,
     }));
+  }
+
+  function handleSchedulePrefill(windowLabel) {
+    setFormValues((current) => ({
+      ...current,
+      window: windowLabel,
+    }))
+    setHighlightedScheduleRecordId('')
+    setFocusFieldKey((current) => current + 1)
+  }
+
+  function handleScheduleHighlight(recordId) {
+    setHighlightedScheduleRecordId(recordId)
   }
 
   async function markAssignedMachineAsPresent(machineName, auditContext) {
@@ -1730,6 +1745,65 @@ function NativeModuleWorkspace({ route }) {
     }
   }
 
+  async function handleConfirmAllMachines() {
+    const recordsToConfirm = visibleMachineChecklistRecords.filter((record) => record.status !== 'Presente')
+
+    if (recordsToConfirm.length === 0) {
+      return
+    }
+
+    const auditContext = buildAuditContext(session)
+    const nextRecords = recordsToConfirm.map((record) => ({
+      ...record,
+      status: 'Presente',
+      updatedAt: auditContext.updatedAt,
+      updatedBy: auditContext.updatedBy,
+    }))
+
+    try {
+      await Promise.all(nextRecords.map((nextRecord) => saveRecordWithFallback({
+        modulePath: 'machine-history',
+        storageKey: 'nexus-module-machine-history',
+        dailyResetHour: 3,
+        record: nextRecord,
+        onLocalApply: () => {
+          setMachineChecklistRecords((current) => current.map((item) => (
+            item.id === nextRecord.id ? nextRecord : item
+          )))
+          setMachineChecklistState((current) => {
+            const existingRecord = current.find((item) => item.id === nextRecord.id)
+
+            if (existingRecord) {
+              return current.map((item) => (
+                item.id === nextRecord.id ? nextRecord : item
+              ))
+            }
+
+            return [nextRecord, ...current]
+          })
+        },
+      })))
+
+      setErrorMessage('')
+      playSuccess()
+      toast.success(`${recordsToConfirm.length} maquininhas confirmadas`)
+      nextRecords.forEach((record) => {
+        appendAuditEvent({
+          module: 'Maquininhas',
+          modulePath: 'machines',
+          actor: auditContext.updatedBy,
+          action: 'Marcou presente no checklist',
+          target: record.device ?? 'maquininha',
+          details: `Checklist atualizado para ${record.device ?? 'maquininha'}`,
+        })
+      })
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel confirmar as maquininhas em massa.')
+      toast.error(error.message ?? 'Nao foi possivel confirmar as maquininhas.')
+      playError()
+    }
+  }
+
   const machineHistoryEvents = route.path === 'machine-history'
     ? loadAuditEvents()
       .filter((event) => event.modulePath === 'machines' && event.action.toLowerCase().includes('checklist'))
@@ -1840,14 +1914,19 @@ function NativeModuleWorkspace({ route }) {
         recentlyClosedRecordId={recentlyClosedRecordId}
         visibleRecords={visibleRecords}
         visibleMachineChecklistRecords={visibleMachineChecklistRecords}
+        machineConfirmedCount={presentMachineChecklistRecords.length}
         formatAuditText={formatAuditText}
         handleApplyAction={handleApplyAction}
         handleDelete={handleDelete}
         handleMachineChecklistToggle={handleMachineChecklistToggle}
+        handleConfirmAllMachines={handleConfirmAllMachines}
         scheduleMachineDrafts={scheduleMachineDrafts}
         scheduleMachineOptions={scheduleMachineOptions}
         handleScheduleMachineDraftChange={handleScheduleMachineDraftChange}
         handleScheduleMachineUpdate={handleScheduleMachineUpdate}
+        handleSchedulePrefill={handleSchedulePrefill}
+        handleScheduleHighlight={handleScheduleHighlight}
+        highlightedScheduleRecordId={highlightedScheduleRecordId}
         statusField={statusField}
         searchTerm={searchTerm}
         statusFilter={statusFilter}

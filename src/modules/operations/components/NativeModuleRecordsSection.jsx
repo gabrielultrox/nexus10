@@ -6,6 +6,7 @@ import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 
 const ROW_EXIT_DURATION_MS = 200
+const DEFAULT_SCHEDULE_WINDOWS = ['10:00-14:00', '14:00-18:00', '18:00-22:00']
 
 function getStatusBadgeClass(value) {
   const normalized = String(value ?? '').trim().toLowerCase()
@@ -105,6 +106,10 @@ function getPrefersReducedMotion() {
 
 function getExitDuration() {
   return getPrefersReducedMotion() ? 0 : ROW_EXIT_DURATION_MS
+}
+
+function normalizeScheduleWindow(windowLabel = '') {
+  return String(windowLabel).replace(/\s+/g, '').trim().toLowerCase()
 }
 
 function NativeModuleToolbar({
@@ -356,87 +361,232 @@ function NativeModuleSchedule({
   onUpdate,
   onDelete,
   exitingIds,
+  highlightedRecordId,
+  onHighlightRecord,
+  onPrefillWindow,
 }) {
+  const [viewMode, setViewMode] = useState('list')
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const days = Array.from(
+    records.reduce((accumulator, record) => {
+      const dayKey = record.dayKey ?? record.date ?? todayKey
+
+      if (!accumulator.some((item) => item.key === dayKey)) {
+        accumulator.push({
+          key: dayKey,
+          label: dayKey === todayKey
+            ? 'Hoje'
+            : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(dayKey)),
+        })
+      }
+
+      return accumulator
+    }, []),
+  ).slice(0, 4)
+  const scheduleDays = days.length > 0 ? days : [{ key: todayKey, label: 'Hoje' }]
+  const scheduleWindows = Array.from(
+    new Set([
+      ...DEFAULT_SCHEDULE_WINDOWS,
+      ...records.map((record) => record.window).filter(Boolean),
+    ]),
+  )
+
+  useEffect(() => {
+    if (records.length === 0) {
+      setViewMode('grid')
+    }
+  }, [records.length])
+
+  function handleEmptySlotClick(windowLabel, dayKey) {
+    onPrefillWindow?.(windowLabel, dayKey)
+  }
+
+  function handleFilledSlotClick(recordId) {
+    onHighlightRecord?.(recordId)
+    setViewMode('list')
+  }
+
   return (
     <div className="schedule-records">
-      <div className="schedule-records__grid">
-        {records.map((record) => (
-          <article key={record.id} className={`schedule-records__card${exitingIds.has(record.id) ? ' is-exiting' : ''}`}>
-            <div className="schedule-records__top">
-              <div>
-                <p className="schedule-records__eyebrow">Entregador</p>
-                <strong className="schedule-records__name">{record.courier}</strong>
-              </div>
-              <span className="ui-badge ui-badge--info">{record.status}</span>
-            </div>
-
-            <div className="schedule-records__meta">
-              <div className="schedule-records__meta-item">
-                <span>Janela</span>
-                <strong>{record.window}</strong>
-              </div>
-              <div className="schedule-records__meta-item">
-                <span>Atualizacao</span>
-                <strong>
-                  {record.updatedAt && record.updatedBy
-                    ? `${record.updatedBy} - ${record.updatedAt}`
-                    : 'Sem atualizacao'}
-                </strong>
-              </div>
-            </div>
-
-            <div className="schedule-records__editor">
-              <div className="ui-field">
-                <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>
-                  Maquininha do dia
-                </label>
-                <Select
-                  id={`schedule-machine-${record.id}`}
-                  className="ui-select"
-                  value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
-                  onChange={(event) => onDraftChange(record.id, event.target.value)}
-                >
-                  {scheduleMachineOptions.map((option) => (
-                    <option key={`${record.id}-${option}`} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="schedule-records__actions">
-                <button
-                  type="button"
-                  className="ui-button ui-button--secondary"
-                  onClick={() => onUpdate(record.id)}
-                  disabled={
-                    exitingIds.has(record.id)
-                    || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                      === (record.machine ?? 'Sem maquininha')
-                  }
-                >
-                  Salvar maquininha do dia
-                </button>
-                <button
-                  type="button"
-                  className="ui-button ui-button--danger"
-                  disabled={exitingIds.has(record.id)}
-                  onClick={() => onDelete(record.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+      <div className="schedule-records__header">
+        <div>
+          <p className="schedule-records__eyebrow">Painel de turno</p>
+          <strong className="schedule-records__title">Cobertura por janela</strong>
+        </div>
+        <div className="schedule-records__view-toggle" role="tablist" aria-label="Visualizacao da escala">
+          <button
+            type="button"
+            className={`schedule-records__view-button${viewMode === 'list' ? ' is-active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            Lista
+          </button>
+          <button
+            type="button"
+            className={`schedule-records__view-button${viewMode === 'grid' ? ' is-active' : ''}`}
+            onClick={() => setViewMode('grid')}
+          >
+            Grade
+          </button>
+        </div>
       </div>
+
+      {viewMode === 'grid' ? (
+        <div className="schedule-grid">
+          <div className="schedule-grid__table">
+            <div className="schedule-grid__head-cell schedule-grid__head-cell--window">Janela</div>
+            {scheduleDays.map((day) => (
+              <div key={day.key} className="schedule-grid__head-cell">
+                {day.label}
+              </div>
+            ))}
+
+            {scheduleWindows.map((windowLabel) => (
+              <div key={windowLabel} className="schedule-grid__row-group">
+                <div className="schedule-grid__window-cell">{windowLabel}</div>
+                {scheduleDays.map((day) => {
+                  const matchingRecords = records.filter((record) => (
+                    normalizeScheduleWindow(record.window) === normalizeScheduleWindow(windowLabel)
+                    && (record.dayKey ?? record.date ?? todayKey) === day.key
+                  ))
+
+                  if (matchingRecords.length === 0) {
+                    return (
+                      <button
+                        key={`${day.key}-${windowLabel}`}
+                        type="button"
+                        className="schedule-grid__slot schedule-grid__slot--empty"
+                        onClick={() => handleEmptySlotClick(windowLabel, day.key)}
+                      >
+                        <span>—</span>
+                      </button>
+                    )
+                  }
+
+                  return (
+                    <div key={`${day.key}-${windowLabel}`} className="schedule-grid__slot schedule-grid__slot--filled">
+                      {matchingRecords.map((record) => (
+                        <button
+                          key={record.id}
+                          type="button"
+                          className="schedule-grid__entry"
+                          onClick={() => handleFilledSlotClick(record.id)}
+                        >
+                          <span className="schedule-grid__entry-name">{record.courier}</span>
+                          <span className="ui-badge ui-badge--info">
+                            {record.machine && record.machine !== 'Sem maquininha' ? record.machine : 'Sem maquininha'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="schedule-records__grid">
+          {records.map((record) => (
+            <article
+              key={record.id}
+              className={`schedule-records__card${exitingIds.has(record.id) ? ' is-exiting' : ''}${highlightedRecordId === record.id ? ' schedule-records__card--highlighted' : ''}`}
+            >
+              <div className="schedule-records__top">
+                <div>
+                  <p className="schedule-records__eyebrow">Entregador</p>
+                  <strong className="schedule-records__name">{record.courier}</strong>
+                </div>
+                <span className="ui-badge ui-badge--info">{record.status}</span>
+              </div>
+
+              <div className="schedule-records__meta">
+                <div className="schedule-records__meta-item">
+                  <span>Janela</span>
+                  <strong>{record.window}</strong>
+                </div>
+                <div className="schedule-records__meta-item">
+                  <span>Atualizacao</span>
+                  <strong>
+                    {record.updatedAt && record.updatedBy
+                      ? `${record.updatedBy} - ${record.updatedAt}`
+                      : 'Sem atualizacao'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="schedule-records__editor">
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>
+                    Maquininha do dia
+                  </label>
+                  <Select
+                    id={`schedule-machine-${record.id}`}
+                    className="ui-select"
+                    value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
+                    onChange={(event) => onDraftChange(record.id, event.target.value)}
+                  >
+                    {scheduleMachineOptions.map((option) => (
+                      <option key={`${record.id}-${option}`} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="schedule-records__actions">
+                  <button
+                    type="button"
+                    className="ui-button ui-button--secondary"
+                    onClick={() => onUpdate(record.id)}
+                    disabled={
+                      exitingIds.has(record.id)
+                      || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
+                        === (record.machine ?? 'Sem maquininha')
+                    }
+                  >
+                    Salvar maquininha do dia
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button--danger"
+                    disabled={exitingIds.has(record.id)}
+                    onClick={() => onDelete(record.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function NativeModuleMachines({ records, onDelete, onToggle, exitingIds }) {
+function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confirmedCount, totalCount, exitingIds }) {
+  const allConfirmed = totalCount > 0 && confirmedCount === totalCount
+
   return (
     <div className="machine-operations">
+      <div className="machine-operations__bulk-bar">
+        <label className="machine-operations__bulk-check" htmlFor="machines-confirm-all">
+          <input
+            id="machines-confirm-all"
+            type="checkbox"
+            checked={allConfirmed}
+            onChange={(event) => {
+              if (event.target.checked) {
+                onConfirmAll?.()
+              }
+            }}
+          />
+          <span>Confirmar todos presentes</span>
+        </label>
+        <span className="machine-operations__bulk-count">{confirmedCount} de {totalCount} confirmadas</span>
+      </div>
       <div className="machine-operations__list">
         {records.map((record) => {
           const isPresent = record.status === 'Presente'
@@ -475,7 +625,7 @@ function NativeModuleMachines({ records, onDelete, onToggle, exitingIds }) {
                 title="Excluir"
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M6 2h4l.5 1H13v1H3V3h2.5L6 2Zm-1 4h1v6H5V6Zm3 0h1v6H8V6Zm3 0h-1v6h1V6Z" />
+                  <path d="M4.47 4.47a.75.75 0 0 1 1.06 0L8 6.94l2.47-2.47a.75.75 0 1 1 1.06 1.06L9.06 8l2.47 2.47a.75.75 0 1 1-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 1 1-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 0 1 0-1.06Z" />
                 </svg>
               </button>
             </article>
@@ -633,13 +783,18 @@ function NativeModuleRecordsSection(props) {
     machineHistoryGroups,
     visibleRecords,
     visibleMachineChecklistRecords,
+    machineConfirmedCount,
     handleApplyAction,
     handleDelete,
     handleMachineChecklistToggle,
+    handleConfirmAllMachines,
     scheduleMachineDrafts,
     scheduleMachineOptions,
     handleScheduleMachineDraftChange,
     handleScheduleMachineUpdate,
+    handleSchedulePrefill,
+    handleScheduleHighlight,
+    highlightedScheduleRecordId,
     statusField,
     searchTerm,
     statusFilter,
@@ -751,7 +906,7 @@ function NativeModuleRecordsSection(props) {
 
       {isMachineHistory ? (
         <NativeModuleMachineHistory groups={machineHistoryGroups} />
-      ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : tableRows.length === 0) && manager) ? (
+      ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : (!isSchedule && tableRows.length === 0)) && manager) ? (
         <ModuleEmptyState
           message={records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
         />
@@ -764,12 +919,18 @@ function NativeModuleRecordsSection(props) {
           onUpdate={handleScheduleMachineUpdate}
           onDelete={requestDelete}
           exitingIds={exitingIds}
+          highlightedRecordId={highlightedScheduleRecordId}
+          onHighlightRecord={handleScheduleHighlight}
+          onPrefillWindow={handleSchedulePrefill}
         />
       ) : isMachineChecklist ? (
         <NativeModuleMachines
           records={visibleMachineChecklistRecords}
           onDelete={requestDelete}
           onToggle={handleMachineChecklistToggle}
+          onConfirmAll={handleConfirmAllMachines}
+          confirmedCount={machineConfirmedCount}
+          totalCount={visibleMachineChecklistRecords.length}
           exitingIds={exitingIds}
         />
       ) : (

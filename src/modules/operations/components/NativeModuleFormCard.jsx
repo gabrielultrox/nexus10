@@ -148,7 +148,7 @@ function NativeModuleFormCard({
 
     const firstField = formRef.current.querySelector('input:not([type="checkbox"]), select, textarea')
     firstField?.focus()
-  }, [routePath])
+  }, [focusFieldKey, routePath])
 
   useEffect(() => {
     if (routePath !== 'delivery-reading') {
