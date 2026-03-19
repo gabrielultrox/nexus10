@@ -2713,10 +2713,68 @@
   color: var(--danger);
 }
 
+.native-module__delete-action:disabled,
+.native-module__return-action:disabled,
+.machine-operations__icon-button:disabled,
+.machine-operations__row-check input:disabled + .machine-operations__row-check-box,
+.schedule-records__actions .ui-button:disabled,
+.delivery-reading__actions .ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .native-module__delete-action svg {
   width: 15px;
   height: 15px;
   fill: currentColor;
+}
+
+.ui-table tbody tr td {
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    height 200ms ease,
+    padding-top 200ms ease,
+    padding-bottom 200ms ease,
+    border-color 200ms ease;
+}
+
+.ui-table__row-exit td {
+  opacity: 0;
+  transform: translateX(16px);
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-color: transparent;
+  overflow: hidden;
+}
+
+.schedule-records__card,
+.delivery-reading__card,
+.machine-operations__row {
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    max-height 200ms ease,
+    padding-top 200ms ease,
+    padding-bottom 200ms ease,
+    margin 200ms ease,
+    border-color 200ms ease,
+    background-color 600ms ease;
+  transform-origin: top;
+}
+
+.schedule-records__card.is-exiting,
+.delivery-reading__card.is-exiting,
+.machine-operations__row.is-exiting {
+  opacity: 0;
+  transform: translateX(16px);
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  border-bottom-color: transparent;
+  overflow: hidden;
 }
 
 .schedule-records__card,
@@ -2759,6 +2817,7 @@
   .native-module__actions-cell,
   .native-module__return-action,
   .native-module__delete-action,
+  .ui-table tbody tr td,
   .schedule-records__card,
   .delivery-reading__card,
   .machine-operations__row,

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
 
+const ROW_EXIT_DURATION_MS = 200
+
 function getStatusBadgeClass(value) {
   const normalized = String(value ?? '').trim().toLowerCase()
 
@@ -71,6 +73,16 @@ function ModuleEmptyState({ message }) {
       <p className="module-empty-state__text">{message}</p>
     </div>
   )
+}
+
+function getPrefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function getExitDuration() {
+  return getPrefersReducedMotion() ? 0 : ROW_EXIT_DURATION_MS
 }
 
 function NativeModuleToolbar({
@@ -321,6 +333,7 @@ function NativeModuleDeliveryReading({
   formatAuditText,
   onApplyAction,
   onDelete,
+  exitingIds,
 }) {
   return (
     <div className="delivery-reading">
@@ -341,7 +354,7 @@ function NativeModuleDeliveryReading({
               {openRecords.map((record) => (
                 <article
                   key={record.id}
-                  className={`delivery-reading__card delivery-reading__card--open ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closing' : ''}`}
+                  className={`delivery-reading__card delivery-reading__card--open ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closing' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
                 >
                   <div className="delivery-reading__top">
                     <div>
@@ -380,6 +393,7 @@ function NativeModuleDeliveryReading({
                     <button
                       type="button"
                       className="ui-button ui-button--danger"
+                      disabled={exitingIds.has(record.id)}
                       onClick={() => onDelete(record.id)}
                     >
                       Excluir
@@ -407,7 +421,7 @@ function NativeModuleDeliveryReading({
               {closedRecords.map((record) => (
                 <article
                   key={record.id}
-                  className={`delivery-reading__card delivery-reading__card--closed ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closed-fresh' : ''}`}
+                  className={`delivery-reading__card delivery-reading__card--closed ${recentlyClosedRecordId === record.id ? 'delivery-reading__card--closed-fresh' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
                 >
                   <div className="delivery-reading__top">
                     <div>
@@ -443,6 +457,7 @@ function NativeModuleDeliveryReading({
                     <button
                       type="button"
                       className="ui-button ui-button--danger"
+                      disabled={exitingIds.has(record.id)}
                       onClick={() => onDelete(record.id)}
                     >
                       Excluir
@@ -465,12 +480,13 @@ function NativeModuleSchedule({
   onDraftChange,
   onUpdate,
   onDelete,
+  exitingIds,
 }) {
   return (
     <div className="schedule-records">
       <div className="schedule-records__grid">
         {records.map((record) => (
-          <article key={record.id} className="schedule-records__card">
+          <article key={record.id} className={`schedule-records__card${exitingIds.has(record.id) ? ' is-exiting' : ''}`}>
             <div className="schedule-records__top">
               <div>
                 <p className="schedule-records__eyebrow">Entregador</p>
@@ -519,13 +535,19 @@ function NativeModuleSchedule({
                   className="ui-button ui-button--secondary"
                   onClick={() => onUpdate(record.id)}
                   disabled={
-                    (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                    === (record.machine ?? 'Sem maquininha')
+                    exitingIds.has(record.id)
+                    || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
+                      === (record.machine ?? 'Sem maquininha')
                   }
                 >
                   Salvar maquininha do dia
                 </button>
-                <button type="button" className="ui-button ui-button--danger" onClick={() => onDelete(record.id)}>
+                <button
+                  type="button"
+                  className="ui-button ui-button--danger"
+                  disabled={exitingIds.has(record.id)}
+                  onClick={() => onDelete(record.id)}
+                >
                   Excluir
                 </button>
               </div>
@@ -537,7 +559,7 @@ function NativeModuleSchedule({
   )
 }
 
-function NativeModuleMachines({ records, onDelete, onToggle }) {
+function NativeModuleMachines({ records, onDelete, onToggle, exitingIds }) {
   return (
     <div className="machine-operations">
       <div className="machine-operations__list">
@@ -549,7 +571,7 @@ function NativeModuleMachines({ records, onDelete, onToggle }) {
           return (
             <article
               key={record.id}
-              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}`}
+              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
             >
               <strong className="machine-operations__row-device">{record.device}</strong>
               <span className="machine-operations__row-meta">{record.holder || 'Sem entregador'}</span>
@@ -563,6 +585,7 @@ function NativeModuleMachines({ records, onDelete, onToggle }) {
                   id={`machine-check-${record.id}`}
                   type="checkbox"
                   checked={isPresent}
+                  disabled={exitingIds.has(record.id)}
                   onChange={() => onToggle(record.id)}
                 />
                 <span className="machine-operations__row-check-box" aria-hidden="true" />
@@ -571,6 +594,7 @@ function NativeModuleMachines({ records, onDelete, onToggle }) {
               <button
                 type="button"
                 className="machine-operations__icon-button"
+                disabled={exitingIds.has(record.id)}
                 onClick={() => onDelete(record.id)}
                 aria-label={`Excluir ${record.device}`}
                 title="Excluir"
@@ -598,6 +622,7 @@ function NativeModuleTable({
   onApplyAction,
   onMarkReturned,
   onDelete,
+  exitingIds,
 }) {
   return (
     <div className="native-module__table-wrap">
@@ -615,7 +640,11 @@ function NativeModuleTable({
               const row = manager.toRow(record)
 
               return (
-                <tr key={record.id} className="ui-table__row-enter" style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}>
+                <tr
+                  key={record.id}
+                  className={`ui-table__row-enter${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
+                  style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
+                >
                   {row.map((cell, index) => (
                     <td
                       key={`${record.id}-${index}`}
@@ -643,8 +672,11 @@ function NativeModuleTable({
                           className="ui-button ui-button--secondary native-module__table-action"
                           onClick={() => onScheduleUpdate(record.id)}
                           disabled={
+                            exitingIds.has(record.id)
+                            || (
                             (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
                             === (record.machine ?? 'Sem maquininha')
+                            )
                           }
                         >
                           Salvar
@@ -664,6 +696,7 @@ function NativeModuleTable({
                       <button
                         type="button"
                         className="native-module__return-action"
+                        disabled={exitingIds.has(record.id)}
                         onClick={() => onMarkReturned(record.id)}
                       >
                         {manager.returnActionLabel}
@@ -673,6 +706,7 @@ function NativeModuleTable({
                       <button
                         type="button"
                         className="native-module__delete-action"
+                        disabled={exitingIds.has(record.id)}
                         onClick={() => onDelete(record.id)}
                         aria-label="Excluir registro"
                         title="Excluir"
@@ -747,6 +781,74 @@ function NativeModuleRecordsSection(props) {
   const isDeliveryReading = route.path === 'delivery-reading'
   const isSchedule = route.path === 'schedule'
   const isMachineChecklist = route.path === 'machines'
+  const [exitingIds, setExitingIds] = useState(() => new Set())
+  const exitTimeoutsRef = useRef(new Map())
+
+  useEffect(() => {
+    const exitTimeouts = exitTimeoutsRef.current
+
+    return () => {
+      exitTimeouts.forEach((timeoutId) => clearTimeout(timeoutId))
+      exitTimeouts.clear()
+    }
+  }, [])
+
+  useEffect(() => {
+    const visibleIds = new Set([
+      ...visibleRecords.map((record) => record.id),
+      ...visibleMachineChecklistRecords.map((record) => record.id),
+      ...visibleOpenDeliveryRecords.map((record) => record.id),
+      ...visibleClosedDeliveryRecords.map((record) => record.id),
+    ])
+
+    setExitingIds((current) => {
+      const next = new Set()
+      current.forEach((id) => {
+        if (visibleIds.has(id)) {
+          next.add(id)
+        }
+      })
+      return next.size === current.size ? current : next
+    })
+  }, [visibleRecords, visibleMachineChecklistRecords, visibleOpenDeliveryRecords, visibleClosedDeliveryRecords])
+
+  function clearExitingId(recordId) {
+    setExitingIds((current) => {
+      if (!current.has(recordId)) {
+        return current
+      }
+
+      const next = new Set(current)
+      next.delete(recordId)
+      return next
+    })
+
+    const timeoutId = exitTimeoutsRef.current.get(recordId)
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      exitTimeoutsRef.current.delete(recordId)
+    }
+  }
+
+  function requestDelete(recordId) {
+    setExitingIds((current) => {
+      if (current.has(recordId)) {
+        return current
+      }
+
+      const next = new Set(current)
+      next.add(recordId)
+      return next
+    })
+
+    const timeoutId = setTimeout(async () => {
+      exitTimeoutsRef.current.delete(recordId)
+      await handleDelete(recordId)
+      clearExitingId(recordId)
+    }, getExitDuration())
+
+    exitTimeoutsRef.current.set(recordId, timeoutId)
+  }
 
   return (
     <SurfaceCard title={tableTitle}>
@@ -783,7 +885,8 @@ function NativeModuleRecordsSection(props) {
           recentlyClosedRecordId={recentlyClosedRecordId}
           formatAuditText={formatAuditText}
           onApplyAction={handleApplyAction}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
+          exitingIds={exitingIds}
         />
       ) : isSchedule ? (
         <NativeModuleSchedule
@@ -792,13 +895,15 @@ function NativeModuleRecordsSection(props) {
           scheduleMachineOptions={scheduleMachineOptions}
           onDraftChange={handleScheduleMachineDraftChange}
           onUpdate={handleScheduleMachineUpdate}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
+          exitingIds={exitingIds}
         />
       ) : isMachineChecklist ? (
         <NativeModuleMachines
           records={visibleMachineChecklistRecords}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
           onToggle={handleMachineChecklistToggle}
+          exitingIds={exitingIds}
         />
       ) : (
         <NativeModuleTable
@@ -813,7 +918,8 @@ function NativeModuleRecordsSection(props) {
           onScheduleUpdate={handleScheduleMachineUpdate}
           onApplyAction={handleApplyAction}
           onMarkReturned={handleMarkReturned}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
+          exitingIds={exitingIds}
         />
       )}
     </SurfaceCard>
