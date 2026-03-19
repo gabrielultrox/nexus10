@@ -813,17 +813,17 @@ export function CommerceFinishStep({
               {summaryItems.length === 0 ? (
                 <div className="commerce-step__summary-empty">Nenhum item adicionado</div>
               ) : (
-                <>
+                <div className="commerce-step__summary-items">
                   {summaryItems.map((item) => (
                     <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__summary-item">
                       <div className="commerce-step__summary-copy">
                         <span>{item.name}</span>
                         <small>{item.quantity}x {formatCurrencyBRL(item.unitPrice)}</small>
                       </div>
-                      <strong>{formatCurrencyBRL(item.totalPrice)}</strong>
+                      <strong className="commerce-step__summary-value">{formatCurrencyBRL(item.totalPrice)}</strong>
                     </div>
                   ))}
-                </>
+                </div>
               )}
 
               <div className="commerce-step__total-final">
