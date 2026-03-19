@@ -1,28 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="shellMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#05070d"/>
-      <stop offset="100%" stop-color="#111722"/>
+    <linearGradient id="bgMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1117"/>
+      <stop offset="100%" stop-color="#181c27"/>
     </linearGradient>
-    <linearGradient id="lineMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cfe7ff"/>
-      <stop offset="100%" stop-color="#f7fbff"/>
+    <linearGradient id="tileFillMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
     </linearGradient>
-    <linearGradient id="accentMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#26d7ff"/>
-      <stop offset="100%" stop-color="#1195f3"/>
+    <linearGradient id="tileEdgeMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c7d2fe"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
+    </linearGradient>
+    <linearGradient id="facetAMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6b8aff"/>
+    </linearGradient>
+    <linearGradient id="facetBMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="facetCMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="facetDMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#312e81"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#shellMask)"/>
-  <rect x="60" y="60" width="392" height="392" rx="108" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="5"/>
-  <path
-    d="M256 102 318 141 318 196 286 196 256 155 226 196 194 196 194 141Z
-       M149 177 210 177 235 218 212 263 180 241 157 279 180 317 212 295 235 340 210 378 149 378 112 298 135 274 112 249Z
-       M363 177 400 249 377 274 400 298 363 378 302 378 277 340 300 295 332 317 355 279 332 241 300 263 277 218 302 177Z
-       M224 239 256 207 288 239 271 267 256 244 241 267Z
-       M226 284 256 336 286 284 271 267 256 292 241 267Z"
-    fill="url(#lineMask)"
-  />
-  <path d="M256 207 288 239 224 239Z" fill="url(#accentMask)"/>
-  <path d="M116 108h16v80h-16zm27 0h16v110h-16zm27 0h16v66h-16z" fill="url(#accentMask)"/>
+  <rect width="512" height="512" rx="140" fill="url(#bgMask)"/>
+  <rect x="76" y="76" width="360" height="360" rx="100" fill="url(#tileFillMask)" stroke="url(#tileEdgeMask)" stroke-width="10"/>
+  <g transform="translate(110 96) scale(0.92)">
+    <polygon points="40,94 106,42 120,144 62,176" fill="url(#facetAMask)"/>
+    <polygon points="120,144 164,110 194,176 142,220" fill="url(#facetBMask)"/>
+    <polygon points="106,42 182,18 212,96 120,144" fill="url(#facetCMask)"/>
+    <polygon points="212,96 284,48 286,172 194,176" fill="url(#facetAMask)"/>
+    <polygon points="62,176 120,144 120,284 60,318" fill="url(#facetDMask)"/>
+    <polygon points="120,144 194,176 168,292 120,284" fill="url(#facetAMask)"/>
+    <polygon points="194,176 286,172 288,298 204,324" fill="url(#facetBMask)"/>
+    <polygon points="60,318 120,284 120,372 52,410" fill="url(#facetBMask)"/>
+    <polygon points="120,284 168,292 170,384 120,372" fill="url(#facetCMask)"/>
+    <polygon points="204,324 288,298 288,404 220,430" fill="url(#facetDMask)"/>
+    <polygon points="286,172 332,136 334,234 298,258" fill="url(#facetCMask)"/>
+    <path d="M120 144L194 176M120 284L194 176M120 284L168 292M212 96L194 176M286 172L194 176" fill="none" stroke="#dbeafe" stroke-opacity=".72" stroke-width="6" stroke-linecap="round"/>
+  </g>
 </svg>

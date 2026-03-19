@@ -110,7 +110,7 @@ body::after {
   object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(
-    0 0 var(--space-1) color-mix(in srgb, var(--color-accent-red) 20%, transparent)
+    0 0 var(--space-1) color-mix(in srgb, var(--accent) 24%, transparent)
   );
 }
 

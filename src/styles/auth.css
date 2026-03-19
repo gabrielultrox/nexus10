@@ -59,7 +59,7 @@
   width: 18px;
   height: 24px;
   object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(204, 47, 60, 0.35));
+  filter: drop-shadow(0 0 12px rgba(107, 138, 255, 0.32));
 }
 
 .auth-sequence__chrome-brand strong,
@@ -318,7 +318,7 @@
   width: clamp(34px, 3.4vw, 46px);
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 20px rgba(204, 47, 60, 0.46));
+  filter: drop-shadow(0 0 20px rgba(107, 138, 255, 0.4));
 }
 
 .auth-boot__bolt {

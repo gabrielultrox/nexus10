@@ -142,7 +142,7 @@
   width: 20px;
   height: 28px;
   object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(204, 47, 60, 0.38));
+  filter: drop-shadow(0 0 16px rgba(107, 138, 255, 0.34));
 }
 
 .system-boot__brand strong,
@@ -310,7 +310,7 @@
   width: 34px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 18px rgba(204, 47, 60, 0.44));
+  filter: drop-shadow(0 0 18px rgba(107, 138, 255, 0.38));
   animation: system-boot-bolt 2.4s ease-in-out infinite;
 }
 

@@ -1,36 +1,50 @@
-<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Nexus 10 ERP</title>
-  <desc id="desc">Emblema cyberpunk industrial inspirado em sinaletica de risco, adaptado para o Nexus 10 ERP.</desc>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Nexus 10</title>
+  <desc id="desc">Marca geometrica do Nexus 10 em linguagem industrial-tech, com base clara e simbolo facetado em azul e violeta.</desc>
   <defs>
-    <linearGradient id="shell" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#05070d"/>
-      <stop offset="100%" stop-color="#111722"/>
+    <linearGradient id="tileFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
     </linearGradient>
-    <linearGradient id="line" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cfe7ff"/>
-      <stop offset="100%" stop-color="#f7fbff"/>
+    <linearGradient id="tileEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c7d2fe"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#26d7ff"/>
-      <stop offset="100%" stop-color="#1195f3"/>
+    <linearGradient id="facetA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6b8aff"/>
     </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#86dfff" flood-opacity=".18"/>
+    <linearGradient id="facetB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="facetC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="facetD" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <filter id="tileShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#020617" flood-opacity=".24"/>
     </filter>
   </defs>
 
-  <rect x="14" y="14" width="228" height="228" rx="56" fill="url(#shell)"/>
-  <rect x="27" y="27" width="202" height="202" rx="42" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
+  <rect x="56" y="56" width="400" height="400" rx="112" fill="url(#tileFill)" stroke="url(#tileEdge)" stroke-width="10" filter="url(#tileShadow)"/>
 
-  <path
-    d="M128 48 160 68 160 92 142 92 128 72 114 92 96 92 96 68Z
-       M73 86 105 86 118 108 106 126 88 114 76 134 88 154 106 142 118 160 105 182 73 182 54 150 66 132 54 114Z
-       M183 86 202 114 190 132 202 150 183 182 151 182 138 160 150 142 168 154 180 134 168 114 150 126 138 108 151 86Z
-       M110 118 128 104 146 118 136 136 128 124 120 136Z
-       M112 146 128 174 144 146 136 136 128 150 120 136Z"
-    fill="url(#line)"
-    filter="url(#glow)"
-  />
-  <path d="M128 104 146 122 110 122Z" fill="url(#accent)"/>
-  <path d="M56 50h8v44h-8zm14 0h8v60h-8zm14 0h8v36h-8z" fill="url(#accent)"/>
+  <g transform="translate(96 76)">
+    <polygon points="40,94 106,42 120,144 62,176" fill="url(#facetA)"/>
+    <polygon points="120,144 164,110 194,176 142,220" fill="url(#facetB)"/>
+    <polygon points="106,42 182,18 212,96 120,144" fill="url(#facetC)"/>
+    <polygon points="212,96 284,48 286,172 194,176" fill="url(#facetA)"/>
+    <polygon points="62,176 120,144 120,284 60,318" fill="url(#facetD)"/>
+    <polygon points="120,144 194,176 168,292 120,284" fill="url(#facetA)"/>
+    <polygon points="194,176 286,172 288,298 204,324" fill="url(#facetB)"/>
+    <polygon points="60,318 120,284 120,372 52,410" fill="url(#facetB)"/>
+    <polygon points="120,284 168,292 170,384 120,372" fill="url(#facetC)"/>
+    <polygon points="204,324 288,298 288,404 220,430" fill="url(#facetD)"/>
+    <polygon points="286,172 332,136 334,234 298,258" fill="url(#facetC)"/>
+    <path d="M120 144L194 176M120 284L194 176M120 284L168 292M212 96L194 176M286 172L194 176" fill="none" stroke="#dbeafe" stroke-opacity=".72" stroke-width="6" stroke-linecap="round"/>
+  </g>
 </svg>

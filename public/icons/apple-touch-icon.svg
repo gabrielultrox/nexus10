@@ -1,28 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+<svg width="180" height="180" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="shellApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#05070d"/>
-      <stop offset="100%" stop-color="#111722"/>
+    <linearGradient id="tileFillApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
     </linearGradient>
-    <linearGradient id="lineApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cfe7ff"/>
-      <stop offset="100%" stop-color="#f7fbff"/>
+    <linearGradient id="tileEdgeApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c7d2fe"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
     </linearGradient>
-    <linearGradient id="accentApple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#26d7ff"/>
-      <stop offset="100%" stop-color="#1195f3"/>
+    <linearGradient id="facetAApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6b8aff"/>
+    </linearGradient>
+    <linearGradient id="facetBApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="facetCApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="facetDApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#312e81"/>
     </linearGradient>
   </defs>
-  <rect width="180" height="180" rx="42" fill="url(#shellApple)"/>
-  <rect x="18" y="18" width="144" height="144" rx="32" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
-  <path
-    d="M90 34 113 48 113 66 101 66 90 51 79 66 67 66 67 48Z
-       M50 61 73 61 82 76 74 90 62 82 54 97 62 112 74 104 82 118 73 132 50 132 36 110 45 98 36 85Z
-       M130 61 144 85 135 98 144 110 130 132 107 132 98 118 106 104 118 112 126 97 118 82 106 90 98 76 107 61Z
-       M77 84 90 73 103 84 96 96 90 87 84 96Z
-       M78 102 90 123 102 102 96 96 90 106 84 96Z"
-    fill="url(#lineApple)"
-  />
-  <path d="M90 73 103 86 77 86Z" fill="url(#accentApple)"/>
-  <path d="M38 36h5v31h-5zm10 0h5v42h-5zm10 0h5v25h-5z" fill="url(#accentApple)"/>
+  <rect x="56" y="56" width="400" height="400" rx="112" fill="url(#tileFillApple)" stroke="url(#tileEdgeApple)" stroke-width="10"/>
+  <g transform="translate(96 76)">
+    <polygon points="40,94 106,42 120,144 62,176" fill="url(#facetAApple)"/>
+    <polygon points="120,144 164,110 194,176 142,220" fill="url(#facetBApple)"/>
+    <polygon points="106,42 182,18 212,96 120,144" fill="url(#facetCApple)"/>
+    <polygon points="212,96 284,48 286,172 194,176" fill="url(#facetAApple)"/>
+    <polygon points="62,176 120,144 120,284 60,318" fill="url(#facetDApple)"/>
+    <polygon points="120,144 194,176 168,292 120,284" fill="url(#facetAApple)"/>
+    <polygon points="194,176 286,172 288,298 204,324" fill="url(#facetBApple)"/>
+    <polygon points="60,318 120,284 120,372 52,410" fill="url(#facetBApple)"/>
+    <polygon points="120,284 168,292 170,384 120,372" fill="url(#facetCApple)"/>
+    <polygon points="204,324 288,298 288,404 220,430" fill="url(#facetDApple)"/>
+    <polygon points="286,172 332,136 334,234 298,258" fill="url(#facetCApple)"/>
+    <path d="M120 144L194 176M120 284L194 176M120 284L168 292M212 96L194 176M286 172L194 176" fill="none" stroke="#dbeafe" stroke-opacity=".72" stroke-width="6" stroke-linecap="round"/>
+  </g>
 </svg>

@@ -1,28 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+<svg width="192" height="192" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="shell192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#05070d"/>
-      <stop offset="100%" stop-color="#111722"/>
+    <linearGradient id="tileFill192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
     </linearGradient>
-    <linearGradient id="line192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cfe7ff"/>
-      <stop offset="100%" stop-color="#f7fbff"/>
+    <linearGradient id="tileEdge192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c7d2fe"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
     </linearGradient>
-    <linearGradient id="accent192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#26d7ff"/>
-      <stop offset="100%" stop-color="#1195f3"/>
+    <linearGradient id="facetA192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6b8aff"/>
+    </linearGradient>
+    <linearGradient id="facetB192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="facetC192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="facetD192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#312e81"/>
     </linearGradient>
   </defs>
-  <rect width="192" height="192" rx="44" fill="url(#shell192)"/>
-  <rect x="20" y="20" width="152" height="152" rx="32" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
-  <path
-    d="M96 36 120 51 120 69 107 69 96 54 85 69 72 69 72 51Z
-       M55 64 79 64 89 80 80 94 67 85 58 100 67 115 80 106 89 120 79 136 55 136 41 112 50 99 41 86Z
-       M137 64 151 86 142 99 151 112 137 136 113 136 103 120 112 106 125 115 134 100 125 85 112 94 103 80 113 64Z
-       M83 89 96 79 109 89 102 101 96 92 90 101Z
-       M84 108 96 128 108 108 102 101 96 111 90 101Z"
-    fill="url(#line192)"
-  />
-  <path d="M96 79 109 92 83 92Z" fill="url(#accent192)"/>
-  <path d="M42 38h6v34h-6zm11 0h6v46h-6zm11 0h6v28h-6z" fill="url(#accent192)"/>
+  <rect x="56" y="56" width="400" height="400" rx="112" fill="url(#tileFill192)" stroke="url(#tileEdge192)" stroke-width="10"/>
+  <g transform="translate(96 76)">
+    <polygon points="40,94 106,42 120,144 62,176" fill="url(#facetA192)"/>
+    <polygon points="120,144 164,110 194,176 142,220" fill="url(#facetB192)"/>
+    <polygon points="106,42 182,18 212,96 120,144" fill="url(#facetC192)"/>
+    <polygon points="212,96 284,48 286,172 194,176" fill="url(#facetA192)"/>
+    <polygon points="62,176 120,144 120,284 60,318" fill="url(#facetD192)"/>
+    <polygon points="120,144 194,176 168,292 120,284" fill="url(#facetA192)"/>
+    <polygon points="194,176 286,172 288,298 204,324" fill="url(#facetB192)"/>
+    <polygon points="60,318 120,284 120,372 52,410" fill="url(#facetB192)"/>
+    <polygon points="120,284 168,292 170,384 120,372" fill="url(#facetC192)"/>
+    <polygon points="204,324 288,298 288,404 220,430" fill="url(#facetD192)"/>
+    <polygon points="286,172 332,136 334,234 298,258" fill="url(#facetC192)"/>
+    <path d="M120 144L194 176M120 284L194 176M120 284L168 292M212 96L194 176M286 172L194 176" fill="none" stroke="#dbeafe" stroke-opacity=".72" stroke-width="6" stroke-linecap="round"/>
+  </g>
 </svg>
