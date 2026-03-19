@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const BOOT_SEQUENCE = [
-  { id: 'boot-1', label: 'INICIALIZANDO NEXUS 10 ERP', accent: 'danger' },
+  { id: 'boot-1', label: 'INICIALIZANDO NEXUS', accent: 'danger' },
   { id: 'boot-2', label: 'CARREGANDO MODULOS OPERACIONAIS', accent: 'info' },
   { id: 'boot-3', label: 'SERVICO DE ACESSO PRONTO', accent: 'success' },
   { id: 'boot-4', label: 'PAINEL PRINCIPAL LIBERADO', accent: 'special' },
@@ -115,7 +115,7 @@ function SystemBoot({ onComplete }) {
           <div className="system-boot__brand">
             <img src="/brand-bolt-red.svg" alt="" className="system-boot__brand-mark" />
             <div>
-              <strong>Nexus 10 ERP</strong>
+              <strong>NEXUS</strong>
               <span>ERP operacional em tempo real</span>
             </div>
           </div>

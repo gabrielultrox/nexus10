@@ -36,16 +36,15 @@ function SalesPage() {
     <div className="workspace-shell workspace-shell--sales">
       <section className="workspace-header">
         <div className="workspace-header__copy">
-          <p className="workspace-header__eyebrow">Vendas</p>
           <h2 className="workspace-header__title">
             {viewMode === 'create' ? 'Nova venda' : viewMode === 'detail' ? 'Detalhe da venda' : 'Lista de vendas'}
           </h2>
           <p className="workspace-header__description">
             {viewMode === 'create'
-              ? 'Lance uma venda em uma tela dedicada, com formulario completo e leitura operacional mais clara.'
+              ? 'Lance uma venda e feche com rapidez.'
               : viewMode === 'detail'
-                ? 'Consulte a venda selecionada em uma tela exclusiva, com status, totais e efeitos publicados.'
-                : 'Acompanhe vendas reais em uma tela dedicada, com filtros claros e acesso rapido ao detalhe.'}
+                ? 'Resumo executivo da venda selecionada.'
+                : 'Operacao comercial em tempo real.'}
           </p>
         </div>
 

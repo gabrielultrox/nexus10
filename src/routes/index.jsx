@@ -3,6 +3,7 @@ import { Navigate, useRoutes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute';
+import EmptyState from '../components/ui/EmptyState';
 import { routeDefinitions } from '../utils/routeCatalog';
 
 const MainLayout = lazy(() => import('../components/layout/MainLayout'));
@@ -30,11 +31,8 @@ const salesRoute = routeDefinitions.find((route) => route.path === 'sales');
 
 function RouteLoader() {
   return (
-    <div className="page-stack">
-      <div className="native-module__empty-state">
-        <p className="text-section-title">Carregando modulo</p>
-        <p className="text-body">Preparando a tela e os dados desta area.</p>
-      </div>
+    <div className="page-stack page-stack--loading">
+      <EmptyState message="Carregando area" />
     </div>
   );
 }

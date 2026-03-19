@@ -672,6 +672,11 @@ body::after {
   max-width: 100%;
 }
 
+.page-stack--loading {
+  min-height: 220px;
+  justify-content: center;
+}
+
 .page-stack > * {
   animation: rise-in 540ms both;
   min-width: 0;

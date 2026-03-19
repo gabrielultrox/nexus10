@@ -17,7 +17,7 @@ function NativeModuleExportCanvases({
           <div ref={scheduleImageRef} className="schedule-export-image__canvas">
             <header className="schedule-export-image__header">
               <div>
-                <span className="schedule-export-image__eyebrow">Nexus 10 ERP</span>
+            <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Escala do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -74,7 +74,7 @@ function NativeModuleExportCanvases({
           >
             <header className="schedule-export-image__header">
               <div>
-                <span className="schedule-export-image__eyebrow">Nexus 10 ERP</span>
+            <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Maquininhas usadas no dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -142,7 +142,7 @@ function NativeModuleExportCanvases({
           >
             <header className="schedule-export-image__header">
               <div>
-                <span className="schedule-export-image__eyebrow">Nexus 10 ERP</span>
+            <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Maquininhas presentes do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>

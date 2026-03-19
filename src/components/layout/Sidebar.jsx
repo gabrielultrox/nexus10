@@ -16,7 +16,7 @@ function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar__brand">
         <img src="/brand-bolt-red.svg" alt="" className="sidebar__logo-mark" />
-        <strong className="sidebar__title">Nexus 10</strong>
+        <strong className="sidebar__title">NEXUS</strong>
       </div>
 
       <nav className="sidebar__nav" aria-label="Navegacao principal">

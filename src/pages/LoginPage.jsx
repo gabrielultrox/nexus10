@@ -122,8 +122,8 @@ function LoginPage() {
         <div className="auth-sequence__chrome-brand">
           <img src="/brand-bolt-red.svg" alt="" />
           <div>
-            <strong>Nexus 10 ERP</strong>
-            <small>Operacao em tempo real</small>
+            <strong>NEXUS</strong>
+            <small>ERP operacional</small>
           </div>
         </div>
         <ThemeToggle />

@@ -39,7 +39,6 @@ function OrdersPage() {
     <div className="workspace-shell workspace-shell--orders">
       <section className="workspace-header">
         <div className="workspace-header__copy">
-          <p className="workspace-header__eyebrow">Pedidos</p>
           <h2 className="workspace-header__title">
             {viewMode === 'create'
               ? 'Novo pedido'
@@ -51,12 +50,12 @@ function OrdersPage() {
           </h2>
           <p className="workspace-header__description">
             {viewMode === 'create'
-              ? 'Monte um pedido em uma tela dedicada, com formulario completo e leitura mais limpa.'
+              ? 'Monte os itens e conclua o lancamento.'
               : viewMode === 'edit'
-                ? 'Atualize o pedido em uma tela separada, sem dividir espaco com a listagem.'
+                ? 'Revise itens, totais e status.'
                 : viewMode === 'detail'
-                  ? 'Consulte o pedido selecionado em uma tela exclusiva, com acoes e dados organizados.'
-                  : 'Acompanhe pedidos operacionais em uma tela dedicada, com busca clara e acesso direto ao detalhe.'}
+                  ? 'Resumo executivo do pedido selecionado.'
+                  : 'Fila operacional de pedidos.'}
           </p>
         </div>
 
