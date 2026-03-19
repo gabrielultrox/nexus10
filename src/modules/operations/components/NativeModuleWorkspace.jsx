@@ -570,8 +570,6 @@ function NativeModuleWorkspace({ route }) {
           label: 'Total maquininhas',
           value: String(machineChecklistRecords.length).padStart(2, '0'),
           meta: 'base cadastrada para o turno',
-          badgeText: 'parque',
-          badgeClass: 'ui-badge--info',
         },
         {
           label: 'Presentes hoje',
