@@ -341,6 +341,21 @@ function CashModule() {
   const openingBlockedMessage = activeTab.id === 'opening' && isCashOpen
     ? `O caixa ja foi aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cashState.openedAt))}. Use as outras operacoes ou siga para o fechamento.`
     : '';
+  const activeTabGuardrailMessage = useMemo(() => {
+    if (!isCashOpen && activeTab.id === 'opening') {
+      return 'Abra o caixa com um valor inicial para liberar sangria, suprimento, retirada e fechamento.';
+    }
+
+    if (activeTab.id === 'closing' && pendingCount > 0) {
+      return `Resolva ${pendingCount} pendencia(s) antes de fechar o caixa.`;
+    }
+
+    if (activeTab.id === 'courier-withdrawal' && courierOptions.length === 0) {
+      return 'Cadastre entregadores validos antes de registrar retiradas no caixa.';
+    }
+
+    return '';
+  }, [activeTab.id, courierOptions.length, isCashOpen, pendingCount]);
 
   useEffect(() => {
     if (!isCashOpen && activeTab.id !== 'opening') {
@@ -699,6 +714,7 @@ function CashModule() {
       <SurfaceCard title={activeTab.title}>
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
         {openingBlockedMessage ? <div className="cash-module__inline-warning">{openingBlockedMessage}</div> : null}
+        {activeTabGuardrailMessage ? <div className="cash-module__inline-state">{activeTabGuardrailMessage}</div> : null}
         {syncMessage ? <div className="cash-module__sync-note">{syncMessage}</div> : null}
 
         <form className={`cash-module__form cash-module__form--${activeTab.id}`} onSubmit={handleSubmit}>
@@ -728,6 +744,7 @@ function CashModule() {
                     id="cash-courier"
                     className="ui-select"
                     value={selectedCourier}
+                    disabled={courierOptions.length === 0}
                     onChange={(event) => setSelectedCourier(event.target.value)}
                   >
                     <option value="">Selecione o entregador</option>
@@ -779,7 +796,22 @@ function CashModule() {
               <button
                 type="submit"
                 className="ui-button ui-button--primary"
-                disabled={isSaving || (activeTab.id !== 'opening' && !isCashOpen) || (activeTab.id === 'opening' && isCashOpen)}
+                disabled={
+                  isSaving
+                  || (activeTab.id !== 'opening' && !isCashOpen)
+                  || (activeTab.id === 'opening' && isCashOpen)
+                  || (activeTab.id === 'closing' && pendingCount > 0)
+                  || (activeTab.id === 'courier-withdrawal' && courierOptions.length === 0)
+                }
+                title={
+                  activeTab.id === 'opening' && isCashOpen
+                    ? 'O caixa ja foi aberto para este turno'
+                    : activeTab.id === 'closing' && pendingCount > 0
+                      ? `Resolva ${pendingCount} pendencia(s) antes de fechar o caixa`
+                    : activeTab.id === 'courier-withdrawal' && courierOptions.length === 0
+                      ? 'Cadastre entregadores antes de registrar retiradas'
+                      : undefined
+                }
               >
                 {activeTab.submitLabel}
               </button>

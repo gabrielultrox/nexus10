@@ -132,6 +132,8 @@ function NativeModuleFormCard({
   isSubmitting = false,
   focusFieldKey = 0,
   invalidFieldName = '',
+  noticeMessage = '',
+  submitDisabledReason = '',
 }) {
   const formRef = useRef(null)
   const deliveryCodeInputRef = useRef(null)
@@ -172,6 +174,12 @@ function NativeModuleFormCard({
           <div className="native-module__form-copy">
             <span className="ui-badge ui-badge--info">{recordsLength} registros do dia</span>
           </div>
+
+          {noticeMessage ? (
+            <div className="native-module__inline-guardrail" role="status">
+              {noticeMessage}
+            </div>
+          ) : null}
 
           <form
             className="native-module__delivery-form"
@@ -240,7 +248,8 @@ function NativeModuleFormCard({
               <button
                 type="submit"
                 className="ui-button ui-button--primary native-module__delivery-submit"
-                disabled={isSubmitting || codeValue.trim().length === 0}
+                disabled={isSubmitting || codeValue.trim().length === 0 || Boolean(submitDisabledReason)}
+                title={submitDisabledReason || undefined}
               >
                 {isSubmitting ? (
                   <>
@@ -264,6 +273,12 @@ function NativeModuleFormCard({
         <div className="native-module__form-copy">
           <span className="ui-badge ui-badge--info">{recordsLength} registros do dia</span>
         </div>
+
+        {noticeMessage ? (
+          <div className="native-module__inline-guardrail" role="status">
+            {noticeMessage}
+          </div>
+        ) : null}
 
         <form
           ref={formRef}
@@ -290,7 +305,12 @@ function NativeModuleFormCard({
                 Cancelar
               </button>
             ) : null}
-            <button type="submit" className="ui-button ui-button--secondary">
+            <button
+              type="submit"
+              className="ui-button ui-button--secondary"
+              disabled={Boolean(submitDisabledReason)}
+              title={submitDisabledReason || undefined}
+            >
               {manager.submitLabel}
             </button>
           </div>

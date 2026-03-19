@@ -44,6 +44,21 @@ import NativeModuleStatusBar from './NativeModuleStatusBar';
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/;
 const DELIVERY_READING_LAST_COURIER_KEY = 'leitura_last_entregador';
 
+function isPlaceholderOption(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+
+  return (
+    !normalized
+    || normalized.includes('cadastre')
+    || normalized.includes('selecione')
+    || normalized.includes('primeiro')
+  );
+}
+
+function hasValidOptions(options = []) {
+  return options.some((option) => !isPlaceholderOption(option));
+}
+
 function buildInitialFormState(config) {
   if (!config) {
     return {};
@@ -284,7 +299,7 @@ function getActiveScheduleCouriers() {
 }
 
 function getPreferredDeliveryCourier(options) {
-  const validOptions = options.filter((option) => option && !option.toLowerCase().includes('cadastre'));
+  const validOptions = options.filter((option) => !isPlaceholderOption(option));
 
   if (validOptions.length === 0) {
     return '';
@@ -390,6 +405,7 @@ function NativeModuleWorkspace({ route }) {
   const scheduleImageRef = useRef(null);
   const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
+  const invalidFieldTimeoutRef = useRef(null);
 
   useEffect(() => {
     setPendingSyncCount(getManualModulePendingCount(syncModulePaths));
@@ -502,6 +518,12 @@ function NativeModuleWorkspace({ route }) {
     setFreshRecordId(null);
     setInvalidFieldName('');
   }, [manager, managerWithResolvedFields, route.path]);
+
+  useEffect(() => () => {
+    if (invalidFieldTimeoutRef.current) {
+      window.clearTimeout(invalidFieldTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (!manager) {
@@ -870,6 +892,33 @@ function NativeModuleWorkspace({ route }) {
 
     return Array.from(groupedMachines.values()).sort((left, right) => left.device.localeCompare(right.device, 'pt-BR'));
   }, [route.path, visibleRecords]);
+  const deliveryReadingCourierOptions = useMemo(
+    () => managerWithResolvedFields?.fields.find((field) => field.name === 'courier')?.options ?? [],
+    [managerWithResolvedFields],
+  );
+  const changeDestinationOptions = useMemo(
+    () => managerWithResolvedFields?.fields.find((field) => field.name === 'destination')?.options ?? [],
+    [managerWithResolvedFields],
+  );
+  const scheduleCourierOptions = useMemo(
+    () => managerWithResolvedFields?.fields.find((field) => field.name === 'courier')?.options ?? [],
+    [managerWithResolvedFields],
+  );
+  const formNoticeMessage = useMemo(() => {
+    if (route.path === 'delivery-reading' && !hasValidOptions(deliveryReadingCourierOptions)) {
+      return 'Cadastre ou escale pelo menos um entregador valido antes de registrar leituras.';
+    }
+
+    if (route.path === 'change' && !hasValidOptions(changeDestinationOptions)) {
+      return 'Cadastre entregadores validos antes de liberar trocos no turno.';
+    }
+
+    if (route.path === 'schedule' && !hasValidOptions(scheduleCourierOptions)) {
+      return 'Cadastre entregadores validos antes de montar a escala do dia.';
+    }
+
+    return '';
+  }, [changeDestinationOptions, deliveryReadingCourierOptions, route.path, scheduleCourierOptions]);
 
   const syncModeLabel = pendingSyncCount > 0
     ? 'Pendente'
@@ -970,6 +1019,20 @@ function NativeModuleWorkspace({ route }) {
     }
 
     setFormValues(buildInitialFormState(managerWithResolvedFields));
+  }
+
+  function markDeliveryCodeInvalid() {
+    setInvalidFieldName('deliveryCode');
+    setFocusFieldKey((current) => current + 1);
+
+    if (invalidFieldTimeoutRef.current) {
+      window.clearTimeout(invalidFieldTimeoutRef.current);
+    }
+
+    invalidFieldTimeoutRef.current = window.setTimeout(() => {
+      setInvalidFieldName('');
+      invalidFieldTimeoutRef.current = null;
+    }, 2000);
   }
 
   function refreshPendingSyncCount() {
@@ -1237,9 +1300,44 @@ function NativeModuleWorkspace({ route }) {
 
     if (route.path === 'delivery-reading' && !String(formValues.deliveryCode ?? '').trim()) {
       setErrorMessage('Informe o codigo da entrega.');
-      setInvalidFieldName('deliveryCode');
-      setFocusFieldKey((current) => current + 1);
+      markDeliveryCodeInvalid();
       toast.error('Informe o codigo da entrega.');
+      playError();
+      return;
+    }
+
+    if (route.path === 'delivery-reading') {
+      const deliveryCode = String(formValues.deliveryCode ?? '').trim();
+      const selectedCourier = String(formValues.courier ?? '').trim();
+      const alreadyRegistered = records.some((record) => String(record.deliveryCode ?? '').trim() === deliveryCode);
+
+      if (isPlaceholderOption(selectedCourier)) {
+        setErrorMessage('Selecione um entregador valido para registrar a leitura.');
+        markDeliveryCodeInvalid();
+        toast.error('Selecione um entregador valido.');
+        playError();
+        return;
+      }
+
+      if (alreadyRegistered) {
+        setErrorMessage(`O codigo ${deliveryCode} ja foi registrado neste turno.`);
+        markDeliveryCodeInvalid();
+        toast.error(`Codigo ${deliveryCode} ja registrado.`);
+        playError();
+        return;
+      }
+    }
+
+    if (route.path === 'change' && isPlaceholderOption(formValues.destination)) {
+      setErrorMessage('Selecione um entregador valido para liberar o troco.');
+      toast.error('Selecione um entregador valido.');
+      playError();
+      return;
+    }
+
+    if (route.path === 'schedule' && isPlaceholderOption(formValues.courier)) {
+      setErrorMessage('Selecione um entregador valido para montar a escala.');
+      toast.error('Selecione um entregador valido.');
       playError();
       return;
     }
@@ -1274,6 +1372,7 @@ function NativeModuleWorkspace({ route }) {
         setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier));
         setFreshRecordId(newRecord.id);
         setFocusFieldKey((current) => current + 1);
+        setInvalidFieldName('');
         toast.success(`Leitura registrada - codigo ${newRecord.deliveryCode}`);
       } else {
         setFormValues(buildInitialFormState(managerWithResolvedFields));
@@ -1292,8 +1391,7 @@ function NativeModuleWorkspace({ route }) {
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel salvar o registro.');
       if (route.path === 'delivery-reading') {
-        setInvalidFieldName('deliveryCode');
-        setFocusFieldKey((current) => current + 1);
+        markDeliveryCodeInvalid();
         toast.error(error.message ?? 'Nao foi possivel registrar a leitura.');
       }
       playError();
@@ -1891,6 +1989,8 @@ function NativeModuleWorkspace({ route }) {
         isSubmitting={isSubmitting}
         focusFieldKey={focusFieldKey}
         invalidFieldName={invalidFieldName}
+        noticeMessage={formNoticeMessage}
+        submitDisabledReason={formNoticeMessage}
       />
 
       {!manager ? (

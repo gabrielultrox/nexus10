@@ -77,6 +77,16 @@
   line-height: 1.5;
 }
 
+.cash-module__inline-state {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--bg-elevated));
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .cash-module__form {
   display: grid;
   gap: var(--space-3);

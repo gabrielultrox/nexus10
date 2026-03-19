@@ -607,6 +607,16 @@ function NativeModuleSchedule({
   )
 }
 
+function getReturnActionStateLabel(record) {
+  const normalized = String(record?.status ?? '').trim().toLowerCase()
+
+  if (normalized.includes('conclu') || normalized.includes('retorn') || normalized.includes('recebid')) {
+    return 'Retorno concluido'
+  }
+
+  return ''
+}
+
 function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confirmedCount, totalCount, exitingIds }) {
   const allConfirmed = totalCount > 0 && confirmedCount === totalCount
 
@@ -767,14 +777,19 @@ function NativeModuleTable({
                       </button>
                     ) : null}
                     {manager.returnActionLabel && canShowReturnAction(record) ? (
-                        <button
-                          type="button"
-                          className="native-module__return-action"
+                      <button
+                        type="button"
+                        className="native-module__return-action"
                         disabled={exitingIds.has(record.id)}
                         onClick={() => onMarkReturned(record.id)}
                       >
                         {manager.returnActionLabel}
                       </button>
+                    ) : null}
+                    {manager.returnActionLabel && !canShowReturnAction(record) ? (
+                      <span className="native-module__action-state-label">
+                        {getReturnActionStateLabel(record)}
+                      </span>
                     ) : null}
                     {manager.allowDelete !== false ? (
                       <button

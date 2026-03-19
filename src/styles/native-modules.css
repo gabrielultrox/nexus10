@@ -2711,6 +2711,16 @@
   animation: native-module-spinner 0.8s linear infinite;
 }
 
+.native-module__inline-guardrail {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--warning) 22%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warning) 8%, var(--bg-elevated));
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @keyframes native-module-spinner {
   to {
     transform: rotate(360deg);
@@ -2931,6 +2941,13 @@
 
 .native-module__return-action:active {
   transform: scale(0.97);
+}
+
+.native-module__action-state-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .native-module__delete-action {
