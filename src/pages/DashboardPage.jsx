@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import '../styles/dashboard.css';
 
@@ -21,6 +22,7 @@ function formatDateInputValue(date) {
 }
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const { currentStoreId } = useStore();
   const [period, setPeriod] = useState(() => getDefaultDashboardPeriod());
   const [sales, setSales] = useState([]);
@@ -137,6 +139,21 @@ function DashboardPage() {
         />
 
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+
+        {operations.reminders?.map((reminder) => (
+          <button
+            key={reminder.id}
+            type="button"
+            className={`dashboard-alert dashboard-alert--${reminder.type}`}
+            onClick={() => reminder.route && navigate(reminder.route)}
+          >
+            <span className="dashboard-alert__dot" aria-hidden="true" />
+            <div className="dashboard-alert__copy">
+              <strong>{reminder.title}</strong>
+              <span>{reminder.message}</span>
+            </div>
+          </button>
+        ))}
 
         <DashboardKpiGrid items={kpis} />
         <DashboardCharts charts={charts} />

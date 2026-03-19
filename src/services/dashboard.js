@@ -129,6 +129,13 @@ function getStatusBadgeClass(status) {
   return 'ui-badge--success';
 }
 
+function shouldHighlightAdvanceReminder(now = new Date()) {
+  const start = new Date(now)
+  start.setHours(22, 30, 0, 0)
+
+  return now >= start
+}
+
 function buildDailySalesSeries(sales, startDate, endDate) {
   const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date();
   const end = endDate ? new Date(`${endDate}T23:59:59`) : new Date();
@@ -298,6 +305,7 @@ export function buildDashboardData({
   const openOccurrences = operations.occurrenceRecords.filter((record) => record.status !== 'Resolvida' && record.status !== 'Fechada').length;
   const uncheckedMachines = operations.machineChecklist.filter((record) => record.status !== 'Presente').length;
   const isSingleDay = startDate === endDate;
+  const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder();
 
   return {
     kpis: [
@@ -391,6 +399,15 @@ export function buildDashboardData({
       },
     },
     operations: {
+      reminders: shouldShowAdvancesReminder ? [
+        {
+          id: 'advances-open',
+          type: 'warning',
+          title: openAdvances === 1 ? 'Existe 1 vale em aberto' : `Existem ${formatInteger(openAdvances)} vales em aberto`,
+          message: 'Desconte do entregador antes do fechamento do turno.',
+          route: '/advances',
+        },
+      ] : [],
       activeShift: activeCouriers.slice(0, 5).map((record) => ({
         id: record.id,
         name: record.courier,

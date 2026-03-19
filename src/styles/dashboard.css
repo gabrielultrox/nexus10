@@ -422,6 +422,43 @@
   gap: var(--space-3);
 }
 
+.dashboard-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warning) 6%, var(--bg-surface));
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-alert__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--warning);
+}
+
+.dashboard-alert__copy {
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-alert__copy strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-alert__copy span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .dashboard-kpi-grid .ui-kpi-card {
   min-height: 0;
 }
