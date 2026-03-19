@@ -139,10 +139,10 @@
 }
 
 .system-boot__brand-mark {
-  width: 20px;
+  width: 28px;
   height: 28px;
   object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(107, 138, 255, 0.34));
+  filter: drop-shadow(0 0 18px rgba(168, 85, 247, 0.3));
 }
 
 .system-boot__brand strong,
@@ -307,10 +307,10 @@
 }
 
 .system-boot__copy-mark-icon {
-  width: 34px;
+  width: 40px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 18px rgba(107, 138, 255, 0.38));
+  filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.34));
   animation: system-boot-bolt 2.4s ease-in-out infinite;
 }
 

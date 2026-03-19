@@ -1,43 +1,81 @@
-<svg width="192" height="192" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Nexus 10</title>
+  <desc id="desc">Logo do Nexus 10 com base arredondada translúcida e símbolo geométrico violeta com conexões luminosas.</desc>
   <defs>
-    <linearGradient id="tileFill192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#eef2ff"/>
+    <radialGradient id="outerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(210 210)">
+      <stop offset="0" stop-color="#A855F7" stop-opacity="0.52"/>
+      <stop offset="0.42" stop-color="#7C3AED" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tileGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 230) rotate(90) scale(190 185)">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#C4B5FD" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.02"/>
+    </radialGradient>
+    <linearGradient id="tileFill" x1="128" y1="96" x2="384" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#F8FAFC" stop-opacity="0.12"/>
     </linearGradient>
-    <linearGradient id="tileEdge192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#c7d2fe"/>
-      <stop offset="100%" stop-color="#93c5fd"/>
+    <linearGradient id="tileStroke" x1="144" y1="104" x2="380" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#E9D5FF" stop-opacity="0.54"/>
     </linearGradient>
-    <linearGradient id="facetA192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#6b8aff"/>
+    <linearGradient id="shapeA" x1="170" y1="188" x2="248" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#4C1D95"/>
     </linearGradient>
-    <linearGradient id="facetB192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#4f46e5"/>
+    <linearGradient id="shapeB" x1="228" y1="152" x2="360" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#5B21B6"/>
     </linearGradient>
-    <linearGradient id="facetC192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#4338ca"/>
+    <linearGradient id="shapeC" x1="300" y1="158" x2="376" y2="276" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6D28D9"/>
     </linearGradient>
-    <linearGradient id="facetD192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="100%" stop-color="#312e81"/>
+    <linearGradient id="shapeD" x1="296" y1="214" x2="384" y2="342" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#5B21B6"/>
     </linearGradient>
+    <linearGradient id="linkStroke" x1="156" y1="286" x2="360" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#A78BFA"/>
+    </linearGradient>
+    <filter id="softBlur" x="74" y="42" width="364" height="428" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
   </defs>
-  <rect x="56" y="56" width="400" height="400" rx="112" fill="url(#tileFill192)" stroke="url(#tileEdge192)" stroke-width="10"/>
-  <g transform="translate(96 76)">
-    <polygon points="40,94 106,42 120,144 62,176" fill="url(#facetA192)"/>
-    <polygon points="120,144 164,110 194,176 142,220" fill="url(#facetB192)"/>
-    <polygon points="106,42 182,18 212,96 120,144" fill="url(#facetC192)"/>
-    <polygon points="212,96 284,48 286,172 194,176" fill="url(#facetA192)"/>
-    <polygon points="62,176 120,144 120,284 60,318" fill="url(#facetD192)"/>
-    <polygon points="120,144 194,176 168,292 120,284" fill="url(#facetA192)"/>
-    <polygon points="194,176 286,172 288,298 204,324" fill="url(#facetB192)"/>
-    <polygon points="60,318 120,284 120,372 52,410" fill="url(#facetB192)"/>
-    <polygon points="120,284 168,292 170,384 120,372" fill="url(#facetC192)"/>
-    <polygon points="204,324 288,298 288,404 220,430" fill="url(#facetD192)"/>
-    <polygon points="286,172 332,136 334,234 298,258" fill="url(#facetC192)"/>
-    <path d="M120 144L194 176M120 284L194 176M120 284L168 292M212 96L194 176M286 172L194 176" fill="none" stroke="#dbeafe" stroke-opacity=".72" stroke-width="6" stroke-linecap="round"/>
+
+  <g filter="url(#softBlur)">
+    <rect x="144" y="112" width="224" height="288" rx="54" fill="url(#outerGlow)"/>
+  </g>
+
+  <rect x="106" y="78" width="300" height="356" rx="66" fill="url(#tileFill)"/>
+  <rect x="106.75" y="78.75" width="298.5" height="354.5" rx="65.25" stroke="url(#tileStroke)" stroke-width="1.5"/>
+  <rect x="128" y="100" width="256" height="312" rx="56" fill="url(#tileGlow)"/>
+
+  <g>
+    <path d="M174 208L228 170V334L170 366V248L174 208Z" fill="url(#shapeA)"/>
+    <path d="M192 194L248 150L248 264L228 286L192 246V194Z" fill="url(#shapeB)"/>
+    <path d="M248 150L340 246V334L248 246V150Z" fill="url(#shapeB)"/>
+    <path d="M300 190L370 160L370 250L330 318L300 286V190Z" fill="url(#shapeC)"/>
+    <path d="M300 218L370 180L370 318L300 246V218Z" fill="url(#shapeD)"/>
+    <path d="M248 246L326 324L286 352L248 312V246Z" fill="url(#shapeA)"/>
+  </g>
+
+  <g stroke="url(#linkStroke)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M176 288L230 262"/>
+    <path d="M230 180V262"/>
+    <path d="M230 262L308 236"/>
+    <path d="M308 236V338"/>
+    <path d="M308 236L370 198"/>
+  </g>
+
+  <g>
+    <circle cx="230" cy="262" r="19" fill="#FFFFFF"/>
+    <circle cx="308" cy="236" r="16" fill="#FFFFFF"/>
+    <circle cx="176" cy="288" r="16" fill="#7C3AED"/>
+    <circle cx="230" cy="180" r="16" fill="#8B5CF6"/>
+    <circle cx="308" cy="338" r="16" fill="#6D28D9"/>
+    <circle cx="370" cy="198" r="16" fill="#8B5CF6"/>
   </g>
 </svg>

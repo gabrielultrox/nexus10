@@ -104,14 +104,12 @@ body::after {
 }
 
 .sidebar__logo-mark {
-  width: var(--space-6);
-  height: var(--space-6);
+  width: 28px;
+  height: 28px;
   display: block;
   object-fit: contain;
   flex-shrink: 0;
-  filter: drop-shadow(
-    0 0 var(--space-1) color-mix(in srgb, var(--accent) 24%, transparent)
-  );
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.24));
 }
 
 .sidebar__title {
@@ -1093,9 +1091,9 @@ body::after {
 }
 
 .sidebar__logo-mark {
-  width: 20px;
-  height: 20px;
-  filter: none;
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.22));
 }
 
 .sidebar__title {
