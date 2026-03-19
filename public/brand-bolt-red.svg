@@ -1,72 +1,36 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Nexus 10</title>
-  <desc id="desc">Icone do Nexus em quadrado arredondado branco com monograma geometrico em forma de N.</desc>
+  <title id="title">Nexus</title>
+  <desc id="desc">Logo minimalista do Nexus com monograma em N dentro de um quadrado arredondado.</desc>
   <defs>
-    <linearGradient id="tileBorder" x1="112" y1="92" x2="400" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F7F2FF"/>
-      <stop offset="1" stop-color="#DDD2FF"/>
+    <linearGradient id="tileBorder" x1="120" y1="96" x2="392" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EDE9FE"/>
+      <stop offset="1" stop-color="#C4B5FD"/>
     </linearGradient>
-    <linearGradient id="markPrimary" x1="142" y1="410" x2="388" y2="146" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2A0B6E"/>
-      <stop offset="0.5" stop-color="#6C1DFF"/>
-      <stop offset="1" stop-color="#A97BFF"/>
+    <linearGradient id="markGradient" x1="168" y1="356" x2="344" y2="164" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4C1D95"/>
+      <stop offset="0.52" stop-color="#6D28D9"/>
+      <stop offset="1" stop-color="#A78BFA"/>
     </linearGradient>
-    <linearGradient id="markSecondary" x1="164" y1="400" x2="402" y2="150" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3A118C"/>
-      <stop offset="0.48" stop-color="#7A2BFF"/>
-      <stop offset="1" stop-color="#B28CFF"/>
-    </linearGradient>
-    <linearGradient id="connector" x1="154" y1="354" x2="402" y2="210" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E9DEFF"/>
-      <stop offset="1" stop-color="#F6F2FF"/>
-    </linearGradient>
-    <filter id="tileGlow" x="16" y="16" width="480" height="480" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <filter id="outerGlow" x="40" y="40" width="432" height="432" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-      <feGaussianBlur stdDeviation="28" result="effect1_foregroundBlur_1_1"/>
-    </filter>
-    <filter id="innerShadow" x="58" y="58" width="396" height="396" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="8"/>
-      <feGaussianBlur stdDeviation="16"/>
-      <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.462745 0 0 0 0 0.27451 0 0 0 0 1 0 0 0 0.22 0"/>
-      <feBlend mode="normal" in2="shape" result="effect1_innerShadow_1_1"/>
+      <feGaussianBlur stdDeviation="18" result="effect1_foregroundBlur_1_1"/>
     </filter>
   </defs>
 
-  <g filter="url(#tileGlow)">
-    <rect x="94" y="94" width="324" height="324" rx="76" fill="#A56BFF" fill-opacity="0.22"/>
+  <g filter="url(#outerGlow)">
+    <rect x="112" y="112" width="288" height="288" rx="72" fill="#8B5CF6" fill-opacity="0.12"/>
   </g>
 
-  <g filter="url(#innerShadow)">
-    <rect x="76" y="76" width="360" height="360" rx="84" fill="#FFFFFF"/>
-    <rect x="77.5" y="77.5" width="357" height="357" rx="82.5" stroke="url(#tileBorder)" stroke-width="3"/>
-  </g>
+  <rect x="96" y="96" width="320" height="320" rx="80" fill="#FFFFFF"/>
+  <rect x="98" y="98" width="316" height="316" rx="78" stroke="url(#tileBorder)" stroke-width="4"/>
 
-  <g>
-    <path d="M147 332L219 292V413L147 449V332Z" fill="url(#markPrimary)"/>
-    <path d="M147 198L224 143L304 214L228 270L147 198Z" fill="url(#markSecondary)"/>
-    <path d="M224 270L304 214L304 360L224 292V270Z" fill="url(#markPrimary)"/>
-    <path d="M304 214L406 164V340L304 360V214Z" fill="url(#markSecondary)"/>
-    <path d="M333 177L408 136L380 198L408 188L333 231V177Z" fill="url(#markSecondary)"/>
-    <path d="M304 214L406 340L348 386L304 360V214Z" fill="url(#markPrimary)"/>
+  <path d="M176 340V172" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M176 172L336 340" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M336 340V172" stroke="url(#markGradient)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <path d="M203 147V257" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M146 332L224 256" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M147 199L224 256" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M224 256L333 214" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M333 214L404 225" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M333 214V420" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-    <path d="M333 214L405 339" stroke="url(#connector)" stroke-width="9" stroke-linecap="round"/>
-
-    <circle cx="147" cy="332" r="13" fill="#6E2AE8"/>
-    <circle cx="203" cy="147" r="13" fill="#8854F4"/>
-    <circle cx="224" cy="256" r="18" fill="#FFFFFF"/>
-    <circle cx="333" cy="214" r="18" fill="#FFFFFF"/>
-    <circle cx="404" cy="225" r="13" fill="#8B60F7"/>
-    <circle cx="333" cy="420" r="13" fill="#6823E0"/>
-  </g>
+  <circle cx="176" cy="172" r="11" fill="#8B5CF6"/>
+  <circle cx="176" cy="340" r="11" fill="#6D28D9"/>
+  <circle cx="336" cy="172" r="11" fill="#A78BFA"/>
+  <circle cx="336" cy="340" r="11" fill="#7C3AED"/>
 </svg>
