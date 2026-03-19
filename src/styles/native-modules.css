@@ -2901,12 +2901,7 @@
 }
 
 .native-module__actions-cell--delivery-reading {
-  min-width: 32px;
-  opacity: 0;
-}
-
-.ui-table tbody tr:hover .native-module__actions-cell--delivery-reading,
-.ui-table tbody tr:focus-within .native-module__actions-cell--delivery-reading {
+  min-width: 156px;
   opacity: 1;
 }
 
