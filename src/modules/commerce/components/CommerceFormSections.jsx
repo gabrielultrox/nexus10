@@ -215,19 +215,25 @@ function ProductPickerDialog({
       return
     }
 
-    const selectedIndex = Math.max(
-      filteredProducts.findIndex((product) => product.id === selectedProductId),
-      0,
-    )
-
-    setActiveIndex(selectedIndex)
-
     const nextFrame = window.requestAnimationFrame(() => {
       searchRef.current?.focus()
       searchRef.current?.select?.()
     })
 
     return () => window.cancelAnimationFrame(nextFrame)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const selectedIndex = Math.max(
+      filteredProducts.findIndex((product) => product.id === selectedProductId),
+      0,
+    )
+
+    setActiveIndex(selectedIndex)
   }, [filteredProducts, open, selectedProductId])
 
   useEffect(() => {
