@@ -1331,14 +1331,14 @@ function NativeModuleWorkspace({ route }) {
     if (route.path === 'change' && isPlaceholderOption(formValues.destination)) {
       setErrorMessage('Selecione um entregador valido para liberar o troco.');
       toast.error('Selecione um entregador valido.');
-      playError();
+      playWarning();
       return;
     }
 
     if (route.path === 'schedule' && isPlaceholderOption(formValues.courier)) {
       setErrorMessage('Selecione um entregador valido para montar a escala.');
       toast.error('Selecione um entregador valido.');
-      playError();
+      playWarning();
       return;
     }
 
@@ -1657,7 +1657,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (visibleRecords.length === 0) {
       setErrorMessage('Nao ha entregadores na escala para exportar.');
-      playError();
+      playWarning();
       return;
     }
 
@@ -1672,7 +1672,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (usedScheduleMachines.length === 0) {
       setErrorMessage('Nao ha maquininhas utilizadas hoje para exportar.');
-      playError();
+      playWarning();
       return;
     }
 
@@ -1691,7 +1691,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (presentMachineChecklistRecords.length === 0) {
       setErrorMessage('Nao ha maquininhas presentes hoje para exportar.');
-      playError();
+      playWarning();
       return;
     }
 
