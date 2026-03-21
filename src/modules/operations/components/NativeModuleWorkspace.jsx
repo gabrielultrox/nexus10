@@ -35,6 +35,7 @@ import {
 } from '../../../services/manualModuleSyncQueue';
 import { getNativeModuleContent } from '../../../services/nativeModuleData';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
+import { printOperationalReport } from '../../../services/operationsPrint';
 import { playError, playNotification, playOperationalSuccess, playOperationalWarning } from '../../../services/soundManager';
 import NativeModuleExportCanvases from './NativeModuleExportCanvases';
 import NativeModuleFormCard from './NativeModuleFormCard';
@@ -1801,76 +1802,6 @@ function NativeModuleWorkspace({ route }) {
     playNotification();
   }
 
-  async function printImageFromRef(targetRef, documentTitle, failureMessage) {
-    const dataUrl = await buildExportImageDataUrl(targetRef, documentTitle, failureMessage);
-
-    if (!dataUrl) {
-      return;
-    }
-
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1080,height=860');
-
-    if (!printWindow) {
-      setErrorMessage('Nao foi possivel abrir a janela de impressao.');
-      playError();
-      return;
-    }
-
-    const safeTitle = documentTitle.replace(/"/g, '&quot;');
-
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <title>${safeTitle}</title>
-    <style>
-      @page { size: A4 portrait; margin: 12mm; }
-      html, body {
-        margin: 0;
-        padding: 0;
-        background: #ffffff;
-      }
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        padding: 20px;
-      }
-      img {
-        display: block;
-        width: min(100%, 980px);
-        height: auto;
-      }
-      @media print {
-        body {
-          padding: 0;
-        }
-        img {
-          width: 100%;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <img src="${dataUrl}" alt="${safeTitle}" />
-    <script>
-      window.addEventListener('load', () => {
-        window.focus();
-        setTimeout(() => {
-          window.print();
-        }, 120);
-      });
-      window.addEventListener('afterprint', () => {
-        window.close();
-      });
-    </script>
-  </body>
-</html>`);
-    printWindow.document.close();
-    playNotification();
-  }
-
   async function handleExportScheduleImage() {
     if (route.path !== 'schedule') {
       playError();
@@ -1955,11 +1886,38 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
-    await printImageFromRef(
-      changeDeliveredImageRef,
-      'Trocos entregues do dia',
-      'Nao foi possivel preparar a impressao dos trocos entregues do dia.',
-    );
+    try {
+      printOperationalReport({
+        title: 'Trocos entregues do dia',
+        subtitle: 'Relatorio termico operacional',
+        meta: formatChecklistDate(),
+        summary: [
+          { label: 'Retornos', value: String(deliveredChangeRecords.length) },
+          { label: 'Total', value: formatCurrencyValue(deliveredChangeTotalValue) },
+          { label: 'Entregadores', value: String(deliveredChangeCourierCount) },
+        ],
+        records: deliveredChangeRecords.map((record) => ({
+          title: record.destination || 'Entregador nao informado',
+          badge: 'Concluido',
+          subtitle: record.origin || 'Operador nao informado',
+          fields: [
+            { label: 'Operador', value: record.origin || 'Nao informado' },
+            { label: 'Valor', value: record.value || formatCurrencyValue(0) },
+            {
+              label: 'Retorno',
+              value: record.returnedAt && record.returnedBy
+                ? `${record.returnedBy} - ${record.returnedAt}`
+                : 'Confirmado sem horario informado',
+            },
+          ],
+        })),
+        footer: `${session?.operatorName ?? session?.displayName ?? 'Operador local'} · ${formatChecklistDate()}`,
+      });
+      playNotification();
+    } catch {
+      setErrorMessage('Nao foi possivel preparar a impressao dos trocos entregues do dia.');
+      playError();
+    }
   }
 
   async function handleExportClosedDeliveriesImage() {
@@ -1993,11 +1951,33 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
-    await printImageFromRef(
-      deliveryReadingClosedImageRef,
-      'Leituras fechadas do dia',
-      'Nao foi possivel preparar a impressao das leituras fechadas do dia.',
-    );
+    try {
+      printOperationalReport({
+        title: 'Leituras fechadas do dia',
+        subtitle: 'Relatorio termico operacional',
+        meta: formatChecklistDate(),
+        summary: [
+          { label: 'Fechadas', value: String(closedDeliveryRecords.length) },
+          { label: 'Entregadores', value: String(closedDeliveryCourierCount) },
+          { label: 'Turbo', value: String(closedDeliveryRecords.filter((record) => record.turbo).length) },
+        ],
+        records: closedDeliveryRecords.map((record) => ({
+          title: record.courier || 'Entregador nao informado',
+          badge: 'Fechada',
+          subtitle: record.deliveryCode || 'Codigo nao informado',
+          fields: [
+            { label: 'Codigo', value: record.deliveryCode || 'Nao informado' },
+            { label: 'Turno', value: record.turn || 'Nao informado' },
+            { label: 'Tipo', value: record.turbo ? 'Turbo' : 'Padrao' },
+          ],
+        })),
+        footer: `${session?.operatorName ?? session?.displayName ?? 'Operador local'} · ${formatChecklistDate()}`,
+      });
+      playNotification();
+    } catch {
+      setErrorMessage('Nao foi possivel preparar a impressao das leituras fechadas do dia.');
+      playError();
+    }
   }
 
   async function handleExportPaidAdvancesImage() {
@@ -2031,11 +2011,33 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
-    await printImageFromRef(
-      advancesPaidImageRef,
-      'Vales baixados do dia',
-      'Nao foi possivel preparar a impressao dos vales baixados do dia.',
-    );
+    try {
+      printOperationalReport({
+        title: 'Vales baixados do dia',
+        subtitle: 'Relatorio termico operacional',
+        meta: formatChecklistDate(),
+        summary: [
+          { label: 'Baixados', value: String(paidAdvanceRecords.length) },
+          { label: 'Total', value: formatCurrencyValue(paidAdvanceTotalValue) },
+          { label: 'Entregadores', value: String(paidAdvanceRecipientCount) },
+        ],
+        records: paidAdvanceRecords.map((record) => ({
+          title: record.recipient || 'Entregador nao informado',
+          badge: 'Baixado',
+          subtitle: record.reason || 'Motivo nao informado',
+          fields: [
+            { label: 'Valor', value: record.value || formatCurrencyValue(0) },
+            { label: 'Data', value: record.date || 'Nao informada' },
+            { label: 'Motivo', value: record.reason || 'Nao informado' },
+          ],
+        })),
+        footer: `${session?.operatorName ?? session?.displayName ?? 'Operador local'} · ${formatChecklistDate()}`,
+      });
+      playNotification();
+    } catch {
+      setErrorMessage('Nao foi possivel preparar a impressao dos vales baixados do dia.');
+      playError();
+    }
   }
 
   function handleMarkReturned(recordId) {
