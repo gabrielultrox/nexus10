@@ -15,9 +15,6 @@ function PwaStatusCard() {
           <div>
             <p className="settings-section-kicker">Progressive Web App</p>
             <h3 className="pwa-status-card__title">Instalacao local e operacao sem rede</h3>
-            <p className="text-caption pwa-status-card__description">
-              Fixe o app no terminal para abrir mais rapido e manter os recursos essenciais disponiveis durante instabilidade de rede.
-            </p>
           </div>
           <span className={`ui-badge ${isOffline ? 'ui-badge--warning' : 'ui-badge--success'}`}>
             {isOffline ? 'Offline' : 'Online'}
@@ -36,6 +33,10 @@ function PwaStatusCard() {
           <span>Instalacao</span>
           <strong>{isInstallable ? 'Pronta neste dispositivo' : 'Aguardando navegador'}</strong>
         </div>
+
+        <p className="text-caption">
+          Use a instalacao local para fixar o app no terminal e manter os recursos essenciais disponiveis durante quedas de rede.
+        </p>
 
         <div className="pwa-status-card__actions">
           <button
