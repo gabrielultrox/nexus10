@@ -34,7 +34,7 @@ import {
 } from '../../../services/manualModuleSyncQueue';
 import { getNativeModuleContent } from '../../../services/nativeModuleData';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
-import { playError, playNotification, playSuccess, playWarning } from '../../../services/soundManager';
+import { playError, playNotification, playOperationalSuccess, playOperationalWarning } from '../../../services/soundManager';
 import NativeModuleExportCanvases from './NativeModuleExportCanvases';
 import NativeModuleFormCard from './NativeModuleFormCard';
 import NativeModulePanels from './NativeModulePanels';
@@ -1221,7 +1221,7 @@ function NativeModuleWorkspace({ route }) {
     if (result.flushedCount > 0) {
       setErrorMessage('')
       setSyncActivityLabel(`${result.flushedCount} pendencias reenviadas`)
-      playSuccess()
+      playOperationalSuccess()
       return
     }
 
@@ -1302,7 +1302,7 @@ function NativeModuleWorkspace({ route }) {
       setErrorMessage('Informe o codigo da entrega.');
       markDeliveryCodeInvalid();
       toast.error('Informe o codigo da entrega.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
@@ -1315,7 +1315,7 @@ function NativeModuleWorkspace({ route }) {
         setErrorMessage('Selecione um entregador valido para registrar a leitura.');
         markDeliveryCodeInvalid();
         toast.error('Selecione um entregador valido.');
-        playWarning();
+        playOperationalWarning();
         return;
       }
 
@@ -1323,7 +1323,7 @@ function NativeModuleWorkspace({ route }) {
         setErrorMessage(`O codigo ${deliveryCode} ja foi registrado neste turno.`);
         markDeliveryCodeInvalid();
         toast.error(`Codigo ${deliveryCode} ja registrado.`);
-        playWarning();
+        playOperationalWarning();
         return;
       }
     }
@@ -1331,14 +1331,14 @@ function NativeModuleWorkspace({ route }) {
     if (route.path === 'change' && isPlaceholderOption(formValues.destination)) {
       setErrorMessage('Selecione um entregador valido para liberar o troco.');
       toast.error('Selecione um entregador valido.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
     if (route.path === 'schedule' && isPlaceholderOption(formValues.courier)) {
       setErrorMessage('Selecione um entregador valido para montar a escala.');
       toast.error('Selecione um entregador valido.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
@@ -1379,7 +1379,7 @@ function NativeModuleWorkspace({ route }) {
       }
 
       setErrorMessage('');
-      playSuccess();
+      playOperationalSuccess();
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -1417,7 +1417,7 @@ function NativeModuleWorkspace({ route }) {
         });
 
       setErrorMessage('');
-      playSuccess();
+      playOperationalSuccess();
 
       appendAuditEvent({
         module: route.title,
@@ -1487,7 +1487,7 @@ function NativeModuleWorkspace({ route }) {
         return nextDrafts;
       });
       setErrorMessage('');
-      playSuccess();
+      playOperationalSuccess();
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -1657,7 +1657,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (visibleRecords.length === 0) {
       setErrorMessage('Nao ha entregadores na escala para exportar.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
@@ -1672,7 +1672,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (usedScheduleMachines.length === 0) {
       setErrorMessage('Nao ha maquininhas utilizadas hoje para exportar.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
@@ -1691,7 +1691,7 @@ function NativeModuleWorkspace({ route }) {
 
     if (presentMachineChecklistRecords.length === 0) {
       setErrorMessage('Nao ha maquininhas presentes hoje para exportar.');
-      playWarning();
+      playOperationalWarning();
       return;
     }
 
@@ -1726,7 +1726,7 @@ function NativeModuleWorkspace({ route }) {
         )));
       },
     }).then(() => {
-      playSuccess();
+      playOperationalSuccess();
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -1771,7 +1771,7 @@ function NativeModuleWorkspace({ route }) {
         setRecentlyClosedRecordId(recordId);
       }
       setErrorMessage('');
-      playSuccess();
+      playOperationalSuccess();
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -1827,7 +1827,7 @@ function NativeModuleWorkspace({ route }) {
         });
 
       setErrorMessage('');
-      playSuccess();
+      playOperationalSuccess();
 
       appendAuditEvent({
         module: 'Maquininhas',
@@ -1883,7 +1883,7 @@ function NativeModuleWorkspace({ route }) {
       })))
 
       setErrorMessage('')
-      playSuccess()
+      playOperationalSuccess()
       toast.success(`${recordsToConfirm.length} maquininhas confirmadas`)
       nextRecords.forEach((record) => {
         appendAuditEvent({

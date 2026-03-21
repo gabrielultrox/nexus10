@@ -1,8 +1,12 @@
 import clickSrc from '../assets/sounds/ui_click.wav';
+import cashSuccessSrc from '../assets/sounds/ui_cash_success.wav';
 import destructiveSrc from '../assets/sounds/ui_destructive.wav';
 import errorSrc from '../assets/sounds/ui_error.wav';
 import navigationSrc from '../assets/sounds/ui_navigation.wav';
 import notificationSrc from '../assets/sounds/ui_notification.wav';
+import operationsSuccessSrc from '../assets/sounds/ui_operations_success.wav';
+import operationsWarningSrc from '../assets/sounds/ui_operations_warning.wav';
+import pdvSuccessSrc from '../assets/sounds/ui_pdv_success.wav';
 import successSrc from '../assets/sounds/ui_success.wav';
 import warningSrc from '../assets/sounds/ui_warning.wav';
 
@@ -11,10 +15,14 @@ const DEFAULT_ENABLED = true;
 
 const soundLibrary = {
   click: { src: clickSrc, volume: 0.14, minGap: 70 },
+  cashSuccess: { src: cashSuccessSrc, volume: 0.17, minGap: 180 },
   success: { src: successSrc, volume: 0.19, minGap: 140 },
   error: { src: errorSrc, volume: 0.17, minGap: 180 },
   navigation: { src: navigationSrc, volume: 0.13, minGap: 120 },
   notification: { src: notificationSrc, volume: 0.17, minGap: 220 },
+  operationsSuccess: { src: operationsSuccessSrc, volume: 0.15, minGap: 150 },
+  operationsWarning: { src: operationsWarningSrc, volume: 0.14, minGap: 170 },
+  pdvSuccess: { src: pdvSuccessSrc, volume: 0.16, minGap: 120 },
   warning: { src: warningSrc, volume: 0.15, minGap: 180 },
   destructive: { src: destructiveSrc, volume: 0.16, minGap: 160 },
 };
@@ -193,6 +201,10 @@ export function playSuccess() {
   playSound('success');
 }
 
+export function playCashSuccess() {
+  playSound('cashSuccess');
+}
+
 export function playError() {
   playSound('error');
 }
@@ -205,8 +217,20 @@ export function playNotification() {
   playSound('notification');
 }
 
+export function playOperationalSuccess() {
+  playSound('operationsSuccess');
+}
+
+export function playPdvSuccess() {
+  playSound('pdvSuccess');
+}
+
 export function playWarning() {
   playSound('warning');
+}
+
+export function playOperationalWarning() {
+  playSound('operationsWarning');
 }
 
 export function playDestructive() {

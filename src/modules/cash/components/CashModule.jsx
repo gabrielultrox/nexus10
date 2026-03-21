@@ -25,7 +25,7 @@ import {
   saveCashState,
   subscribeToCashState,
 } from '../../../services/cashStateService';
-import { playSuccess, playWarning } from '../../../services/soundManager';
+import { playCashSuccess, playWarning } from '../../../services/soundManager';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 
@@ -559,7 +559,7 @@ function CashModule() {
       });
       clearForm();
       toast.success(`${activeTab.receiptLabel} registrado`);
-      playSuccess();
+      playCashSuccess();
     } finally {
       setIsSaving(false);
     }
@@ -599,7 +599,7 @@ function CashModule() {
           details: nextRecord.amountLabel,
         });
         toast.success(`Caixa aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(nextState.openedAt))}`);
-        playSuccess();
+        playCashSuccess();
         clearForm();
       }
 
@@ -623,7 +623,7 @@ function CashModule() {
           details: nextRecord.amountLabel,
         });
         toast.success(`Caixa fechado as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(nextState.closedAt))}`);
-        playSuccess();
+        playCashSuccess();
         clearForm();
         navigate('/dashboard');
       }

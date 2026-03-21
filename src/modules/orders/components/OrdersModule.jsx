@@ -19,7 +19,7 @@ import {
   updateOrder,
 } from '../../../services/orders';
 import { subscribeToProducts } from '../../../services/productService';
-import { playDestructive, playError, playSuccess } from '../../../services/soundManager';
+import { playDestructive, playError, playPdvSuccess } from '../../../services/soundManager';
 import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
 import Select from '../../../components/ui/Select';
@@ -660,7 +660,7 @@ function OrdersModule({
       });
       await refreshSelectedOrder(selectedOrder.id);
       setFeedbackMessage('Pedido marcado como despachado.');
-      playSuccess();
+      playPdvSuccess();
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel despachar o pedido.'));
       playError();
@@ -705,7 +705,7 @@ function OrdersModule({
       if (options.toastMessage) {
         toast.success(options.toastMessage);
       }
-      playSuccess();
+      playPdvSuccess();
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel gerar a venda.'));
       if (options.errorToastMessage) {
@@ -836,7 +836,7 @@ function OrdersModule({
         setFeedbackMessage('Pedido cadastrado com sucesso.');
       }
 
-      playSuccess();
+      playPdvSuccess();
       resetForm();
       if (nextOrderId) {
         onOpenDetail(nextOrderId);

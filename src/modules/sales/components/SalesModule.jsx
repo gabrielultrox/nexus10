@@ -17,7 +17,7 @@ import {
   subscribeToSales,
   updateSaleStatus,
 } from '../../../services/sales';
-import { playDestructive, playError, playSuccess } from '../../../services/soundManager';
+import { playDestructive, playError, playPdvSuccess } from '../../../services/soundManager';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 import SalesDetailPanel from './SalesDetailPanel';
@@ -370,7 +370,7 @@ function SalesModule({
       const saleId = await createDirectSale({ storeId: currentStoreId, tenantId, values: buildPayload(), createdBy: session });
       await refreshSelectedSale(saleId);
       setFeedbackMessage(`Venda ${saleId} lancada com sucesso.`);
-      playSuccess();
+      playPdvSuccess();
       resetForm();
       onOpenDetail(saleId);
     } catch (error) {
@@ -394,7 +394,7 @@ function SalesModule({
       await updateSaleStatus({ storeId: currentStoreId, saleId: selectedSale.id, status: nextStatus, actor: session });
       await refreshSelectedSale(selectedSale.id);
       setFeedbackMessage(`Venda ${selectedSale.code ?? selectedSale.id} atualizada para ${getSaleStatusMeta(nextStatus).label}.`);
-      playSuccess();
+      playPdvSuccess();
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel atualizar a venda.'));
       playError();
