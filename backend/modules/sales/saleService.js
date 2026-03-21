@@ -114,6 +114,11 @@ function normalizeInfrastructureError(error) {
   return error;
 }
 
+function isRecoverablePostingError(error) {
+  return ['SALE_TIMEOUT', 'SALE_INFRA_TIMEOUT', 'SALE_INFRA_UNAVAILABLE'].includes(error?.code)
+    || /Tempo excedido ao concluir o posting da venda/i.test(String(error?.message ?? ''));
+}
+
 function buildSaleDocument({
   storeId,
   tenantId,
@@ -248,6 +253,10 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
 
     return mapSaleResponse(persistedSale);
   } catch (error) {
+    if (isRecoverablePostingError(error)) {
+      return mapSaleResponse(createdSale);
+    }
+
     await safeCleanup(
       repository.deleteSale({
         storeId,
@@ -312,6 +321,17 @@ export async function createSaleFromOrder({
       sale: mapSaleResponse(persistedSale),
     };
   } catch (error) {
+    if (isRecoverablePostingError(error)) {
+      return {
+        orderId,
+        saleId: createdSale.saleId,
+        sale: mapSaleResponse({
+          id: createdSale.saleId,
+          data: saleData,
+        }),
+      };
+    }
+
     await safeCleanup(
       repository.revertSaleFromOrder({
         storeId,

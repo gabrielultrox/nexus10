@@ -57,20 +57,21 @@ export async function postSaleLifecycle({
   previousStatus = null,
   actor = null,
 }) {
-  const stockResult = await syncSaleStock({
-    storeId,
-    tenantId,
-    sale,
-    previousStatus,
-  });
+  const [stockResult, financialResult] = await Promise.all([
+    syncSaleStock({
+      storeId,
+      tenantId,
+      sale,
+      previousStatus,
+    }),
+    syncSaleToFinancialEntry({
+      storeId,
+      tenantId,
+      sale,
+    }),
+  ]);
 
-  const financialResult = await syncSaleToFinancialEntry({
-    storeId,
-    tenantId,
-    sale,
-  });
-
-  await recordAuditEvent({
+  void recordAuditEvent({
     storeId,
     tenantId,
     actor,
@@ -89,7 +90,7 @@ export async function postSaleLifecycle({
       financialEntryId: financialResult.entryId ?? null,
       reversed: isReversed(sale.status),
     },
-  });
+  }).catch(() => {});
 
   return {
     stockPosted: stockResult.applied,

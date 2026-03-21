@@ -471,12 +471,6 @@ function OrdersModule({
     return getOrderDomainStatusLabel(order.domainStatus);
   }
 
-  function resetForm() {
-    setFormState(createInitialFormState());
-    setErrorMessage('');
-    setFeedbackMessage('');
-  }
-
   function updateAddressField(field, value) {
     setFormState((current) => ({
       ...current,
@@ -817,6 +811,7 @@ function OrdersModule({
     try {
       const values = buildPayload();
       let nextOrderId = editingOrderId;
+      let auditDescription = '';
 
       if (editingOrderId) {
         await updateOrder({
@@ -824,15 +819,7 @@ function OrdersModule({
           orderId: editingOrderId,
           values,
         });
-        await recordAuditLog({
-          storeId: currentStoreId,
-          tenantId,
-          actor: buildAuditActor(session),
-          action: 'order.updated',
-          entityType: 'order',
-          entityId: editingOrderId,
-          description: `Pedido ${selectedOrder?.number ?? editingOrderId} atualizado.`,
-        });
+        auditDescription = `Pedido ${selectedOrder?.number ?? editingOrderId} atualizado.`;
         setFeedbackMessage('Pedido atualizado com sucesso.');
       } else {
         nextOrderId = await createOrder({
@@ -841,24 +828,29 @@ function OrdersModule({
           values,
           createdBy: session,
         });
-        await recordAuditLog({
-          storeId: currentStoreId,
-          tenantId,
-          actor: buildAuditActor(session),
-          action: 'order.created',
-          entityType: 'order',
-          entityId: nextOrderId,
-          description: `Novo pedido ${values.source} criado com total ${formatCurrencyBRL(calculatedTotals.total)}.`,
-        });
+        auditDescription = `Novo pedido ${values.source} criado com total ${formatCurrencyBRL(calculatedTotals.total)}.`;
         setFeedbackMessage('Pedido cadastrado com sucesso.');
       }
 
       playPdvSuccess();
-      resetForm();
       if (nextOrderId) {
         onOpenDetail(nextOrderId);
       } else {
         onOpenList();
+      }
+      setFormState(createInitialFormState());
+
+      if (nextOrderId) {
+        void refreshSelectedOrder(nextOrderId).catch(() => null);
+        void recordAuditLog({
+          storeId: currentStoreId,
+          tenantId,
+          actor: buildAuditActor(session),
+          action: editingOrderId ? 'order.updated' : 'order.created',
+          entityType: 'order',
+          entityId: nextOrderId,
+          description: auditDescription,
+        }).catch(() => null);
       }
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel salvar o pedido.'));

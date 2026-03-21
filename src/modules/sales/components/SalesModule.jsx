@@ -280,12 +280,6 @@ function SalesModule({
     ];
   }, [sales]);
 
-  function resetForm() {
-    setFormState(createInitialFormState());
-    setErrorMessage('');
-    setFeedbackMessage('');
-  }
-
   useEffect(() => {
     if (viewMode === 'create') {
       setFormState(createInitialFormState());
@@ -368,11 +362,11 @@ function SalesModule({
 
     try {
       const saleId = await createDirectSale({ storeId: currentStoreId, tenantId, values: buildPayload(), createdBy: session });
-      await refreshSelectedSale(saleId);
       setFeedbackMessage(`Venda ${saleId} lancada com sucesso.`);
       playPdvSuccess();
-      resetForm();
       onOpenDetail(saleId);
+      setFormState(createInitialFormState());
+      void refreshSelectedSale(saleId).catch(() => null);
     } catch (error) {
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel lancar a venda.'));
       playError();
