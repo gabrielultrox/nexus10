@@ -19,7 +19,7 @@ import {
   updateOrder,
 } from '../../../services/orders';
 import { subscribeToProducts } from '../../../services/productService';
-import { playDestructive, playError, playPdvSuccess } from '../../../services/soundManager';
+import { playDestructive, playError, playNotification, playPdvSuccess } from '../../../services/soundManager';
 import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
 import Select from '../../../components/ui/Select';
@@ -735,6 +735,12 @@ function OrdersModule({
       return;
     }
 
+    if (order.isExternal) {
+      setErrorMessage('Pedidos externos nao podem ser excluidos por esta tela.');
+      playNotification();
+      return;
+    }
+
     if (!window.confirm(`Excluir o pedido ${order.number}?`)) {
       return;
     }
@@ -755,6 +761,17 @@ function OrdersModule({
         onOpenList();
       }
     } catch (error) {
+      if (String(error?.message ?? '').includes('Pedido nao encontrado')) {
+        setOrders((current) => current.filter((entry) => entry.id !== order.id));
+        setFeedbackMessage(`Pedido ${order.number} removido da lista local.`);
+        setErrorMessage('');
+        playNotification();
+        if (order.id === orderId) {
+          onOpenList();
+        }
+        return;
+      }
+
       setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel excluir o pedido.'));
       playError();
     } finally {
@@ -931,6 +948,7 @@ function OrdersModule({
                       {visibleOrders.map((order, index) => {
                         const actionConfig = getInlineActionConfig(order);
                         const isPendingAction = pendingAction?.orderId === order.id;
+                        const canDeleteOrder = !order.isExternal && order.saleStatus !== 'LAUNCHED' && order.domainStatus !== 'CONVERTED_TO_SALE';
 
                         return (
                           <tr
@@ -1001,15 +1019,21 @@ function OrdersModule({
                                 ) : (
                                   <span className="orders-domain__row-complete">--</span>
                                 )}
-                                <button
-                                  type="button"
-                                  className="orders-domain__delete-button"
-                                  aria-label={`Excluir pedido ${order.number}`}
-                                  disabled={deletingOrderId === order.id}
-                                  onClick={(event) => handleDeleteOrder(order, event)}
-                                >
-                                  x
-                                </button>
+                                {canDeleteOrder ? (
+                                  <button
+                                    type="button"
+                                    className="orders-domain__delete-button"
+                                    aria-label={`Excluir pedido ${order.number}`}
+                                    disabled={deletingOrderId === order.id}
+                                    onClick={(event) => handleDeleteOrder(order, event)}
+                                  >
+                                    x
+                                  </button>
+                                ) : (
+                                  <span className="orders-domain__row-complete">
+                                    --
+                                  </span>
+                                )}
                               </div>
                             </td>
                           </tr>
