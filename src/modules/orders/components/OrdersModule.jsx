@@ -686,6 +686,20 @@ function OrdersModule({
         storeId: currentStoreId,
         tenantId,
         orderId: order.id,
+        values: {
+          channel: order.sourceChannel ?? order.source,
+          customerId: order.customerId ?? order.customerSnapshot?.id ?? null,
+          customerSnapshot: order.customerSnapshot ?? null,
+          items: order.items ?? [],
+          totals: order.totals ?? null,
+          paymentMethod: order.paymentPreview?.method ?? order.paymentMethod ?? null,
+          payment: order.paymentPreview ?? null,
+          address: order.address ?? null,
+          notes: order.notes ?? '',
+          orderCode: order.code ?? '',
+          orderStatus: order.domainStatus ?? order.status ?? 'OPEN',
+          orderTenantId: order.tenantId ?? tenantId ?? null,
+        },
         createdBy: session,
       });
       await recordAuditLog({

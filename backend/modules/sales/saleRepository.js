@@ -1,5 +1,5 @@
 import { getAdminFirestore } from '../../firebaseAdmin.js';
-import { createSaleError, normalizeSaleDomainStatus } from './saleValidationService.js';
+import { normalizeSaleDomainStatus } from './saleValidationService.js';
 
 const COLLECTIONS = {
   stores: 'stores',
@@ -50,38 +50,28 @@ export function createSaleRepository() {
       return { id: saleRef.id, data: payload };
     },
 
-    async createSaleFromOrder({ storeId, orderId, payload }) {
+    async createSaleFromOrder({ storeId, orderId, payload, previousOrderStatus = 'OPEN' }) {
       const firestore = getAdminFirestore();
       const saleRef = this.createSaleRef(storeId);
       const orderRef = this.getOrderRef(storeId, orderId);
+      const batch = firestore.batch();
 
-      return firestore.runTransaction(async (transaction) => {
-        const orderSnapshot = await transaction.get(orderRef);
-
-        if (!orderSnapshot.exists) {
-          throw createSaleError('Pedido nao encontrado para gerar venda.', 404, 'ORDER_NOT_FOUND');
-        }
-
-        const currentOrder = orderSnapshot.data();
-
-        if (currentOrder.saleId || String(currentOrder.saleStatus ?? '').toUpperCase() === 'LAUNCHED') {
-          throw createSaleError('Este pedido ja gerou uma venda.', 409, 'ORDER_ALREADY_CONVERTED');
-        }
-
-        transaction.set(saleRef, payload);
-        transaction.update(orderRef, {
-          status: 'CONVERTED_TO_SALE',
-          saleStatus: 'LAUNCHED',
-          saleId: saleRef.id,
-          updatedAt: new Date(),
-        });
-
-        return {
-          saleId: saleRef.id,
-          previousOrderStatus: currentOrder.status ?? 'OPEN',
-          data: payload,
-        };
+      batch.set(saleRef, payload);
+      batch.update(orderRef, {
+        status: 'CONVERTED_TO_SALE',
+        saleStatus: 'LAUNCHED',
+        saleId: saleRef.id,
+        updatedAt: new Date(),
       });
+
+      await batch.commit();
+
+      return {
+        id: saleRef.id,
+        saleId: saleRef.id,
+        previousOrderStatus,
+        data: payload,
+      };
     },
 
     async deleteSale({ storeId, saleId }) {

@@ -10,7 +10,7 @@ import {
 
 const repository = createSaleRepository();
 const reversibleStatuses = new Set(['POSTED']);
-const saleInfrastructureTimeoutMs = 15000;
+const saleInfrastructureTimeoutMs = 5000;
 
 function validateStoreId(storeId) {
   if (!String(storeId ?? '').trim()) {
@@ -70,6 +70,31 @@ function buildOrderSnapshot(orderId, order) {
     status: normalizeOrderStatus(order.status, 'OPEN'),
     domainStatus: normalizeOrderStatus(order.status, 'OPEN'),
     total: order.totals?.total ?? 0,
+  };
+}
+
+function buildSeededOrderData(orderId, values = {}) {
+  if (!Array.isArray(values.items) || values.items.length === 0 || !values.totals) {
+    return null;
+  }
+
+  return {
+    id: orderId,
+    data: {
+      code: values.orderCode ?? '',
+      status: values.orderStatus ?? 'OPEN',
+      source: values.channel ?? values.source ?? null,
+      channel: values.channel ?? values.source ?? null,
+      customerId: values.customerId ?? values.customerSnapshot?.id ?? null,
+      customerSnapshot: values.customerSnapshot ?? null,
+      items: values.items,
+      totals: values.totals,
+      paymentPreview: values.payment ?? null,
+      payment: values.payment ?? null,
+      address: values.address ?? null,
+      notes: values.notes ?? '',
+      tenantId: values.orderTenantId ?? null,
+    },
   };
 }
 
@@ -278,7 +303,8 @@ export async function createSaleFromOrder({
   validateStoreId(storeId);
   validateOrderId(orderId);
 
-  const order = await repository.getOrderById({ storeId, orderId });
+  const order = buildSeededOrderData(orderId, values)
+    ?? await repository.getOrderById({ storeId, orderId });
 
   if (!order) {
     throw createSaleError('Pedido nao encontrado.', 404, 'ORDER_NOT_FOUND');
@@ -302,6 +328,7 @@ export async function createSaleFromOrder({
       storeId,
       orderId,
       payload: saleData,
+      previousOrderStatus: normalizeOrderStatus(order.data.status, 'OPEN'),
     }),
     'a criacao inicial da venda a partir do pedido',
   );
@@ -310,23 +337,23 @@ export async function createSaleFromOrder({
     const persistedSale = await finalizeSaleCreation({
       storeId,
       tenantId: saleData.tenantId ?? null,
-      saleId: createdSale.saleId,
+      saleId: createdSale.id,
       saleData,
       actor: buildCreatedBy(createdBy),
     });
 
     return {
       orderId,
-      saleId: createdSale.saleId,
+      saleId: createdSale.id,
       sale: mapSaleResponse(persistedSale),
     };
   } catch (error) {
     if (isRecoverablePostingError(error)) {
       return {
         orderId,
-        saleId: createdSale.saleId,
+        saleId: createdSale.id,
         sale: mapSaleResponse({
-          id: createdSale.saleId,
+          id: createdSale.id,
           data: saleData,
         }),
       };
@@ -336,7 +363,7 @@ export async function createSaleFromOrder({
       repository.revertSaleFromOrder({
         storeId,
         orderId,
-        saleId: createdSale.saleId,
+        saleId: createdSale.id,
         previousOrderStatus: createdSale.previousOrderStatus,
       }),
     );
