@@ -217,9 +217,9 @@ export function getDefaultDashboardPeriod() {
 export function loadDashboardOperationalSources() {
   const scheduleRecords = loadResettableLocalRecords('nexus-module-schedule', [], 3);
   const machineChecklist = loadResettableLocalRecords('nexus-module-machine-history', [], 3);
-  const changeRecords = loadLocalRecords('nexus-module-change', []);
-  const advanceRecords = loadLocalRecords('nexus-module-advances', []);
-  const occurrenceRecords = loadLocalRecords('nexus-module-occurrences', []);
+  const changeRecords = loadResettableLocalRecords('nexus-module-change', [], 3);
+  const advanceRecords = loadResettableLocalRecords('nexus-module-advances', [], 3);
+  const occurrenceRecords = loadResettableLocalRecords('nexus-module-occurrences', [], 3);
   const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords);
 
   return {
