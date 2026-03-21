@@ -1,3 +1,4 @@
+import SurfaceCard from '../common/SurfaceCard';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
 
 function PwaStatusCard() {
@@ -8,32 +9,34 @@ function PwaStatusCard() {
   }
 
   return (
-    <section className="ui-card pwa-status-card">
-      <div className="pwa-status-card__inner">
-        <header className="pwa-status-card__header">
+    <SurfaceCard title="Aplicativo e offline">
+      <div className="settings-summary pwa-status-card">
+        <div className="pwa-status-card__hero">
           <div>
-            <p className="text-overline">Progressive Web App</p>
-            <h2 className="text-section-title">Instalação e modo offline</h2>
+            <p className="settings-section-kicker">Progressive Web App</p>
+            <h3 className="pwa-status-card__title">Instalacao local e operacao sem rede</h3>
           </div>
           <span className={`ui-badge ${isOffline ? 'ui-badge--warning' : 'ui-badge--success'}`}>
             {isOffline ? 'Offline' : 'Online'}
           </span>
-        </header>
-
-        <div className="pwa-status-card__content">
-          <div className="pwa-status-card__item">
-            <span className="text-label">Manifest + Splash</span>
-            <strong>Configurados via `vite-plugin-pwa`</strong>
-          </div>
-          <div className="pwa-status-card__item">
-            <span className="text-label">Service Worker</span>
-            <strong>Cache automático de páginas, assets e imagens</strong>
-          </div>
-          <div className="pwa-status-card__item">
-            <span className="text-label">Instalação</span>
-            <strong>{isInstallable ? 'Prompt disponível neste dispositivo' : 'Aguardando elegibilidade do navegador'}</strong>
-          </div>
         </div>
+
+        <div className="settings-summary__row">
+          <span>Manifest + splash</span>
+          <strong>Configurados</strong>
+        </div>
+        <div className="settings-summary__row">
+          <span>Service worker</span>
+          <strong>Cache automatico</strong>
+        </div>
+        <div className="settings-summary__row">
+          <span>Instalacao</span>
+          <strong>{isInstallable ? 'Pronta neste dispositivo' : 'Aguardando navegador'}</strong>
+        </div>
+
+        <p className="text-caption">
+          Use a instalacao local para fixar o app no terminal e manter os recursos essenciais disponiveis durante quedas de rede.
+        </p>
 
         <div className="pwa-status-card__actions">
           <button
@@ -46,7 +49,7 @@ function PwaStatusCard() {
           </button>
         </div>
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
