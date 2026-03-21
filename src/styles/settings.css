@@ -2,6 +2,10 @@
   gap: var(--space-4);
 }
 
+.settings-page {
+  scroll-behavior: smooth;
+}
+
 .settings-page--locked {
   min-height: calc(100vh - 120px);
 }
@@ -146,9 +150,37 @@
   align-items: center;
 }
 
+.settings-quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.settings-quick-nav__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.settings-quick-nav__item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .settings-section {
   display: grid;
   gap: var(--space-3);
+  scroll-margin-top: 80px;
 }
 
 .settings-section__header {
@@ -178,6 +210,26 @@
 
 .settings-grid--duo {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-panel {
+  gap: var(--space-3);
+}
+
+.settings-panel__intro {
+  display: grid;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-panel__eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .settings-summary__row {
@@ -211,6 +263,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+}
+
+.settings-inline-action--panel {
+  padding-top: var(--space-2);
 }
 
 .settings-sound-panel {
@@ -254,6 +310,10 @@
   gap: var(--space-3);
 }
 
+.pwa-status-card__description {
+  margin-top: var(--space-2);
+}
+
 @media (max-width: 920px) {
   .settings-grid--duo,
   .settings-form-grid {
@@ -266,6 +326,17 @@
   .settings-overview__actions,
   .settings-sound-panel__preview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .settings-quick-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .settings-quick-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .settings-section__header,

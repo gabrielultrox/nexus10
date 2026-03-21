@@ -37,9 +37,28 @@ function SettingsStatusTile({ eyebrow, value, meta, tone = 'neutral' }) {
   );
 }
 
-function SettingsSection({ eyebrow, title, description, children }) {
+function SettingsQuickNav() {
+  const items = [
+    { href: '#settings-appearance', label: 'Aparencia' },
+    { href: '#settings-sound', label: 'Som' },
+    { href: '#settings-security', label: 'Seguranca' },
+    { href: '#settings-pwa', label: 'PWA' },
+  ];
+
   return (
-    <section className="settings-section">
+    <nav className="settings-quick-nav" aria-label="Atalhos de configuracoes">
+      {items.map((item) => (
+        <a key={item.href} className="settings-quick-nav__item" href={item.href}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function SettingsSection({ id, eyebrow, title, description, children }) {
+  return (
+    <section id={id} className="settings-section">
       <header className="settings-section__header">
         <div className="settings-section__copy">
           <p className="settings-section-kicker">{eyebrow}</p>
@@ -257,6 +276,8 @@ function SettingsPage() {
       {feedback ? <div className="auth-error auth-error--success">{feedback}</div> : null}
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
+      <SettingsQuickNav />
+
       <SurfaceCard title="Centro de controle">
         <div className="settings-overview">
           <div className="settings-overview__copy">
@@ -313,13 +334,20 @@ function SettingsPage() {
       </SurfaceCard>
 
       <SettingsSection
-        eyebrow="Experiencia"
-        title="Interface e feedback"
-        description="Ajustes que controlam a leitura do shell e a resposta sensorial das acoes do operador."
+        id="settings-appearance"
+        eyebrow="Aparencia"
+        title="Leitura e shell do terminal"
+        description="Defina a cara do terminal e mantenha o visual consistente entre boot, login e operacao."
       >
-        <div className="settings-grid settings-grid--duo">
-          <SurfaceCard title="Tema e shell">
-            <div className="settings-summary">
+        <div className="settings-grid">
+          <SurfaceCard title="Aparencia do app">
+            <div className="settings-summary settings-panel">
+              <div className="settings-panel__intro">
+                <p className="settings-panel__eyebrow">Shell operacional</p>
+                <p className="text-caption">
+                  O tema afeta toda a sessao local, incluindo boot, tela de PIN, login e ambiente principal.
+                </p>
+              </div>
               <div className="settings-summary__row">
                 <span>Escopo</span>
                 <strong>Boot, PIN e login</strong>
@@ -328,17 +356,33 @@ function SettingsPage() {
                 <span>Visual</span>
                 <strong>Dark mode operacional</strong>
               </div>
-              <p className="text-caption">
-                O tema afeta toda a sessao local, incluindo entrada no app e camadas sensiveis do terminal.
-              </p>
-              <div className="settings-inline-action">
+              <div className="settings-summary__row">
+                <span>Marca</span>
+                <strong>Shell industrial-tech</strong>
+              </div>
+              <div className="settings-inline-action settings-inline-action--panel">
                 <ThemeToggle />
               </div>
             </div>
           </SurfaceCard>
+        </div>
+      </SettingsSection>
 
+      <SettingsSection
+        id="settings-sound"
+        eyebrow="Som"
+        title="Feedback sonoro do operador"
+        description="Controle o perfil e a intensidade dos sons para manter o terminal agradavel no uso diario."
+      >
+        <div className="settings-grid">
           <SurfaceCard title="Som e feedback">
-            <div className="settings-summary settings-sound-panel">
+            <div className="settings-summary settings-sound-panel settings-panel">
+              <div className="settings-panel__intro">
+                <p className="settings-panel__eyebrow">Assinatura sonora</p>
+                <p className="text-caption">
+                  Escolha um perfil consistente para caixa, PDV e operacao e pre-escute antes de aplicar.
+                </p>
+              </div>
               <div className="settings-summary__row">
                 <span>Status</span>
                 <strong>{soundEffectsEnabled ? 'Ativado' : 'Desativado'}</strong>
@@ -355,7 +399,7 @@ function SettingsPage() {
                   id="settings-sound-profile"
                   className="ui-select"
                   value={soundProfile}
-                  disabled={!soundEffectsEnabled}
+                  disabled={!soundEffectsEnabled || !canWriteSettings}
                   onChange={handleChangeSoundProfile}
                 >
                   {soundProfiles.map((profile) => (
@@ -368,16 +412,16 @@ function SettingsPage() {
               <div className="settings-sound-panel__preview">
                 <span className="text-caption">Pre-ouvir categorias</span>
                 <div className="settings-sound-panel__preview-grid">
-                  <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('cash')}>
+                  <button type="button" className="ui-button ui-button--ghost" disabled={!soundEffectsEnabled} onClick={() => handlePreviewSound('cash')}>
                     Caixa
                   </button>
-                  <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('pdv')}>
+                  <button type="button" className="ui-button ui-button--ghost" disabled={!soundEffectsEnabled} onClick={() => handlePreviewSound('pdv')}>
                     PDV
                   </button>
-                  <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('operations')}>
+                  <button type="button" className="ui-button ui-button--ghost" disabled={!soundEffectsEnabled} onClick={() => handlePreviewSound('operations')}>
                     Operacao
                   </button>
-                  <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('warning')}>
+                  <button type="button" className="ui-button ui-button--ghost" disabled={!soundEffectsEnabled} onClick={() => handlePreviewSound('warning')}>
                     Aviso
                   </button>
                 </div>
@@ -393,14 +437,21 @@ function SettingsPage() {
       </SettingsSection>
 
       <SettingsSection
+        id="settings-security"
         eyebrow="Seguranca"
-        title="Acesso e prontidao do app"
-        description="Controles locais de PIN e o estado da instalacao offline do terminal."
+        title="Protecao local do terminal"
+        description="Controle a camada local de PIN e mantenha o acesso previsivel para o posto em operacao."
       >
-        <div className="settings-grid settings-grid--duo">
+        <div className="settings-grid">
           <SurfaceCard title="Seguranca local">
             <form className="settings-pin-form" onSubmit={handleSavePin}>
-              <div className="settings-summary settings-summary--dense">
+              <div className="settings-summary settings-summary--dense settings-panel">
+                <div className="settings-panel__intro">
+                  <p className="settings-panel__eyebrow">PIN local</p>
+                  <p className="text-caption">
+                    O PIN protege o terminal antes do login e pode ser restaurado para o padrao a qualquer momento.
+                  </p>
+                </div>
                 <div className="settings-summary__row">
                   <span>PIN ativo</span>
                   <strong>{currentPinMask}</strong>
@@ -459,7 +510,16 @@ function SettingsPage() {
               </div>
             </form>
           </SurfaceCard>
+        </div>
+      </SettingsSection>
 
+      <SettingsSection
+        id="settings-pwa"
+        eyebrow="PWA"
+        title="Instalacao e operacao offline"
+        description="Gerencie a presenca do app neste dispositivo e acompanhe a prontidao para uso sem rede."
+      >
+        <div className="settings-grid">
           <PwaStatusCard />
         </div>
       </SettingsSection>
