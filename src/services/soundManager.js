@@ -1,18 +1,22 @@
 import clickSrc from '../assets/sounds/ui_click.wav';
+import destructiveSrc from '../assets/sounds/ui_destructive.wav';
 import errorSrc from '../assets/sounds/ui_error.wav';
 import navigationSrc from '../assets/sounds/ui_navigation.wav';
 import notificationSrc from '../assets/sounds/ui_notification.wav';
 import successSrc from '../assets/sounds/ui_success.wav';
+import warningSrc from '../assets/sounds/ui_warning.wav';
 
 const SOUND_ENABLED_STORAGE_KEY = 'nexus-sound-effects-enabled';
 const DEFAULT_ENABLED = true;
 
 const soundLibrary = {
-  click: { src: clickSrc, volume: 0.16, minGap: 70 },
-  success: { src: successSrc, volume: 0.2, minGap: 140 },
-  error: { src: errorSrc, volume: 0.18, minGap: 180 },
-  navigation: { src: navigationSrc, volume: 0.15, minGap: 120 },
-  notification: { src: notificationSrc, volume: 0.18, minGap: 220 },
+  click: { src: clickSrc, volume: 0.14, minGap: 70 },
+  success: { src: successSrc, volume: 0.19, minGap: 140 },
+  error: { src: errorSrc, volume: 0.17, minGap: 180 },
+  navigation: { src: navigationSrc, volume: 0.13, minGap: 120 },
+  notification: { src: notificationSrc, volume: 0.17, minGap: 220 },
+  warning: { src: warningSrc, volume: 0.15, minGap: 180 },
+  destructive: { src: destructiveSrc, volume: 0.16, minGap: 160 },
 };
 
 let enabled = DEFAULT_ENABLED;
@@ -112,8 +116,19 @@ function handleGlobalButtonClick(event) {
   }
 
   if (
-    button.classList.contains('ui-button--secondary')
+    button.classList.contains('ui-button--danger')
+    || button.classList.contains('orders-domain__delete-button')
+    || button.classList.contains('commerce-step__remove-button')
+  ) {
+    playSound('destructive');
+    return;
+  }
+
+  if (
+    button.classList.contains('ui-button--primary')
+    || button.classList.contains('ui-button--secondary')
     || button.classList.contains('ui-button--success')
+    || button.classList.contains('ui-button--ghost')
     || button.classList.contains('auth-submit')
   ) {
     playSound('click');
@@ -188,4 +203,12 @@ export function playNavigation() {
 
 export function playNotification() {
   playSound('notification');
+}
+
+export function playWarning() {
+  playSound('warning');
+}
+
+export function playDestructive() {
+  playSound('destructive');
 }

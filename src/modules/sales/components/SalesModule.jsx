@@ -17,7 +17,7 @@ import {
   subscribeToSales,
   updateSaleStatus,
 } from '../../../services/sales';
-import { playError, playSuccess } from '../../../services/soundManager';
+import { playDestructive, playError, playSuccess } from '../../../services/soundManager';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 import SalesDetailPanel from './SalesDetailPanel';
@@ -427,7 +427,7 @@ function SalesModule({
       });
       setSales((current) => current.filter((entry) => entry.id !== sale.id));
       setFeedbackMessage(`Venda ${sale.number} excluida com sucesso.`);
-      playSuccess();
+      playDestructive();
       if (sale.id === saleId) {
         onOpenList();
       }

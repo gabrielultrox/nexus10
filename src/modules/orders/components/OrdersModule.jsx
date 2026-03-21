@@ -19,7 +19,7 @@ import {
   updateOrder,
 } from '../../../services/orders';
 import { subscribeToProducts } from '../../../services/productService';
-import { playError, playSuccess } from '../../../services/soundManager';
+import { playDestructive, playError, playSuccess } from '../../../services/soundManager';
 import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
 import Select from '../../../components/ui/Select';
@@ -750,7 +750,7 @@ function OrdersModule({
       });
       setOrders((current) => current.filter((entry) => entry.id !== order.id));
       setFeedbackMessage(`Pedido ${order.number} excluido com sucesso.`);
-      playSuccess();
+      playDestructive();
       if (order.id === orderId) {
         onOpenList();
       }
