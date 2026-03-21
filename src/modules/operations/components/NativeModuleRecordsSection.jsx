@@ -510,17 +510,43 @@ function NativeModuleSchedule({
                   return (
                     <div key={`${day.key}-${windowLabel}`} className="schedule-grid__slot schedule-grid__slot--filled">
                       {matchingRecords.map((record) => (
-                        <button
-                          key={record.id}
-                          type="button"
-                          className="schedule-grid__entry"
-                          onClick={() => handleFilledSlotClick(record.id)}
-                        >
-                          <span className="schedule-grid__entry-name">{record.courier}</span>
-                          <span className="ui-badge ui-badge--info">
-                            {record.machine && record.machine !== 'Sem maquininha' ? record.machine : 'Sem maquininha'}
-                          </span>
-                        </button>
+                        <div key={record.id} className="schedule-grid__entry">
+                          <button
+                            type="button"
+                            className="schedule-grid__entry-header"
+                            onClick={() => handleFilledSlotClick(record.id)}
+                          >
+                            <span className="schedule-grid__entry-name">{record.courier}</span>
+                            <span className="ui-badge ui-badge--info">
+                              {record.machine && record.machine !== 'Sem maquininha' ? record.machine : 'Sem maquininha'}
+                            </span>
+                          </button>
+                          <div className="schedule-grid__entry-editor">
+                            <Select
+                              className="ui-select schedule-grid__entry-select"
+                              value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
+                              onChange={(event) => onDraftChange(record.id, event.target.value)}
+                            >
+                              {scheduleMachineOptions.map((option) => (
+                                <option key={`${record.id}-${option}`} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </Select>
+                            <button
+                              type="button"
+                              className="ui-button ui-button--secondary schedule-grid__entry-save"
+                              onClick={() => onUpdate(record.id)}
+                              disabled={
+                                exitingIds.has(record.id)
+                                || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
+                                  === (record.machine ?? 'Sem maquininha')
+                              }
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )
