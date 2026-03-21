@@ -171,6 +171,11 @@ function SalesModule({
     [formState.items, products],
   );
 
+  const persistedDraftItems = useMemo(
+    () => draftItems.filter((item) => item.productId || item.product?.id || item.productSnapshot?.id || item.productSnapshot?.name),
+    [draftItems],
+  );
+
   const calculatedTotals = useMemo(() => {
     const subtotal = Number(draftItems.reduce((total, item) => total + Number(item.totalPrice ?? 0), 0).toFixed(2));
     const freight = parseDecimal(formState.totals.freight);
@@ -300,7 +305,11 @@ function SalesModule({
   }
 
   function buildPayload() {
-    if (draftItems.some((item) => !item.productId)) {
+    if (persistedDraftItems.length === 0) {
+      throw new Error('Adicione pelo menos um produto valido para lancar a venda.');
+    }
+
+    if (persistedDraftItems.some((item) => !(item.productId || item.product?.id || item.productSnapshot?.id || item.productSnapshot?.name))) {
       throw new Error('Selecione um produto valido para todos os itens.');
     }
 
@@ -308,7 +317,18 @@ function SalesModule({
       channel: formState.channel,
       customerId: selectedCustomer?.id ?? null,
       customerSnapshot: selectedCustomer ? { id: selectedCustomer.id, name: selectedCustomer.name, phone: selectedCustomer.phoneDisplay ?? selectedCustomer.phone ?? '', neighborhood: selectedCustomer.neighborhood ?? '' } : undefined,
-      items: draftItems.map((item) => ({ productId: item.productId, productSnapshot: { id: item.product?.id ?? item.productSnapshot?.id ?? item.productId, name: item.product?.name ?? item.productSnapshot?.name ?? 'Produto', category: item.product?.category ?? item.productSnapshot?.category ?? '', sku: item.product?.sku ?? item.productSnapshot?.sku ?? '' }, quantity: item.quantity, unitPrice: item.unitPrice, totalPrice: item.totalPrice })),
+      items: persistedDraftItems.map((item) => ({
+        productId: item.productId || item.product?.id || item.productSnapshot?.id || null,
+        productSnapshot: {
+          id: item.product?.id ?? item.productSnapshot?.id ?? item.productId ?? null,
+          name: item.product?.name ?? item.productSnapshot?.name ?? 'Produto',
+          category: item.product?.category ?? item.productSnapshot?.category ?? '',
+          sku: item.product?.sku ?? item.productSnapshot?.sku ?? '',
+        },
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+      })),
       totals: calculatedTotals,
       paymentMethod: formState.paymentMethod,
       payment: { method: formState.paymentMethod, label: getPaymentMethodLabel(formState.paymentMethod), amount: calculatedTotals.total },
@@ -323,6 +343,12 @@ function SalesModule({
     }
 
     const sale = await getSaleById({ storeId: currentStoreId, saleId });
+    if (sale) {
+      setSales((current) => {
+        const next = current.filter((entry) => entry.id !== sale.id);
+        return [sale, ...next];
+      });
+    }
     return sale;
   }
 

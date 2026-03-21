@@ -372,6 +372,11 @@ function OrdersModule({
     [formState.items, products],
   );
 
+  const persistedDraftItems = useMemo(
+    () => draftItems.filter((item) => item.productId || item.product?.id || item.productSnapshot?.id || item.productSnapshot?.name),
+    [draftItems],
+  );
+
   const calculatedTotals = useMemo(() => {
     const subtotal = Number(
       draftItems.reduce((total, item) => total + Number(item.totalPrice ?? 0), 0).toFixed(2),
@@ -554,7 +559,11 @@ function OrdersModule({
   }
 
   function buildPayload() {
-    if (draftItems.some((item) => !item.productId)) {
+    if (persistedDraftItems.length === 0) {
+      throw new Error('Adicione pelo menos um produto valido para salvar o pedido.');
+    }
+
+    if (persistedDraftItems.some((item) => !(item.productId || item.product?.id || item.productSnapshot?.id || item.productSnapshot?.name))) {
       throw new Error('Selecione um produto valido para todos os itens.');
     }
 
@@ -569,10 +578,10 @@ function OrdersModule({
           neighborhood: selectedCustomer.neighborhood ?? '',
         }
         : undefined,
-      items: draftItems.map((item) => ({
-        productId: item.productId,
+      items: persistedDraftItems.map((item) => ({
+        productId: item.productId || item.product?.id || item.productSnapshot?.id || null,
         productSnapshot: {
-          id: item.product?.id ?? item.productSnapshot?.id ?? item.productId,
+          id: item.product?.id ?? item.productSnapshot?.id ?? item.productId ?? null,
           name: item.product?.name ?? item.productSnapshot?.name ?? 'Produto',
           category: item.product?.category ?? item.productSnapshot?.category ?? '',
           sku: item.product?.sku ?? item.productSnapshot?.sku ?? '',
@@ -607,6 +616,13 @@ function OrdersModule({
       storeId: currentStoreId,
       orderId,
     });
+
+    if (order) {
+      setOrders((current) => {
+        const next = current.filter((entry) => entry.id !== order.id);
+        return [order, ...next];
+      });
+    }
 
     return order;
   }
