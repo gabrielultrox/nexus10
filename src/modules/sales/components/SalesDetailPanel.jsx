@@ -18,7 +18,7 @@ function SalesDetailPanel({
   const actionStateMessage = !selectedSale
     ? ''
     : !canWrite
-      ? 'Sem permissao para alterar esta venda.'
+      ? 'Seu perfil pode consultar, mas nao alterar esta venda.'
       : selectedSale.domainStatus === 'REVERSED'
         ? 'Venda ja estornada.'
         : selectedSale.domainStatus === 'CANCELLED'

@@ -287,7 +287,7 @@ function SalesModule({
 
   function getSaleListActionStateLabel() {
     if (!can('sales:write')) {
-      return 'Sem acoes';
+      return 'Somente leitura';
     }
 
     return null;
