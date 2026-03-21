@@ -967,6 +967,11 @@ function OrdersModule({
                         const actionConfig = getInlineActionConfig(order);
                         const isPendingAction = pendingAction?.orderId === order.id;
                         const canDeleteOrder = !order.isExternal && order.saleStatus !== 'LAUNCHED' && order.domainStatus !== 'CONVERTED_TO_SALE';
+                        const actionStateLabel = order.domainStatus === 'CONVERTED_TO_SALE'
+                          ? 'Concluido'
+                          : canDeleteOrder
+                            ? null
+                            : 'Sem acoes';
 
                         return (
                           <tr
@@ -1034,9 +1039,7 @@ function OrdersModule({
                                   )
                                 ) : order.domainStatus === 'CONVERTED_TO_SALE' ? (
                                   <span className="orders-domain__row-complete">Concluido</span>
-                                ) : (
-                                  <span className="orders-domain__row-complete">--</span>
-                                )}
+                                ) : null}
                                 {canDeleteOrder ? (
                                   <DestructiveIconButton
                                     className="orders-domain__delete-button"
@@ -1044,11 +1047,11 @@ function OrdersModule({
                                     disabled={deletingOrderId === order.id}
                                     onClick={(event) => handleDeleteOrder(order, event)}
                                   />
-                                ) : (
+                                ) : !actionConfig && actionStateLabel ? (
                                   <span className="orders-domain__row-complete">
-                                    --
+                                    {actionStateLabel}
                                   </span>
-                                )}
+                                ) : null}
                               </div>
                             </td>
                           </tr>
