@@ -25,6 +25,7 @@ import {
   saveCashState,
   subscribeToCashState,
 } from '../../../services/cashStateService';
+import { playSuccess, playWarning } from '../../../services/soundManager';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 
@@ -365,6 +366,7 @@ function CashModule() {
         return nextParams;
       });
       toast.warning('Abra o caixa primeiro');
+      playWarning();
     }
   }, [activeTab.id, isCashOpen, setSearchParams, toast]);
 
@@ -399,10 +401,12 @@ function CashModule() {
   function handleTabChange(tabId) {
     if (tabId === 'opening' && isCashOpen) {
       toast.warning('O caixa ja foi aberto');
+      playWarning();
     }
 
     if (tabId !== 'opening' && !isCashOpen) {
       toast.warning('Abra o caixa primeiro');
+      playWarning();
       setSearchParams((currentParams) => {
         const nextParams = new URLSearchParams(currentParams);
         nextParams.set('tab', 'opening');
@@ -475,6 +479,7 @@ function CashModule() {
 
     if (activeTab.id !== 'opening' && activeTab.id !== 'closing' && !isCashOpen) {
       toast.warning('Abra o caixa primeiro');
+      playWarning();
       handleTabChange('opening');
       return;
     }
@@ -489,6 +494,7 @@ function CashModule() {
     if (activeTab.id === 'opening' && isCashOpen) {
       setErrorMessage('O caixa ja esta aberto.');
       toast.warning('O caixa ja esta aberto');
+      playWarning();
       return;
     }
 
@@ -512,12 +518,14 @@ function CashModule() {
     if (activeTab.id === 'closing') {
       if (!isCashOpen) {
         toast.warning('Abra o caixa primeiro');
+        playWarning();
         handleTabChange('opening');
         return;
       }
 
       if (pendingCount > 0) {
         toast.warning(`Resolva ${pendingCount} pendencia(s) antes`);
+        playWarning();
         return;
       }
 
@@ -551,6 +559,7 @@ function CashModule() {
       });
       clearForm();
       toast.success(`${activeTab.receiptLabel} registrado`);
+      playSuccess();
     } finally {
       setIsSaving(false);
     }
@@ -590,6 +599,7 @@ function CashModule() {
           details: nextRecord.amountLabel,
         });
         toast.success(`Caixa aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(nextState.openedAt))}`);
+        playSuccess();
         clearForm();
       }
 
@@ -613,6 +623,7 @@ function CashModule() {
           details: nextRecord.amountLabel,
         });
         toast.success(`Caixa fechado as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(nextState.closedAt))}`);
+        playSuccess();
         clearForm();
         navigate('/dashboard');
       }

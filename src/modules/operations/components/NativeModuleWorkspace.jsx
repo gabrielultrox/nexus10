@@ -34,7 +34,7 @@ import {
 } from '../../../services/manualModuleSyncQueue';
 import { getNativeModuleContent } from '../../../services/nativeModuleData';
 import { courierSeedRecords, machineSeedRecords } from '../../../services/operationsSeedData';
-import { playError, playNotification, playSuccess } from '../../../services/soundManager';
+import { playError, playNotification, playSuccess, playWarning } from '../../../services/soundManager';
 import NativeModuleExportCanvases from './NativeModuleExportCanvases';
 import NativeModuleFormCard from './NativeModuleFormCard';
 import NativeModulePanels from './NativeModulePanels';
@@ -1302,7 +1302,7 @@ function NativeModuleWorkspace({ route }) {
       setErrorMessage('Informe o codigo da entrega.');
       markDeliveryCodeInvalid();
       toast.error('Informe o codigo da entrega.');
-      playError();
+      playWarning();
       return;
     }
 
@@ -1315,7 +1315,7 @@ function NativeModuleWorkspace({ route }) {
         setErrorMessage('Selecione um entregador valido para registrar a leitura.');
         markDeliveryCodeInvalid();
         toast.error('Selecione um entregador valido.');
-        playError();
+        playWarning();
         return;
       }
 
@@ -1323,7 +1323,7 @@ function NativeModuleWorkspace({ route }) {
         setErrorMessage(`O codigo ${deliveryCode} ja foi registrado neste turno.`);
         markDeliveryCodeInvalid();
         toast.error(`Codigo ${deliveryCode} ja registrado.`);
-        playError();
+        playWarning();
         return;
       }
     }
