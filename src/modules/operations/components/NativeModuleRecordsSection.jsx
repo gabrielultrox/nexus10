@@ -145,6 +145,14 @@ function formatScheduleEntryTime(windowLabel = '') {
     .trim()
 }
 
+function getScheduleSlotKey(windowLabel = '', dayKey = '') {
+  return `${dayKey}::${normalizeScheduleWindow(windowLabel)}`
+}
+
+function isScheduleMachineMissing(record) {
+  return !record?.machine || record.machine === 'Sem maquininha'
+}
+
 function NativeModuleToolbar({
   routePath,
   manager,
@@ -408,28 +416,66 @@ function NativeModuleSchedule({
   const [viewMode, setViewMode] = useState('list')
   const today = new Date()
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  const days = Array.from(
-    records.reduce((accumulator, record) => {
-      const dayKey = record.dayKey ?? record.date ?? todayKey
+  const days = useMemo(() => (
+    Array.from(
+      records.reduce((accumulator, record) => {
+        const dayKey = record.dayKey ?? record.date ?? todayKey
 
-      if (!accumulator.some((item) => item.key === dayKey)) {
-        accumulator.push({
-          key: dayKey,
-          label: dayKey === todayKey
-            ? 'Hoje'
-            : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(dayKey)),
-        })
-      }
+        if (!accumulator.some((item) => item.key === dayKey)) {
+          accumulator.push({
+            key: dayKey,
+            label: dayKey === todayKey
+              ? 'Hoje'
+              : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(dayKey)),
+          })
+        }
 
-      return accumulator
-    }, []),
-  ).slice(0, 4)
-  const scheduleDays = days.length > 0 ? days : [{ key: todayKey, label: 'Hoje' }]
+        return accumulator
+      }, []),
+    ).slice(0, 4)
+  ), [records, todayKey])
+  const scheduleDays = useMemo(
+    () => (days.length > 0 ? days : [{ key: todayKey, label: 'Hoje' }]),
+    [days, todayKey],
+  )
   const scheduleWindows = Array.from(
     new Set([
       ...DEFAULT_SCHEDULE_WINDOWS,
       ...records.map((record) => record.window).filter(Boolean),
     ]),
+  )
+  const slotRecordMap = useMemo(() => {
+    const nextMap = new Map()
+
+    records.forEach((record) => {
+      const dayKey = record.dayKey ?? record.date ?? todayKey
+      const slotKey = getScheduleSlotKey(record.window, dayKey)
+      const currentRecords = nextMap.get(slotKey) ?? []
+      currentRecords.push(record)
+      nextMap.set(slotKey, currentRecords)
+    })
+
+    return nextMap
+  }, [records, todayKey])
+  const conflictSlotKeys = useMemo(() => (
+    new Set(
+      Array.from(slotRecordMap.entries())
+        .filter(([, slotRecords]) => slotRecords.length > 1)
+        .map(([slotKey]) => slotKey),
+    )
+  ), [slotRecordMap])
+  const missingMachineCount = useMemo(
+    () => records.filter((record) => isScheduleMachineMissing(record)).length,
+    [records],
+  )
+  const emptySlotCount = useMemo(
+    () => scheduleDays.reduce((count, day) => (
+      count + scheduleWindows.filter((windowLabel) => {
+        const slotKey = getScheduleSlotKey(windowLabel, day.key)
+        return (slotRecordMap.get(slotKey) ?? []).length === 0
+      }).length
+    ), 0),
+    [scheduleDays, scheduleWindows, slotRecordMap],
   )
 
   useEffect(() => {
@@ -453,6 +499,24 @@ function NativeModuleSchedule({
         <div>
           <p className="schedule-records__eyebrow">Painel de turno</p>
           <strong className="schedule-records__title">Cobertura por entrada</strong>
+          <div className="schedule-records__signals" aria-label="Resumo operacional da escala">
+            <span className="schedule-records__signal">
+              <strong>{records.length}</strong>
+              <span>entradas ativas</span>
+            </span>
+            <span className={`schedule-records__signal${conflictSlotKeys.size > 0 ? ' schedule-records__signal--danger' : ''}`}>
+              <strong>{conflictSlotKeys.size}</strong>
+              <span>conflito{conflictSlotKeys.size === 1 ? '' : 's'}</span>
+            </span>
+            <span className={`schedule-records__signal${missingMachineCount > 0 ? ' schedule-records__signal--warning' : ''}`}>
+              <strong>{missingMachineCount}</strong>
+              <span>sem maquininha</span>
+            </span>
+            <span className={`schedule-records__signal${emptySlotCount > 0 ? ' schedule-records__signal--muted' : ''}`}>
+              <strong>{emptySlotCount}</strong>
+              <span>sem cobertura</span>
+            </span>
+          </div>
         </div>
         <div className="schedule-records__view-toggle" role="tablist" aria-label="Visualizacao da escala">
           <button
@@ -489,10 +553,9 @@ function NativeModuleSchedule({
               <div key={windowLabel} className="schedule-grid__row-group">
                 <div className="schedule-grid__window-cell">{formatScheduleEntryTime(windowLabel)}</div>
                 {scheduleDays.map((day) => {
-                  const matchingRecords = records.filter((record) => (
-                    normalizeScheduleWindow(record.window) === normalizeScheduleWindow(windowLabel)
-                    && (record.dayKey ?? record.date ?? todayKey) === day.key
-                  ))
+                  const slotKey = getScheduleSlotKey(windowLabel, day.key)
+                  const matchingRecords = slotRecordMap.get(slotKey) ?? []
+                  const hasConflict = conflictSlotKeys.has(slotKey)
 
                   if (matchingRecords.length === 0) {
                     return (
@@ -508,46 +571,67 @@ function NativeModuleSchedule({
                   }
 
                   return (
-                    <div key={`${day.key}-${windowLabel}`} className="schedule-grid__slot schedule-grid__slot--filled">
-                      {matchingRecords.map((record) => (
-                        <div key={record.id} className="schedule-grid__entry">
-                          <button
-                            type="button"
-                            className="schedule-grid__entry-header"
-                            onClick={() => handleFilledSlotClick(record.id)}
+                    <div
+                      key={`${day.key}-${windowLabel}`}
+                      className={`schedule-grid__slot schedule-grid__slot--filled${hasConflict ? ' schedule-grid__slot--conflict' : ''}`}
+                    >
+                      {matchingRecords.map((record) => {
+                        const machineMissing = isScheduleMachineMissing(record)
+
+                        return (
+                          <div
+                            key={record.id}
+                            className={`schedule-grid__entry${hasConflict ? ' schedule-grid__entry--conflict' : ''}${machineMissing ? ' schedule-grid__entry--missing-machine' : ''}`}
                           >
-                            <span className="schedule-grid__entry-name">{record.courier}</span>
-                            <span className="ui-badge ui-badge--info">
-                              {record.machine && record.machine !== 'Sem maquininha' ? record.machine : 'Sem maquininha'}
-                            </span>
-                          </button>
-                          <div className="schedule-grid__entry-editor">
-                            <Select
-                              className="ui-select schedule-grid__entry-select"
-                              value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
-                              onChange={(event) => onDraftChange(record.id, event.target.value)}
-                            >
-                              {scheduleMachineOptions.map((option) => (
-                                <option key={`${record.id}-${option}`} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </Select>
                             <button
                               type="button"
-                              className="ui-button ui-button--secondary schedule-grid__entry-save"
-                              onClick={() => onUpdate(record.id)}
-                              disabled={
-                                exitingIds.has(record.id)
-                                || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                                  === (record.machine ?? 'Sem maquininha')
-                              }
+                              className="schedule-grid__entry-header"
+                              onClick={() => handleFilledSlotClick(record.id)}
                             >
-                              Salvar
+                              <span className="schedule-grid__entry-copy">
+                                <span className="schedule-grid__entry-name">{record.courier}</span>
+                                <span className="schedule-grid__entry-flags">
+                                  {hasConflict ? <span className="ui-badge ui-badge--danger">Conflito</span> : null}
+                                  <span className={`ui-badge ${machineMissing ? 'ui-badge--warning' : 'ui-badge--info'}`}>
+                                    {machineMissing ? 'Sem maquininha' : record.machine}
+                                  </span>
+                                </span>
+                              </span>
                             </button>
+                            <div className="schedule-grid__entry-editor">
+                              <Select
+                                className="ui-select schedule-grid__entry-select"
+                                value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
+                                onChange={(event) => onDraftChange(record.id, event.target.value)}
+                              >
+                                {scheduleMachineOptions.map((option) => (
+                                  <option key={`${record.id}-${option}`} value={option}>
+                                    {option}
+                                  </option>
+                                ))}
+                              </Select>
+                              <button
+                                type="button"
+                                className="ui-button ui-button--secondary schedule-grid__entry-save"
+                                onClick={() => onUpdate(record.id)}
+                                disabled={
+                                  exitingIds.has(record.id)
+                                  || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
+                                    === (record.machine ?? 'Sem maquininha')
+                                }
+                              >
+                                Salvar
+                              </button>
+                              <DestructiveIconButton
+                                className="schedule-grid__entry-delete"
+                                disabled={exitingIds.has(record.id)}
+                                onClick={() => onDelete(record.id)}
+                                label={`Excluir escala de ${record.courier}`}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )
                 })}
@@ -557,76 +641,87 @@ function NativeModuleSchedule({
         </div>
       ) : (
         <div className="schedule-records__grid">
-          {records.map((record) => (
-            <article
-              key={record.id}
-              className={`schedule-records__card${exitingIds.has(record.id) ? ' is-exiting' : ''}${highlightedRecordId === record.id ? ' schedule-records__card--highlighted' : ''}`}
-            >
-              <div className="schedule-records__top">
-                <div>
-                  <p className="schedule-records__eyebrow">Entregador</p>
-                  <strong className="schedule-records__name">{record.courier}</strong>
-                </div>
-                <span className="ui-badge ui-badge--info">{record.status}</span>
-              </div>
+          {records.map((record) => {
+            const dayKey = record.dayKey ?? record.date ?? todayKey
+            const slotKey = getScheduleSlotKey(record.window, dayKey)
+            const hasConflict = conflictSlotKeys.has(slotKey)
+            const machineMissing = isScheduleMachineMissing(record)
 
-              <div className="schedule-records__meta">
-                <div className="schedule-records__meta-item">
-                  <span>Entrada</span>
-                  <strong>{formatScheduleEntryTime(record.window)}</strong>
-                </div>
-                <div className="schedule-records__meta-item">
-                  <span>Atualizacao</span>
-                  <strong>
-                    {record.updatedAt && record.updatedBy
-                      ? `${record.updatedBy} - ${record.updatedAt}`
-                      : 'Sem atualizacao'}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="schedule-records__editor">
-                <div className="ui-field">
-                  <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>
-                    Maquininha do dia
-                  </label>
-                  <Select
-                    id={`schedule-machine-${record.id}`}
-                    className="ui-select"
-                    value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
-                    onChange={(event) => onDraftChange(record.id, event.target.value)}
-                  >
-                    {scheduleMachineOptions.map((option) => (
-                      <option key={`${record.id}-${option}`} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
+            return (
+              <article
+                key={record.id}
+                className={`schedule-records__card${exitingIds.has(record.id) ? ' is-exiting' : ''}${highlightedRecordId === record.id ? ' schedule-records__card--highlighted' : ''}${hasConflict ? ' schedule-records__card--conflict' : ''}${machineMissing ? ' schedule-records__card--missing-machine' : ''}`}
+              >
+                <div className="schedule-records__top">
+                  <div>
+                    <p className="schedule-records__eyebrow">Entregador</p>
+                    <strong className="schedule-records__name">{record.courier}</strong>
+                  </div>
+                  <div className="schedule-records__badge-stack">
+                    <span className="ui-badge ui-badge--info">{record.status}</span>
+                    {hasConflict ? <span className="ui-badge ui-badge--danger">Conflito</span> : null}
+                    {machineMissing ? <span className="ui-badge ui-badge--warning">Sem maquininha</span> : null}
+                  </div>
                 </div>
 
-                <div className="schedule-records__actions">
-                  <button
-                    type="button"
-                    className="ui-button ui-button--secondary"
-                    onClick={() => onUpdate(record.id)}
-                    disabled={
-                      exitingIds.has(record.id)
-                      || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                        === (record.machine ?? 'Sem maquininha')
-                    }
-                  >
-                    Salvar maquininha do dia
-                  </button>
-                  <DestructiveIconButton
-                    className="schedule-records__delete-button"
-                    disabled={exitingIds.has(record.id)}
-                    onClick={() => onDelete(record.id)}
-                    label={`Excluir escala de ${record.courier}`}
-                  />
+                <div className="schedule-records__meta">
+                  <div className="schedule-records__meta-item">
+                    <span>Entrada</span>
+                    <strong>{formatScheduleEntryTime(record.window)}</strong>
+                  </div>
+                  <div className="schedule-records__meta-item">
+                    <span>Atualizacao</span>
+                    <strong>
+                      {record.updatedAt && record.updatedBy
+                        ? `${record.updatedBy} - ${record.updatedAt}`
+                        : 'Sem atualizacao'}
+                    </strong>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+
+                <div className="schedule-records__editor">
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor={`schedule-machine-${record.id}`}>
+                      Maquininha do dia
+                    </label>
+                    <Select
+                      id={`schedule-machine-${record.id}`}
+                      className="ui-select"
+                      value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
+                      onChange={(event) => onDraftChange(record.id, event.target.value)}
+                    >
+                      {scheduleMachineOptions.map((option) => (
+                        <option key={`${record.id}-${option}`} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div className="schedule-records__actions">
+                    <button
+                      type="button"
+                      className="ui-button ui-button--secondary"
+                      onClick={() => onUpdate(record.id)}
+                      disabled={
+                        exitingIds.has(record.id)
+                        || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
+                          === (record.machine ?? 'Sem maquininha')
+                      }
+                    >
+                      Salvar maquininha do dia
+                    </button>
+                    <DestructiveIconButton
+                      className="schedule-records__delete-button"
+                      disabled={exitingIds.has(record.id)}
+                      onClick={() => onDelete(record.id)}
+                      label={`Excluir escala de ${record.courier}`}
+                    />
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
       )}
     </div>
