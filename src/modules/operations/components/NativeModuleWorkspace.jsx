@@ -267,6 +267,33 @@ function formatChecklistDate() {
     .toUpperCase();
 }
 
+function formatCurrencyValue(value) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
+function parseCurrencyValue(value) {
+  const normalized = String(value ?? '')
+    .replace(/[^\d,.-]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function isCompletedChangeRecord(record) {
+  const normalized = String(record?.status ?? '').trim().toLowerCase();
+
+  return (
+    normalized.includes('conclu')
+    || normalized.includes('retorn')
+    || normalized.includes('recebid')
+  );
+}
+
 function resolveDisplayText(value, fallback = 'Nao informado') {
   if (typeof value === 'string') {
     const trimmedValue = value.trim();
@@ -430,6 +457,7 @@ function NativeModuleWorkspace({ route }) {
   const scheduleImageRef = useRef(null);
   const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
+  const changeDeliveredImageRef = useRef(null);
   const invalidFieldTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -889,6 +917,32 @@ function NativeModuleWorkspace({ route }) {
       ? visibleRecords.filter((record) => record.closed)
       : []),
     [route.path, visibleRecords],
+  );
+  const deliveredChangeRecords = useMemo(() => {
+    if (route.path !== 'change') {
+      return [];
+    }
+
+    return [...records]
+      .filter((record) => isCompletedChangeRecord(record))
+      .sort((left, right) => {
+        const leftTimestamp = new Date(left.updatedAtClient ?? left.createdAtClient ?? 0).getTime();
+        const rightTimestamp = new Date(right.updatedAtClient ?? right.createdAtClient ?? 0).getTime();
+
+        return rightTimestamp - leftTimestamp;
+      });
+  }, [records, route.path]);
+  const deliveredChangeTotalValue = useMemo(
+    () => deliveredChangeRecords.reduce((total, record) => total + parseCurrencyValue(record.value), 0),
+    [deliveredChangeRecords],
+  );
+  const deliveredChangeCourierCount = useMemo(
+    () => new Set(
+      deliveredChangeRecords
+        .map((record) => String(record.destination ?? '').trim())
+        .filter(Boolean),
+    ).size,
+    [deliveredChangeRecords],
   );
   const usedScheduleMachines = useMemo(() => {
     if (route.path !== 'schedule') {
@@ -1624,11 +1678,11 @@ function NativeModuleWorkspace({ route }) {
     return `${fileLabel} (${today}).${extension}`;
   }
 
-  async function exportImageFromRef(targetRef, fileLabel, failureMessage) {
+  async function buildExportImageDataUrl(targetRef, fileLabel, failureMessage) {
     if (!targetRef?.current) {
       setErrorMessage(failureMessage);
       playError();
-      return;
+      return null;
     }
 
     const exportNode = targetRef.current.cloneNode(true);
@@ -1662,30 +1716,109 @@ function NativeModuleWorkspace({ route }) {
       setErrorMessage('');
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
 
-      const dataUrl = await toPng(exportNode, {
+      return await toPng(exportNode, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: '#f7fafc',
         skipFonts: true,
       });
-
-      const link = document.createElement('a');
-      const filename = buildExportFileName(fileLabel, 'png');
-
-      link.href = dataUrl;
-      link.download = filename;
-      link.rel = 'noopener';
-      link.target = '_self';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      playNotification();
     } catch {
       playError();
       setErrorMessage(failureMessage);
+      return null;
     } finally {
       exportSandbox.remove();
     }
+  }
+
+  async function exportImageFromRef(targetRef, fileLabel, failureMessage) {
+    const dataUrl = await buildExportImageDataUrl(targetRef, fileLabel, failureMessage);
+
+    if (!dataUrl) {
+      return;
+    }
+
+    const link = document.createElement('a');
+    const filename = buildExportFileName(fileLabel, 'png');
+
+    link.href = dataUrl;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.target = '_self';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    playNotification();
+  }
+
+  async function printImageFromRef(targetRef, documentTitle, failureMessage) {
+    const dataUrl = await buildExportImageDataUrl(targetRef, documentTitle, failureMessage);
+
+    if (!dataUrl) {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1080,height=860');
+
+    if (!printWindow) {
+      setErrorMessage('Nao foi possivel abrir a janela de impressao.');
+      playError();
+      return;
+    }
+
+    const safeTitle = documentTitle.replace(/"/g, '&quot;');
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>${safeTitle}</title>
+    <style>
+      @page { size: A4 portrait; margin: 12mm; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+      }
+      img {
+        display: block;
+        width: min(100%, 980px);
+        height: auto;
+      }
+      @media print {
+        body {
+          padding: 0;
+        }
+        img {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <img src="${dataUrl}" alt="${safeTitle}" />
+    <script>
+      window.addEventListener('load', () => {
+        window.focus();
+        setTimeout(() => {
+          window.print();
+        }, 120);
+      });
+      window.addEventListener('afterprint', () => {
+        window.close();
+      });
+    </script>
+  </body>
+</html>`);
+    printWindow.document.close();
+    playNotification();
   }
 
   async function handleExportScheduleImage() {
@@ -1738,6 +1871,44 @@ function NativeModuleWorkspace({ route }) {
       machineChecklistImageRef,
       'maquininhas do dia',
       'Nao foi possivel exportar as maquininhas presentes como imagem.',
+    );
+  }
+
+  async function handleExportDeliveredChangesImage() {
+    if (route.path !== 'change') {
+      playError();
+      return;
+    }
+
+    if (deliveredChangeRecords.length === 0) {
+      setErrorMessage('Nao ha trocos concluidos hoje para exportar.');
+      playOperationalWarning();
+      return;
+    }
+
+    await exportImageFromRef(
+      changeDeliveredImageRef,
+      'trocos entregues do dia',
+      'Nao foi possivel exportar os trocos entregues do dia.',
+    );
+  }
+
+  async function handlePrintDeliveredChanges() {
+    if (route.path !== 'change') {
+      playError();
+      return;
+    }
+
+    if (deliveredChangeRecords.length === 0) {
+      setErrorMessage('Nao ha trocos concluidos hoje para imprimir.');
+      playOperationalWarning();
+      return;
+    }
+
+    await printImageFromRef(
+      changeDeliveredImageRef,
+      'Trocos entregues do dia',
+      'Nao foi possivel preparar a impressao dos trocos entregues do dia.',
     );
   }
 
@@ -2076,6 +2247,8 @@ function NativeModuleWorkspace({ route }) {
         handleExportScheduleImage={handleExportScheduleImage}
         handleExportScheduleMachinesImage={handleExportScheduleMachinesImage}
         handleExportMachineChecklistImage={handleExportMachineChecklistImage}
+        handleExportDeliveredChangesImage={handleExportDeliveredChangesImage}
+        handlePrintDeliveredChanges={handlePrintDeliveredChanges}
         handleExportBackup={handleExportBackup}
         handleManualReset={handleManualReset}
         handleClearAll={handleClearAll}
@@ -2089,12 +2262,17 @@ function NativeModuleWorkspace({ route }) {
         scheduleImageRef={scheduleImageRef}
         scheduleMachinesImageRef={scheduleMachinesImageRef}
         machineChecklistImageRef={machineChecklistImageRef}
+        changeDeliveredImageRef={changeDeliveredImageRef}
         visibleRecords={visibleRecords}
         usedScheduleMachines={usedScheduleMachines}
         metrics={metrics}
         formatChecklistDate={formatChecklistDate}
+        formatCurrencyValue={formatCurrencyValue}
         session={session}
         presentMachineChecklistRecords={presentMachineChecklistRecords}
+        deliveredChangeRecords={deliveredChangeRecords}
+        deliveredChangeTotalValue={deliveredChangeTotalValue}
+        deliveredChangeCourierCount={deliveredChangeCourierCount}
       />
     </div>
   );

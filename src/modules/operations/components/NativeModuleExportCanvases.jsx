@@ -3,12 +3,17 @@ function NativeModuleExportCanvases({
   scheduleImageRef,
   scheduleMachinesImageRef,
   machineChecklistImageRef,
+  changeDeliveredImageRef,
   visibleRecords,
   usedScheduleMachines,
   metrics,
   formatChecklistDate,
+  formatCurrencyValue,
   session,
   presentMachineChecklistRecords,
+  deliveredChangeRecords,
+  deliveredChangeTotalValue,
+  deliveredChangeCourierCount,
 }) {
   function getScheduleEntryTime(windowLabel = '') {
     return String(windowLabel)
@@ -178,6 +183,79 @@ function NativeModuleExportCanvases({
                   <span className="schedule-export-image__machine-badge schedule-export-image__machine-badge--present">
                     Presente
                   </span>
+                </article>
+              ))}
+            </div>
+
+            <footer className="schedule-export-image__footer">
+              <span>Gerado automaticamente pelo ERP operacional</span>
+              <strong>{session?.operatorName ?? session?.displayName ?? 'Operador local'}</strong>
+            </footer>
+          </div>
+        </div>
+      ) : null}
+
+      {routePath === 'change' ? (
+        <div className="schedule-export-image" aria-hidden="true">
+          <div
+            ref={changeDeliveredImageRef}
+            className="schedule-export-image__canvas schedule-export-image__canvas--changes"
+          >
+            <header className="schedule-export-image__header">
+              <div>
+                <span className="schedule-export-image__eyebrow">NEXUS</span>
+                <h2 className="schedule-export-image__title">Trocos entregues do dia</h2>
+                <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
+              </div>
+              <div className="schedule-export-image__stamp">
+                <span>Retornos confirmados</span>
+                <strong>{deliveredChangeRecords.length} trocos</strong>
+              </div>
+            </header>
+
+            <div className="schedule-export-image__metrics">
+              <article className="schedule-export-image__metric">
+                <span>Total entregue</span>
+                <strong>{formatCurrencyValue(deliveredChangeTotalValue)}</strong>
+                <small>Soma dos trocos concluidos no dia</small>
+              </article>
+              <article className="schedule-export-image__metric">
+                <span>Entregadores</span>
+                <strong>{deliveredChangeCourierCount}</strong>
+                <small>Equipe que recebeu troco concluido hoje</small>
+              </article>
+              <article className="schedule-export-image__metric">
+                <span>Conferencia</span>
+                <strong>{deliveredChangeRecords.length}</strong>
+                <small>Registros prontos para exportar e imprimir</small>
+              </article>
+            </div>
+
+            <div className="schedule-export-image__grid">
+              {deliveredChangeRecords.map((record) => (
+                <article key={record.id} className="schedule-export-image__card">
+                  <div className="schedule-export-image__card-top">
+                    <strong>{record.destination || 'Entregador nao informado'}</strong>
+                    <span>Concluido</span>
+                  </div>
+                  <div className="schedule-export-image__card-body schedule-export-image__card-body--stack">
+                    <p>
+                      <span>Operador</span>
+                      <strong>{record.origin || 'Nao informado'}</strong>
+                    </p>
+                    <p>
+                      <span>Valor</span>
+                      <strong>{record.value || formatCurrencyValue(0)}</strong>
+                    </p>
+                    <p>
+                      <span>Retorno</span>
+                      <strong>
+                        {record.returnedAt && record.returnedBy
+                          ? `${record.returnedBy} - ${record.returnedAt}`
+                          : 'Confirmado sem horario informado'}
+                      </strong>
+                    </p>
+                  </div>
                 </article>
               ))}
             </div>

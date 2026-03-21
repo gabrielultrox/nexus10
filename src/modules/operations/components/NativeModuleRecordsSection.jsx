@@ -158,6 +158,8 @@ function NativeModuleToolbar({
   onExportSchedule,
   onExportScheduleMachines,
   onExportMachines,
+  onExportDeliveredChanges,
+  onPrintDeliveredChanges,
   onExportBackup,
   onManualReset,
   onClearAll,
@@ -311,6 +313,16 @@ function NativeModuleToolbar({
             <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
               Exportar presentes
             </button>
+          ) : null}
+          {routePath === 'change' ? (
+            <>
+              <button type="button" className="ui-button ui-button--secondary" onClick={onExportDeliveredChanges}>
+                Exportar entregues
+              </button>
+              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintDeliveredChanges}>
+                Imprimir entregues
+              </button>
+            </>
           ) : null}
           {routePath !== 'schedule' ? (
             <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
@@ -890,6 +902,8 @@ function NativeModuleRecordsSection(props) {
   handleExportScheduleImage,
   handleExportScheduleMachinesImage,
   handleExportMachineChecklistImage,
+  handleExportDeliveredChangesImage,
+  handlePrintDeliveredChanges,
   handleExportBackup,
   handleManualReset,
   handleClearAll,
@@ -1062,6 +1076,8 @@ function NativeModuleRecordsSection(props) {
         onExportSchedule={handleExportScheduleImage}
         onExportScheduleMachines={handleExportScheduleMachinesImage}
         onExportMachines={handleExportMachineChecklistImage}
+        onExportDeliveredChanges={handleExportDeliveredChangesImage}
+        onPrintDeliveredChanges={handlePrintDeliveredChanges}
         onExportBackup={handleExportBackup}
         onManualReset={handleManualReset}
         onClearAll={handleClearAll}
