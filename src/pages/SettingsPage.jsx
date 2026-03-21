@@ -13,13 +13,18 @@ import {
   setStoredPin,
 } from '../services/localAccess';
 import {
+  getSoundProfile,
+  getSoundProfiles,
   isSoundEnabled,
   playError,
   playNotification,
   playSuccess,
+  previewSoundCategory,
   setSoundEnabled,
+  setSoundProfile,
 } from '../services/soundManager';
 import { isSettingsUnlocked, lockSettings, unlockSettings } from '../services/settingsAccess';
+import Select from '../components/ui/Select';
 
 function SettingsPage() {
   const { session, can } = useAuth();
@@ -32,6 +37,8 @@ function SettingsPage() {
   const [pinEnabled, setPinEnabled] = useState(() => hasStoredPin());
   const [currentPinMask, setCurrentPinMask] = useState(() => (hasStoredPin() ? '****' : `${DEFAULT_ACCESS_PIN} padrao`));
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled());
+  const [soundProfile, setSoundProfileState] = useState(() => getSoundProfile());
+  const soundProfiles = getSoundProfiles();
 
   function handleUnlockSettings(event) {
     event.preventDefault();
@@ -124,6 +131,27 @@ function SettingsPage() {
     }
   }
 
+  function handleChangeSoundProfile(event) {
+    const nextProfile = event.target.value;
+    setSoundProfile(nextProfile);
+    setSoundProfileState(nextProfile);
+    setFeedback(`Perfil sonoro ${soundProfiles.find((profile) => profile.id === nextProfile)?.label?.toLowerCase() ?? 'padrao'} aplicado.`);
+    setErrorMessage('');
+    previewSoundCategory('operations');
+  }
+
+  function handlePreviewSound(category) {
+    if (!soundEffectsEnabled) {
+      setErrorMessage('Ative os efeitos sonoros para pre-ouvir os perfis.');
+      playError();
+      return;
+    }
+
+    setFeedback('');
+    setErrorMessage('');
+    previewSoundCategory(category);
+  }
+
   if (!settingsUnlocked) {
     return (
       <div className="page-stack settings-page settings-page--locked">
@@ -212,14 +240,49 @@ function SettingsPage() {
         </SurfaceCard>
 
         <SurfaceCard title="Sound Effects">
-          <div className="settings-summary">
+          <div className="settings-summary settings-sound-panel">
             <div className="settings-summary__row">
               <span>Status</span>
               <strong>{soundEffectsEnabled ? 'Ativado' : 'Desativado'}</strong>
             </div>
             <div className="settings-summary__row">
               <span>Perfil</span>
-              <strong>Feedback curto e discreto</strong>
+              <strong>{soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'}</strong>
+            </div>
+            <div className="ui-field settings-sound-panel__field">
+              <label className="ui-label" htmlFor="settings-sound-profile">
+                Perfil sonoro
+              </label>
+              <Select
+                id="settings-sound-profile"
+                className="ui-select"
+                value={soundProfile}
+                disabled={!soundEffectsEnabled}
+                onChange={handleChangeSoundProfile}
+              >
+                {soundProfiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="settings-sound-panel__preview">
+              <span className="text-caption">Pre-ouvir categorias</span>
+              <div className="settings-sound-panel__preview-grid">
+                <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('cash')}>
+                  Caixa
+                </button>
+                <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('pdv')}>
+                  PDV
+                </button>
+                <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('operations')}>
+                  Operacao
+                </button>
+                <button type="button" className="ui-button ui-button--ghost" onClick={() => handlePreviewSound('warning')}>
+                  Aviso
+                </button>
+              </div>
             </div>
             <button type="button" className="ui-button ui-button--secondary" onClick={handleToggleSoundEffects}>
               {soundEffectsEnabled ? 'Desligar sons' : 'Ligar sons'}

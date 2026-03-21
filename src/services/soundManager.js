@@ -11,7 +11,15 @@ import successSrc from '../assets/sounds/ui_success.wav';
 import warningSrc from '../assets/sounds/ui_warning.wav';
 
 const SOUND_ENABLED_STORAGE_KEY = 'nexus-sound-effects-enabled';
+const SOUND_PROFILE_STORAGE_KEY = 'nexus-sound-effects-profile';
 const DEFAULT_ENABLED = true;
+const DEFAULT_PROFILE = 'balanced';
+
+const soundProfiles = {
+  soft: { label: 'Suave', multiplier: 0.82 },
+  balanced: { label: 'Padrao', multiplier: 1 },
+  vivid: { label: 'Intenso', multiplier: 1.18 },
+};
 
 const soundLibrary = {
   click: { src: clickSrc, volume: 0.14, minGap: 70 },
@@ -28,6 +36,7 @@ const soundLibrary = {
 };
 
 let enabled = DEFAULT_ENABLED;
+let profile = DEFAULT_PROFILE;
 let activeAudio = null;
 let initialized = false;
 let listenersBound = false;
@@ -50,6 +59,20 @@ function loadStoredEnabled() {
   }
 
   return rawValue !== 'false';
+}
+
+function loadStoredProfile() {
+  if (typeof window === 'undefined') {
+    return DEFAULT_PROFILE;
+  }
+
+  const rawValue = window.localStorage.getItem(SOUND_PROFILE_STORAGE_KEY);
+
+  if (!rawValue || !soundProfiles[rawValue]) {
+    return DEFAULT_PROFILE;
+  }
+
+  return rawValue;
 }
 
 function getAudioInstance(key) {
@@ -102,7 +125,7 @@ function playSound(key) {
 
   lastPlayedAt.set(key, now);
   stopActiveAudio();
-  audio.volume = config.volume;
+  audio.volume = Math.max(0, Math.min(1, config.volume * (soundProfiles[profile]?.multiplier ?? 1)));
   audio.currentTime = 0;
   activeAudio = audio;
   audio.play().catch(() => {
@@ -149,6 +172,7 @@ export function initializeSoundManager() {
   }
 
   enabled = loadStoredEnabled();
+  profile = loadStoredProfile();
   initialized = true;
 }
 
@@ -186,6 +210,27 @@ export function setSoundEnabled(nextValue) {
 
   if (!enabled) {
     stopActiveAudio();
+  }
+}
+
+export function getSoundProfile() {
+  initializeSoundManager();
+  return profile;
+}
+
+export function getSoundProfiles() {
+  return Object.entries(soundProfiles).map(([id, data]) => ({
+    id,
+    label: data.label,
+  }));
+}
+
+export function setSoundProfile(nextProfile) {
+  const normalizedProfile = soundProfiles[nextProfile] ? nextProfile : DEFAULT_PROFILE;
+  profile = normalizedProfile;
+
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(SOUND_PROFILE_STORAGE_KEY, normalizedProfile);
   }
 }
 
@@ -235,4 +280,15 @@ export function playOperationalWarning() {
 
 export function playDestructive() {
   playSound('destructive');
+}
+
+export function previewSoundCategory(category) {
+  const previewMap = {
+    cash: 'cashSuccess',
+    pdv: 'pdvSuccess',
+    operations: 'operationsSuccess',
+    warning: 'operationsWarning',
+  };
+
+  playSound(previewMap[category] ?? 'click');
 }
