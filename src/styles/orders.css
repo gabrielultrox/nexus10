@@ -262,7 +262,76 @@
 }
 
 .orders-domain__detail-actions {
-  align-items: center;
+  align-items: stretch;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.orders-domain__detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 248px);
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.orders-domain__detail-hero-main,
+.orders-domain__action-rail {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
+  border-radius: var(--radius-section);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 22%),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
+}
+
+.orders-domain__hero-summary {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
+}
+
+.orders-domain__hero-kicker,
+.orders-domain__action-rail-label {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.orders-domain__hero-order {
+  color: var(--color-text-primary);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.orders-domain__hero-meta,
+.orders-domain__hero-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.orders-domain__hero-meta {
+  font-size: 0.88rem;
+}
+
+.orders-domain__hero-description {
+  max-width: 58ch;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.orders-domain__action-rail {
+  align-content: start;
+}
+
+.orders-domain__action-rail .ui-button {
+  width: 100%;
+  justify-content: center;
+  min-height: 36px;
 }
 
 .orders-domain__item-line {
@@ -296,6 +365,21 @@
 .orders-domain__item-line p,
 .orders-domain__notes p {
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 980px) {
+  .orders-domain__detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-domain__action-rail .ui-button {
+    width: auto;
+    justify-content: center;
+  }
+
+  .orders-domain__detail-actions {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 }
 
 .orders-domain__timeline-card,

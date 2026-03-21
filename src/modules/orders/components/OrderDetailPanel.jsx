@@ -27,70 +27,89 @@ function OrderDetailPanel({
     ? selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)
     : '--'
   const isSaleLaunched = selectedOrder?.saleStatus === 'LAUNCHED'
+  const statusDescription = isSaleLaunched
+    ? 'Impacto em estoque e financeiro ja publicado.'
+    : selectedOrder?.domainStatus === 'DISPATCHED'
+      ? 'Pedido em rota, aguardando conversao em venda.'
+      : 'Pedido ativo e pronto para seguir no fluxo operacional.'
 
   return (
     <div className="orders-domain__detail-shell">
-      <div className="orders-domain__detail-header">
-        <div>
-          <p className="text-section-title">Detalhe do Pedido</p>
-          <p className="text-body">Status, conversao e impacto operacional.</p>
-        </div>
-
-        {selectedOrder ? (
-          <div className="orders-domain__detail-actions">
-            <button
-              type="button"
-              className="ui-button ui-button--ghost"
-              onClick={() => printOrderTicket(selectedOrder)}
-            >
-              Imprimir pedido
-            </button>
-            <button
-              type="button"
-              className="ui-button ui-button--ghost"
-              onClick={onEdit}
-              disabled={!canWrite || isSaleLaunched}
-            >
-              Editar pedido
-            </button>
-            <button
-              type="button"
-              className="ui-button ui-button--secondary"
-              onClick={onDispatch}
-              disabled={acting || !canWrite || selectedOrder.domainStatus !== 'OPEN'}
-            >
-              Marcar como despachado
-            </button>
-            <button
-              type="button"
-              className="ui-button ui-button--primary"
-              onClick={onConvertToSale}
-              disabled={
-                acting
-                || !canWrite
-                || isSaleLaunched
-                || selectedOrder.domainStatus === 'CANCELLED'
-              }
-            >
-              Gerar venda
-            </button>
-          </div>
-        ) : null}
-      </div>
-
       {!selectedOrder ? (
         <EmptyState
           message={isLoading ? 'Carregando...' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
         />
       ) : (
         <div className="orders-domain__detail">
-          <div className="commerce-detail-band">
-            <span className="ui-badge ui-badge--info">{orderSource}</span>
-            <span className="ui-badge ui-badge--warning">{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</span>
-            <span className={`ui-badge ${isSaleLaunched ? 'ui-badge--success' : 'ui-badge--special'}`}>
-              {isSaleLaunched ? 'Venda lancada' : 'Venda nao lancada'}
-            </span>
-            <span className="ui-badge ui-badge--special">{paymentLabel}</span>
+          <div className="orders-domain__detail-hero">
+            <div className="orders-domain__detail-hero-main">
+              <div className="orders-domain__detail-header">
+                <div>
+                  <p className="text-section-title">Detalhe do pedido</p>
+                  <p className="text-body">Status, conversao e impacto operacional.</p>
+                </div>
+              </div>
+
+              <div className="commerce-detail-band">
+                <span className="ui-badge ui-badge--info">{orderSource}</span>
+                <span className="ui-badge ui-badge--warning">{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</span>
+                <span className={`ui-badge ${isSaleLaunched ? 'ui-badge--success' : 'ui-badge--special'}`}>
+                  {isSaleLaunched ? 'Venda lancada' : 'Venda nao lancada'}
+                </span>
+                <span className="ui-badge ui-badge--special">{paymentLabel}</span>
+              </div>
+
+              <div className="orders-domain__hero-summary">
+                <div className="orders-domain__hero-kicker">Pedido em foco</div>
+                <strong className="orders-domain__hero-order">{selectedOrder.number}</strong>
+                <p className="orders-domain__hero-meta">
+                  {selectedOrder.customerName} · {formatCurrencyBRL(selectedOrder.totals?.total ?? 0)}
+                </p>
+                <p className="orders-domain__hero-description">{statusDescription}</p>
+              </div>
+            </div>
+
+            <aside className="orders-domain__action-rail">
+              <span className="orders-domain__action-rail-label">Acoes</span>
+              <div className="orders-domain__detail-actions">
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost"
+                  onClick={() => printOrderTicket(selectedOrder)}
+                >
+                  Imprimir pedido
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost"
+                  onClick={onEdit}
+                  disabled={!canWrite || isSaleLaunched}
+                >
+                  Editar pedido
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button--secondary"
+                  onClick={onDispatch}
+                  disabled={acting || !canWrite || selectedOrder.domainStatus !== 'OPEN'}
+                >
+                  Marcar como despachado
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button--primary"
+                  onClick={onConvertToSale}
+                  disabled={
+                    acting
+                    || !canWrite
+                    || isSaleLaunched
+                    || selectedOrder.domainStatus === 'CANCELLED'
+                  }
+                >
+                  Gerar venda
+                </button>
+              </div>
+            </aside>
           </div>
 
           <div className="orders-domain__detail-grid">
