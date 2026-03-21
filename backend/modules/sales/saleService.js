@@ -325,6 +325,18 @@ export async function createSaleFromOrder({
   }
 }
 
+export async function deleteSale({ storeId, saleId }) {
+  validateStoreId(storeId);
+  validateSaleId(saleId);
+
+  const deletedSale = await repository.deleteSaleRecord({
+    storeId,
+    saleId,
+  });
+
+  return mapSaleResponse(deletedSale);
+}
+
 export async function updateSaleStatus({ storeId, saleId, status, actor = null }) {
   validateStoreId(storeId);
   validateSaleId(saleId);

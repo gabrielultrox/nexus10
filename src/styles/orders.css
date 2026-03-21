@@ -1825,6 +1825,11 @@
   pointer-events: auto;
 }
 
+.orders-domain__row-actions--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .orders-domain__inline-button {
   min-height: 26px;
   padding: 3px 10px;
@@ -1899,4 +1904,27 @@
 .orders-domain__row-complete {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.orders-domain__delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 8px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.orders-domain__delete-button:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 24%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg-elevated));
 }

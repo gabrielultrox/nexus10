@@ -466,6 +466,14 @@ export async function convertOrderToSale({
   return data.saleId;
 }
 
+export async function deleteOrder({ storeId, orderId }) {
+  const data = await requestBackend(`/stores/${storeId}/orders/${orderId}`, {
+    method: 'DELETE',
+  });
+
+  return data.id;
+}
+
 export async function updateOrderStatus({ storeId, orderId, status }) {
   const allowedStatuses = new Set([...orderStatusSequence, 'cancelled', 'OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']);
 

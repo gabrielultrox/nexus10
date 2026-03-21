@@ -12,6 +12,7 @@ import { firebaseReady } from '../../../services/firebase';
 import {
   convertOrderToSale,
   createOrder,
+  deleteOrder as deleteOrderRecord,
   getOrderById,
   markOrderAsDispatched,
   subscribeToOrders,
@@ -155,6 +156,7 @@ function OrdersModule({
   const initializedViewRef = useRef('');
   const [freshOrderIds, setFreshOrderIds] = useState(() => new Set());
   const [pendingAction, setPendingAction] = useState(null);
+  const [deletingOrderId, setDeletingOrderId] = useState(null);
   const previousVisibleOrderIdsRef = useRef([]);
   const freshTimeoutsRef = useRef(new Map());
 
@@ -724,6 +726,42 @@ function OrdersModule({
     setPendingAction(null);
   }
 
+  async function handleDeleteOrder(order, event) {
+    event.stopPropagation();
+
+    if (!can('orders:write')) {
+      setErrorMessage('Seu perfil nao pode excluir pedidos.');
+      playError();
+      return;
+    }
+
+    if (!window.confirm(`Excluir o pedido ${order.number}?`)) {
+      return;
+    }
+
+    setDeletingOrderId(order.id);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      await deleteOrderRecord({
+        storeId: currentStoreId,
+        orderId: order.id,
+      });
+      setOrders((current) => current.filter((entry) => entry.id !== order.id));
+      setFeedbackMessage(`Pedido ${order.number} excluido com sucesso.`);
+      playSuccess();
+      if (order.id === orderId) {
+        onOpenList();
+      }
+    } catch (error) {
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel excluir o pedido.'));
+      playError();
+    } finally {
+      setDeletingOrderId(null);
+    }
+  }
+
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Pedidos">
@@ -963,6 +1001,15 @@ function OrdersModule({
                                 ) : (
                                   <span className="orders-domain__row-complete">--</span>
                                 )}
+                                <button
+                                  type="button"
+                                  className="orders-domain__delete-button"
+                                  aria-label={`Excluir pedido ${order.number}`}
+                                  disabled={deletingOrderId === order.id}
+                                  onClick={(event) => handleDeleteOrder(order, event)}
+                                >
+                                  x
+                                </button>
                               </div>
                             </td>
                           </tr>

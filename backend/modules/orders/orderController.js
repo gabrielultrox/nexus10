@@ -1,6 +1,7 @@
 import {
   convertOrderToSale,
   createOrder,
+  deleteOrder,
   markOrderAsDispatched,
   updateOrder,
 } from './orderService.js';
@@ -71,6 +72,19 @@ export function registerOrderRoutes(app) {
       response.json({ data });
     } catch (error) {
       sendError(response, error, 'Nao foi possivel gerar a venda a partir do pedido.');
+    }
+  });
+
+  app.delete('/api/stores/:storeId/orders/:orderId', async (request, response) => {
+    try {
+      const data = await deleteOrder({
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      });
+
+      response.json({ data });
+    } catch (error) {
+      sendError(response, error, 'Nao foi possivel excluir o pedido.');
     }
   });
 }

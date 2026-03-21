@@ -1,5 +1,6 @@
 import {
   createDirectSale,
+  deleteSale,
   createSaleFromOrder,
   updateSaleStatus,
 } from './saleService.js';
@@ -58,6 +59,19 @@ export function registerSaleRoutes(app) {
       response.json({ data });
     } catch (error) {
       sendError(response, error, 'Nao foi possivel atualizar o status da venda.');
+    }
+  });
+
+  app.delete('/api/stores/:storeId/sales/:saleId', async (request, response) => {
+    try {
+      const data = await deleteSale({
+        storeId: request.params.storeId,
+        saleId: request.params.saleId,
+      });
+
+      response.json({ data });
+    } catch (error) {
+      sendError(response, error, 'Nao foi possivel excluir a venda.');
     }
   });
 }

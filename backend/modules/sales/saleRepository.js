@@ -88,6 +88,42 @@ export function createSaleRepository() {
       await this.getSaleRef(storeId, saleId).delete();
     },
 
+    async deleteSaleRecord({ storeId, saleId }) {
+      const firestore = getAdminFirestore();
+      const saleRef = this.getSaleRef(storeId, saleId);
+
+      return firestore.runTransaction(async (transaction) => {
+        const saleSnapshot = await transaction.get(saleRef);
+
+        if (!saleSnapshot.exists) {
+          throw createSaleError('Venda nao encontrada.', 404, 'SALE_NOT_FOUND');
+        }
+
+        const currentSale = saleSnapshot.data();
+
+        if (currentSale.orderId) {
+          const orderRef = this.getOrderRef(storeId, currentSale.orderId);
+          const orderSnapshot = await transaction.get(orderRef);
+
+          if (orderSnapshot.exists) {
+            transaction.update(orderRef, {
+              status: currentSale.orderSnapshot?.status ?? 'OPEN',
+              saleStatus: 'NOT_LAUNCHED',
+              saleId: null,
+              updatedAt: new Date(),
+            });
+          }
+        }
+
+        transaction.delete(saleRef);
+
+        return {
+          id: saleId,
+          data: currentSale,
+        };
+      });
+    },
+
     async revertSaleFromOrder({ storeId, orderId, saleId, previousOrderStatus = 'OPEN' }) {
       const firestore = getAdminFirestore();
       const saleRef = this.getSaleRef(storeId, saleId);

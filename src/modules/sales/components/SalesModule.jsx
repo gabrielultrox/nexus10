@@ -11,6 +11,7 @@ import { firebaseReady } from '../../../services/firebase';
 import { subscribeToProducts } from '../../../services/productService';
 import {
   createDirectSale,
+  deleteSale as deleteSaleRecord,
   getSaleById,
   getSaleStatusMeta,
   subscribeToSales,
@@ -53,6 +54,7 @@ function SalesModule({
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [freshSaleIds, setFreshSaleIds] = useState(() => new Set());
+  const [deletingSaleId, setDeletingSaleId] = useState(null);
   const previousVisibleSaleIdsRef = useRef([]);
   const freshTimeoutsRef = useRef(new Map());
 
@@ -401,6 +403,42 @@ function SalesModule({
     }
   }
 
+  async function handleDeleteSale(sale, event) {
+    event.stopPropagation();
+
+    if (!can('sales:write')) {
+      setErrorMessage('Seu perfil nao pode excluir vendas.');
+      playError();
+      return;
+    }
+
+    if (!window.confirm(`Excluir a venda ${sale.number}?`)) {
+      return;
+    }
+
+    setDeletingSaleId(sale.id);
+    setErrorMessage('');
+    setFeedbackMessage('');
+
+    try {
+      await deleteSaleRecord({
+        storeId: currentStoreId,
+        saleId: sale.id,
+      });
+      setSales((current) => current.filter((entry) => entry.id !== sale.id));
+      setFeedbackMessage(`Venda ${sale.number} excluida com sucesso.`);
+      playSuccess();
+      if (sale.id === saleId) {
+        onOpenList();
+      }
+    } catch (error) {
+      setErrorMessage(getFriendlyErrorMessage(error, 'Nao foi possivel excluir a venda.'));
+      playError();
+    } finally {
+      setDeletingSaleId(null);
+    }
+  }
+
   if (!firebaseReady || !currentStoreId) {
     return (
       <SurfaceCard title="Vendas">
@@ -451,7 +489,7 @@ function SalesModule({
               ) : (
                 <div className="entity-table-wrap">
                   <table className="ui-table">
-                    <thead><tr><th>Venda</th><th>Origem</th><th>Cliente</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Criada em</th></tr></thead>
+                    <thead><tr><th>Venda</th><th>Origem</th><th>Cliente</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Criada em</th><th>Acao</th></tr></thead>
                     <tbody>
                       {visibleSales.map((sale, index) => {
                         const statusMeta = getSaleStatusMeta(sale.domainStatus);
@@ -469,6 +507,19 @@ function SalesModule({
                             <td className="ui-table__cell--muted">{sale.paymentMethodLabel}</td>
                             <td><span className={`ui-badge ${statusMeta.badgeClass}`}>{statusMeta.label}</span></td>
                             <td className="ui-table__cell--muted">{formatDateTime(sale.createdAtDate ?? sale.createdAt)}</td>
+                            <td className="orders-domain__action-cell">
+                              <div className="orders-domain__row-actions orders-domain__row-actions--visible">
+                                <button
+                                  type="button"
+                                  className="orders-domain__delete-button"
+                                  aria-label={`Excluir venda ${sale.number}`}
+                                  disabled={deletingSaleId === sale.id}
+                                  onClick={(event) => handleDeleteSale(sale, event)}
+                                >
+                                  x
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         );
                       })}

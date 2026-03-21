@@ -128,5 +128,34 @@ export function createOrderRepository() {
         data: nextData,
       };
     },
+
+    async deleteOrder({ storeId, orderId }) {
+      const documentRef = getOrderDocument(storeId, orderId);
+      const snapshot = await documentRef.get();
+
+      if (!snapshot.exists) {
+        throw createOrderError('Pedido nao encontrado.', 404, 'ORDER_NOT_FOUND');
+      }
+
+      const currentOrder = snapshot.data();
+
+      if (
+        currentOrder.saleId
+        || normalizeOrderSaleStatus(currentOrder.saleStatus, 'NOT_LAUNCHED') === 'LAUNCHED'
+      ) {
+        throw createOrderError(
+          'Pedidos que ja geraram venda nao podem ser excluidos.',
+          409,
+          'ORDER_ALREADY_CONVERTED',
+        );
+      }
+
+      await documentRef.delete();
+
+      return {
+        id: orderId,
+        data: currentOrder,
+      };
+    },
   };
 }

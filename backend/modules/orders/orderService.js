@@ -55,6 +55,17 @@ export async function markOrderAsDispatched({ storeId, orderId }) {
   return mapOrderResponse(order);
 }
 
+export async function deleteOrder({ storeId, orderId }) {
+  validateStoreId(storeId);
+  validateOrderId(orderId);
+  const order = await repository.deleteOrder({
+    storeId,
+    orderId,
+  });
+
+  return mapOrderResponse(order);
+}
+
 export async function convertOrderToSale({
   storeId,
   tenantId = null,

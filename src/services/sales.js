@@ -364,6 +364,14 @@ export async function createSaleFromOrder({ storeId, tenantId, orderId, values =
   return data.saleId;
 }
 
+export async function deleteSale({ storeId, saleId }) {
+  const data = await requestBackend(`/stores/${storeId}/sales/${saleId}`, {
+    method: 'DELETE',
+  });
+
+  return data.id;
+}
+
 export async function updateSaleStatus({ storeId, saleId, status, actor = null }) {
   const data = await requestBackend(`/stores/${storeId}/sales/${saleId}/status`, {
     method: 'PATCH',
