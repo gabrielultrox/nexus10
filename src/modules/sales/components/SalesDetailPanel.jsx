@@ -15,6 +15,15 @@ function SalesDetailPanel({
 }) {
   const statusMeta = selectedSale ? getSaleStatusMeta(selectedSale.domainStatus) : null
   const canMutateSale = Boolean(acting || !canWrite || selectedSale?.domainStatus !== 'POSTED') === false
+  const actionStateMessage = !selectedSale
+    ? ''
+    : !canWrite
+      ? 'Sem permissao para alterar esta venda.'
+      : selectedSale.domainStatus === 'REVERSED'
+        ? 'Venda ja estornada.'
+        : selectedSale.domainStatus === 'CANCELLED'
+          ? 'Venda ja cancelada.'
+          : 'Sem acoes pendentes para esta venda.'
 
   return (
     <div className="sales-domain__detail-shell">
@@ -52,7 +61,7 @@ function SalesDetailPanel({
               </>
             ) : (
               <p className="orders-domain__action-empty sales-domain__action-empty">
-                Sem acoes pendentes para esta venda.
+                {actionStateMessage}
               </p>
             )}
           </div>

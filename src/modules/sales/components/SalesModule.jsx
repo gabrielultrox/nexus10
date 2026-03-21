@@ -285,6 +285,14 @@ function SalesModule({
     ];
   }, [sales]);
 
+  function getSaleListActionStateLabel() {
+    if (!can('sales:write')) {
+      return 'Sem acoes';
+    }
+
+    return null;
+  }
+
   useEffect(() => {
     if (viewMode === 'create') {
       setFormState(createInitialFormState());
@@ -500,6 +508,8 @@ function SalesModule({
                     <tbody>
                       {visibleSales.map((sale, index) => {
                         const statusMeta = getSaleStatusMeta(sale.domainStatus);
+                        const canDeleteSale = can('sales:write');
+                        const actionStateLabel = getSaleListActionStateLabel();
                         return (
                           <tr
                             key={sale.id}
@@ -516,12 +526,18 @@ function SalesModule({
                             <td className="ui-table__cell--muted">{formatDateTime(sale.createdAtDate ?? sale.createdAt)}</td>
                             <td className="orders-domain__action-cell">
                               <div className="orders-domain__row-actions orders-domain__row-actions--visible">
-                                <DestructiveIconButton
-                                  className="orders-domain__delete-button"
-                                  label={`Excluir venda ${sale.number}`}
-                                  disabled={deletingSaleId === sale.id}
-                                  onClick={(event) => handleDeleteSale(sale, event)}
-                                />
+                                {canDeleteSale ? (
+                                  <DestructiveIconButton
+                                    className="orders-domain__delete-button"
+                                    label={`Excluir venda ${sale.number}`}
+                                    disabled={deletingSaleId === sale.id}
+                                    onClick={(event) => handleDeleteSale(sale, event)}
+                                  />
+                                ) : actionStateLabel ? (
+                                  <span className="orders-domain__row-complete">
+                                    {actionStateLabel}
+                                  </span>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
