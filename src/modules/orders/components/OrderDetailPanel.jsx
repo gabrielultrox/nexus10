@@ -27,6 +27,15 @@ function OrderDetailPanel({
     ? selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)
     : '--'
   const isSaleLaunched = selectedOrder?.saleStatus === 'LAUNCHED'
+  const canEditOrder = Boolean(canWrite && !isSaleLaunched)
+  const canDispatchOrder = Boolean(canWrite && !acting && selectedOrder?.domainStatus === 'OPEN')
+  const canConvertOrder = Boolean(
+    canWrite
+    && !acting
+    && !isSaleLaunched
+    && selectedOrder?.domainStatus !== 'CANCELLED'
+  )
+  const hasPendingActions = canEditOrder || canDispatchOrder || canConvertOrder
   const statusDescription = isSaleLaunched
     ? 'Impacto em estoque e financeiro ja publicado.'
     : selectedOrder?.domainStatus === 'DISPATCHED'
@@ -79,35 +88,38 @@ function OrderDetailPanel({
                 >
                   Imprimir pedido
                 </button>
-                <button
-                  type="button"
-                  className="ui-button ui-button--ghost"
-                  onClick={onEdit}
-                  disabled={!canWrite || isSaleLaunched}
-                >
-                  Editar pedido
-                </button>
-                <button
-                  type="button"
-                  className="ui-button ui-button--secondary"
-                  onClick={onDispatch}
-                  disabled={acting || !canWrite || selectedOrder.domainStatus !== 'OPEN'}
-                >
-                  Marcar como despachado
-                </button>
-                <button
-                  type="button"
-                  className="ui-button ui-button--primary"
-                  onClick={onConvertToSale}
-                  disabled={
-                    acting
-                    || !canWrite
-                    || isSaleLaunched
-                    || selectedOrder.domainStatus === 'CANCELLED'
-                  }
-                >
-                  Gerar venda
-                </button>
+                {canEditOrder ? (
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={onEdit}
+                  >
+                    Editar pedido
+                  </button>
+                ) : null}
+                {canDispatchOrder ? (
+                  <button
+                    type="button"
+                    className="ui-button ui-button--secondary"
+                    onClick={onDispatch}
+                  >
+                    Marcar como despachado
+                  </button>
+                ) : null}
+                {canConvertOrder ? (
+                  <button
+                    type="button"
+                    className="ui-button ui-button--primary"
+                    onClick={onConvertToSale}
+                  >
+                    Gerar venda
+                  </button>
+                ) : null}
+                {!hasPendingActions ? (
+                  <p className="orders-domain__action-empty">
+                    Sem acoes pendentes para este pedido.
+                  </p>
+                ) : null}
               </div>
             </aside>
           </div>

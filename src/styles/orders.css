@@ -267,6 +267,15 @@
   gap: var(--space-2);
 }
 
+.orders-domain__action-empty,
+.sales-domain__action-empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
 .orders-domain__detail-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 248px);

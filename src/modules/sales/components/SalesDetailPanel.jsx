@@ -14,6 +14,7 @@ function SalesDetailPanel({
   onCancel,
 }) {
   const statusMeta = selectedSale ? getSaleStatusMeta(selectedSale.domainStatus) : null
+  const canMutateSale = Boolean(acting || !canWrite || selectedSale?.domainStatus !== 'POSTED') === false
 
   return (
     <div className="sales-domain__detail-shell">
@@ -32,22 +33,28 @@ function SalesDetailPanel({
             >
               Imprimir venda
             </button>
-            <button
-              type="button"
-              className="ui-button ui-button--warning"
-              onClick={onReverse}
-              disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}
-            >
-              Estornar venda
-            </button>
-            <button
-              type="button"
-              className="ui-button ui-button--danger"
-              onClick={onCancel}
-              disabled={acting || !canWrite || selectedSale.domainStatus !== 'POSTED'}
-            >
-              Cancelar venda
-            </button>
+            {canMutateSale ? (
+              <>
+                <button
+                  type="button"
+                  className="ui-button ui-button--warning"
+                  onClick={onReverse}
+                >
+                  Estornar venda
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button--danger"
+                  onClick={onCancel}
+                >
+                  Cancelar venda
+                </button>
+              </>
+            ) : (
+              <p className="orders-domain__action-empty sales-domain__action-empty">
+                Sem acoes pendentes para esta venda.
+              </p>
+            )}
           </div>
         ) : null}
       </div>
