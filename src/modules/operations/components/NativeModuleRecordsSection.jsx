@@ -633,6 +633,16 @@ function NativeModuleSchedule({
   )
 }
 
+function isCompletedChangeRecord(record) {
+  const normalized = String(record?.status ?? '').trim().toLowerCase()
+
+  return (
+    normalized.includes('conclu')
+    || normalized.includes('retorn')
+    || normalized.includes('recebid')
+  )
+}
+
 function getReturnActionStateLabel(record) {
   const normalized = String(record?.status ?? '').trim().toLowerCase()
 
@@ -887,9 +897,11 @@ function NativeModuleRecordsSection(props) {
   const isSchedule = route.path === 'schedule'
   const isMachineChecklist = route.path === 'machines'
   const isDeliveryReading = route.path === 'delivery-reading'
+  const isChangeModule = route.path === 'change'
   const confirm = useConfirm()
   const [exitingIds, setExitingIds] = useState(() => new Set())
   const [deliveryReadingTab, setDeliveryReadingTab] = useState('open')
+  const [changeTab, setChangeTab] = useState('pending')
   const exitTimeoutsRef = useRef(new Map())
 
   const deliveryReadingCounts = useMemo(() => {
@@ -918,8 +930,42 @@ function NativeModuleRecordsSection(props) {
     ))
   }, [deliveryReadingTab, isDeliveryReading, visibleRecords])
 
-  const displayedRecords = isDeliveryReading ? deliveryReadingVisibleRecords : visibleRecords
-  const displayedVisibleCount = isDeliveryReading ? deliveryReadingVisibleRecords.length : visibleCount
+  const changeCounts = useMemo(() => {
+    if (!isChangeModule) {
+      return { pending: 0, completed: 0 }
+    }
+
+    return visibleRecords.reduce((accumulator, record) => {
+      if (isCompletedChangeRecord(record)) {
+        accumulator.completed += 1
+      } else {
+        accumulator.pending += 1
+      }
+
+      return accumulator
+    }, { pending: 0, completed: 0 })
+  }, [isChangeModule, visibleRecords])
+
+  const changeVisibleRecords = useMemo(() => {
+    if (!isChangeModule) {
+      return visibleRecords
+    }
+
+    return visibleRecords.filter((record) => (
+      changeTab === 'completed' ? isCompletedChangeRecord(record) : !isCompletedChangeRecord(record)
+    ))
+  }, [changeTab, isChangeModule, visibleRecords])
+
+  const displayedRecords = isDeliveryReading
+    ? deliveryReadingVisibleRecords
+    : isChangeModule
+      ? changeVisibleRecords
+      : visibleRecords
+  const displayedVisibleCount = isDeliveryReading
+    ? deliveryReadingVisibleRecords.length
+    : isChangeModule
+      ? changeVisibleRecords.length
+      : visibleCount
 
   useEffect(() => {
     const exitTimeouts = exitTimeoutsRef.current
@@ -1035,6 +1081,27 @@ function NativeModuleRecordsSection(props) {
           >
             <span>Fechadas</span>
             <span className="delivery-reading__list-tab-count">{deliveryReadingCounts.closed}</span>
+          </button>
+        </div>
+      ) : null}
+
+      {isChangeModule ? (
+        <div className="delivery-reading__list-tabs" role="tablist" aria-label="Filtrar trocos por estado">
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${changeTab === 'pending' ? ' is-active' : ''}`}
+            onClick={() => setChangeTab('pending')}
+          >
+            <span>Pendentes</span>
+            <span className="delivery-reading__list-tab-count">{changeCounts.pending}</span>
+          </button>
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${changeTab === 'completed' ? ' is-active' : ''}`}
+            onClick={() => setChangeTab('completed')}
+          >
+            <span>Concluidos</span>
+            <span className="delivery-reading__list-tab-count">{changeCounts.completed}</span>
           </button>
         </div>
       ) : null}
