@@ -96,6 +96,29 @@ function sanitizeManualRecords(records) {
   return records.filter((record) => !legacySeedIdPattern.test(record.id ?? ''));
 }
 
+function dedupeRecordsById(records) {
+  const seenIds = new Set();
+
+  return records.filter((record) => {
+    const recordId = record?.id;
+
+    if (!recordId) {
+      return true;
+    }
+
+    if (seenIds.has(recordId)) {
+      return false;
+    }
+
+    seenIds.add(recordId);
+    return true;
+  });
+}
+
+function normalizeManualRecords(records) {
+  return dedupeRecordsById(sanitizeManualRecords(records));
+}
+
 function buildRouteRecords(routePath, manager) {
   if (!manager) {
     return [];
@@ -106,12 +129,12 @@ function buildRouteRecords(routePath, manager) {
   }
 
   if (manager.dailyResetHour != null) {
-    return sanitizeManualRecords(
+    return normalizeManualRecords(
       loadResettableLocalRecords(manager.storageKey, manager.initialRecords, manager.dailyResetHour),
     );
   }
 
-  return sanitizeManualRecords(loadLocalRecords(manager.storageKey, manager.initialRecords));
+  return normalizeManualRecords(loadLocalRecords(manager.storageKey, manager.initialRecords));
 }
 
 function buildAuditContext(session) {
@@ -540,7 +563,7 @@ function NativeModuleWorkspace({ route }) {
       initialRecords: manager.initialRecords,
       dailyResetHour: manager.dailyResetHour ?? null,
       onData: (nextRecords) => {
-        setRecords(sanitizeManualRecords(nextRecords));
+        setRecords(normalizeManualRecords(nextRecords));
         setErrorMessage('');
       },
       onError: () => {
@@ -1357,7 +1380,7 @@ function NativeModuleWorkspace({ route }) {
         dailyResetHour: manager.dailyResetHour ?? null,
         record: newRecord,
         onLocalApply: () => {
-          setRecords((current) => [newRecord, ...current]);
+          setRecords((current) => normalizeManualRecords([newRecord, ...current]));
         },
       });
 
