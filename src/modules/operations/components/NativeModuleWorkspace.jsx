@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 
 import MetricCard from '../../../components/common/MetricCard';
 import PageIntro from '../../../components/common/PageIntro';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
@@ -350,6 +351,7 @@ function NativeModuleWorkspace({ route }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const content = getNativeModuleContent(route);
   const manager = getManualModuleConfig(route.path);
   const [isOnline, setIsOnline] = useState(() => window.navigator.onLine);
@@ -1503,7 +1505,14 @@ function NativeModuleWorkspace({ route }) {
   }
 
   async function handleClearAll() {
-    if (!window.confirm('Deseja remover todos os registros deste modulo?')) {
+    const confirmed = await confirm.ask({
+      title: 'Limpar registros',
+      message: `Confirma a limpeza de todos os registros de ${route.title}?`,
+      confirmLabel: 'Limpar registros',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -1519,6 +1528,7 @@ function NativeModuleWorkspace({ route }) {
       });
 
       setErrorMessage('');
+      toast.success(`${route.title} limpo com sucesso`);
       playNotification();
       appendAuditEvent({
         module: route.title,
@@ -1539,7 +1549,12 @@ function NativeModuleWorkspace({ route }) {
       return;
     }
 
-    const confirmed = window.confirm('Deseja resetar os registros deste modulo agora?');
+    const confirmed = await confirm.ask({
+      title: 'Resetar modulo',
+      message: `Confirma o reset manual de ${route.title} neste turno?`,
+      confirmLabel: manager.manualResetLabel,
+      tone: 'warning',
+    });
 
     if (!confirmed) {
       return;
@@ -1560,6 +1575,7 @@ function NativeModuleWorkspace({ route }) {
       });
 
       setErrorMessage('');
+      toast.success(`${route.title} resetado para o dia atual`);
       playNotification();
       appendAuditEvent({
         module: route.title,
@@ -1827,6 +1843,7 @@ function NativeModuleWorkspace({ route }) {
         });
 
       setErrorMessage('');
+      toast.success('Registro excluido');
       playOperationalSuccess();
 
       appendAuditEvent({

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
@@ -44,6 +45,7 @@ function mapCustomerToForm(customer) {
 function CustomersModule() {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
+  const confirm = useConfirm();
   const [customers, setCustomers] = useState([]);
   const [formState, setFormState] = useState(initialFormState);
   const [editingCustomerId, setEditingCustomerId] = useState(null);
@@ -369,7 +371,18 @@ function CustomersModule() {
   async function handleDelete(customerId) {
     const customer = customers.find((item) => item.id === customerId);
 
-    if (!currentStoreId || !window.confirm('Deseja excluir este cliente?')) {
+    if (!currentStoreId) {
+      return;
+    }
+
+    const confirmed = await confirm.ask({
+      title: 'Excluir cliente',
+      message: `Confirma a exclusao de ${customer?.name ?? 'este cliente'}?`,
+      confirmLabel: 'Excluir cliente',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
       return;
     }
 

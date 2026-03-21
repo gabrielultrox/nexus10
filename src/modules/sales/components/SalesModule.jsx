@@ -20,6 +20,9 @@ import {
 import { playDestructive, playError, playPdvSuccess } from '../../../services/soundManager';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
+import DestructiveIconButton from '../../../components/ui/DestructiveIconButton';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { useToast } from '../../../hooks/useToast';
 import SalesDetailPanel from './SalesDetailPanel';
 import SalesFormPanel from './SalesFormPanel';
 import {
@@ -39,6 +42,8 @@ function SalesModule({
 }) {
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -406,7 +411,14 @@ function SalesModule({
       return;
     }
 
-    if (!window.confirm(`Excluir a venda ${sale.number}?`)) {
+    const confirmed = await confirm.ask({
+      title: 'Excluir venda',
+      message: `Confirma a exclusao da venda ${sale.number}?`,
+      confirmLabel: 'Excluir venda',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -421,6 +433,7 @@ function SalesModule({
       });
       setSales((current) => current.filter((entry) => entry.id !== sale.id));
       setFeedbackMessage(`Venda ${sale.number} excluida com sucesso.`);
+      toast.success(`Venda ${sale.number} excluida`);
       playDestructive();
       if (sale.id === saleId) {
         onOpenList();
@@ -503,15 +516,12 @@ function SalesModule({
                             <td className="ui-table__cell--muted">{formatDateTime(sale.createdAtDate ?? sale.createdAt)}</td>
                             <td className="orders-domain__action-cell">
                               <div className="orders-domain__row-actions orders-domain__row-actions--visible">
-                                <button
-                                  type="button"
+                                <DestructiveIconButton
                                   className="orders-domain__delete-button"
-                                  aria-label={`Excluir venda ${sale.number}`}
+                                  label={`Excluir venda ${sale.number}`}
                                   disabled={deletingSaleId === sale.id}
                                   onClick={(event) => handleDeleteSale(sale, event)}
-                                >
-                                  x
-                                </button>
+                                />
                               </div>
                             </td>
                           </tr>

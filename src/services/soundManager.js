@@ -150,6 +150,7 @@ function handleGlobalButtonClick(event) {
     button.classList.contains('ui-button--danger')
     || button.classList.contains('orders-domain__delete-button')
     || button.classList.contains('commerce-step__remove-button')
+    || button.classList.contains('ui-destructive-button')
   ) {
     playSound('destructive');
     return;

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import SurfaceCard from '../../../components/common/SurfaceCard';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
 import { firebaseReady } from '../../../services/firebase';
@@ -25,6 +27,7 @@ import CouriersFilters from './CouriersFilters';
 import CouriersGrid from './CouriersGrid';
 import CouriersStats from './CouriersStats';
 import Select from '../../../components/ui/Select';
+import { playDestructive, playError } from '../../../services/soundManager';
 
 const initialFilters = {
   search: '',
@@ -57,6 +60,8 @@ function buildMachineOptions(machineRecords) {
 function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEditing }) {
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [filters, setFilters] = useState(initialFilters);
   const [manualCouriers, setManualCouriers] = useState(() => loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
   const [machineRecords, setMachineRecords] = useState(() => loadLocalRecords('nexus-module-machines', machineSeedRecords));
@@ -410,6 +415,16 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
 
   async function handleDelete(courierId) {
     const courier = manualCouriers.find((item) => item.id === courierId);
+    const confirmed = await confirm.ask({
+      title: 'Remover entregador',
+      message: `Confirma a exclusao do cadastro de ${courier?.name ?? 'entregador'}?`,
+      confirmLabel: 'Remover entregador',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
 
     try {
       if (canSyncCouriers) {
@@ -433,8 +448,11 @@ function CouriersModule({ mode = 'lookup', editingCourierId = null, onFinishEdit
         target: courier?.name ?? 'Entregador',
         details: 'Cadastro removido do modulo de entregadores',
       });
+      toast.success(`Entregador ${courier?.name ?? ''} removido`);
+      playDestructive();
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel excluir o entregador.');
+      playError();
     }
   }
 

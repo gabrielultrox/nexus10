@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import DestructiveIconButton from '../../../components/ui/DestructiveIconButton';
 import { courierShiftMap, courierStatusMap } from '../schemas/courierSchema';
 
 function CourierCard({ courier, onDelete, showActivityIndicator = false }) {
@@ -38,17 +39,12 @@ function CourierCard({ courier, onDelete, showActivityIndicator = false }) {
         <Link to={`/couriers/${courier.id}`} className="ui-button ui-button--ghost courier-card__action">
           Abrir
         </Link>
-        <button
-          type="button"
+        <DestructiveIconButton
           className="courier-card__icon-action"
           onClick={() => onDelete?.(courier.id)}
-          aria-label={`Remover ${courier.name}`}
+          label={`Remover ${courier.name}`}
           title="Remover"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M6 2h4l.5 1H13v1H3V3h2.5L6 2Zm-1 4h1v6H5V6Zm3 0h1v6H8V6Zm3 0h-1v6h1V6Z" />
-          </svg>
-        </button>
+        />
       </div>
     </article>
   );

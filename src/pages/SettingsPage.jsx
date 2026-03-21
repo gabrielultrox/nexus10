@@ -5,6 +5,7 @@ import SurfaceCard from '../components/common/SurfaceCard';
 import PwaStatusCard from '../components/settings/PwaStatusCard';
 import ThemeToggle from '../components/theme/ThemeToggle';
 import Select from '../components/ui/Select';
+import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../contexts/AuthContext';
 import {
   DEFAULT_ACCESS_PIN,
@@ -53,6 +54,7 @@ function SettingsSection({ eyebrow, title, description, children }) {
 
 function SettingsPage() {
   const { session, can } = useAuth();
+  const confirm = useConfirm();
   const [masterPassword, setMasterPassword] = useState('');
   const [settingsUnlocked, setSettingsUnlocked] = useState(() => isSettingsUnlocked());
   const [pinDraft, setPinDraft] = useState('');
@@ -125,10 +127,21 @@ function SettingsPage() {
     }
   }
 
-  function handleRemovePin() {
+  async function handleRemovePin() {
     if (!canWriteSettings) {
       setErrorMessage('Seu perfil nao pode alterar configuracoes sensiveis.');
       playError();
+      return;
+    }
+
+    const confirmed = await confirm.ask({
+      title: 'Remover PIN local',
+      message: 'Confirma a remocao do PIN customizado deste terminal?',
+      confirmLabel: 'Remover PIN',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
       return;
     }
 

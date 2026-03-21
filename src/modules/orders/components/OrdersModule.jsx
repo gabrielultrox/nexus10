@@ -24,6 +24,8 @@ import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
+import DestructiveIconButton from '../../../components/ui/DestructiveIconButton';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { useToast } from '../../../hooks/useToast';
 
 const statusOptions = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED'];
@@ -141,6 +143,7 @@ function OrdersModule({
   const { can, session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -735,7 +738,14 @@ function OrdersModule({
       return;
     }
 
-    if (!window.confirm(`Excluir o pedido ${order.number}?`)) {
+    const confirmed = await confirm.ask({
+      title: 'Excluir pedido',
+      message: `Confirma a exclusao do pedido ${order.number}?`,
+      confirmLabel: 'Excluir pedido',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -750,6 +760,7 @@ function OrdersModule({
       });
       setOrders((current) => current.filter((entry) => entry.id !== order.id));
       setFeedbackMessage(`Pedido ${order.number} excluido com sucesso.`);
+      toast.success(`Pedido ${order.number} excluido`);
       playDestructive();
       if (order.id === orderId) {
         onOpenList();
@@ -759,6 +770,7 @@ function OrdersModule({
         setOrders((current) => current.filter((entry) => entry.id !== order.id));
         setFeedbackMessage(`Pedido ${order.number} removido da lista local.`);
         setErrorMessage('');
+        toast.info(`Pedido ${order.number} removido da lista local`);
         playNotification();
         if (order.id === orderId) {
           onOpenList();
@@ -1012,15 +1024,12 @@ function OrdersModule({
                                   <span className="orders-domain__row-complete">--</span>
                                 )}
                                 {canDeleteOrder ? (
-                                  <button
-                                    type="button"
+                                  <DestructiveIconButton
                                     className="orders-domain__delete-button"
-                                    aria-label={`Excluir pedido ${order.number}`}
+                                    label={`Excluir pedido ${order.number}`}
                                     disabled={deletingOrderId === order.id}
                                     onClick={(event) => handleDeleteOrder(order, event)}
-                                  >
-                                    x
-                                  </button>
+                                  />
                                 ) : (
                                   <span className="orders-domain__row-complete">
                                     --

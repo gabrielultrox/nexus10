@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import { useConfirm } from '../../../hooks/useConfirm'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
@@ -93,6 +94,7 @@ function buildIssueBadges(product, auditSets) {
 function ProductsModule() {
   const { can, session } = useAuth()
   const { currentStoreId, tenantId } = useStore()
+  const confirm = useConfirm()
   const [products, setProducts] = useState([])
   const [formState, setFormState] = useState(initialFormState)
   const [bulkState, setBulkState] = useState(initialBulkState)
@@ -456,7 +458,18 @@ function ProductsModule() {
   async function handleDelete(productId) {
     const product = products.find((item) => item.id === productId)
 
-    if (!currentStoreId || !window.confirm('Deseja excluir este produto?')) {
+    if (!currentStoreId) {
+      return
+    }
+
+    const confirmed = await confirm.ask({
+      title: 'Excluir produto',
+      message: `Confirma a exclusao de ${product?.name ?? 'este produto'}?`,
+      confirmLabel: 'Excluir produto',
+      tone: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 

@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { StoreProvider } from './contexts/StoreContext';
+import { ConfirmProvider } from './hooks/useConfirm';
 import { ToastProvider } from './hooks/useToast';
 import { ThemeProvider } from './hooks/useTheme';
 import { registerPwa } from './services/pwa';
@@ -45,7 +46,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <StoreProvider>
             <NotificationsProvider>
               <ToastProvider>
-                <App />
+                <ConfirmProvider>
+                  <App />
+                </ConfirmProvider>
               </ToastProvider>
             </NotificationsProvider>
           </StoreProvider>

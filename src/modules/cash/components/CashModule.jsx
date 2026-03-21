@@ -5,8 +5,10 @@ import CaixaStatusBar from '../../../components/caixa/CaixaStatusBar';
 import PageTabs from '../../../components/common/PageTabs';
 import SurfaceCard from '../../../components/common/SurfaceCard';
 import FormRow from '../../../components/ui/FormRow';
+import DestructiveIconButton from '../../../components/ui/DestructiveIconButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useStore } from '../../../contexts/StoreContext';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { useToast } from '../../../hooks/useToast';
 import { formatCurrencyBRL } from '../../../services/commerce';
 import { subscribeToCouriers } from '../../../services/courierService';
@@ -212,17 +214,11 @@ function CashHistoryTable({ records, onPrint, onDelete }) {
                   >
                     Imprimir
                   </button>
-                  <button
-                    type="button"
+                  <DestructiveIconButton
                     className="native-module__delete-action"
                     onClick={() => onDelete(record.id)}
-                    aria-label="Excluir lancamento"
-                    title="Excluir"
-                  >
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path d="M6 2h4l.5 1H13v1H3V3h2.5L6 2Zm-1 4h1v6H5V6Zm3 0h1v6H8V6Zm3 0h-1v6h1V6Z" />
-                    </svg>
-                  </button>
+                    label="Excluir lancamento"
+                  />
                 </div>
               </td>
             </tr>
@@ -236,6 +232,7 @@ function CashHistoryTable({ records, onPrint, onDelete }) {
 function CashModule() {
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTabId = searchParams.get('tab') ?? CASH_TABS[0].id;
   const activeTab = CASH_TABS.find((tab) => tab.id === activeTabId) ?? CASH_TABS[0];
@@ -634,6 +631,17 @@ function CashModule() {
 
   async function handleDelete(recordId) {
     const targetRecord = records.find((record) => record.id === recordId);
+    const confirmed = await confirm.ask({
+      title: 'Excluir lancamento',
+      message: `Confirma a exclusao do lancamento ${targetRecord?.receiptCode ?? ''}?`,
+      confirmLabel: 'Excluir lancamento',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     const nextRecords = records.filter((record) => record.id !== recordId);
     setRecords(nextRecords);
     saveResettableLocalRecords(CASH_STORAGE_KEY, nextRecords, CASH_RESET_HOUR);
@@ -658,9 +666,22 @@ function CashModule() {
       target: targetRecord?.receiptCode ?? 'Lancamento de caixa',
       details: targetRecord?.amountLabel ?? '',
     });
+    toast.success('Lancamento excluido');
+    playCashSuccess();
   }
 
   async function handleClearHistory() {
+    const confirmed = await confirm.ask({
+      title: 'Limpar historico',
+      message: 'Confirma a limpeza do historico operacional do caixa neste dia?',
+      confirmLabel: 'Limpar historico',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setRecords([]);
     saveResettableLocalRecords(CASH_STORAGE_KEY, [], CASH_RESET_HOUR);
 
@@ -686,6 +707,8 @@ function CashModule() {
       target: 'Caixa',
       details: 'Historico operacional do dia foi reiniciado.',
     });
+    toast.success('Historico do caixa limpo');
+    playCashSuccess();
   }
 
   return (

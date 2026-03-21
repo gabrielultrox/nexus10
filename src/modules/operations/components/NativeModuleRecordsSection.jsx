@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 
 import SurfaceCard from '../../../components/common/SurfaceCard'
 import StatusBadge from '../../../components/ui/StatusBadge'
+import DestructiveIconButton from '../../../components/ui/DestructiveIconButton'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
+import { useConfirm } from '../../../hooks/useConfirm'
 
 const ROW_EXIT_DURATION_MS = 200
 const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
@@ -589,14 +591,12 @@ function NativeModuleSchedule({
                   >
                     Salvar maquininha do dia
                   </button>
-                  <button
-                    type="button"
-                    className="ui-button ui-button--danger"
+                  <DestructiveIconButton
+                    className="schedule-records__delete-button"
                     disabled={exitingIds.has(record.id)}
                     onClick={() => onDelete(record.id)}
-                  >
-                    Excluir
-                  </button>
+                    label={`Excluir escala de ${record.courier}`}
+                  />
                 </div>
               </div>
             </article>
@@ -667,18 +667,12 @@ function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confi
                 <span className="machine-operations__row-check-box" aria-hidden="true" />
                 <span className="machine-operations__row-check-label">Confirmar</span>
               </label>
-              <button
-                type="button"
+              <DestructiveIconButton
                 className="machine-operations__icon-button"
                 disabled={exitingIds.has(record.id)}
                 onClick={() => onDelete(record.id)}
-                aria-label={`Excluir ${record.device}`}
-                title="Excluir"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M4.47 4.47a.75.75 0 0 1 1.06 0L8 6.94l2.47-2.47a.75.75 0 1 1 1.06 1.06L9.06 8l2.47 2.47a.75.75 0 1 1-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 1 1-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 0 1 0-1.06Z" />
-                </svg>
-              </button>
+                label={`Excluir ${record.device}`}
+              />
             </article>
           )
         })}
@@ -793,18 +787,12 @@ function NativeModuleTable({
                       </span>
                     ) : null}
                     {manager.allowDelete !== false ? (
-                      <button
-                        type="button"
+                      <DestructiveIconButton
                         className="native-module__delete-action"
                         disabled={exitingIds.has(record.id)}
                         onClick={() => onDelete(record.id)}
-                        aria-label="Excluir registro"
-                        title="Excluir"
-                      >
-                        <svg viewBox="0 0 16 16" aria-hidden="true">
-                          <path d="M6 2h4l.5 1H13v1H3V3h2.5L6 2Zm-1 4h1v6H5V6Zm3 0h1v6H8V6Zm3 0h-1v6h1V6Z" />
-                        </svg>
-                      </button>
+                        label="Excluir registro"
+                      />
                     ) : null}
                   </td>
                 </tr>
@@ -873,6 +861,7 @@ function NativeModuleRecordsSection(props) {
   const isSchedule = route.path === 'schedule'
   const isMachineChecklist = route.path === 'machines'
   const isDeliveryReading = route.path === 'delivery-reading'
+  const confirm = useConfirm()
   const [exitingIds, setExitingIds] = useState(() => new Set())
   const [deliveryReadingTab, setDeliveryReadingTab] = useState('open')
   const exitTimeoutsRef = useRef(new Map())
@@ -950,7 +939,18 @@ function NativeModuleRecordsSection(props) {
     }
   }
 
-  function requestDelete(recordId) {
+  async function requestDelete(recordId) {
+    const confirmed = await confirm.ask({
+      title: 'Excluir registro',
+      message: 'Confirma a exclusao deste registro?',
+      confirmLabel: 'Excluir registro',
+      tone: 'danger',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
     setExitingIds((current) => {
       if (current.has(recordId)) {
         return current
