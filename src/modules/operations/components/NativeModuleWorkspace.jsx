@@ -458,6 +458,8 @@ function NativeModuleWorkspace({ route }) {
   const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
   const changeDeliveredImageRef = useRef(null);
+  const deliveryReadingClosedImageRef = useRef(null);
+  const advancesPaidImageRef = useRef(null);
   const invalidFieldTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -943,6 +945,54 @@ function NativeModuleWorkspace({ route }) {
         .filter(Boolean),
     ).size,
     [deliveredChangeRecords],
+  );
+  const closedDeliveryRecords = useMemo(() => {
+    if (route.path !== 'delivery-reading') {
+      return [];
+    }
+
+    return [...records]
+      .filter((record) => Boolean(record.closed))
+      .sort((left, right) => {
+        const leftTimestamp = new Date(left.updatedAtClient ?? left.createdAtClient ?? 0).getTime();
+        const rightTimestamp = new Date(right.updatedAtClient ?? right.createdAtClient ?? 0).getTime();
+
+        return rightTimestamp - leftTimestamp;
+      });
+  }, [records, route.path]);
+  const closedDeliveryCourierCount = useMemo(
+    () => new Set(
+      closedDeliveryRecords
+        .map((record) => String(record.courier ?? '').trim())
+        .filter(Boolean),
+    ).size,
+    [closedDeliveryRecords],
+  );
+  const paidAdvanceRecords = useMemo(() => {
+    if (route.path !== 'advances') {
+      return [];
+    }
+
+    return [...records]
+      .filter((record) => String(record.status ?? '').trim().toLowerCase().includes('baixad'))
+      .sort((left, right) => {
+        const leftTimestamp = new Date(left.updatedAtClient ?? left.date ?? 0).getTime();
+        const rightTimestamp = new Date(right.updatedAtClient ?? right.date ?? 0).getTime();
+
+        return rightTimestamp - leftTimestamp;
+      });
+  }, [records, route.path]);
+  const paidAdvanceTotalValue = useMemo(
+    () => paidAdvanceRecords.reduce((total, record) => total + parseCurrencyValue(record.value), 0),
+    [paidAdvanceRecords],
+  );
+  const paidAdvanceRecipientCount = useMemo(
+    () => new Set(
+      paidAdvanceRecords
+        .map((record) => String(record.recipient ?? '').trim())
+        .filter(Boolean),
+    ).size,
+    [paidAdvanceRecords],
   );
   const usedScheduleMachines = useMemo(() => {
     if (route.path !== 'schedule') {
@@ -1912,6 +1962,82 @@ function NativeModuleWorkspace({ route }) {
     );
   }
 
+  async function handleExportClosedDeliveriesImage() {
+    if (route.path !== 'delivery-reading') {
+      playError();
+      return;
+    }
+
+    if (closedDeliveryRecords.length === 0) {
+      setErrorMessage('Nao ha leituras fechadas hoje para exportar.');
+      playOperationalWarning();
+      return;
+    }
+
+    await exportImageFromRef(
+      deliveryReadingClosedImageRef,
+      'leituras fechadas do dia',
+      'Nao foi possivel exportar as leituras fechadas do dia.',
+    );
+  }
+
+  async function handlePrintClosedDeliveries() {
+    if (route.path !== 'delivery-reading') {
+      playError();
+      return;
+    }
+
+    if (closedDeliveryRecords.length === 0) {
+      setErrorMessage('Nao ha leituras fechadas hoje para imprimir.');
+      playOperationalWarning();
+      return;
+    }
+
+    await printImageFromRef(
+      deliveryReadingClosedImageRef,
+      'Leituras fechadas do dia',
+      'Nao foi possivel preparar a impressao das leituras fechadas do dia.',
+    );
+  }
+
+  async function handleExportPaidAdvancesImage() {
+    if (route.path !== 'advances') {
+      playError();
+      return;
+    }
+
+    if (paidAdvanceRecords.length === 0) {
+      setErrorMessage('Nao ha vales baixados hoje para exportar.');
+      playOperationalWarning();
+      return;
+    }
+
+    await exportImageFromRef(
+      advancesPaidImageRef,
+      'vales baixados do dia',
+      'Nao foi possivel exportar os vales baixados do dia.',
+    );
+  }
+
+  async function handlePrintPaidAdvances() {
+    if (route.path !== 'advances') {
+      playError();
+      return;
+    }
+
+    if (paidAdvanceRecords.length === 0) {
+      setErrorMessage('Nao ha vales baixados hoje para imprimir.');
+      playOperationalWarning();
+      return;
+    }
+
+    await printImageFromRef(
+      advancesPaidImageRef,
+      'Vales baixados do dia',
+      'Nao foi possivel preparar a impressao dos vales baixados do dia.',
+    );
+  }
+
   function handleMarkReturned(recordId) {
     if (!manager?.markReturned) {
       return;
@@ -2249,6 +2375,10 @@ function NativeModuleWorkspace({ route }) {
         handleExportMachineChecklistImage={handleExportMachineChecklistImage}
         handleExportDeliveredChangesImage={handleExportDeliveredChangesImage}
         handlePrintDeliveredChanges={handlePrintDeliveredChanges}
+        handleExportClosedDeliveriesImage={handleExportClosedDeliveriesImage}
+        handlePrintClosedDeliveries={handlePrintClosedDeliveries}
+        handleExportPaidAdvancesImage={handleExportPaidAdvancesImage}
+        handlePrintPaidAdvances={handlePrintPaidAdvances}
         handleExportBackup={handleExportBackup}
         handleManualReset={handleManualReset}
         handleClearAll={handleClearAll}
@@ -2263,6 +2393,8 @@ function NativeModuleWorkspace({ route }) {
         scheduleMachinesImageRef={scheduleMachinesImageRef}
         machineChecklistImageRef={machineChecklistImageRef}
         changeDeliveredImageRef={changeDeliveredImageRef}
+        deliveryReadingClosedImageRef={deliveryReadingClosedImageRef}
+        advancesPaidImageRef={advancesPaidImageRef}
         visibleRecords={visibleRecords}
         usedScheduleMachines={usedScheduleMachines}
         metrics={metrics}
@@ -2273,6 +2405,11 @@ function NativeModuleWorkspace({ route }) {
         deliveredChangeRecords={deliveredChangeRecords}
         deliveredChangeTotalValue={deliveredChangeTotalValue}
         deliveredChangeCourierCount={deliveredChangeCourierCount}
+        closedDeliveryRecords={closedDeliveryRecords}
+        closedDeliveryCourierCount={closedDeliveryCourierCount}
+        paidAdvanceRecords={paidAdvanceRecords}
+        paidAdvanceTotalValue={paidAdvanceTotalValue}
+        paidAdvanceRecipientCount={paidAdvanceRecipientCount}
       />
     </div>
   );

@@ -160,6 +160,10 @@ function NativeModuleToolbar({
   onExportMachines,
   onExportDeliveredChanges,
   onPrintDeliveredChanges,
+  onExportClosedDeliveries,
+  onPrintClosedDeliveries,
+  onExportPaidAdvances,
+  onPrintPaidAdvances,
   onExportBackup,
   onManualReset,
   onClearAll,
@@ -321,6 +325,26 @@ function NativeModuleToolbar({
               </button>
               <button type="button" className="ui-button ui-button--ghost" onClick={onPrintDeliveredChanges}>
                 Imprimir entregues
+              </button>
+            </>
+          ) : null}
+          {routePath === 'delivery-reading' ? (
+            <>
+              <button type="button" className="ui-button ui-button--secondary" onClick={onExportClosedDeliveries}>
+                Exportar fechadas
+              </button>
+              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintClosedDeliveries}>
+                Imprimir fechadas
+              </button>
+            </>
+          ) : null}
+          {routePath === 'advances' ? (
+            <>
+              <button type="button" className="ui-button ui-button--secondary" onClick={onExportPaidAdvances}>
+                Exportar baixados
+              </button>
+              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintPaidAdvances}>
+                Imprimir baixados
               </button>
             </>
           ) : null}
@@ -904,6 +928,10 @@ function NativeModuleRecordsSection(props) {
   handleExportMachineChecklistImage,
   handleExportDeliveredChangesImage,
   handlePrintDeliveredChanges,
+  handleExportClosedDeliveriesImage,
+  handlePrintClosedDeliveries,
+  handleExportPaidAdvancesImage,
+  handlePrintPaidAdvances,
   handleExportBackup,
   handleManualReset,
   handleClearAll,
@@ -1078,6 +1106,10 @@ function NativeModuleRecordsSection(props) {
         onExportMachines={handleExportMachineChecklistImage}
         onExportDeliveredChanges={handleExportDeliveredChangesImage}
         onPrintDeliveredChanges={handlePrintDeliveredChanges}
+        onExportClosedDeliveries={handleExportClosedDeliveriesImage}
+        onPrintClosedDeliveries={handlePrintClosedDeliveries}
+        onExportPaidAdvances={handleExportPaidAdvancesImage}
+        onPrintPaidAdvances={handlePrintPaidAdvances}
         onExportBackup={handleExportBackup}
         onManualReset={handleManualReset}
         onClearAll={handleClearAll}
