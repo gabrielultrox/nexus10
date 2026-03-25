@@ -239,7 +239,7 @@ function LoginPage() {
                 <p className="text-overline">Login do operador</p>
                 <h2 className="text-display">Entrar no ERP</h2>
                 <p className="text-body">
-                  Entre com o operador local. A senha padrao atual continua sendo <strong>01</strong>.
+                  Entre com o operador local usando a senha operacional configurada no backend.
                 </p>
               </div>
 

@@ -51,10 +51,24 @@ function required(name, fallback = '') {
   return process.env[name] ?? fallback;
 }
 
+function requiredInProduction(name, fallback = '') {
+  const value = process.env[name];
+
+  if (value != null && value !== '') {
+    return value;
+  }
+
+  if ((process.env.NODE_ENV ?? 'development') === 'production') {
+    throw new Error(`Variavel obrigatoria ausente em producao: ${name}`);
+  }
+
+  return fallback;
+}
+
 export const backendEnv = {
   port: asNumber(process.env.PORT, 8787),
   nodeEnv: required('NODE_ENV', 'development'),
-  localOperatorPassword: required('LOCAL_OPERATOR_PASSWORD', '01'),
+  localOperatorPassword: requiredInProduction('LOCAL_OPERATOR_PASSWORD', '01'),
   openaiApiKey: process.env.OPENAI_API_KEY ?? null,
   frontendOrigin: required('FRONTEND_ORIGIN', '').split(',').map((item) => item.trim()).filter(Boolean),
   ifoodAuthBaseUrl: required('IFOOD_AUTH_BASE_URL', 'https://merchant-api.ifood.com.br/authentication/v1.0'),

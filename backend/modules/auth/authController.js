@@ -3,7 +3,8 @@ import { backendEnv } from '../../config/env.js';
 import { getLocalOperatorProfile } from '../../config/localOperators.js';
 
 function isValidPassword(password) {
-  return String(password ?? '') === String(backendEnv.localOperatorPassword ?? '01');
+  return Boolean(backendEnv.localOperatorPassword)
+    && String(password ?? '') === String(backendEnv.localOperatorPassword);
 }
 
 export function registerAuthRoutes(app) {
@@ -13,6 +14,11 @@ export function registerAuthRoutes(app) {
 
     if (!operatorName) {
       response.status(400).json({ error: 'Selecione um operador.' });
+      return;
+    }
+
+    if (!backendEnv.localOperatorPassword) {
+      response.status(503).json({ error: 'Senha operacional nao configurada no backend.' });
       return;
     }
 
