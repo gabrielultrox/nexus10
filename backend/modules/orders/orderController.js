@@ -16,6 +16,10 @@ function sendError(response, error, fallbackMessage) {
   });
 }
 
+function getActorFromRequest(request) {
+  return request.authUser ?? null;
+}
+
 export function registerOrderRoutes(app) {
   app.post('/api/stores/:storeId/orders', async (request, response) => {
     try {
@@ -23,7 +27,7 @@ export function registerOrderRoutes(app) {
         storeId: request.params.storeId,
         tenantId: request.body?.tenantId ?? null,
         values: getPayload(request.body),
-        createdBy: request.body?.createdBy ?? null,
+        createdBy: getActorFromRequest(request),
       });
 
       response.status(201).json({ data });
@@ -66,7 +70,7 @@ export function registerOrderRoutes(app) {
         tenantId: request.body?.tenantId ?? null,
         orderId: request.params.orderId,
         values: getPayload(request.body),
-        createdBy: request.body?.createdBy ?? null,
+        createdBy: getActorFromRequest(request),
       });
 
       response.json({ data });

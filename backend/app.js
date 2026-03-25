@@ -3,6 +3,7 @@ import express from 'express';
 import { backendEnv } from './config/env.js';
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js';
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js';
+import { requireApiAuth } from './middleware/requireAuth.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
@@ -55,6 +56,8 @@ export function createApp() {
       timestamp: new Date().toISOString(),
     });
   });
+
+  app.use('/api', requireApiAuth);
 
   registerOrderRoutes(app);
   registerSaleRoutes(app);

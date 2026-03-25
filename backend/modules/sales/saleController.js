@@ -15,6 +15,10 @@ function sendError(response, error, fallbackMessage) {
   });
 }
 
+function getActorFromRequest(request) {
+  return request.authUser ?? null;
+}
+
 export function registerSaleRoutes(app) {
   app.post('/api/stores/:storeId/sales', async (request, response) => {
     try {
@@ -22,7 +26,7 @@ export function registerSaleRoutes(app) {
         storeId: request.params.storeId,
         tenantId: request.body?.tenantId ?? null,
         values: getPayload(request.body),
-        createdBy: request.body?.createdBy ?? null,
+        createdBy: getActorFromRequest(request),
       });
 
       response.status(201).json({ data });
@@ -38,7 +42,7 @@ export function registerSaleRoutes(app) {
         tenantId: request.body?.tenantId ?? null,
         orderId: request.params.orderId,
         values: getPayload(request.body),
-        createdBy: request.body?.createdBy ?? null,
+        createdBy: getActorFromRequest(request),
       });
 
       response.status(201).json({ data });
@@ -53,7 +57,7 @@ export function registerSaleRoutes(app) {
         storeId: request.params.storeId,
         saleId: request.params.saleId,
         status: request.body?.status,
-        actor: request.body?.createdBy ?? request.body?.actor ?? null,
+        actor: getActorFromRequest(request),
       });
 
       response.json({ data });
