@@ -878,39 +878,41 @@ function NativeModuleTable({
                         </button>
                       </div>
                     ) : null}
-                    {manager.actionLabel ? (
-                      <button
-                        type="button"
-                        className="ui-button ui-button--secondary native-module__table-action"
-                        onClick={() => onApplyAction(record.id)}
-                        disabled={exitingIds.has(record.id)}
-                      >
-                        {manager.getActionLabel?.(record) ?? manager.actionLabel}
-                      </button>
-                    ) : null}
-                    {manager.returnActionLabel && canShowReturnAction(record) ? (
-                      <button
-                        type="button"
-                        className="native-module__return-action"
-                        disabled={exitingIds.has(record.id)}
-                        onClick={() => onMarkReturned(record.id)}
-                      >
-                        {manager.returnActionLabel}
-                      </button>
-                    ) : null}
-                    {manager.returnActionLabel && !canShowReturnAction(record) ? (
-                      <span className="native-module__action-state-label">
-                        {getReturnActionStateLabel(record)}
-                      </span>
-                    ) : null}
-                    {manager.allowDelete !== false ? (
-                      <DestructiveIconButton
-                        className="native-module__delete-action"
-                        disabled={exitingIds.has(record.id)}
-                        onClick={() => onDelete(record.id)}
-                        label="Excluir registro"
-                      />
-                    ) : null}
+                    <div className="native-module__action-group">
+                      {manager.actionLabel ? (
+                        <button
+                          type="button"
+                          className="ui-button ui-button--secondary native-module__table-action"
+                          onClick={() => onApplyAction(record.id)}
+                          disabled={exitingIds.has(record.id)}
+                        >
+                          {manager.getActionLabel?.(record) ?? manager.actionLabel}
+                        </button>
+                      ) : null}
+                      {manager.returnActionLabel && canShowReturnAction(record) ? (
+                        <button
+                          type="button"
+                          className="native-module__return-action"
+                          disabled={exitingIds.has(record.id)}
+                          onClick={() => onMarkReturned(record.id)}
+                        >
+                          {manager.returnActionLabel}
+                        </button>
+                      ) : null}
+                      {manager.returnActionLabel && !canShowReturnAction(record) ? (
+                        <span className="native-module__action-state-label">
+                          {getReturnActionStateLabel(record)}
+                        </span>
+                      ) : null}
+                      {manager.allowDelete !== false ? (
+                        <DestructiveIconButton
+                          className="native-module__delete-action"
+                          disabled={exitingIds.has(record.id)}
+                          onClick={() => onDelete(record.id)}
+                          label="Excluir registro"
+                        />
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               )

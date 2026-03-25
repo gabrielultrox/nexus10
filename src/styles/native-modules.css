@@ -479,6 +479,8 @@
 }
 
 .native-module__actions-cell--editable-record {
+  display: grid;
+  align-items: stretch;
   min-width: 248px;
 }
 
@@ -489,6 +491,14 @@
 
 .native-module__inline-editor--record-field {
   width: 100%;
+}
+
+.native-module__action-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .native-module__inline-select {
