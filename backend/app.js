@@ -1,9 +1,10 @@
 import express from 'express';
 
 import { backendEnv } from './config/env.js';
+import { registerAuthRoutes } from './modules/auth/authController.js';
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js';
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js';
-import { requireApiAuth } from './middleware/requireAuth.js';
+import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
@@ -57,7 +58,9 @@ export function createApp() {
     });
   });
 
+  registerAuthRoutes(app);
   app.use('/api', requireApiAuth);
+  app.use('/api/stores/:storeId', requireStoreAccess);
 
   registerOrderRoutes(app);
   registerSaleRoutes(app);

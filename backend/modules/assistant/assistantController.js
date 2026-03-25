@@ -1,4 +1,5 @@
 import { handleAssistantQuery } from './assistantService.js';
+import { requirePermission } from '../../middleware/requireAuth.js';
 
 function sendError(response, error, fallbackMessage) {
   response.status(error.statusCode ?? 500).json({
@@ -7,7 +8,7 @@ function sendError(response, error, fallbackMessage) {
 }
 
 export function registerAssistantRoutes(app) {
-  app.post('/api/stores/:storeId/assistant/query', async (request, response) => {
+  app.post('/api/stores/:storeId/assistant/query', requirePermission('assistant:write'), async (request, response) => {
     try {
       const data = await handleAssistantQuery({
         storeId: request.params.storeId,

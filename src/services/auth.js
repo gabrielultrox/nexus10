@@ -2,6 +2,7 @@ import {
   onIdTokenChanged,
   signInWithEmailAndPassword,
   signInAnonymously,
+  signInWithCustomToken,
   signOut,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -18,6 +19,11 @@ export async function loginWithEmail(email, password) {
 export async function loginAnonymously() {
   assertFirebaseReady();
   return signInAnonymously(firebaseAuth);
+}
+
+export async function loginWithCustomToken(token) {
+  assertFirebaseReady();
+  return signInWithCustomToken(firebaseAuth, token);
 }
 
 export async function logout() {

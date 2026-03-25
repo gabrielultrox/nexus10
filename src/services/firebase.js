@@ -2,7 +2,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   onAuthStateChanged,
-  signInAnonymously,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -71,14 +70,7 @@ async function ensureRemoteSession() {
     return null;
   }
 
-  const currentUser = firebaseAuth.currentUser ?? await waitForFirebaseAuthReady();
-
-  if (currentUser) {
-    return currentUser;
-  }
-
-  const credential = await signInAnonymously(firebaseAuth);
-  return credential.user;
+  return firebaseAuth.currentUser ?? await waitForFirebaseAuthReady();
 }
 
 async function clearRemoteSession() {

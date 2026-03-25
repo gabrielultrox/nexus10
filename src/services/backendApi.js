@@ -18,7 +18,7 @@ async function parseResponse(response) {
 export async function requestBackend(path, options = {}) {
   let authorizationHeader = options.headers?.Authorization ?? options.headers?.authorization ?? null;
 
-  if (!authorizationHeader && firebaseReady) {
+  if (!authorizationHeader && firebaseReady && !options.skipAuth) {
     const user = await ensureRemoteSession().catch(() => null);
     const idToken = user ? await user.getIdToken().catch(() => '') : '';
 

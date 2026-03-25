@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { userHasRequiredRole } from '../services/auth';
+import {
+  getCurrentUser,
+  getUserSession,
+  loginWithCustomToken,
+  userHasRequiredRole,
+} from '../services/auth';
+import { requestBackend } from '../services/backendApi';
 import { clearRemoteSession, ensureRemoteSession, firebaseReady } from '../services/firebase';
 import { buildRolePermissionFlags, getRoleLabel, hasPermission } from '../services/permissions';
 import {
@@ -42,6 +48,22 @@ function buildLocalSession(profile) {
   };
 }
 
+function buildRemoteSession(remoteSession, fallbackProfile = null) {
+  const profile = fallbackProfile ?? {};
+  const operatorName = remoteSession.claims?.operatorName
+    ?? profile.operatorName
+    ?? remoteSession.displayName
+    ?? 'Operador';
+
+  return {
+    ...remoteSession,
+    displayName: remoteSession.displayName ?? profile.displayName ?? operatorName,
+    operatorName,
+    roleLabel: getRoleLabel(remoteSession.role),
+    permissions: remoteSession.permissions ?? buildRolePermissionFlags(remoteSession.role),
+  };
+}
+
 async function buildTemporarySession() {
   const operatorName = getTemporaryOperatorName();
   const profile = await resolveUserProfileByOperator(operatorName)
@@ -62,7 +84,38 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
       try {
+        if (typeof window === 'undefined') {
+          setSession(await buildTemporarySession());
+          return;
+        }
+
         const savedSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
+        const parsedSavedSession = savedSession ? JSON.parse(savedSession) : null;
+
+        if (firebaseReady) {
+          const remoteUser = await ensureRemoteSession().catch(() => null);
+
+          if (remoteUser) {
+            const remoteSession = await getUserSession(remoteUser);
+            const fallbackProfile = await resolveUserProfileByOperator(
+              remoteSession?.claims?.operatorName
+              ?? remoteSession?.displayName
+              ?? parsedSavedSession?.operatorName
+              ?? '',
+            ).catch(() => null);
+            const nextSession = buildRemoteSession(remoteSession, fallbackProfile);
+            window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+            if (nextSession.operatorName) {
+              window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, nextSession.operatorName);
+            }
+            setSession(nextSession);
+            return;
+          }
+
+          window.localStorage.removeItem(AUTH_STORAGE_KEY);
+          setSession(null);
+          return;
+        }
 
         if (!savedSession) {
           const nextSession = await buildTemporarySession();
@@ -71,13 +124,9 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        const parsedSession = JSON.parse(savedSession);
-        const refreshedProfile = await refreshSessionProfile(parsedSession).catch(() => (
-          getDefaultUserProfile(parsedSession.operatorName ?? parsedSession.displayName ?? 'Operador local')
+        const refreshedProfile = await refreshSessionProfile(parsedSavedSession).catch(() => (
+          getDefaultUserProfile(parsedSavedSession.operatorName ?? parsedSavedSession.displayName ?? 'Operador local')
         ));
-        if (firebaseReady) {
-          await ensureRemoteSession().catch(() => null);
-        }
         const nextSession = buildLocalSession(refreshedProfile);
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
         setSession(nextSession);
@@ -111,16 +160,35 @@ export function AuthProvider({ children }) {
           throw new Error('Selecione um operador.');
         }
 
-        if (credentials.password !== '01') {
-          throw new Error('Senha incorreta.');
-        }
+        let nextSession = null;
 
-        const profile = await resolveUserProfileByOperator(operatorName)
-          .catch(() => getDefaultUserProfile(operatorName));
         if (firebaseReady) {
-          await ensureRemoteSession();
+          const authResponse = await requestBackend('/auth/session', {
+            method: 'POST',
+            skipAuth: true,
+            body: {
+              operatorName,
+              password: credentials.password,
+            },
+          });
+          await loginWithCustomToken(authResponse.customToken);
+          const currentUser = getCurrentUser();
+
+          if (!currentUser) {
+            throw new Error('Nao foi possivel concluir a autenticacao remota.');
+          }
+
+          const remoteSession = await getUserSession(currentUser);
+          nextSession = buildRemoteSession(remoteSession, authResponse.profile);
+        } else {
+          if (credentials.password !== '01') {
+            throw new Error('Senha incorreta.');
+          }
+
+          const profile = await resolveUserProfileByOperator(operatorName)
+            .catch(() => getDefaultUserProfile(operatorName));
+          nextSession = buildLocalSession(profile);
         }
-        const nextSession = buildLocalSession(profile);
 
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
         window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, operatorName);
@@ -130,6 +198,8 @@ export function AuthProvider({ children }) {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
         if (firebaseReady) {
           await clearRemoteSession().catch(() => null);
+          setSession(null);
+          return;
         }
         const nextSession = await buildTemporarySession();
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));

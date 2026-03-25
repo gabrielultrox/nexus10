@@ -4,6 +4,7 @@ import {
   createSaleFromOrder,
   updateSaleStatus,
 } from './saleService.js';
+import { requirePermission } from '../../middleware/requireAuth.js';
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
@@ -20,7 +21,7 @@ function getActorFromRequest(request) {
 }
 
 export function registerSaleRoutes(app) {
-  app.post('/api/stores/:storeId/sales', async (request, response) => {
+  app.post('/api/stores/:storeId/sales', requirePermission('sales:write'), async (request, response) => {
     try {
       const data = await createDirectSale({
         storeId: request.params.storeId,
@@ -35,7 +36,7 @@ export function registerSaleRoutes(app) {
     }
   });
 
-  app.post('/api/stores/:storeId/orders/:orderId/sales', async (request, response) => {
+  app.post('/api/stores/:storeId/orders/:orderId/sales', requirePermission('sales:write'), async (request, response) => {
     try {
       const data = await createSaleFromOrder({
         storeId: request.params.storeId,
@@ -51,7 +52,7 @@ export function registerSaleRoutes(app) {
     }
   });
 
-  app.patch('/api/stores/:storeId/sales/:saleId/status', async (request, response) => {
+  app.patch('/api/stores/:storeId/sales/:saleId/status', requirePermission('sales:write'), async (request, response) => {
     try {
       const data = await updateSaleStatus({
         storeId: request.params.storeId,
@@ -66,7 +67,7 @@ export function registerSaleRoutes(app) {
     }
   });
 
-  app.delete('/api/stores/:storeId/sales/:saleId', async (request, response) => {
+  app.delete('/api/stores/:storeId/sales/:saleId', requirePermission('sales:write'), async (request, response) => {
     try {
       const data = await deleteSale({
         storeId: request.params.storeId,

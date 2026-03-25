@@ -5,6 +5,7 @@ import {
   markOrderAsDispatched,
   updateOrder,
 } from './orderService.js';
+import { requirePermission } from '../../middleware/requireAuth.js';
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
@@ -21,7 +22,7 @@ function getActorFromRequest(request) {
 }
 
 export function registerOrderRoutes(app) {
-  app.post('/api/stores/:storeId/orders', async (request, response) => {
+  app.post('/api/stores/:storeId/orders', requirePermission('orders:write'), async (request, response) => {
     try {
       const data = await createOrder({
         storeId: request.params.storeId,
@@ -36,7 +37,7 @@ export function registerOrderRoutes(app) {
     }
   });
 
-  app.patch('/api/stores/:storeId/orders/:orderId', async (request, response) => {
+  app.patch('/api/stores/:storeId/orders/:orderId', requirePermission('orders:write'), async (request, response) => {
     try {
       const data = await updateOrder({
         storeId: request.params.storeId,
@@ -50,7 +51,7 @@ export function registerOrderRoutes(app) {
     }
   });
 
-  app.post('/api/stores/:storeId/orders/:orderId/dispatch', async (request, response) => {
+  app.post('/api/stores/:storeId/orders/:orderId/dispatch', requirePermission('orders:write'), async (request, response) => {
     try {
       const data = await markOrderAsDispatched({
         storeId: request.params.storeId,
@@ -63,7 +64,7 @@ export function registerOrderRoutes(app) {
     }
   });
 
-  app.post('/api/stores/:storeId/orders/:orderId/convert-to-sale', async (request, response) => {
+  app.post('/api/stores/:storeId/orders/:orderId/convert-to-sale', requirePermission('orders:write'), async (request, response) => {
     try {
       const data = await convertOrderToSale({
         storeId: request.params.storeId,
@@ -79,7 +80,7 @@ export function registerOrderRoutes(app) {
     }
   });
 
-  app.delete('/api/stores/:storeId/orders/:orderId', async (request, response) => {
+  app.delete('/api/stores/:storeId/orders/:orderId', requirePermission('orders:write'), async (request, response) => {
     try {
       const data = await deleteOrder({
         storeId: request.params.storeId,

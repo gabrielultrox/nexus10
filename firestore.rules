@@ -5,21 +5,178 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function currentRole() {
+      return isSignedIn() && request.auth.token.role is string
+        ? request.auth.token.role
+        : '';
+    }
+
+    function roleRank() {
+      return currentRole() == 'admin'
+        ? 4
+        : currentRole() == 'gerente'
+          ? 3
+          : currentRole() == 'operador'
+            ? 2
+            : currentRole() == 'atendente'
+              ? 1
+              : 0;
+    }
+
+    function hasRoleOrAbove(minRank) {
+      return isSignedIn() && roleRank() >= minRank;
+    }
+
+    function hasStoreAccess(storeId) {
+      return isSignedIn()
+        && request.auth.token.storeIds is list
+        && storeId in request.auth.token.storeIds;
+    }
+
+    function canReadStore(storeId) {
+      return hasStoreAccess(storeId);
+    }
+
+    function canWriteOrders(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(1);
+    }
+
+    function canWriteSales(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(3);
+    }
+
+    function canWriteInventory(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(2);
+    }
+
+    function canWriteFinance(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(2);
+    }
+
+    function canWriteSettings(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(3);
+    }
+
+    function canReadAudit(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(2);
+    }
+
+    function canWriteAudit(storeId) {
+      return hasStoreAccess(storeId) && hasRoleOrAbove(2);
+    }
+
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && (request.auth.uid == userId || hasRoleOrAbove(3));
+      allow write: if isSignedIn() && (request.auth.uid == userId || hasRoleOrAbove(3));
     }
 
     match /stores/{storeId} {
-      allow read, write: if isSignedIn();
+      allow read: if canReadStore(storeId);
+      allow write: if canWriteSettings(storeId);
+
+      match /couriers/{courierId} {
+        allow read: if canReadStore(storeId);
+        allow write: if hasStoreAccess(storeId) && hasRoleOrAbove(2);
+      }
+
+      match /manual_modules/{recordId} {
+        allow read: if canReadStore(storeId);
+        allow write: if hasStoreAccess(storeId) && hasRoleOrAbove(2);
+      }
+
+      match /orders/{orderId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteOrders(storeId);
+      }
+
+      match /sales/{saleId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSales(storeId);
+      }
+
+      match /products/{productId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteInventory(storeId);
+      }
+
+      match /stock_items/{productId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteInventory(storeId);
+      }
+
+      match /inventory_items/{productId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteInventory(storeId);
+      }
+
+      match /stock_movements/{movementId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteInventory(storeId);
+      }
+
+      match /inventory_movements/{movementId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteInventory(storeId);
+      }
+
+      match /customers/{customerId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteOrders(storeId);
+      }
+
+      match /financial_entries/{entryId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteFinance(storeId);
+      }
+
+      match /financial_closures/{closureId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteFinance(storeId);
+      }
+
+      match /audit_logs/{auditId} {
+        allow read: if canReadAudit(storeId);
+        allow write: if canWriteAudit(storeId);
+      }
+
+      match /settings/{settingId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
+
+      match /external_orders/{documentId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
+
+      match /external_order_events/{eventId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
+
+      match /external_order_tracking/{trackingId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
+
+      match /integration_logs/{logId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
+
+      match /integration_merchants/{merchantId} {
+        allow read: if canReadStore(storeId);
+        allow write: if canWriteSettings(storeId);
+      }
 
       match /{document=**} {
-        allow read, write: if isSignedIn();
+        allow read, write: if false;
       }
     }
 
-    match /nexus10/{doc} {
-      allow read, write: if isSignedIn();
+    match /nexus10/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasRoleOrAbove(3);
     }
   }
 }

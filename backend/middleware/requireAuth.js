@@ -17,7 +17,11 @@ function buildAuthUser(decodedToken) {
     uid: decodedToken.uid,
     email: decodedToken.email ?? null,
     displayName: decodedToken.name ?? null,
+    operatorName: decodedToken.operatorName ?? decodedToken.name ?? null,
     role: decodedToken.role ?? 'operator',
+    tenantId: decodedToken.tenantId ?? null,
+    storeIds: Array.isArray(decodedToken.storeIds) ? decodedToken.storeIds : [],
+    defaultStoreId: decodedToken.defaultStoreId ?? null,
     isAnonymous: decodedToken.firebase?.sign_in_provider === 'anonymous',
     claims: decodedToken,
   };
@@ -42,6 +46,12 @@ export async function requireApiAuth(request, response, next) {
 
   try {
     const decodedToken = await getAdminApp().auth().verifyIdToken(token);
+    if (decodedToken.firebase?.sign_in_provider === 'anonymous') {
+      response.status(401).json({
+        error: 'Sessao anonima nao pode acessar a API protegida.',
+      });
+      return;
+    }
     request.authUser = buildAuthUser(decodedToken);
     next();
   } catch {
@@ -49,4 +59,41 @@ export async function requireApiAuth(request, response, next) {
       error: 'Token de autenticacao invalido.',
     });
   }
+}
+
+export function requireStoreAccess(request, response, next) {
+  const storeId = request.params.storeId;
+  const storeIds = request.authUser?.storeIds ?? [];
+
+  if (!storeId || storeIds.includes(storeId)) {
+    next();
+    return;
+  }
+
+  response.status(403).json({
+    error: 'Seu perfil nao tem acesso a esta loja.',
+  });
+}
+
+const rolePermissions = {
+  admin: new Set(['assistant:write', 'orders:read', 'orders:write', 'sales:read', 'sales:write', 'integrations:write']),
+  gerente: new Set(['assistant:write', 'orders:read', 'orders:write', 'sales:read', 'sales:write', 'integrations:write']),
+  operador: new Set(['assistant:write', 'orders:read', 'orders:write', 'sales:read']),
+  atendente: new Set(['orders:read', 'orders:write']),
+};
+
+export function requirePermission(permission) {
+  return function permissionGuard(request, response, next) {
+    const role = request.authUser?.role ?? 'operador';
+    const permissions = rolePermissions[role] ?? new Set();
+
+    if (permissions.has(permission)) {
+      next();
+      return;
+    }
+
+    response.status(403).json({
+      error: 'Seu perfil nao tem permissao para esta acao.',
+    });
+  };
 }
