@@ -49,6 +49,25 @@ npm install
 
 3. Preencha as variaveis de frontend (`VITE_FIREBASE_*`) e, se for usar o backend do iFood, tambem as variaveis de backend.
 
+## Checklist de Producao
+
+Antes de publicar o backend em producao, configure obrigatoriamente:
+
+- `FRONTEND_ORIGIN` com a URL exata do frontend publicado
+- `LOCAL_OPERATOR_PASSWORD` com um segredo real
+- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_CLIENT_EMAIL`
+- `FIREBASE_ADMIN_PRIVATE_KEY`
+
+Configuracoes recomendadas:
+
+- `API_RATE_LIMIT_WINDOW_MS`
+- `API_RATE_LIMIT_MAX`
+- `AUTH_RATE_LIMIT_MAX`
+- `IFOOD_WEBHOOK_SECRET`
+
+Nao publique com fallback de desenvolvimento ou senha operacional fraca.
+
 ## Scripts
 
 ```bash
@@ -78,3 +97,4 @@ O deploy manual de producao deve ser excecao. Detalhes em [docs/deploy-flow.md](
 - O projeto possui fallback local quando o Firebase nao esta configurado.
 - O arquivo `.env` esta ignorado no Git e nao foi publicado.
 - O repositorio foi preparado para desenvolvimento local e pode ser expandido com deploy separado para frontend e backend.
+- O resumo da ultima rodada de endurecimento de seguranca esta em [docs/security-audit-2026-03-25.md](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\security-audit-2026-03-25.md).
