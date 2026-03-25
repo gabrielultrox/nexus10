@@ -97,4 +97,5 @@ O deploy manual de producao deve ser excecao. Detalhes em [docs/deploy-flow.md](
 - O projeto possui fallback local quando o Firebase nao esta configurado.
 - O arquivo `.env` esta ignorado no Git e nao foi publicado.
 - O repositorio foi preparado para desenvolvimento local e pode ser expandido com deploy separado para frontend e backend.
+- `legacy/` nao deve ser distribuido nem modificado; o deploy atual usa `dist/` e a plataforma tambem ignora `legacy/` via `.vercelignore`.
 - O resumo da ultima rodada de endurecimento de seguranca esta em [docs/security-audit-2026-03-25.md](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\security-audit-2026-03-25.md).

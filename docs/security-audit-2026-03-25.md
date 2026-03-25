@@ -41,11 +41,14 @@ Contexto:
 
 - ambos os achados apontam para o commit `3f13892`
 - os arquivos estao em `legacy/`, que esta explicitamente marcado no projeto como area que nao deve ser modificada
+- o build atual do app sai de `dist/` via Vite, entao esses arquivos nao fazem parte do artefato principal do frontend
+- foi adicionada uma barreira extra em `.vercelignore` para evitar empacotamento acidental de `legacy/` em deploys de plataforma
 
 Impacto:
 
 - a chave tem formato real de Google API key e deve ser tratada como credencial exposta
 - se ainda estiver ativa, precisa ser rotacionada e restringida no console do Google/Firebase
+- hoje o risco principal e de repositorio/historico e de qualquer uso manual desses arquivos legados, nao do bundle `dist` atual
 
 Acao recomendada:
 

@@ -1,0 +1,7 @@
+legacy/
+docs/
+output/
+tmp/
+.playwright-cli/
+*.log
+*.err
