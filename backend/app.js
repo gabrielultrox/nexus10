@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import { backendEnv } from './config/env.js';
 import { registerAuthRoutes } from './modules/auth/authController.js';
@@ -14,6 +16,38 @@ import {
   touchIntegrationMerchant,
 } from './repositories/integrationMerchantRepository.js';
 
+function isDevelopmentEnvironment() {
+  return backendEnv.nodeEnv !== 'production';
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (backendEnv.frontendOrigin.includes(origin)) {
+    return true;
+  }
+
+  if (isDevelopmentEnvironment()) {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  }
+
+  return false;
+}
+
+function createApiRateLimiter(max) {
+  return rateLimit({
+    windowMs: backendEnv.apiRateLimitWindowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      error: 'Limite de requisicoes excedido. Aguarde antes de tentar novamente.',
+    },
+  });
+}
+
 export function createApp() {
   const app = express();
   const repository = createIfoodFirestoreRepository();
@@ -22,22 +56,31 @@ export function createApp() {
     repositories: repository,
   });
 
+  app.disable('x-powered-by');
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+  }));
+
   app.use((request, response, next) => {
     const origin = request.headers.origin;
-    const allowedOrigins = backendEnv.frontendOrigin;
 
     if (!origin) {
       next();
       return;
     }
 
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      response.header('Access-Control-Allow-Origin', origin);
-      response.header('Vary', 'Origin');
-      response.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      response.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-      response.header('Access-Control-Allow-Credentials', 'true');
+    if (!isAllowedOrigin(origin)) {
+      response.status(403).json({
+        error: 'Origem nao autorizada para esta API.',
+      });
+      return;
     }
+
+    response.header('Access-Control-Allow-Origin', origin);
+    response.header('Vary', 'Origin');
+    response.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    response.header('Access-Control-Allow-Credentials', 'true');
 
     if (request.method === 'OPTIONS') {
       response.status(204).end();
@@ -48,6 +91,8 @@ export function createApp() {
   });
 
   app.use('/api', express.json());
+  app.use('/api', createApiRateLimiter(backendEnv.apiRateLimitMax));
+  app.use('/api/auth/session', createApiRateLimiter(backendEnv.authRateLimitMax));
   app.use('/webhooks/ifood', express.text({ type: '*/*' }));
 
   app.get('/api/health', (_request, response) => {
