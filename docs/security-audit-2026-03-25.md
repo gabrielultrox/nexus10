@@ -21,6 +21,39 @@ Ainda existem pontos residuais relevantes:
 
 Conclusao: nao encontrei evidência de `.env` com segredo rastreado no Git a partir desta varredura, mas houve risco de governanca por bypass temporario de auth.
 
+### Scan dedicado com Gitleaks
+
+Ferramenta usada:
+
+- `gitleaks 8.30.1`
+
+Resultado:
+
+- `188 commits scanned`
+- `2 leaks found`
+
+Achados:
+
+1. chave com padrao `gcp-api-key` em [legacy/index-legacy.html](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\legacy\index-legacy.html):43
+2. chave com padrao `gcp-api-key` em [legacy/legacy-core.html](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\legacy\legacy-core.html):43
+
+Contexto:
+
+- ambos os achados apontam para o commit `3f13892`
+- os arquivos estao em `legacy/`, que esta explicitamente marcado no projeto como area que nao deve ser modificada
+
+Impacto:
+
+- a chave tem formato real de Google API key e deve ser tratada como credencial exposta
+- se ainda estiver ativa, precisa ser rotacionada e restringida no console do Google/Firebase
+
+Acao recomendada:
+
+1. verificar se a key ainda esta ativa
+2. rotacionar a key
+3. restringir por origem HTTP e por APIs necessarias
+4. decidir se o conteudo de `legacy/` vai continuar distribuido; se sim, esse material precisa de saneamento fora do fluxo normal, porque a pasta esta protegida contra edicao neste projeto
+
 ### APIs chamadas pelo frontend
 
 Chamadas para o backend protegidas por `requestBackend`:
