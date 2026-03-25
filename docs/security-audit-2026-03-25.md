@@ -57,6 +57,13 @@ Acao recomendada:
 3. restringir por origem HTTP e por APIs necessarias
 4. decidir se o conteudo de `legacy/` vai continuar distribuido; se sim, esse material precisa de saneamento fora do fluxo normal, porque a pasta esta protegida contra edicao neste projeto
 
+Status em 2026-03-25:
+
+1. a key antiga exposta foi rotacionada e removida do projeto `nexus-10-d0fe3`
+2. a key nova ativa ficou restrita por `HTTP referrer` e por whitelist de APIs
+3. o frontend publicado em `nexus10-seguro-copia-2026-03-092036.vercel.app` usa `nexus-af413`, nao `nexus-10-d0fe3`
+4. as unicas referencias restantes a `nexus-10-d0fe3` e a key antiga estao em `legacy/`, que hoje deve ser tratado apenas como arquivo morto e fora do fluxo operacional
+
 ### APIs chamadas pelo frontend
 
 Chamadas para o backend protegidas por `requestBackend`:

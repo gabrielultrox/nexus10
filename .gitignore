@@ -6,7 +6,9 @@ dist
 *.err
 nexus10-seguro-copia-2026-03-09_2036/
 
+.codex/
 .vercel
+.vercel.env.tmp
 .playwright-cli/
 output/
 tmp/
