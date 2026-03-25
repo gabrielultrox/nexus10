@@ -348,6 +348,37 @@
   line-height: 1.4;
 }
 
+.history-module__entry-finance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.history-module__entry-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.history-module__entry-chip--value {
+  color: var(--success);
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.history-module__entry-chip--courier {
+  color: var(--accent);
+  border-color: rgba(107, 138, 255, 0.2);
+  background: rgba(107, 138, 255, 0.08);
+}
+
 .history-module__entry-meta {
   display: flex;
   flex-wrap: wrap;

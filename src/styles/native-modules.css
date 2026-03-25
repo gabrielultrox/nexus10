@@ -3342,6 +3342,11 @@
   background: color-mix(in srgb, var(--accent-soft) 48%, var(--bg-surface));
 }
 
+.native-module__table-row--highlighted {
+  background: color-mix(in srgb, var(--accent-soft) 58%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
 .machine-operations__bulk-bar {
   display: flex;
   align-items: center;

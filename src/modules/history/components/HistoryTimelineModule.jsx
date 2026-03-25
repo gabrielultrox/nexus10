@@ -221,6 +221,8 @@ function buildSearchBlob(event) {
     event.action,
     event.target,
     event.details,
+    event.value,
+    event.courier,
   ].filter(Boolean).join(' '));
 }
 
@@ -243,6 +245,33 @@ function buildOriginLink(event) {
     return null;
   }
 
+  if (route.path === 'orders') {
+    const orderId = event.orderId ?? event.entityId ?? '';
+
+    return {
+      to: orderId ? `/orders/${orderId}` : `/${route.path}`,
+      label: route.label,
+    };
+  }
+
+  if (route.path === 'sales') {
+    const saleId = event.saleId ?? event.entityId ?? '';
+
+    return {
+      to: saleId ? `/sales/${saleId}` : `/${route.path}`,
+      label: route.label,
+    };
+  }
+
+  const recordId = event.recordId ?? event.entityId ?? '';
+
+  if (recordId) {
+    return {
+      to: `/${route.path}?recordId=${encodeURIComponent(recordId)}`,
+      label: route.label,
+    };
+  }
+
   return {
     to: `/${route.path}`,
     label: route.label,
@@ -255,6 +284,56 @@ function buildEventText(event) {
   }
 
   return event.action;
+}
+
+function extractValueFromLegacyText(...values) {
+  const combined = values.filter(Boolean).join(' ');
+  const currencyMatch = combined.match(/R\$\s*\d[\d.,]*/i);
+
+  if (currencyMatch) {
+    return currencyMatch[0].replace(/\s+/g, ' ').trim();
+  }
+
+  return '';
+}
+
+function extractCourierFromLegacyText(event) {
+  const explicitTarget = event.target?.trim() ?? '';
+
+  if (explicitTarget && explicitTarget !== 'registro manual' && explicitTarget !== 'entregador') {
+    return explicitTarget;
+  }
+
+  const combined = [event.details, event.action].filter(Boolean).join(' ');
+  const patterns = [
+    /(?:para|retornado para)\s+([^.,|]+)/i,
+    /(?:entregador:)\s*([^.,|]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = combined.match(pattern);
+
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return '';
+}
+
+function buildFinancialAuditContext(event) {
+  if (event.modulePath !== 'change' && event.modulePath !== 'advances') {
+    return null;
+  }
+
+  const courier = event.courier ?? extractCourierFromLegacyText(event);
+  const value = event.value ?? extractValueFromLegacyText(event.details, event.action, event.target);
+
+  if (!courier && !value) {
+    return null;
+  }
+
+  return { courier, value };
 }
 
 function HistoryTimelineModule() {
@@ -672,6 +751,7 @@ function HistoryTimelineModule() {
                       {visibleGroupEvents.map((event) => {
                         const originLink = buildOriginLink(event);
                         const category = categorizeEvent(event);
+                        const financialContext = buildFinancialAuditContext(event);
 
                         return (
                           <article key={event.id} className={`history-module__entry history-module__entry--${category}`}>
@@ -689,6 +769,20 @@ function HistoryTimelineModule() {
                                 ) : null}
                               </div>
                               <p className="history-module__entry-description">{buildEventText(event)}</p>
+                              {financialContext ? (
+                                <div className="history-module__entry-finance">
+                                  {financialContext.value ? (
+                                    <span className="history-module__entry-chip history-module__entry-chip--value">
+                                      Valor: {financialContext.value}
+                                    </span>
+                                  ) : null}
+                                  {financialContext.courier ? (
+                                    <span className="history-module__entry-chip history-module__entry-chip--courier">
+                                      Entregador: {financialContext.courier}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              ) : null}
                               <div className="history-module__entry-meta">
                                 {event.target ? <span>Alvo: {event.target}</span> : null}
                                 <span>Tipo: {EVENT_TYPE_FILTERS.find((filter) => filter.id === category)?.label ?? 'Atualizacoes'}</span>

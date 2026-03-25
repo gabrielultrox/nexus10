@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 
 import MetricCard from '../../../components/common/MetricCard';
@@ -340,6 +341,32 @@ function formatAuditText(record, fallback = 'Sem atualizacao') {
   return actorLabel || timeLabel || fallback;
 }
 
+function buildOperationsAuditSummary(routePath, record) {
+  if (!record) {
+    return null;
+  }
+
+  if (routePath === 'change') {
+    return {
+      target: record.destination ?? 'entregador',
+      details: `Troco de ${record.value ?? 'R$ 0,00'} para ${record.destination ?? 'entregador'}`,
+      value: record.value ?? '',
+      courier: record.destination ?? '',
+    };
+  }
+
+  if (routePath === 'advances') {
+    return {
+      target: record.recipient ?? 'entregador',
+      details: `Vale de ${record.value ?? 'R$ 0,00'} para ${record.recipient ?? 'entregador'}`,
+      value: record.value ?? '',
+      courier: record.recipient ?? '',
+    };
+  }
+
+  return null;
+}
+
 function getActiveScheduleCouriers() {
   return Array.from(
     new Set(
@@ -399,6 +426,7 @@ function shouldUseLocalFallback(error) {
 }
 
 function NativeModuleWorkspace({ route }) {
+  const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
   const toast = useToast();
@@ -455,6 +483,7 @@ function NativeModuleWorkspace({ route }) {
   const [, setSyncActivityLabel] = useState(
     remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta',
   );
+  const requestedRecordId = searchParams.get('recordId') ?? '';
   const scheduleImageRef = useRef(null);
   const scheduleMachinesImageRef = useRef(null);
   const machineChecklistImageRef = useRef(null);
@@ -709,6 +738,19 @@ function NativeModuleWorkspace({ route }) {
 
     return () => window.clearTimeout(timeoutId);
   }, [freshRecordId]);
+
+  useEffect(() => {
+    if (!requestedRecordId) {
+      return;
+    }
+
+    if (route.path === 'schedule') {
+      setHighlightedScheduleRecordId(requestedRecordId);
+      return;
+    }
+
+    setFreshRecordId(requestedRecordId);
+  }, [requestedRecordId, route.path]);
 
   useEffect(() => {
     if (!invalidFieldName) {
@@ -1510,13 +1552,18 @@ function NativeModuleWorkspace({ route }) {
 
       setErrorMessage('');
       playOperationalSuccess();
+      const operationsSummary = buildOperationsAuditSummary(route.path, newRecord);
+
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
+        recordId: newRecord.id,
         actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
         action: 'Criou registro',
-        target: newRecord.deliveryCode ?? newRecord.code ?? newRecord.courier ?? newRecord.device ?? newRecord.zone ?? newRecord.order ?? newRecord.origin ?? 'registro manual',
-        details: `Cadastro criado em ${route.title}`,
+        target: operationsSummary?.target ?? newRecord.deliveryCode ?? newRecord.code ?? newRecord.courier ?? newRecord.device ?? newRecord.zone ?? newRecord.order ?? newRecord.origin ?? 'registro manual',
+        details: operationsSummary?.details ?? `Cadastro criado em ${route.title}`,
+        value: operationsSummary?.value,
+        courier: operationsSummary?.courier,
       });
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel salvar o registro.');
@@ -1549,13 +1596,18 @@ function NativeModuleWorkspace({ route }) {
       setErrorMessage('');
       playOperationalSuccess();
 
+      const operationsSummary = buildOperationsAuditSummary(route.path, record);
+
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
+        recordId: record?.id,
         actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
         action: 'Excluiu registro',
-        target: record?.deliveryCode ?? record?.code ?? record?.courier ?? record?.device ?? record?.zone ?? record?.order ?? record?.origin ?? 'registro manual',
-        details: `Registro removido de ${route.title}`,
+        target: operationsSummary?.target ?? record?.deliveryCode ?? record?.code ?? record?.courier ?? record?.device ?? record?.zone ?? record?.order ?? record?.origin ?? 'registro manual',
+        details: operationsSummary?.details ?? `Registro removido de ${route.title}`,
+        value: operationsSummary?.value,
+        courier: operationsSummary?.courier,
       });
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel excluir o registro.');
@@ -1621,6 +1673,7 @@ function NativeModuleWorkspace({ route }) {
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
+        recordId,
         actor: auditContext.updatedBy,
         action: 'Alterou maquininha do dia na escala',
         target: record.courier ?? 'entregador',
@@ -2068,10 +2121,13 @@ function NativeModuleWorkspace({ route }) {
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
+        recordId,
         actor: returnedBy,
         action: 'Confirmou retorno',
-        target: targetRecord?.origin ?? 'troco',
-        details: `Retorno confirmado em ${route.title}`,
+        target: targetRecord?.destination ?? 'entregador',
+        details: `Troco de ${targetRecord?.value ?? 'R$ 0,00'} retornado para ${targetRecord?.destination ?? 'entregador'}`,
+        value: targetRecord?.value ?? '',
+        courier: targetRecord?.destination ?? '',
       });
     }).catch(() => {
       playError();
@@ -2110,13 +2166,18 @@ function NativeModuleWorkspace({ route }) {
       }
       setErrorMessage('');
       playOperationalSuccess();
+      const operationsSummary = buildOperationsAuditSummary(route.path, targetRecord);
+
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
+        recordId,
         actor: auditContext.updatedBy,
         action: manager.actionLabel ?? 'Atualizou registro',
-        target: targetRecord.deliveryCode ?? targetRecord.code ?? targetRecord.device ?? targetRecord.order ?? targetRecord.origin ?? targetRecord.zone ?? 'registro manual',
-        details: `Acao aplicada em ${route.title}`,
+        target: operationsSummary?.target ?? targetRecord.deliveryCode ?? targetRecord.code ?? targetRecord.device ?? targetRecord.order ?? targetRecord.origin ?? targetRecord.zone ?? 'registro manual',
+        details: operationsSummary?.details ?? `Acao aplicada em ${route.title}`,
+        value: operationsSummary?.value,
+        courier: operationsSummary?.courier,
       });
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel atualizar o registro.');
@@ -2171,6 +2232,7 @@ function NativeModuleWorkspace({ route }) {
       appendAuditEvent({
         module: 'Maquininhas',
         modulePath: 'machines',
+        recordId: record?.id,
         actor: auditContext.updatedBy,
         action: nextStatus === 'Presente' ? 'Marcou presente no checklist' : 'Desmarcou presenca no checklist',
         target: record?.device ?? 'maquininha',
@@ -2228,6 +2290,7 @@ function NativeModuleWorkspace({ route }) {
         appendAuditEvent({
           module: 'Maquininhas',
           modulePath: 'machines',
+          recordId: record.id,
           actor: auditContext.updatedBy,
           action: 'Marcou presente no checklist',
           target: record.device ?? 'maquininha',
@@ -2387,6 +2450,7 @@ function NativeModuleWorkspace({ route }) {
         tableColumns={tableColumns}
         handleMarkReturned={handleMarkReturned}
         freshRecordId={freshRecordId}
+        highlightedRecordId={requestedRecordId || highlightedScheduleRecordId}
       />
 
       <NativeModuleExportCanvases

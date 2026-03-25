@@ -773,6 +773,7 @@ function NativeModuleTable({
   onDelete,
   exitingIds,
   freshRecordId,
+  highlightedRecordId,
 }) {
   return (
     <div className="native-module__table-wrap">
@@ -792,7 +793,7 @@ function NativeModuleTable({
               return (
                 <tr
                   key={record.id}
-                  className={`${record.id === freshRecordId ? 'ui-table__row-fresh-top' : 'ui-table__row-enter'}${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
+                  className={`${record.id === freshRecordId ? 'ui-table__row-fresh-top' : 'ui-table__row-enter'}${record.id === highlightedRecordId ? ' native-module__table-row--highlighted' : ''}${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
                   style={{
                     '--row-delay': `${Math.min(rowIndex * 40, 240)}ms`,
                     '--row-flash-color': routePath === 'delivery-reading'
@@ -938,6 +939,7 @@ function NativeModuleRecordsSection(props) {
   tableColumns,
     handleMarkReturned,
     freshRecordId,
+    highlightedRecordId,
   } = props
 
   const isMachineHistory = route.path === 'machine-history'
@@ -1002,6 +1004,27 @@ function NativeModuleRecordsSection(props) {
       changeTab === 'completed' ? isCompletedChangeRecord(record) : !isCompletedChangeRecord(record)
     ))
   }, [changeTab, isChangeModule, visibleRecords])
+
+  useEffect(() => {
+    if (!highlightedRecordId) {
+      return
+    }
+
+    const highlightedRecord = visibleRecords.find((record) => record.id === highlightedRecordId)
+
+    if (!highlightedRecord) {
+      return
+    }
+
+    if (isDeliveryReading) {
+      setDeliveryReadingTab(highlightedRecord.closed ? 'closed' : 'open')
+      return
+    }
+
+    if (isChangeModule) {
+      setChangeTab(isCompletedChangeRecord(highlightedRecord) ? 'completed' : 'pending')
+    }
+  }, [highlightedRecordId, isChangeModule, isDeliveryReading, visibleRecords])
 
   const displayedRecords = isDeliveryReading
     ? deliveryReadingVisibleRecords
@@ -1204,6 +1227,7 @@ function NativeModuleRecordsSection(props) {
           onDelete={requestDelete}
           exitingIds={exitingIds}
           freshRecordId={freshRecordId}
+          highlightedRecordId={highlightedRecordId}
         />
       )}
     </SurfaceCard>
