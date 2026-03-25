@@ -472,6 +472,7 @@ function NativeModuleWorkspace({ route }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [errorMessage, setErrorMessage] = useState('');
   const [scheduleMachineDrafts, setScheduleMachineDrafts] = useState({});
+  const [editableRecordDrafts, setEditableRecordDrafts] = useState({});
   const [highlightedScheduleRecordId, setHighlightedScheduleRecordId] = useState('');
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null);
   const [freshRecordId, setFreshRecordId] = useState(null);
@@ -598,6 +599,7 @@ function NativeModuleWorkspace({ route }) {
     setStatusFilter('all');
     setErrorMessage('');
     setScheduleMachineDrafts({});
+    setEditableRecordDrafts({});
     setHighlightedScheduleRecordId('');
     setRecentlyClosedRecordId(null);
     setFreshRecordId(null);
@@ -1622,6 +1624,116 @@ function NativeModuleWorkspace({ route }) {
     }));
   }
 
+  function handleEditableRecordDraftChange(recordId, value) {
+    setEditableRecordDrafts((current) => ({
+      ...current,
+      [recordId]: value,
+    }));
+  }
+
+  function getEditableRecordFieldName() {
+    if (route.path === 'change') {
+      return 'origin';
+    }
+
+    if (route.path === 'advances') {
+      return 'recipient';
+    }
+
+    return null;
+  }
+
+  function getEditableRecordOptions() {
+    if (route.path === 'change') {
+      return storeUserOptions;
+    }
+
+    if (route.path === 'advances') {
+      return storeMemberOptions;
+    }
+
+    return [];
+  }
+
+  async function handleEditableRecordUpdate(recordId) {
+    const fieldName = getEditableRecordFieldName();
+
+    if (!fieldName || !manager) {
+      return;
+    }
+
+    const record = records.find((item) => item.id === recordId);
+
+    if (!record) {
+      playError();
+      return;
+    }
+
+    const currentValue = String(record[fieldName] ?? '').trim();
+    const nextValue = String(editableRecordDrafts[recordId] ?? currentValue).trim();
+
+    if (!nextValue || nextValue === currentValue) {
+      return;
+    }
+
+    if (isPlaceholderOption(nextValue)) {
+      setErrorMessage('Selecione uma opcao valida antes de salvar.');
+      playOperationalWarning();
+      return;
+    }
+
+    const auditContext = buildAuditContext(session);
+    const nextRecord = {
+      ...record,
+      [fieldName]: nextValue,
+      updatedAt: auditContext.updatedAt,
+      updatedBy: auditContext.updatedBy,
+    };
+
+    try {
+      await saveRecordWithFallback({
+        modulePath: route.path,
+        storageKey: manager.storageKey,
+        dailyResetHour: manager.dailyResetHour ?? null,
+        record: nextRecord,
+        onLocalApply: () => {
+          setRecords((current) => current.map((item) => (
+            item.id === recordId ? nextRecord : item
+          )));
+        },
+      });
+
+      setEditableRecordDrafts((current) => {
+        const nextDrafts = { ...current };
+        delete nextDrafts[recordId];
+        return nextDrafts;
+      });
+      setErrorMessage('');
+      playOperationalSuccess();
+      appendAuditEvent({
+        module: route.title,
+        modulePath: route.path,
+        recordId,
+        actor: auditContext.updatedBy,
+        action: route.path === 'change' ? 'Alterou operador do troco' : 'Alterou entregador do vale',
+        target: route.path === 'change' ? nextValue : (record.value ?? 'vale'),
+        details: route.path === 'change'
+          ? `Operador do troco atualizado para ${nextValue}`
+          : `Entregador do vale atualizado para ${nextValue}`,
+        value: record.value ?? '',
+        courier: route.path === 'advances' ? nextValue : (record.destination ?? ''),
+      });
+    } catch (error) {
+      setErrorMessage(
+        error.message
+        ?? (route.path === 'change'
+          ? 'Nao foi possivel atualizar o operador do troco.'
+          : 'Nao foi possivel atualizar o entregador do vale.'),
+      );
+      playError();
+    }
+  }
+
   async function handleScheduleMachineUpdate(recordId) {
     if (route.path !== 'schedule') {
       return;
@@ -2423,9 +2535,13 @@ function NativeModuleWorkspace({ route }) {
         handleMachineChecklistToggle={handleMachineChecklistToggle}
         handleConfirmAllMachines={handleConfirmAllMachines}
         scheduleMachineDrafts={scheduleMachineDrafts}
+        editableRecordDrafts={editableRecordDrafts}
+        editableRecordOptions={getEditableRecordOptions()}
         scheduleMachineOptions={scheduleMachineOptions}
         handleScheduleMachineDraftChange={handleScheduleMachineDraftChange}
+        handleEditableRecordDraftChange={handleEditableRecordDraftChange}
         handleScheduleMachineUpdate={handleScheduleMachineUpdate}
+        handleEditableRecordUpdate={handleEditableRecordUpdate}
         handleSchedulePrefill={handleSchedulePrefill}
         handleScheduleHighlight={handleScheduleHighlight}
         highlightedScheduleRecordId={highlightedScheduleRecordId}

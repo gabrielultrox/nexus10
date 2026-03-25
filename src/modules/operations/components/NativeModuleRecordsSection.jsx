@@ -765,9 +765,13 @@ function NativeModuleTable({
   manager,
   visibleRecords,
   scheduleMachineDrafts,
+  editableRecordDrafts,
+  editableRecordOptions,
   scheduleMachineOptions,
   onDraftChange,
+  onEditableRecordDraftChange,
   onScheduleUpdate,
+  onEditableRecordUpdate,
   onApplyAction,
   onMarkReturned,
   onDelete,
@@ -789,6 +793,14 @@ function NativeModuleTable({
           {manager
             ? visibleRecords.map((record, rowIndex) => {
               const row = manager.toRow(record)
+              const isEditableRecord = routePath === 'change' || routePath === 'advances'
+              const editableFieldValue = routePath === 'change'
+                ? (record.origin ?? '')
+                : (record.recipient ?? '')
+              const nextEditableFieldValue = String(
+                editableRecordDrafts?.[record.id]
+                ?? editableFieldValue,
+              ).trim()
 
               return (
                 <tr
@@ -809,7 +821,7 @@ function NativeModuleTable({
                       {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
                     </td>
                   ))}
-                  <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}>
+                  <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible native-module__actions-cell--editable-record' : ''}${routePath === 'advances' ? ' native-module__actions-cell--editable-record' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}>
                     {routePath === 'schedule' ? (
                       <div className="native-module__inline-editor">
                         <Select
@@ -833,6 +845,33 @@ function NativeModuleTable({
                             (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
                             === (record.machine ?? 'Sem maquininha')
                             )
+                          }
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    ) : null}
+                    {isEditableRecord ? (
+                      <div className="native-module__inline-editor native-module__inline-editor--record-field">
+                        <Select
+                          className="ui-select native-module__inline-select"
+                          value={nextEditableFieldValue}
+                          onChange={(event) => onEditableRecordDraftChange(record.id, event.target.value)}
+                        >
+                          {editableRecordOptions.map((option) => (
+                            <option key={`${record.id}-${option}`} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </Select>
+                        <button
+                          type="button"
+                          className="ui-button ui-button--secondary native-module__table-action"
+                          onClick={() => onEditableRecordUpdate(record.id)}
+                          disabled={
+                            exitingIds.has(record.id)
+                            || !nextEditableFieldValue
+                            || nextEditableFieldValue === String(editableFieldValue).trim()
                           }
                         >
                           Salvar
@@ -912,9 +951,13 @@ function NativeModuleRecordsSection(props) {
     handleMachineChecklistToggle,
     handleConfirmAllMachines,
     scheduleMachineDrafts,
+    editableRecordDrafts,
+    editableRecordOptions,
     scheduleMachineOptions,
     handleScheduleMachineDraftChange,
+    handleEditableRecordDraftChange,
     handleScheduleMachineUpdate,
+    handleEditableRecordUpdate,
     handleSchedulePrefill,
     handleScheduleHighlight,
     highlightedScheduleRecordId,
@@ -1219,9 +1262,13 @@ function NativeModuleRecordsSection(props) {
           manager={manager}
           visibleRecords={displayedRecords}
           scheduleMachineDrafts={scheduleMachineDrafts}
+          editableRecordDrafts={editableRecordDrafts}
+          editableRecordOptions={editableRecordOptions}
           scheduleMachineOptions={scheduleMachineOptions}
           onDraftChange={handleScheduleMachineDraftChange}
+          onEditableRecordDraftChange={handleEditableRecordDraftChange}
           onScheduleUpdate={handleScheduleMachineUpdate}
+          onEditableRecordUpdate={handleEditableRecordUpdate}
           onApplyAction={handleApplyAction}
           onMarkReturned={handleMarkReturned}
           onDelete={requestDelete}
