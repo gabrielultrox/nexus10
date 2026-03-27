@@ -299,6 +299,42 @@
   min-width: 260px;
 }
 
+.cash-module__pending-row td {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.cash-module__pending-row--high td {
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.cash-module__pending-row--medium td {
+  background: color-mix(in srgb, var(--warning) 4%, transparent);
+}
+
+.cash-module__pending-row--high td:first-child,
+.cash-module__pending-row--medium td:first-child,
+.cash-module__pending-row--low td:first-child {
+  border-left: 3px solid transparent;
+}
+
+.cash-module__pending-row--high td:first-child {
+  border-left-color: var(--danger);
+}
+
+.cash-module__pending-row--medium td:first-child {
+  border-left-color: var(--warning);
+}
+
+.cash-module__pending-row--low td:first-child {
+  border-left-color: color-mix(in srgb, var(--text-muted) 45%, var(--border));
+}
+
+.cash-module__pending-row.is-resolved td {
+  opacity: 0.82;
+}
+
 .cash-module__pending-identity,
 .cash-module__pending-status,
 .cash-module__pending-meta {

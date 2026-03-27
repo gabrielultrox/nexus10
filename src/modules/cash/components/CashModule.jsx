@@ -320,7 +320,7 @@ function FinancialPendingTable({ records, onChecklistToggle, onResolvedToggle, o
             return (
               <tr
                 key={record.id}
-                className="ui-table__row-enter"
+                className={`ui-table__row-enter cash-module__pending-row cash-module__pending-row--${record.priority ?? 'medium'}${isResolved ? ' is-resolved' : ''}`}
                 style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
               >
                 <td className="ui-table__cell--strong">
