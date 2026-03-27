@@ -5,7 +5,10 @@ import {
   markOrderAsDispatched,
   updateOrder,
 } from './orderService.js';
+import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { requirePermission } from '../../middleware/requireAuth.js';
+
+const ordersLogger = createLoggerContext({ module: 'orders' });
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
@@ -21,6 +24,15 @@ function getActorFromRequest(request) {
   return request.authUser ?? null;
 }
 
+function logOrderError(request, action, error, extra = {}) {
+  const log = request.log ?? ordersLogger;
+  log.error({
+    context: `orders.${action}`,
+    ...extra,
+    error: serializeError(error),
+  }, 'Order route failed');
+}
+
 export function registerOrderRoutes(app) {
   app.post('/api/stores/:storeId/orders', requirePermission('orders:write'), async (request, response) => {
     try {
@@ -31,8 +43,19 @@ export function registerOrderRoutes(app) {
         createdBy: getActorFromRequest(request),
       });
 
+      (request.log ?? ordersLogger).info({
+        context: 'orders.create',
+        storeId: request.params.storeId,
+        orderId: data.id ?? null,
+        actorId: request.authUser?.uid ?? null,
+      }, 'Order created');
+
       response.status(201).json({ data });
     } catch (error) {
+      logOrderError(request, 'create', error, {
+        storeId: request.params.storeId,
+        actorId: request.authUser?.uid ?? null,
+      });
       sendError(response, error, 'Nao foi possivel criar o pedido.');
     }
   });
@@ -45,8 +68,18 @@ export function registerOrderRoutes(app) {
         values: getPayload(request.body),
       });
 
+      (request.log ?? ordersLogger).info({
+        context: 'orders.update',
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      }, 'Order updated');
+
       response.json({ data });
     } catch (error) {
+      logOrderError(request, 'update', error, {
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      });
       sendError(response, error, 'Nao foi possivel atualizar o pedido.');
     }
   });
@@ -58,8 +91,18 @@ export function registerOrderRoutes(app) {
         orderId: request.params.orderId,
       });
 
+      (request.log ?? ordersLogger).info({
+        context: 'orders.dispatch',
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      }, 'Order dispatched');
+
       response.json({ data });
     } catch (error) {
+      logOrderError(request, 'dispatch', error, {
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      });
       sendError(response, error, 'Nao foi possivel marcar o pedido como despachado.');
     }
   });
@@ -74,8 +117,20 @@ export function registerOrderRoutes(app) {
         createdBy: getActorFromRequest(request),
       });
 
+      (request.log ?? ordersLogger).info({
+        context: 'orders.convert_to_sale',
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+        actorId: request.authUser?.uid ?? null,
+      }, 'Order converted to sale');
+
       response.json({ data });
     } catch (error) {
+      logOrderError(request, 'convert_to_sale', error, {
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+        actorId: request.authUser?.uid ?? null,
+      });
       sendError(response, error, 'Nao foi possivel gerar a venda a partir do pedido.');
     }
   });
@@ -87,8 +142,18 @@ export function registerOrderRoutes(app) {
         orderId: request.params.orderId,
       });
 
+      (request.log ?? ordersLogger).info({
+        context: 'orders.delete',
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      }, 'Order deleted');
+
       response.json({ data });
     } catch (error) {
+      logOrderError(request, 'delete', error, {
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+      });
       sendError(response, error, 'Nao foi possivel excluir o pedido.');
     }
   });

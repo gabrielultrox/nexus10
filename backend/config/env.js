@@ -68,6 +68,7 @@ function requiredInProduction(name, fallback = '') {
 export const backendEnv = {
   port: asNumber(process.env.PORT, 8787),
   nodeEnv: required('NODE_ENV', 'development'),
+  logLevel: required('LOG_LEVEL', 'info'),
   localOperatorPassword: requiredInProduction('LOCAL_OPERATOR_PASSWORD', '01'),
   openaiApiKey: process.env.OPENAI_API_KEY ?? null,
   frontendOrigin: required('FRONTEND_ORIGIN', '').split(',').map((item) => item.trim()).filter(Boolean),

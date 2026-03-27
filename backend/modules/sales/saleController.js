@@ -4,7 +4,10 @@ import {
   createSaleFromOrder,
   updateSaleStatus,
 } from './saleService.js';
+import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { requirePermission } from '../../middleware/requireAuth.js';
+
+const salesLogger = createLoggerContext({ module: 'sales' });
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
@@ -20,6 +23,15 @@ function getActorFromRequest(request) {
   return request.authUser ?? null;
 }
 
+function logSaleError(request, action, error, extra = {}) {
+  const log = request.log ?? salesLogger;
+  log.error({
+    context: `sales.${action}`,
+    ...extra,
+    error: serializeError(error),
+  }, 'Sale route failed');
+}
+
 export function registerSaleRoutes(app) {
   app.post('/api/stores/:storeId/sales', requirePermission('sales:write'), async (request, response) => {
     try {
@@ -30,8 +42,19 @@ export function registerSaleRoutes(app) {
         createdBy: getActorFromRequest(request),
       });
 
+      (request.log ?? salesLogger).info({
+        context: 'sales.create_direct',
+        storeId: request.params.storeId,
+        saleId: data.id ?? null,
+        actorId: request.authUser?.uid ?? null,
+      }, 'Direct sale created');
+
       response.status(201).json({ data });
     } catch (error) {
+      logSaleError(request, 'create_direct', error, {
+        storeId: request.params.storeId,
+        actorId: request.authUser?.uid ?? null,
+      });
       sendError(response, error, 'Nao foi possivel criar a venda.');
     }
   });
@@ -46,8 +69,21 @@ export function registerSaleRoutes(app) {
         createdBy: getActorFromRequest(request),
       });
 
+      (request.log ?? salesLogger).info({
+        context: 'sales.create_from_order',
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+        saleId: data.id ?? null,
+        actorId: request.authUser?.uid ?? null,
+      }, 'Sale created from order');
+
       response.status(201).json({ data });
     } catch (error) {
+      logSaleError(request, 'create_from_order', error, {
+        storeId: request.params.storeId,
+        orderId: request.params.orderId,
+        actorId: request.authUser?.uid ?? null,
+      });
       sendError(response, error, 'Nao foi possivel gerar a venda a partir do pedido.');
     }
   });
@@ -61,8 +97,21 @@ export function registerSaleRoutes(app) {
         actor: getActorFromRequest(request),
       });
 
+      (request.log ?? salesLogger).info({
+        context: 'sales.update_status',
+        storeId: request.params.storeId,
+        saleId: request.params.saleId,
+        status: request.body?.status ?? null,
+        actorId: request.authUser?.uid ?? null,
+      }, 'Sale status updated');
+
       response.json({ data });
     } catch (error) {
+      logSaleError(request, 'update_status', error, {
+        storeId: request.params.storeId,
+        saleId: request.params.saleId,
+        actorId: request.authUser?.uid ?? null,
+      });
       sendError(response, error, 'Nao foi possivel atualizar o status da venda.');
     }
   });
@@ -74,8 +123,18 @@ export function registerSaleRoutes(app) {
         saleId: request.params.saleId,
       });
 
+      (request.log ?? salesLogger).info({
+        context: 'sales.delete',
+        storeId: request.params.storeId,
+        saleId: request.params.saleId,
+      }, 'Sale deleted');
+
       response.json({ data });
     } catch (error) {
+      logSaleError(request, 'delete', error, {
+        storeId: request.params.storeId,
+        saleId: request.params.saleId,
+      });
       sendError(response, error, 'Nao foi possivel excluir a venda.');
     }
   });

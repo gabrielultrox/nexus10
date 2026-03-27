@@ -1,6 +1,9 @@
 import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js';
 import { backendEnv } from '../../config/env.js';
 import { getLocalOperatorProfile } from '../../config/localOperators.js';
+import { createLoggerContext, serializeError } from '../../logging/logger.js';
+
+const authLogger = createLoggerContext({ module: 'auth' });
 
 function isValidPassword(password) {
   return Boolean(backendEnv.localOperatorPassword)
@@ -11,18 +14,33 @@ export function registerAuthRoutes(app) {
   app.post('/api/auth/session', async (request, response) => {
     const operatorName = String(request.body?.operatorName ?? '').trim();
     const password = String(request.body?.password ?? '');
+    const log = request.log ?? authLogger;
 
     if (!operatorName) {
+      log.warn({
+        context: 'auth.session.create',
+        reason: 'missing_operator',
+      }, 'Auth session rejected');
       response.status(400).json({ error: 'Selecione um operador.' });
       return;
     }
 
     if (!backendEnv.localOperatorPassword) {
+      log.error({
+        context: 'auth.session.create',
+        operatorName,
+        reason: 'missing_backend_password',
+      }, 'Operational password is not configured');
       response.status(503).json({ error: 'Senha operacional nao configurada no backend.' });
       return;
     }
 
     if (!isValidPassword(password)) {
+      log.warn({
+        context: 'auth.session.create',
+        operatorName,
+        reason: 'invalid_password',
+      }, 'Auth session rejected');
       response.status(401).json({ error: 'Senha incorreta.' });
       return;
     }
@@ -47,6 +65,13 @@ export function registerAuthRoutes(app) {
 
       const customToken = await getAdminApp().auth().createCustomToken(profile.uid, customClaims);
 
+      log.info({
+        context: 'auth.session.create',
+        operatorName: profile.operatorName,
+        role: profile.role,
+        tenantId: profile.tenantId,
+      }, 'Auth session created');
+
       response.json({
         data: {
           customToken,
@@ -54,6 +79,11 @@ export function registerAuthRoutes(app) {
         },
       });
     } catch (error) {
+      log.error({
+        context: 'auth.session.create',
+        operatorName,
+        error: serializeError(error),
+      }, 'Failed to create auth session');
       response.status(500).json({
         error: error.message ?? 'Nao foi possivel abrir a sessao autenticada.',
       });

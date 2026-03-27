@@ -3,10 +3,12 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 import { backendEnv } from './config/env.js';
+import { logger, serializeError } from './logging/logger.js';
 import { registerAuthRoutes } from './modules/auth/authController.js';
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js';
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js';
 import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js';
+import { requestLogger } from './middleware/requestLogger.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
@@ -51,12 +53,14 @@ function createApiRateLimiter(max) {
 export function createApp() {
   const app = express();
   const repository = createIfoodFirestoreRepository();
+  const appLogger = logger.child({ context: 'app' });
   const runtime = createIfoodIntegrationRuntime({
     env: backendEnv,
     repositories: repository,
   });
 
   app.disable('x-powered-by');
+  app.use(requestLogger);
   app.use(helmet({
     crossOriginResourcePolicy: false,
   }));
@@ -122,6 +126,11 @@ export function createApp() {
         data: merchants,
       });
     } catch (error) {
+      request.log?.error({
+        context: 'ifood.merchants.list',
+        storeId: request.params.storeId,
+        error: serializeError(error),
+      }, 'Failed to list iFood merchants');
       response.status(500).json({
         error: error.message ?? 'Nao foi possivel listar os merchants do iFood.',
       });
@@ -179,6 +188,12 @@ export function createApp() {
         data: pollingResult,
       });
     } catch (error) {
+      request.log?.error({
+        context: 'ifood.polling.run',
+        storeId,
+        merchantId,
+        error: serializeError(error),
+      }, 'Failed to run iFood polling');
       await touchIntegrationMerchant({
         storeId,
         merchantId,
@@ -233,6 +248,13 @@ export function createApp() {
         data: normalizedOrder,
       });
     } catch (error) {
+      request.log?.error({
+        context: 'ifood.order.sync',
+        storeId,
+        merchantId,
+        orderId,
+        error: serializeError(error),
+      }, 'Failed to sync iFood order');
       response.status(500).json({
         error: error.message ?? 'Nao foi possivel sincronizar o pedido do iFood.',
       });
@@ -287,6 +309,12 @@ export function createApp() {
         data: result,
       });
     } catch (error) {
+      request.log?.error({
+        context: 'ifood.webhook',
+        storeId,
+        merchantId,
+        error: serializeError(error),
+      }, 'Failed to process iFood webhook');
       await touchIntegrationMerchant({
         storeId,
         merchantId,
@@ -299,6 +327,25 @@ export function createApp() {
         error: error.message ?? 'Nao foi possivel processar o webhook do iFood.',
       });
     }
+  });
+
+  app.use((error, request, response, _next) => {
+    const requestLoggerInstance = request.log ?? appLogger;
+
+    requestLoggerInstance.error({
+      context: 'express.unhandled',
+      route: request.originalUrl,
+      method: request.method,
+      error: serializeError(error),
+    }, 'Unhandled backend error');
+
+    if (response.headersSent) {
+      return;
+    }
+
+    response.status(500).json({
+      error: 'Erro interno no servidor.',
+    });
   });
 
   return app;
