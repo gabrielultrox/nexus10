@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
-import { useToast } from './useToast.jsx'
-import { AppError, ErrorHandler, ErrorSeverity } from '@services/errorHandler'
+import { useToast } from './useToast'
+import { AppError, ErrorHandler, ErrorSeverity } from '../services/errorHandler'
 
 interface IUseErrorHandlerOptions {
   showToast?: boolean
@@ -9,15 +9,9 @@ interface IUseErrorHandlerOptions {
   onError?: (error: AppError) => void
 }
 
-interface IToastApi {
-  error: (message: string, options?: Record<string, unknown>) => string
-  warning: (message: string, options?: Record<string, unknown>) => string
-  info: (message: string, options?: Record<string, unknown>) => string
-}
-
 export function useErrorHandler(options: IUseErrorHandlerOptions = {}) {
   const { showToast = true, logError = true, onError } = options
-  const toast = useToast() as IToastApi
+  const toast = useToast()
 
   const handleError = useCallback(
     (error: unknown) => {

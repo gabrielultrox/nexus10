@@ -136,6 +136,28 @@ export async function listFinancialClosuresPage({ storeId, pageSize = 50, cursor
   })
 }
 
+export async function listFinancialEntriesPage({ storeId, pageSize = 50, cursor = null } = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    }
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.financialEntries, {
+    orderField: 'createdAt',
+    orderDirection: 'desc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(
+      storeId,
+      FIRESTORE_COLLECTIONS.financialEntries,
+      'page-by-createdAt',
+    ),
+  })
+}
+
 export function validateManualExpenseInput(values) {
   const description = values.description?.trim()
   const cashierName = values.cashierName?.trim() || 'Geral'

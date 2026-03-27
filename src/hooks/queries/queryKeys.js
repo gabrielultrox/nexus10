@@ -11,6 +11,7 @@ export const queryKeys = {
   },
   finance: {
     all: (storeId) => ['finance', storeId],
+    entries: (storeId, options = {}) => ['finance', storeId, 'entries', options],
     closures: (storeId, options = {}) => ['finance', storeId, 'closures', options],
   },
 }
