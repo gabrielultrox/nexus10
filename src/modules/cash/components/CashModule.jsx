@@ -717,14 +717,14 @@ function CashModule({ mode = 'cash' }) {
   const requiresCourier = activeTab.id === 'courier-withdrawal'
   const isCashOpen = cashState.status === 'aberto'
   const pendingCount = openFinancialPendingRecords.length
-  const closingDisabled = !isCashOpen || pendingCount > 0
+  const closingDisabled = !isCashOpen
   const openingBlockedMessage =
     activeTab.id === 'opening' && isCashOpen
       ? `O caixa ja foi aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cashState.openedAt))}. Use as outras operacoes ou siga para o fechamento.`
       : ''
   const activeTabGuardrailMessage = useMemo(() => {
     if (isFinancialPendingView && openFinancialPendingRecords.length > 0) {
-      return `Existem ${openFinancialPendingRecords.length} pendencia(s) abertas. O fechamento do caixa continua bloqueado ate a resolucao.`
+      return `Existem ${openFinancialPendingRecords.length} pendencia(s) abertas para acompanhamento e retorno ao cliente.`
     }
 
     if (!isCashOpen && activeTab.id === 'opening') {
@@ -732,7 +732,7 @@ function CashModule({ mode = 'cash' }) {
     }
 
     if (activeTab.id === 'closing' && pendingCount > 0) {
-      return `Resolva ${pendingCount} pendencia(s) antes de fechar o caixa.`
+      return `Existem ${pendingCount} pendencia(s) aberta(s) para acompanhamento do financeiro. O caixa pode seguir normalmente.`
     }
 
     if (activeTab.id === 'courier-withdrawal' && courierOptions.length === 0) {
@@ -823,7 +823,7 @@ function CashModule({ mode = 'cash' }) {
         {
           label: 'Pendencias abertas',
           value: String(openFinancialPendingRecords.length).padStart(2, '0'),
-          meta: 'itens bloqueando o fechamento',
+          meta: 'itens para acompanhamento',
         },
         {
           label: 'Resolvidas no dia',
@@ -1022,12 +1022,6 @@ function CashModule({ mode = 'cash' }) {
         toast.warning('Abra o caixa primeiro')
         playWarning()
         handleTabChange('opening')
-        return
-      }
-
-      if (pendingCount > 0) {
-        toast.warning(`Resolva ${pendingCount} pendencia(s) antes`)
-        playWarning()
         return
       }
 
@@ -1474,7 +1468,9 @@ function CashModule({ mode = 'cash' }) {
           onOpenCash={() => handleTabChange('opening')}
           onGoToClosing={() => handleTabChange('closing')}
           closingDisabled={closingDisabled}
-          closingTooltip={pendingCount > 0 ? `Resolva ${pendingCount} pendencia(s) antes` : ''}
+          closingTooltip={
+            pendingCount > 0 ? `${pendingCount} pendencia(s) aberta(s) para acompanhamento` : ''
+          }
         />
       )}
 
@@ -1737,17 +1733,14 @@ function CashModule({ mode = 'cash' }) {
                     isSaving ||
                     (activeTab.id !== 'opening' && !isCashOpen) ||
                     (activeTab.id === 'opening' && isCashOpen) ||
-                    (activeTab.id === 'closing' && pendingCount > 0) ||
                     (activeTab.id === 'courier-withdrawal' && courierOptions.length === 0)
                   }
                   title={
                     activeTab.id === 'opening' && isCashOpen
                       ? 'O caixa ja foi aberto para este turno'
-                      : activeTab.id === 'closing' && pendingCount > 0
-                        ? `Resolva ${pendingCount} pendencia(s) antes de fechar o caixa`
-                        : activeTab.id === 'courier-withdrawal' && courierOptions.length === 0
-                          ? 'Cadastre entregadores antes de registrar retiradas'
-                          : undefined
+                      : activeTab.id === 'courier-withdrawal' && courierOptions.length === 0
+                        ? 'Cadastre entregadores antes de registrar retiradas'
+                        : undefined
                   }
                 >
                   {activeTab.submitLabel}
