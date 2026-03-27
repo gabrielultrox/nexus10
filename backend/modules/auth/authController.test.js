@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { RequestValidationError } from '../../errors/RequestValidationError.js'
+
 const firestoreSetMock = vi.fn()
 const createCustomTokenMock = vi.fn()
 const getLocalOperatorProfileMock = vi.fn()
@@ -44,6 +46,37 @@ function createResponseMock() {
   }
 }
 
+async function runRegisteredRoute(app, request) {
+  const [, ...handlers] = app.post.mock.calls[0]
+  const response = createResponseMock()
+
+  let index = 0
+
+  async function dispatch(error) {
+    if (error instanceof RequestValidationError) {
+      response.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        source: error.source,
+        details: error.details,
+      })
+      return
+    }
+
+    const handler = handlers[index]
+    index += 1
+
+    if (!handler) {
+      return
+    }
+
+    await handler(request, response, dispatch)
+  }
+
+  await dispatch()
+  return response
+}
+
 describe('registerAuthRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -55,13 +88,17 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const [, handler] = app.post.mock.calls[0]
-    const response = createResponseMock()
-
-    await handler({ body: { password: '4321' } }, response)
+    const response = await runRegisteredRoute(app, { body: { password: '4321' } })
 
     expect(response.statusCode).toBe(400)
-    expect(response.payload).toEqual({ error: 'Selecione um operador.' })
+    expect(response.payload).toEqual({
+      error: 'Dados de entrada invalidos.',
+      code: 'VALIDATION_ERROR',
+      source: 'body',
+      details: {
+        operator: ['operator e obrigatorio.'],
+      },
+    })
   })
 
   it('retorna 401 quando a senha estiver incorreta', async () => {
@@ -70,10 +107,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const [, handler] = app.post.mock.calls[0]
-    const response = createResponseMock()
-
-    await handler({ body: { operatorName: 'Gabriel', password: '9999' } }, response)
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '9999' } })
 
     expect(response.statusCode).toBe(401)
     expect(response.payload).toEqual({ error: 'Senha incorreta.' })
@@ -98,10 +132,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const [, handler] = app.post.mock.calls[0]
-    const response = createResponseMock()
-
-    await handler({ body: { operatorName: 'Gabriel', password: '4321' } }, response)
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '4321' } })
 
     expect(getLocalOperatorProfileMock).toHaveBeenCalledWith('Gabriel')
     expect(firestoreSetMock).toHaveBeenCalledTimes(1)
@@ -132,10 +163,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const [, handler] = app.post.mock.calls[0]
-    const response = createResponseMock()
-
-    await handler({ body: { operatorName: 'Gabriel', password: '4321' } }, response)
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '4321' } })
 
     expect(response.statusCode).toBe(500)
     expect(response.payload).toEqual({

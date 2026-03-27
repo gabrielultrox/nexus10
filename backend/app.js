@@ -3,12 +3,14 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 import { backendEnv } from './config/env.js';
+import { RequestValidationError } from './errors/RequestValidationError.js';
 import { logger, serializeError } from './logging/logger.js';
 import { registerAuthRoutes } from './modules/auth/authController.js';
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js';
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js';
 import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js';
 import { requestLogger } from './middleware/requestLogger.js';
+import { validateRequest } from './middleware/validateRequest.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
@@ -17,6 +19,7 @@ import {
   listIntegrationMerchants,
   touchIntegrationMerchant,
 } from './repositories/integrationMerchantRepository.js';
+import { ifoodWebhookSchema } from './validation/schemas.js';
 
 function isDevelopmentEnvironment() {
   return backendEnv.nodeEnv !== 'production';
@@ -261,10 +264,17 @@ export function createApp() {
     }
   });
 
-  app.post('/webhooks/ifood/:storeId/:merchantId', async (request, response) => {
+  app.post('/webhooks/ifood/:storeId/:merchantId', validateRequest(ifoodWebhookSchema, {
+    source: 'webhook',
+    mapRequest: (request) => ({
+      signature: request.header('X-IFood-Signature'),
+      body: String(request.body ?? ''),
+    }),
+  }), async (request, response) => {
     const { storeId, merchantId } = request.params;
-    const signature = request.header('X-IFood-Signature');
-    const rawBody = request.body ?? '';
+    const validatedWebhook = request.validated?.webhook ?? {};
+    const signature = validatedWebhook.signature;
+    const rawBody = validatedWebhook.body;
 
     try {
       const merchant = await getIntegrationMerchant({
@@ -331,6 +341,27 @@ export function createApp() {
 
   app.use((error, request, response, _next) => {
     const requestLoggerInstance = request.log ?? appLogger;
+
+    if (error instanceof RequestValidationError) {
+      requestLoggerInstance.warn({
+        context: 'express.validation',
+        route: request.originalUrl,
+        method: request.method,
+        source: error.source,
+        details: error.details,
+      }, error.message);
+
+      if (!response.headersSent) {
+        response.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+          source: error.source,
+          details: error.details,
+        });
+      }
+
+      return;
+    }
 
     requestLoggerInstance.error({
       context: 'express.unhandled',

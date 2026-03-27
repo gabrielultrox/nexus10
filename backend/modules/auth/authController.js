@@ -2,6 +2,8 @@ import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js';
 import { backendEnv } from '../../config/env.js';
 import { getLocalOperatorProfile } from '../../config/localOperators.js';
 import { createLoggerContext, serializeError } from '../../logging/logger.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { loginSchema } from '../../validation/schemas.js';
 
 const authLogger = createLoggerContext({ module: 'auth' });
 
@@ -11,9 +13,10 @@ function isValidPassword(password) {
 }
 
 export function registerAuthRoutes(app) {
-  app.post('/api/auth/session', async (request, response) => {
-    const operatorName = String(request.body?.operatorName ?? '').trim();
-    const password = String(request.body?.password ?? '');
+  app.post('/api/auth/session', validateRequest(loginSchema), async (request, response) => {
+    const payload = request.validated?.body ?? {};
+    const operatorName = String(payload.operator ?? '').trim();
+    const password = String(payload.pin ?? '');
     const log = request.log ?? authLogger;
 
     if (!operatorName) {

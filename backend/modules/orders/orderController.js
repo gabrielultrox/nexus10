@@ -7,11 +7,17 @@ import {
 } from './orderService.js';
 import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { requirePermission } from '../../middleware/requireAuth.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { createOrderSchema } from '../../validation/schemas.js';
 
 const ordersLogger = createLoggerContext({ module: 'orders' });
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
+}
+
+function getValidatedPayload(request) {
+  return request.validated?.body?.raw ?? getPayload(request.body);
 }
 
 function sendError(response, error, fallbackMessage) {
@@ -34,12 +40,18 @@ function logOrderError(request, action, error, extra = {}) {
 }
 
 export function registerOrderRoutes(app) {
-  app.post('/api/stores/:storeId/orders', requirePermission('orders:write'), async (request, response) => {
+  app.post(
+    '/api/stores/:storeId/orders',
+    requirePermission('orders:write'),
+    validateRequest(createOrderSchema, {
+      mapRequest: (request) => getPayload(request.body),
+    }),
+    async (request, response) => {
     try {
       const data = await createOrder({
         storeId: request.params.storeId,
         tenantId: request.body?.tenantId ?? null,
-        values: getPayload(request.body),
+        values: getValidatedPayload(request),
         createdBy: getActorFromRequest(request),
       });
 
@@ -58,7 +70,8 @@ export function registerOrderRoutes(app) {
       });
       sendError(response, error, 'Nao foi possivel criar o pedido.');
     }
-  });
+    },
+  );
 
   app.patch('/api/stores/:storeId/orders/:orderId', requirePermission('orders:write'), async (request, response) => {
     try {
