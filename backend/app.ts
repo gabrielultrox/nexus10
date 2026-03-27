@@ -3,7 +3,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import swaggerUi from 'swagger-ui-express'
 
-import { backendEnv } from './config/env.js'
+import { backendEnv, ensureBackendEnvLoaded } from './config/env.js'
 import { RequestValidationError } from './errors/RequestValidationError.js'
 import { logger, serializeError } from './logging/logger.js'
 import { registerAuthRoutes } from './modules/auth/authController.js'
@@ -126,6 +126,8 @@ function createApiRateLimiter(max: number) {
 }
 
 export function createApp(): Express {
+  ensureBackendEnvLoaded()
+
   const app = express()
   const repository = createIfoodFirestoreRepository()
   const appLogger = logger.child({ context: 'app' })

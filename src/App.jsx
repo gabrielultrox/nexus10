@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 import SystemBoot from './components/system/SystemBoot'
+import { ensureClientEnvLoaded } from './config/loadEnv'
 import { useAuth } from './contexts/AuthContext'
 import AppRoutes from './routes'
 import {
@@ -12,6 +13,8 @@ import {
   unbindGlobalSoundEffects,
 } from './services/soundManager'
 import { queryClient } from './services/queryClient'
+
+ensureClientEnvLoaded()
 
 function App() {
   const navigate = useNavigate()

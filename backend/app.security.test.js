@@ -22,6 +22,9 @@ vi.mock('./config/env.js', () => ({
     firebaseClientEmail: 'test@example.com',
     firebasePrivateKey: 'test-key',
   },
+  ensureBackendEnvLoaded: () => ({
+    nodeEnv: 'production',
+  }),
   hasFirebaseAdminConfig: () => true,
 }))
 

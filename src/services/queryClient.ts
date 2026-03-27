@@ -2,7 +2,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 
 import { ErrorCode, ErrorHandler } from './errorHandler'
 
-function shouldRetry(error: unknown, failureCount: number) {
+function shouldRetry(failureCount: number, error: unknown) {
   const normalized = ErrorHandler.normalize(error)
 
   if (failureCount >= 2) {
