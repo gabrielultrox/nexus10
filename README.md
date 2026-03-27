@@ -64,6 +64,10 @@ Configuracoes recomendadas:
 - `API_RATE_LIMIT_WINDOW_MS`
 - `API_RATE_LIMIT_MAX`
 - `AUTH_RATE_LIMIT_MAX`
+- `REDIS_URL`
+- `REDIS_SESSION_TTL_SECONDS`
+- `REDIS_MERCHANT_TTL_SECONDS`
+- `REDIS_PRODUCT_TTL_SECONDS`
 - `IFOOD_WEBHOOK_SECRET`
 
 Nao publique com fallback de desenvolvimento ou senha operacional fraca.
@@ -74,6 +78,9 @@ Nao publique com fallback de desenvolvimento ou senha operacional fraca.
 npm run dev            # frontend Vite
 npm run dev:backend    # backend Express com watch
 npm run dev:full       # frontend + backend juntos
+npm run redis:start    # sobe Redis local via Docker
+npm run redis:stop     # remove o container Redis local
+npm run redis:logs     # acompanha logs do Redis local
 npm run build          # build de producao do frontend
 npm run preview        # preview do build
 npm run deploy:preview # preview manual na Vercel
@@ -91,6 +98,22 @@ Fluxo padrao:
 4. deixe a Vercel publicar automaticamente a partir do GitHub
 
 O deploy manual de producao deve ser excecao. Detalhes em [docs/deploy-flow.md](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\deploy-flow.md).
+
+## Cache Redis
+
+O backend aceita Redis opcional para cache de:
+
+- sessoes autenticadas validadas
+- merchants iFood por loja
+- catalogo de produtos por loja
+
+TTL padrao:
+
+- sessao: `300s`
+- merchants: `180s`
+- produtos: `120s`
+
+Se Redis cair ou nao estiver configurado, o backend faz fallback automatico para Firestore/Firebase Admin.
 
 ## Observacoes
 

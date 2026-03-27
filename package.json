@@ -15,6 +15,9 @@
     "seed:ifood-merchant": "node backend/scripts/seedIfoodMerchant.js",
     "inventory:import-csv": "node backend/scripts/importInventoryCsv.js",
     "preview": "vite preview",
+    "redis:start": "docker run --name nexus10-redis -p 6379:6379 -d redis:7-alpine",
+    "redis:stop": "docker rm -f nexus10-redis",
+    "redis:logs": "docker logs -f nexus10-redis",
     "deploy:preview": "vercel -y",
     "deploy:prod:manual": "vercel --prod -y",
     "release:auto": "node scripts/release-auto.mjs",
@@ -40,6 +43,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1",
+    "redis": "^5.8.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {

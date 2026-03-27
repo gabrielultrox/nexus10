@@ -1,6 +1,7 @@
 import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js';
 import { backendEnv } from '../../config/env.js';
 import { getLocalOperatorProfile } from '../../config/localOperators.js';
+import { buildCacheKey, cacheSet } from '../../cache/cacheService.js';
 import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { validateRequest } from '../../middleware/validateRequest.js';
 import { loginSchema } from '../../validation/schemas.js';
@@ -67,6 +68,16 @@ export function registerAuthRoutes(app) {
       };
 
       const customToken = await getAdminApp().auth().createCustomToken(profile.uid, customClaims);
+      const sessionPayload = {
+        profile,
+        claims: customClaims,
+      };
+
+      await cacheSet(
+        buildCacheKey('session', 'profile', profile.uid),
+        sessionPayload,
+        backendEnv.redisSessionTtlSeconds,
+      );
 
       log.info({
         context: 'auth.session.create',

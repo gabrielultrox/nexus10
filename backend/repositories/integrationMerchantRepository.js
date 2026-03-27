@@ -1,4 +1,6 @@
 import { getAdminFirestore } from '../firebaseAdmin.js';
+import { backendEnv } from '../config/env.js';
+import { buildCacheKey, cacheInvalidate, cacheRemember } from '../cache/cacheService.js';
 
 const COLLECTIONS = {
   stores: 'stores',
@@ -20,24 +22,40 @@ function getMerchantCollection(storeId) {
 }
 
 export async function getIntegrationMerchant({ storeId, merchantId, source = 'ifood' }) {
-  const snapshot = await getMerchantCollection(storeId).doc(merchantId).get();
+  const cacheKey = buildCacheKey('store', storeId, 'merchant', merchantId, source);
 
-  if (!snapshot.exists) {
-    return null;
-  }
+  return cacheRemember({
+    key: cacheKey,
+    ttlSeconds: backendEnv.redisMerchantTtlSeconds,
+    loader: async () => {
+      const snapshot = await getMerchantCollection(storeId).doc(merchantId).get();
 
-  const merchant = mapDoc(snapshot);
-  return merchant.source === source ? merchant : null;
+      if (!snapshot.exists) {
+        return null;
+      }
+
+      const merchant = mapDoc(snapshot);
+      return merchant.source === source ? merchant : null;
+    },
+  });
 }
 
 export async function listIntegrationMerchants({ storeId, source = 'ifood', enabledOnly = false }) {
-  const snapshot = await getMerchantCollection(storeId)
-    .where('source', '==', source)
-    .get();
+  const cacheKey = buildCacheKey('store', storeId, 'merchants', source, enabledOnly ? 'active' : 'all');
 
-  return snapshot.docs
-    .map(mapDoc)
-    .filter((merchant) => !enabledOnly || merchant.status === 'active');
+  return cacheRemember({
+    key: cacheKey,
+    ttlSeconds: backendEnv.redisMerchantTtlSeconds,
+    loader: async () => {
+      const snapshot = await getMerchantCollection(storeId)
+        .where('source', '==', source)
+        .get();
+
+      return snapshot.docs
+        .map(mapDoc)
+        .filter((merchant) => !enabledOnly || merchant.status === 'active');
+    },
+  });
 }
 
 export async function touchIntegrationMerchant({
@@ -54,4 +72,10 @@ export async function touchIntegrationMerchant({
       },
       { merge: true },
     );
+
+  await cacheInvalidate([
+    buildCacheKey('store', storeId, 'merchant', merchantId, 'ifood'),
+    buildCacheKey('store', storeId, 'merchants', 'ifood', 'all'),
+    buildCacheKey('store', storeId, 'merchants', 'ifood', 'active'),
+  ]);
 }

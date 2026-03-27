@@ -5,6 +5,7 @@ import { RequestValidationError } from '../../errors/RequestValidationError.js'
 const firestoreSetMock = vi.fn()
 const createCustomTokenMock = vi.fn()
 const getLocalOperatorProfileMock = vi.fn()
+const cacheSetMock = vi.fn()
 
 vi.mock('../../firebaseAdmin.js', () => ({
   getAdminFirestore: vi.fn(() => ({
@@ -29,6 +30,11 @@ vi.mock('../../config/env.js', () => ({
 
 vi.mock('../../config/localOperators.js', () => ({
   getLocalOperatorProfile: getLocalOperatorProfileMock,
+}))
+
+vi.mock('../../cache/cacheService.js', () => ({
+  buildCacheKey: vi.fn(() => 'nexus10:session:profile:local-gabriel'),
+  cacheSet: cacheSetMock,
 }))
 
 function createResponseMock() {
@@ -80,6 +86,7 @@ async function runRegisteredRoute(app, request) {
 describe('registerAuthRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    cacheSetMock.mockResolvedValue(true)
   })
 
   it('retorna 400 quando o operador nao e informado', async () => {
@@ -144,6 +151,7 @@ describe('registerAuthRoutes', () => {
       operatorName: 'Gabriel',
       displayName: 'Gabriel',
     })
+    expect(cacheSetMock).toHaveBeenCalledTimes(1)
     expect(response.statusCode).toBe(200)
     expect(response.payload).toEqual({
       data: {

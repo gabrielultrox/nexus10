@@ -1,4 +1,5 @@
 import { getAdminFirestore } from '../../firebaseAdmin.js';
+import { listStoreProducts } from '../../repositories/productCatalogRepository.js';
 
 const COLLECTIONS = {
   stores: 'stores',
@@ -45,6 +46,10 @@ function getTodayRange() {
 }
 
 async function getCollectionDocuments(storeId, collectionName, limit = 40) {
+  if (collectionName === COLLECTIONS.products) {
+    return listStoreProducts({ storeId, limit });
+  }
+
   const snapshot = await getStoreDocument(storeId).collection(collectionName).limit(limit).get();
   return snapshot.docs.map((entry) => ({
     id: entry.id,

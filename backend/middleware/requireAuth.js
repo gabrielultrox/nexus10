@@ -1,5 +1,8 @@
 import { hasFirebaseAdminConfig } from '../config/env.js';
 import { getAdminApp } from '../firebaseAdmin.js';
+import { backendEnv } from '../config/env.js';
+import { buildCacheKey, cacheRemember } from '../cache/cacheService.js';
+import crypto from 'node:crypto';
 
 function readBearerToken(request) {
   const headerValue = request.headers.authorization ?? '';
@@ -45,7 +48,13 @@ export async function requireApiAuth(request, response, next) {
   }
 
   try {
-    const decodedToken = await getAdminApp().auth().verifyIdToken(token);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const decodedToken = await cacheRemember({
+      key: buildCacheKey('session', 'id-token', tokenHash),
+      ttlSeconds: backendEnv.redisSessionTtlSeconds,
+      loader: () => getAdminApp().auth().verifyIdToken(token),
+    });
+
     if (decodedToken.firebase?.sign_in_provider === 'anonymous') {
       response.status(401).json({
         error: 'Sessao anonima nao pode acessar a API protegida.',
