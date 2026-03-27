@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -45,6 +45,8 @@ function App() {
   const confirm = useConfirm()
   const toast = useToast()
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false)
+  const [routeAnimationKey, setRouteAnimationKey] = useState(0)
+  const [isRoutePending, startRouteTransition] = useTransition()
   const lastPathRef = useRef(location.pathname)
   const bootVisible = !bootSequenceComplete || loading
 
@@ -72,9 +74,12 @@ function App() {
 
     if (lastPathRef.current !== location.pathname) {
       playNavigation()
+      startRouteTransition(() => {
+        setRouteAnimationKey((current) => current + 1)
+      })
       lastPathRef.current = location.pathname
     }
-  }, [bootVisible, location.pathname])
+  }, [bootVisible, location.pathname, startRouteTransition])
 
   useEffect(() => {
     if (!bootSequenceComplete || loading) {
@@ -168,7 +173,12 @@ function App() {
           }
         }}
       >
-        <AppRoutes />
+        <div
+          key={routeAnimationKey}
+          className={`motion-route-stage${isRoutePending ? ' is-transitioning' : ''}`}
+        >
+          <AppRoutes />
+        </div>
       </AppErrorBoundary>
       {bootVisible ? <SystemBoot onComplete={handleBootComplete} /> : null}
     </QueryClientProvider>

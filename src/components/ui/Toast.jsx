@@ -1,9 +1,14 @@
 function Toast({ message, variant = 'info', visible = true }) {
   return (
     <div
-      className={['toast', `toast--${variant}`, visible ? 'toast--visible' : 'toast--hidden'].join(
-        ' ',
-      )}
+      className={[
+        'toast',
+        `toast--${variant}`,
+        visible ? 'toast--visible' : 'toast--hidden',
+        variant === 'error' && visible ? 'motion-shake' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
     >

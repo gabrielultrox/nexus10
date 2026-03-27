@@ -36,6 +36,7 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
   ref,
 ) {
   const [isOpen, setIsOpen] = useState(false)
+  const [shouldRenderDropdown, setShouldRenderDropdown] = useState(false)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const shellRef = useRef<HTMLDivElement | null>(null)
@@ -79,10 +80,19 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
 
   useEffect(() => {
     if (isOpen) {
+      setShouldRenderDropdown(true)
       searchInputRef.current?.focus()
     } else {
       setQuery('')
+
+      const timeoutId = window.setTimeout(() => {
+        setShouldRenderDropdown(false)
+      }, 180)
+
+      return () => window.clearTimeout(timeoutId)
     }
+
+    return undefined
   }, [isOpen])
 
   const selectedOption = flatOptions.find((option) => option.value === value)
@@ -244,8 +254,14 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
         </span>
         <span className="ui-search-select__icon">{CHEVRON_ICON}</span>
       </button>
-      {isOpen ? (
-        <div className="ui-search-select__dropdown">
+      {shouldRenderDropdown ? (
+        <div
+          className={[
+            'ui-search-select__dropdown',
+            isOpen ? 'is-open motion-slide-up-enter' : 'is-closing',
+          ].join(' ')}
+          data-state={isOpen ? 'open' : 'closed'}
+        >
           <input
             ref={searchInputRef}
             type="search"

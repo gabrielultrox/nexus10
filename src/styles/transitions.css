@@ -1,0 +1,205 @@
+:root {
+  --motion-duration-fast: 140ms;
+  --motion-duration-normal: 220ms;
+  --motion-duration-slow: 280ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --motion-ease-press: cubic-bezier(0.3, 0, 0.2, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.motion-fade-enter {
+  animation: motion-fade-in var(--motion-duration-normal) var(--motion-ease-standard) both;
+}
+
+.motion-slide-up-enter {
+  animation: motion-slide-up var(--motion-duration-normal) var(--motion-ease-emphasized) both;
+}
+
+.motion-scale-enter {
+  animation: motion-scale-in var(--motion-duration-normal) var(--motion-ease-emphasized) both;
+}
+
+.motion-shake {
+  animation: motion-shake-x var(--motion-duration-fast) var(--motion-ease-press) 2;
+}
+
+.motion-pulse {
+  animation: motion-soft-pulse 1.4s ease-in-out infinite;
+}
+
+.motion-spinner {
+  animation: motion-spin 760ms linear infinite;
+}
+
+.motion-route-stage {
+  animation: motion-route-fade var(--motion-duration-normal) var(--motion-ease-standard) both;
+  will-change: opacity, transform;
+}
+
+.motion-route-stage.is-transitioning {
+  pointer-events: none;
+}
+
+.motion-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.motion-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: motion-soft-pulse 900ms ease-in-out infinite;
+}
+
+.motion-dots span:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.motion-dots span:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-slide-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes motion-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-backdrop-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-shake-x {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
+
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes motion-soft-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-skeleton-wave {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes motion-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes motion-route-fade {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade-enter,
+  .motion-slide-up-enter,
+  .motion-scale-enter,
+  .motion-shake,
+  .motion-pulse,
+  .motion-spinner,
+  .motion-route-stage,
+  .motion-dots span {
+    animation: none !important;
+  }
+}

@@ -236,7 +236,7 @@
 }
 
 .ui-button:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .ui-button--primary {
@@ -1745,6 +1745,7 @@
   border-right: 2px solid var(--color-static-white);
   border-bottom: 2px solid var(--color-static-white);
   transform: rotate(40deg);
+  animation: motion-scale-in var(--motion-duration-fast) var(--motion-ease-emphasized) both;
 }
 
 .ui-radio__input:checked + .ui-radio__indicator::after {
@@ -1753,6 +1754,7 @@
   inset: 4px;
   border-radius: 999px;
   background: var(--color-static-white);
+  animation: motion-scale-in var(--motion-duration-fast) var(--motion-ease-emphasized) both;
 }
 
 .ui-checkbox__copy,
@@ -2087,6 +2089,122 @@
   .toast--hidden {
     transition: none;
   }
+}
+
+.ui-modal-overlay {
+  opacity: 0;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.ui-modal-overlay.is-visible {
+  opacity: 1;
+}
+
+.ui-modal-overlay.is-exiting {
+  opacity: 0;
+}
+
+.ui-modal-overlay.is-visible .ui-modal-overlay__backdrop {
+  animation: motion-backdrop-in var(--motion-duration-fast) var(--motion-ease-standard) both;
+}
+
+.ui-modal-overlay.is-exiting .ui-modal-overlay__backdrop {
+  animation: motion-backdrop-out var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
+.ui-modal {
+  will-change: opacity, transform;
+}
+
+.ui-modal--closing {
+  animation: motion-scale-out var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
+.toast {
+  will-change: opacity, transform;
+  transform: translateY(12px) scale(0.98);
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.toast--visible {
+  transform: translateY(0) scale(1);
+}
+
+.toast--hidden {
+  transform: translateY(6px) scale(0.98);
+}
+
+.toast--success.toast--visible {
+  animation: motion-fade-in var(--motion-duration-fast) var(--motion-ease-standard) both;
+}
+
+.ui-search-select__dropdown,
+.ui-date-picker__popover {
+  transform-origin: top center;
+  will-change: opacity, transform;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-exit),
+    transform var(--motion-duration-fast) var(--motion-ease-exit);
+}
+
+.ui-search-select__dropdown.is-open,
+.ui-date-picker__popover.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ui-search-select__dropdown.is-closing,
+.ui-date-picker__popover.is-closing {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  pointer-events: none;
+}
+
+.ui-table__page-transition--forward {
+  animation: motion-slide-up var(--motion-duration-fast) var(--motion-ease-standard) both;
+}
+
+.ui-table__page-transition--backward {
+  animation: motion-fade-in var(--motion-duration-fast) var(--motion-ease-standard) both;
+}
+
+.ui-skeleton-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.ui-skeleton {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-panel-soft-alt) 88%, transparent);
+}
+
+.ui-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-static-white) 30%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: motion-skeleton-wave 1.2s var(--motion-ease-standard) infinite;
+}
+
+.ui-skeleton--circle {
+  border-radius: 999px;
+}
+
+.ui-route-loader {
+  display: grid;
+  gap: 14px;
 }
 
 .ui-sr-only {

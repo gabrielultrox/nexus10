@@ -3,6 +3,7 @@ import { Navigate, useRoutes } from 'react-router-dom'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
+import { Skeleton } from '../components/ui'
 import { routeDefinitions } from '../utils/routeCatalog'
 
 const MainLayout = lazy(() => import('../components/layout/MainLayout'))
@@ -31,10 +32,11 @@ const salesRoute = routeDefinitions.find((route) => route.path === 'sales')
 
 function RouteLoader() {
   return (
-    <div className="page-stack page-stack--loading">
-      <div className="empty-state">
-        <span className="empty-state__message">Carregando area</span>
-      </div>
+    <div className="page-stack page-stack--loading ui-route-loader motion-fade-enter">
+      <Skeleton height="18px" width="24%" />
+      <Skeleton height="88px" />
+      <Skeleton height="88px" />
+      <Skeleton height="88px" />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Button from './Button'
 import type { ITableColumn, ITableProps, ITableSortState } from './types'
@@ -25,6 +25,9 @@ function Table<TData extends Record<string, unknown>>({
 }: ITableProps<TData>) {
   const [sortState, setSortState] = useState<ITableSortState<TData> | null>(defaultSort)
   const [page, setPage] = useState(1)
+  const [pageMotionDirection, setPageMotionDirection] = useState<'forward' | 'backward' | null>(
+    null,
+  )
 
   const sortedData = useMemo(() => {
     if (!sortState?.key) {
@@ -45,6 +48,18 @@ function Table<TData extends Record<string, unknown>>({
     const start = (safePage - 1) * pageSize
     return sortedData.slice(start, start + pageSize)
   }, [pageSize, safePage, sortedData])
+
+  useEffect(() => {
+    if (!pageMotionDirection) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPageMotionDirection(null)
+    }, 220)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [pageMotionDirection])
 
   function toggleSort(column: ITableColumn<TData>) {
     if (!column.sortable) {
@@ -111,7 +126,14 @@ function Table<TData extends Record<string, unknown>>({
               })}
             </tr>
           </thead>
-          <tbody>
+          <tbody
+            className={[
+              'ui-table__page-transition',
+              pageMotionDirection ? `ui-table__page-transition--${pageMotionDirection}` : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             {pagedData.length ? (
               pagedData.map((row, rowIndex) => (
                 <tr key={getRowKey ? getRowKey(row, rowIndex) : String(row.id ?? rowIndex)}>
@@ -144,7 +166,10 @@ function Table<TData extends Record<string, unknown>>({
           <Button
             variant="ghost"
             disabled={safePage <= 1}
-            onClick={() => setPage((value) => Math.max(1, value - 1))}
+            onClick={() => {
+              setPageMotionDirection('backward')
+              setPage((value) => Math.max(1, value - 1))
+            }}
             aria-label="Ir para a pagina anterior"
           >
             Anterior
@@ -152,7 +177,10 @@ function Table<TData extends Record<string, unknown>>({
           <Button
             variant="ghost"
             disabled={safePage >= totalPages}
-            onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+            onClick={() => {
+              setPageMotionDirection('forward')
+              setPage((value) => Math.min(totalPages, value + 1))
+            }}
             aria-label="Ir para a proxima pagina"
           >
             Proxima
