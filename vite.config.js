@@ -5,6 +5,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
   const shouldAnalyze = mode === 'analyze'
+  const featureChunkMatchers = [
+    'charts-and-reports',
+    'operations-workspace',
+    'export-utils',
+    'firebase-data',
+  ]
 
   return {
     plugins: [
@@ -103,9 +109,29 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: true,
       assetsInlineLimit: 2048,
       sourcemap: shouldAnalyze,
+      modulePreload: {
+        resolveDependencies(_filename, dependencies, context) {
+          if (context.hostType !== 'html') {
+            return dependencies
+          }
+
+          return dependencies.filter(
+            (dependency) =>
+              !featureChunkMatchers.some((chunkName) => dependency.includes(chunkName)),
+          )
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (
+              id.includes('/src/components/ui/') ||
+              id.includes('/src/components/common/') ||
+              id.includes('/src/components/system/')
+            ) {
+              return 'ui-system'
+            }
+
             if (
               id.includes('/src/components/dashboard/') ||
               id.includes('/src/modules/reports/components/')
@@ -133,12 +159,20 @@ export default defineConfig(({ mode }) => {
               return 'export-utils'
             }
 
-            if (id.includes('react-router-dom')) {
-              return 'router'
+            if (id.includes('@tanstack/react-query')) {
+              return 'query-vendor'
             }
 
-            if (id.includes('react-dom') || id.includes('react')) {
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
               return 'react-vendor'
+            }
+
+            if (id.includes('react-router-dom') || id.includes('react-router')) {
+              return 'router-vendor'
             }
 
             return 'vendor'

@@ -1,5 +1,3 @@
-import * as Sentry from '@sentry/react'
-
 import {
   AppError,
   ErrorCode,
@@ -42,20 +40,33 @@ export interface IOfflineRequestQueueItem {
 const OFFLINE_QUEUE_KEY = 'nexus10.offlineRequestQueue'
 const VITE_SENTRY_DSN = import.meta.env['VITE_SENTRY_DSN'] as string | undefined
 let sentryReady = false
+let sentryModulePromise: Promise<typeof import('@sentry/react') | null> | null = null
 
-function ensureSentryInitialized() {
-  if (sentryReady || !VITE_SENTRY_DSN) {
-    return
+async function loadSentryModule() {
+  if (!VITE_SENTRY_DSN) {
+    return null
   }
 
-  Sentry.init({
-    dsn: VITE_SENTRY_DSN,
-    environment: import.meta.env.MODE,
-    release: import.meta.env.VITE_APP_ENV ?? import.meta.env.MODE,
-    tracesSampleRate: 0.1,
-  })
+  if (!sentryModulePromise) {
+    sentryModulePromise = import('@sentry/react')
+      .then((module) => {
+        if (!sentryReady) {
+          module.init({
+            dsn: VITE_SENTRY_DSN,
+            environment: import.meta.env.MODE,
+            release: import.meta.env.VITE_APP_ENV ?? import.meta.env.MODE,
+            tracesSampleRate: 0.1,
+          })
 
-  sentryReady = true
+          sentryReady = true
+        }
+
+        return module
+      })
+      .catch(() => null)
+  }
+
+  return sentryModulePromise
 }
 
 function readOfflineQueue(): IOfflineRequestQueueItem[] {
@@ -172,24 +183,36 @@ export function getApiErrorDisplayModel(error: unknown): IApiErrorDisplayModel {
 
 export function captureErrorForMonitoring(error: unknown, context: IApiErrorContext = {}) {
   const normalized = toApiError(error, context)
-  ensureSentryInitialized()
 
-  if (sentryReady) {
-    Sentry.withScope((scope) => {
-      scope.setLevel(
-        normalized.severity === ErrorSeverity.CRITICAL || normalized.severity === ErrorSeverity.HIGH
-          ? 'error'
-          : normalized.severity === ErrorSeverity.MEDIUM
-            ? 'warning'
-            : 'info',
-      )
-      scope.setContext('api', normalized.toJSON())
-      scope.setExtras(context)
-      Sentry.captureException(normalized)
-    })
-  } else {
+  if (!VITE_SENTRY_DSN) {
     normalized.log()
+    return normalized
   }
+
+  void loadSentryModule()
+    .then((Sentry) => {
+      if (!Sentry || !sentryReady) {
+        normalized.log()
+        return
+      }
+
+      Sentry.withScope((scope) => {
+        scope.setLevel(
+          normalized.severity === ErrorSeverity.CRITICAL ||
+            normalized.severity === ErrorSeverity.HIGH
+            ? 'error'
+            : normalized.severity === ErrorSeverity.MEDIUM
+              ? 'warning'
+              : 'info',
+        )
+        scope.setContext('api', normalized.toJSON())
+        scope.setExtras(context)
+        Sentry.captureException(normalized)
+      })
+    })
+    .catch(() => {
+      normalized.log()
+    })
 
   return normalized
 }
