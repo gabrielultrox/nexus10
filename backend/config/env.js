@@ -3,7 +3,8 @@ import path from 'node:path'
 import dotenv from 'dotenv'
 import { z } from 'zod'
 
-const appEnvironmentSchema = z.enum(['development', 'staging', 'production', 'test'])
+const runtimeEnvironmentSchema = z.enum(['development', 'staging', 'production', 'test'])
+const logLevelSchema = z.enum(['trace', 'debug', 'info', 'warn', 'error'])
 
 const deprecatedBackendVariables = [
   {
@@ -15,11 +16,31 @@ const deprecatedBackendVariables = [
 
 let backendEnvCache = null
 
+function normalizeRuntimeEnvironment(value, fallback = 'development') {
+  if (value == null || value === '') {
+    return fallback
+  }
+
+  const normalized = String(value).trim().toLowerCase()
+  const aliases = {
+    dev: 'development',
+    development: 'development',
+    staging: 'staging',
+    prod: 'production',
+    production: 'production',
+    test: 'test',
+  }
+
+  return aliases[normalized] ?? normalized
+}
+
 function loadEnvFiles() {
   const rootDirectory = process.cwd()
-  const inferredEnvironment =
-    process.env.APP_ENV ?? process.env.VITE_APP_ENV ?? process.env.NODE_ENV ?? 'development'
-  const appEnvironment = appEnvironmentSchema.catch('development').parse(inferredEnvironment)
+  const inferredEnvironment = normalizeRuntimeEnvironment(
+    process.env.APP_ENV ?? process.env.VITE_APP_ENV ?? process.env.NODE_ENV ?? process.env.MODE,
+    process.env.VITEST ? 'test' : 'development',
+  )
+  const appEnvironment = runtimeEnvironmentSchema.catch('development').parse(inferredEnvironment)
 
   const candidateFiles = [
     `.env.${appEnvironment}.local`,
@@ -60,6 +81,23 @@ function createNumericSchema(defaultValue) {
   }, z.number().finite())
 }
 
+const booleanStringSchema = z.preprocess((value) => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (value == null || value === '') {
+    return false
+  }
+
+  const normalized = String(value).trim().toLowerCase()
+  return normalized === 'true' || normalized === '1' || normalized === 'yes'
+}, z.boolean())
+
+function createRequiredStringSchema(key) {
+  return z.string().trim().min(1, `${key} e obrigatoria.`)
+}
+
 function warnDeprecatedBackendVariables(rawEnv) {
   deprecatedBackendVariables.forEach(({ key, replacement, reason }) => {
     if (rawEnv[key]) {
@@ -74,17 +112,53 @@ function formatZodIssues(error) {
   return error.issues
     .map((issue) => {
       const field = issue.path.length > 0 ? issue.path.join('.') : 'root'
-      return `${field}: ${issue.message}`
+      return `- ${field}: ${issue.message}`
     })
     .join('\n')
 }
 
+function buildRawBackendEnv() {
+  const rawEnv = { ...process.env }
+  const effectiveEnvironment = runtimeEnvironmentSchema
+    .catch('development')
+    .parse(
+      normalizeRuntimeEnvironment(
+        rawEnv.APP_ENV ?? rawEnv.NODE_ENV ?? rawEnv.VITE_APP_ENV ?? rawEnv.MODE,
+        process.env.VITEST ? 'test' : 'development',
+      ),
+    )
+
+  rawEnv.APP_ENV = rawEnv.APP_ENV ?? effectiveEnvironment
+  rawEnv.NODE_ENV = normalizeRuntimeEnvironment(rawEnv.NODE_ENV ?? effectiveEnvironment)
+
+  if (effectiveEnvironment === 'test' || process.env.VITEST) {
+    rawEnv.FIREBASE_ADMIN_PROJECT_ID ??= 'test-project'
+    rawEnv.FIREBASE_ADMIN_CLIENT_EMAIL ??= 'firebase-adminsdk@test-project.iam.gserviceaccount.com'
+    rawEnv.FIREBASE_ADMIN_PRIVATE_KEY ??=
+      '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n'
+    rawEnv.IFOOD_WEBHOOK_SECRET ??= 'test-ifood-webhook-secret'
+    rawEnv.LOCAL_OPERATOR_PASSWORD ??= 'test-local-operator-password'
+    rawEnv.FRONTEND_ORIGIN ??= 'http://localhost:5173'
+  }
+
+  return rawEnv
+}
+
 const backendEnvSchema = z
   .object({
-    APP_ENV: appEnvironmentSchema.default('development'),
-    NODE_ENV: z.string().trim().optional(),
-    PORT: createNumericSchema(8787),
-    LOG_LEVEL: z.string().trim().default('info'),
+    APP_ENV: z.preprocess(
+      (value) => normalizeRuntimeEnvironment(value, 'development'),
+      runtimeEnvironmentSchema.default('development'),
+    ),
+    NODE_ENV: z.preprocess(
+      (value) => normalizeRuntimeEnvironment(value, 'development'),
+      runtimeEnvironmentSchema.default('development'),
+    ),
+    PORT: createNumericSchema(3001),
+    LOG_LEVEL: z.preprocess(
+      (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
+      logLevelSchema,
+    ),
     SENTRY_DSN: z.string().trim().default(''),
     SENTRY_RELEASE: z.string().trim().default(''),
     SENTRY_TRACES_SAMPLE_RATE: createNumericSchema(0.2),
@@ -102,13 +176,16 @@ const backendEnvSchema = z
     REDIS_MERCHANT_TTL_SECONDS: createNumericSchema(180),
     REDIS_PRODUCT_TTL_SECONDS: createNumericSchema(120),
     OPENAI_API_KEY: z.string().trim().optional(),
-    FRONTEND_ORIGIN: z.string().trim().default(''),
+    FRONTEND_ORIGIN: z.string().trim().optional(),
     CORS_PREFLIGHT_MAX_AGE_SECONDS: createNumericSchema(600),
     SECURITY_USER_AGENT_BLOCKLIST: z.string().trim().default(''),
     RATE_LIMIT_TRUSTED_IPS: z.string().trim().default(''),
-    API_RATE_LIMIT_WINDOW_MS: createNumericSchema(15 * 60 * 1000),
-    API_RATE_LIMIT_MAX: createNumericSchema(300),
+    API_RATE_LIMIT_WINDOW_MS: createNumericSchema(60000),
+    API_RATE_LIMIT_MAX: createNumericSchema(100),
     AUTH_RATE_LIMIT_MAX: createNumericSchema(20),
+    IFOOD_ENABLED: booleanStringSchema.default(false),
+    IFOOD_CLIENT_ID: z.string().trim().optional(),
+    IFOOD_CLIENT_SECRET: z.string().trim().optional(),
     IFOOD_AUTH_BASE_URL: z
       .string()
       .trim()
@@ -118,21 +195,45 @@ const backendEnvSchema = z
     IFOOD_EVENTS_ACK_PATH: z.string().trim().default('/events/v1.0/events/acknowledgment'),
     IFOOD_ORDER_DETAILS_PATH: z.string().trim().default('/order/v1.0/orders'),
     IFOOD_WEBHOOK_URL: z.string().trim().default(''),
-    IFOOD_WEBHOOK_SECRET: z.string().trim().default(''),
+    IFOOD_WEBHOOK_SECRET: createRequiredStringSchema('IFOOD_WEBHOOK_SECRET'),
     IFOOD_POLLING_INTERVAL_SECONDS: createNumericSchema(30),
-    FIREBASE_ADMIN_PROJECT_ID: z.string().trim().optional().or(z.literal('')),
-    FIREBASE_ADMIN_CLIENT_EMAIL: z.string().trim().optional().or(z.literal('')),
-    FIREBASE_ADMIN_PRIVATE_KEY: z.string().trim().optional().or(z.literal('')),
+    FIREBASE_ADMIN_PROJECT_ID: createRequiredStringSchema('FIREBASE_ADMIN_PROJECT_ID'),
+    FIREBASE_ADMIN_CLIENT_EMAIL: createRequiredStringSchema('FIREBASE_ADMIN_CLIENT_EMAIL'),
+    FIREBASE_ADMIN_PRIVATE_KEY: createRequiredStringSchema('FIREBASE_ADMIN_PRIVATE_KEY'),
     FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
     FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
     VITE_FIREBASE_PROJECT_ID: z.string().trim().optional(),
   })
   .superRefine((data, context) => {
-    if (['staging', 'production'].includes(data.APP_ENV) && !data.LOCAL_OPERATOR_PASSWORD) {
+    if (data.APP_ENV === 'production' && !asOptionalString(data.FRONTEND_ORIGIN)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FRONTEND_ORIGIN'],
+        message: 'e obrigatoria em producao.',
+      })
+    }
+
+    if (data.APP_ENV === 'production' && !asOptionalString(data.LOCAL_OPERATOR_PASSWORD)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['LOCAL_OPERATOR_PASSWORD'],
-        message: 'obrigatoria em staging/producao.',
+        message: 'e obrigatoria em producao.',
+      })
+    }
+
+    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_CLIENT_ID)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['IFOOD_CLIENT_ID'],
+        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
+      })
+    }
+
+    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_CLIENT_SECRET)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['IFOOD_CLIENT_SECRET'],
+        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
       })
     }
   })
@@ -140,7 +241,7 @@ const backendEnvSchema = z
 function normalizeBackendEnv(parsedEnv) {
   return {
     port: parsedEnv.PORT,
-    nodeEnv: parsedEnv.NODE_ENV?.trim() || parsedEnv.APP_ENV,
+    nodeEnv: parsedEnv.NODE_ENV,
     appEnv: parsedEnv.APP_ENV,
     logLevel: parsedEnv.LOG_LEVEL,
     sentryDsn: parsedEnv.SENTRY_DSN,
@@ -152,8 +253,7 @@ function normalizeBackendEnv(parsedEnv) {
     alertErrorRateThresholdPercent: parsedEnv.ALERT_ERROR_RATE_THRESHOLD_PERCENT,
     alertLatencyP95ThresholdMs: parsedEnv.ALERT_LATENCY_P95_THRESHOLD_MS,
     alertIfoodWebhookFailureThreshold: parsedEnv.ALERT_IFOOD_WEBHOOK_FAILURE_THRESHOLD,
-    localOperatorPassword:
-      parsedEnv.LOCAL_OPERATOR_PASSWORD || (parsedEnv.APP_ENV === 'production' ? '' : '01'),
+    localOperatorPassword: parsedEnv.LOCAL_OPERATOR_PASSWORD || '01',
     redisUrl: parsedEnv.REDIS_URL,
     redisKeyPrefix: parsedEnv.REDIS_KEY_PREFIX,
     redisSocketTimeoutMs: parsedEnv.REDIS_SOCKET_TIMEOUT_MS,
@@ -161,7 +261,8 @@ function normalizeBackendEnv(parsedEnv) {
     redisMerchantTtlSeconds: parsedEnv.REDIS_MERCHANT_TTL_SECONDS,
     redisProductTtlSeconds: parsedEnv.REDIS_PRODUCT_TTL_SECONDS,
     openaiApiKey: asOptionalString(parsedEnv.OPENAI_API_KEY) ?? null,
-    frontendOrigin: parsedEnv.FRONTEND_ORIGIN.split(',')
+    frontendOrigin: (parsedEnv.FRONTEND_ORIGIN ?? '')
+      .split(',')
       .map((item) => item.trim())
       .filter(Boolean),
     corsPreflightMaxAgeSeconds: parsedEnv.CORS_PREFLIGHT_MAX_AGE_SECONDS,
@@ -174,6 +275,9 @@ function normalizeBackendEnv(parsedEnv) {
     apiRateLimitWindowMs: parsedEnv.API_RATE_LIMIT_WINDOW_MS,
     apiRateLimitMax: parsedEnv.API_RATE_LIMIT_MAX,
     authRateLimitMax: parsedEnv.AUTH_RATE_LIMIT_MAX,
+    ifoodEnabled: parsedEnv.IFOOD_ENABLED,
+    ifoodClientId: asOptionalString(parsedEnv.IFOOD_CLIENT_ID) ?? '',
+    ifoodClientSecret: asOptionalString(parsedEnv.IFOOD_CLIENT_SECRET) ?? '',
     ifoodAuthBaseUrl: parsedEnv.IFOOD_AUTH_BASE_URL,
     ifoodMerchantBaseUrl: parsedEnv.IFOOD_MERCHANT_BASE_URL,
     ifoodEventsPollingPath: parsedEnv.IFOOD_EVENTS_POLLING_PATH,
@@ -204,7 +308,8 @@ export function loadBackendEnv() {
   loadEnvFiles()
   warnDeprecatedBackendVariables(process.env)
 
-  const result = backendEnvSchema.safeParse(process.env)
+  const rawEnv = buildRawBackendEnv()
+  const result = backendEnvSchema.safeParse(rawEnv)
 
   if (!result.success) {
     throw new Error(

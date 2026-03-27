@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 import SystemBoot from './components/system/SystemBoot'
-import { ensureClientEnvLoaded } from './config/loadEnv'
+import { ensureFrontendEnvLoaded } from './config/env'
 import { useAuth } from './contexts/AuthContext'
 import { useStore } from './contexts/StoreContext'
 import { useConfirm } from './hooks/useConfirm'
@@ -19,7 +19,7 @@ import {
 } from './services/soundManager'
 import { queryClient } from './services/queryClient'
 
-ensureClientEnvLoaded()
+ensureFrontendEnvLoaded()
 
 const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending'
 const CASH_RESET_HOUR = 3
