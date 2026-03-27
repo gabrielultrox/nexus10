@@ -14,6 +14,7 @@ const CouriersPage = lazy(() => import('../pages/CouriersPage'))
 const CustomersPage = lazy(() => import('../pages/CustomersPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
 const CashPage = lazy(() => import('../pages/CashPage'))
+const FinancialPendingsPage = lazy(() => import('../pages/FinancialPendingsPage'))
 const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const InventoryPage = lazy(() => import('../pages/InventoryPage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
@@ -55,6 +56,8 @@ function getRouteElement(route) {
         return withRouteSuspense(<AuditLogPage />)
       case 'cash':
         return withRouteSuspense(<CashPage />)
+      case 'financial-pendings':
+        return withRouteSuspense(<FinancialPendingsPage />)
       case 'history':
         return withRouteSuspense(<HistoryPage />)
       case 'inventory':

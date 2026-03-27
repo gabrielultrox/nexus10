@@ -50,6 +50,16 @@ export const routeDefinitions = [
     requiredRoles: ['gerente'],
   },
   {
+    path: 'financial-pendings',
+    label: 'Pendencias fin.',
+    icon: '04A',
+    section: 'Financeiro',
+    eyebrow: 'Financeiro',
+    title: 'Pendencias financeiras',
+    description: 'Fila unica de pendencias financeiras para trocos, estornos, cobrancas e ajustes.',
+    requiredRoles: ['atendente'],
+  },
+  {
     path: 'advances',
     label: 'Vales',
     icon: '05',

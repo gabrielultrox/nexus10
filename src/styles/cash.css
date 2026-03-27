@@ -302,6 +302,153 @@
   flex-wrap: wrap;
 }
 
+.cash-module__pending-export-canvas {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cash-module__pending-export-sheet {
+  width: 1200px;
+  padding: 40px;
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 30%
+    ),
+    linear-gradient(180deg, #f9fbfd 0%, #eef3f8 100%);
+  color: var(--text-primary);
+}
+
+.cash-module__pending-export-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cash-module__pending-export-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cash-module__pending-export-title {
+  margin: 10px 0 6px;
+  font-size: 32px;
+  line-height: 1.05;
+}
+
+.cash-module__pending-export-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.cash-module__pending-export-stamp {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, white);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  text-align: right;
+}
+
+.cash-module__pending-export-stamp span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.cash-module__pending-export-stamp strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.cash-module__pending-export-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: 24px;
+}
+
+.cash-module__pending-export-metric,
+.cash-module__pending-export-card {
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.cash-module__pending-export-metric span,
+.cash-module__pending-export-card-body span {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.cash-module__pending-export-metric strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 24px;
+}
+
+.cash-module__pending-export-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: 24px;
+}
+
+.cash-module__pending-export-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cash-module__pending-export-card-top strong {
+  font-size: 18px;
+}
+
+.cash-module__pending-export-card-top span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--danger);
+}
+
+.cash-module__pending-export-card-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cash-module__pending-export-card-body p {
+  margin: 0;
+}
+
+.cash-module__pending-export-card-body strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 @media (max-width: 900px) {
   .cash-module__metrics,
   .cash-module__form-row,

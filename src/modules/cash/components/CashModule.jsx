@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { toPng } from 'html-to-image'
 
 import CaixaStatusBar from '../../../components/caixa/CaixaStatusBar'
 import PageTabs from '../../../components/common/PageTabs'
@@ -81,15 +82,16 @@ const CASH_TABS = [
     receiptLabel: 'Fechamento de caixa',
     codePrefix: 'FEC',
   },
-  {
-    id: 'financial-pending',
-    label: 'Pendencias financeiras',
-    title: 'Registrar pendencia financeira',
-    submitLabel: 'Registrar pendencia',
-    receiptLabel: 'Pendencia financeira',
-    codePrefix: 'PEN',
-  },
 ]
+
+const FINANCIAL_PENDING_VIEW = {
+  id: 'financial-pending',
+  label: 'Pendencias financeiras',
+  title: 'Registrar pendencia financeira',
+  submitLabel: 'Registrar pendencia',
+  receiptLabel: 'Pendencia financeira',
+  codePrefix: 'PEN',
+}
 
 const FINANCIAL_PENDING_TYPES = [
   { value: 'change-pending', label: 'Troco pendente' },
@@ -459,13 +461,92 @@ function CashHistoryTable({ records, onPrint, onDelete }) {
   )
 }
 
-function CashModule() {
+function FinancialPendingExportCanvas({ records, totalOpenAmount, session }) {
+  return (
+    <div className="cash-module__pending-export-sheet">
+      <header className="cash-module__pending-export-header">
+        <div>
+          <span className="cash-module__pending-export-eyebrow">NEXUS</span>
+          <h2 className="cash-module__pending-export-title">Pendencias financeiras</h2>
+          <p className="cash-module__pending-export-meta">
+            {new Intl.DateTimeFormat('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }).format(new Date())}
+          </p>
+        </div>
+        <div className="cash-module__pending-export-stamp">
+          <span>Em aberto</span>
+          <strong>{records.filter((record) => !isFinancialPendingResolved(record)).length}</strong>
+        </div>
+      </header>
+
+      <div className="cash-module__pending-export-summary">
+        <article className="cash-module__pending-export-metric">
+          <span>Total de registros</span>
+          <strong>{records.length}</strong>
+        </article>
+        <article className="cash-module__pending-export-metric">
+          <span>Valor em risco</span>
+          <strong>{formatCurrencyBRL(totalOpenAmount)}</strong>
+        </article>
+        <article className="cash-module__pending-export-metric">
+          <span>Operador</span>
+          <strong>{session?.operatorName ?? session?.displayName ?? 'Operador local'}</strong>
+        </article>
+      </div>
+
+      <div className="cash-module__pending-export-list">
+        {records.map((record) => (
+          <article key={record.id} className="cash-module__pending-export-card">
+            <div className="cash-module__pending-export-card-top">
+              <strong>{record.customerName}</strong>
+              <span>{isFinancialPendingResolved(record) ? 'Resolvido' : 'Em aberto'}</span>
+            </div>
+            <div className="cash-module__pending-export-card-body">
+              <p>
+                <span>Numero</span>
+                <strong>{record.customerPhone || 'Nao informado'}</strong>
+              </p>
+              <p>
+                <span>Tipo</span>
+                <strong>{record.typeLabel}</strong>
+              </p>
+              <p>
+                <span>Valor</span>
+                <strong>{record.amountLabel}</strong>
+              </p>
+              <p>
+                <span>Prioridade</span>
+                <strong>{record.priorityLabel}</strong>
+              </p>
+              <p>
+                <span>Descricao</span>
+                <strong>{record.description}</strong>
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CashModule({ mode = 'cash' }) {
   const navigate = useNavigate()
   const toast = useToast()
   const confirm = useConfirm()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTabId = searchParams.get('tab') ?? CASH_TABS[0].id
-  const activeTab = CASH_TABS.find((tab) => tab.id === activeTabId) ?? CASH_TABS[0]
+  const isFinancialPendingView = mode === 'financial-pending'
+  const activeTabId = isFinancialPendingView
+    ? FINANCIAL_PENDING_VIEW.id
+    : (searchParams.get('tab') ?? CASH_TABS[0].id)
+  const activeTab = isFinancialPendingView
+    ? FINANCIAL_PENDING_VIEW
+    : (CASH_TABS.find((tab) => tab.id === activeTabId) ?? CASH_TABS[0])
   const [records, setRecords] = useState(() =>
     loadResettableLocalRecords(CASH_STORAGE_KEY, [], CASH_RESET_HOUR),
   )
@@ -633,11 +714,6 @@ function CashModule() {
       openFinancialPendingRecords.reduce((total, record) => total + Number(record.amount ?? 0), 0),
     [openFinancialPendingRecords],
   )
-  const financialPendingTabLabel = useMemo(
-    () =>
-      `Pendencias financeiras${openFinancialPendingRecords.length > 0 ? ` (${openFinancialPendingRecords.length})` : ''}`,
-    [openFinancialPendingRecords.length],
-  )
   const requiresCourier = activeTab.id === 'courier-withdrawal'
   const isCashOpen = cashState.status === 'aberto'
   const pendingCount = openFinancialPendingRecords.length
@@ -647,12 +723,12 @@ function CashModule() {
       ? `O caixa ja foi aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cashState.openedAt))}. Use as outras operacoes ou siga para o fechamento.`
       : ''
   const activeTabGuardrailMessage = useMemo(() => {
-    if (!isCashOpen && activeTab.id === 'opening') {
-      return 'Abra o caixa com um valor inicial para liberar sangria, suprimento, retirada e fechamento.'
+    if (isFinancialPendingView && openFinancialPendingRecords.length > 0) {
+      return `Existem ${openFinancialPendingRecords.length} pendencia(s) abertas. O fechamento do caixa continua bloqueado ate a resolucao.`
     }
 
-    if (activeTab.id === 'financial-pending' && openFinancialPendingRecords.length > 0) {
-      return `Existem ${openFinancialPendingRecords.length} pendencia(s) abertas. O fechamento do caixa fica bloqueado ate a resolucao.`
+    if (!isCashOpen && activeTab.id === 'opening') {
+      return 'Abra o caixa com um valor inicial para liberar sangria, suprimento, retirada e fechamento.'
     }
 
     if (activeTab.id === 'closing' && pendingCount > 0) {
@@ -667,13 +743,18 @@ function CashModule() {
   }, [
     activeTab.id,
     courierOptions.length,
+    isFinancialPendingView,
     isCashOpen,
     openFinancialPendingRecords.length,
     pendingCount,
   ])
 
   useEffect(() => {
-    if (!isCashOpen && !['opening', 'financial-pending'].includes(activeTab.id)) {
+    if (isFinancialPendingView) {
+      return
+    }
+
+    if (!isCashOpen && activeTab.id !== 'opening') {
       setSearchParams((currentParams) => {
         const nextParams = new URLSearchParams(currentParams)
         nextParams.set('tab', 'opening')
@@ -682,7 +763,7 @@ function CashModule() {
       toast.warning('Abra o caixa primeiro')
       playWarning()
     }
-  }, [activeTab.id, isCashOpen, setSearchParams, toast])
+  }, [activeTab.id, isCashOpen, isFinancialPendingView, setSearchParams, toast])
 
   useEffect(() => {
     if (!isCashOpen) {
@@ -734,16 +815,10 @@ function CashModule() {
     })
   }, [cashState, currentStoreId, pendingCount, tenantId])
 
-  const cashTabs = useMemo(
-    () =>
-      CASH_TABS.map((tab) =>
-        tab.id === 'financial-pending' ? { ...tab, label: financialPendingTabLabel } : tab,
-      ),
-    [financialPendingTabLabel],
-  )
+  const cashTabs = CASH_TABS
 
   const topMetrics = useMemo(() => {
-    if (activeTab.id === 'financial-pending') {
+    if (isFinancialPendingView) {
       return [
         {
           label: 'Pendencias abertas',
@@ -784,6 +859,7 @@ function CashModule() {
     activeTab.id,
     activeTab.label,
     financialPendingAmount,
+    isFinancialPendingView,
     openFinancialPendingRecords.length,
     records.length,
     resolvedFinancialPendingRecords.length,
@@ -792,12 +868,16 @@ function CashModule() {
   ])
 
   function handleTabChange(tabId) {
+    if (isFinancialPendingView) {
+      return
+    }
+
     if (tabId === 'opening' && isCashOpen) {
       toast.warning('O caixa ja foi aberto')
       playWarning()
     }
 
-    if (!['opening', 'financial-pending'].includes(tabId) && !isCashOpen) {
+    if (tabId !== 'opening' && !isCashOpen) {
       toast.warning('Abra o caixa primeiro')
       playWarning()
       setSearchParams((currentParams) => {
@@ -1308,6 +1388,43 @@ function CashModule() {
     playCashSuccess()
   }
 
+  async function handleExportFinancialPendingsImage() {
+    const exportNode = document.getElementById('financial-pending-export-canvas')
+
+    if (!exportNode) {
+      toast.error('Nao foi possivel preparar a exportacao.')
+      return
+    }
+
+    try {
+      const image = await toPng(exportNode, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#f7fafc',
+        skipFonts: true,
+      })
+      const fileDate = new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+        .format(new Date())
+        .replace(/\//g, '-')
+      const link = document.createElement('a')
+
+      link.href = image
+      link.download = `pendencias-financeiras-${fileDate}.png`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      toast.success('Imagem exportada')
+    } catch (error) {
+      console.error('Nao foi possivel exportar as pendencias financeiras.', error)
+      toast.error('Falha ao exportar a imagem')
+    }
+  }
+
   async function handleClearHistory() {
     const confirmed = await confirm.ask({
       title: 'Limpar historico',
@@ -1351,13 +1468,15 @@ function CashModule() {
 
   return (
     <div className="cash-module">
-      <CaixaStatusBar
-        cashState={cashState}
-        onOpenCash={() => handleTabChange('opening')}
-        onGoToClosing={() => handleTabChange('closing')}
-        closingDisabled={closingDisabled}
-        closingTooltip={pendingCount > 0 ? `Resolva ${pendingCount} pendencia(s) antes` : ''}
-      />
+      {isFinancialPendingView ? null : (
+        <CaixaStatusBar
+          cashState={cashState}
+          onOpenCash={() => handleTabChange('opening')}
+          onGoToClosing={() => handleTabChange('closing')}
+          closingDisabled={closingDisabled}
+          closingTooltip={pendingCount > 0 ? `Resolva ${pendingCount} pendencia(s) antes` : ''}
+        />
+      )}
 
       <div className="card-grid cash-module__metrics">
         {topMetrics.map((metric) => (
@@ -1370,7 +1489,9 @@ function CashModule() {
         ))}
       </div>
 
-      <PageTabs tabs={cashTabs} activeTab={activeTab.id} onTabChange={handleTabChange} />
+      {isFinancialPendingView ? null : (
+        <PageTabs tabs={cashTabs} activeTab={activeTab.id} onTabChange={handleTabChange} />
+      )}
 
       <SurfaceCard title={activeTab.title}>
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
@@ -1380,7 +1501,7 @@ function CashModule() {
         {activeTabGuardrailMessage ? (
           <div className="cash-module__inline-state">{activeTabGuardrailMessage}</div>
         ) : null}
-        {activeTab.id === 'financial-pending' ? (
+        {isFinancialPendingView ? (
           financialPendingSyncMessage ? (
             <div className="cash-module__sync-note">{financialPendingSyncMessage}</div>
           ) : null
@@ -1388,7 +1509,7 @@ function CashModule() {
           <div className="cash-module__sync-note">{syncMessage}</div>
         ) : null}
 
-        {activeTab.id === 'financial-pending' ? (
+        {isFinancialPendingView ? (
           <form className="cash-module__pending-form" onSubmit={handleFinancialPendingSubmit}>
             <FormRow className="cash-module__form-row cash-module__pending-form-grid">
               <div className="ui-field cash-module__row-field">
@@ -1663,7 +1784,7 @@ function CashModule() {
         )}
       </SurfaceCard>
 
-      {activeTab.id === 'financial-pending' ? (
+      {isFinancialPendingView ? (
         <SurfaceCard title="Fila de pendencias financeiras">
           <div className="cash-module__history-toolbar">
             <span className="cash-module__history-counter">
@@ -1685,6 +1806,9 @@ function CashModule() {
                 <option value="resolved">Resolvidas</option>
                 <option value="all">Todas</option>
               </Select>
+              <Button variant="secondary" onClick={handleExportFinancialPendingsImage}>
+                Exportar imagem
+              </Button>
               {resolvedFinancialPendingRecords.length > 0 ? (
                 <Button variant="secondary" onClick={handleClearResolvedFinancialPendings}>
                   Limpar resolvidas
@@ -1722,6 +1846,18 @@ function CashModule() {
           <CashHistoryTable records={records} onPrint={printCashReceipt} onDelete={handleDelete} />
         </SurfaceCard>
       )}
+
+      {isFinancialPendingView ? (
+        <div className="cash-module__pending-export-canvas" aria-hidden="true">
+          <div id="financial-pending-export-canvas">
+            <FinancialPendingExportCanvas
+              records={filteredFinancialPendingRecords}
+              totalOpenAmount={financialPendingAmount}
+              session={session}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
