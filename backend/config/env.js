@@ -103,6 +103,8 @@ const backendEnvSchema = z
     REDIS_PRODUCT_TTL_SECONDS: createNumericSchema(120),
     OPENAI_API_KEY: z.string().trim().optional(),
     FRONTEND_ORIGIN: z.string().trim().default(''),
+    CORS_PREFLIGHT_MAX_AGE_SECONDS: createNumericSchema(600),
+    SECURITY_USER_AGENT_BLOCKLIST: z.string().trim().default(''),
     RATE_LIMIT_TRUSTED_IPS: z.string().trim().default(''),
     API_RATE_LIMIT_WINDOW_MS: createNumericSchema(15 * 60 * 1000),
     API_RATE_LIMIT_MAX: createNumericSchema(300),
@@ -160,6 +162,10 @@ function normalizeBackendEnv(parsedEnv) {
     redisProductTtlSeconds: parsedEnv.REDIS_PRODUCT_TTL_SECONDS,
     openaiApiKey: asOptionalString(parsedEnv.OPENAI_API_KEY) ?? null,
     frontendOrigin: parsedEnv.FRONTEND_ORIGIN.split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+    corsPreflightMaxAgeSeconds: parsedEnv.CORS_PREFLIGHT_MAX_AGE_SECONDS,
+    securityUserAgentBlocklist: parsedEnv.SECURITY_USER_AGENT_BLOCKLIST.split(',')
       .map((item) => item.trim())
       .filter(Boolean),
     rateLimitTrustedIps: parsedEnv.RATE_LIMIT_TRUSTED_IPS.split(',')
