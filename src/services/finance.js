@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 
 import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
+import { buildStoreQueryCacheKey, getPaginatedStoreCollectionDocuments, invalidateQueryCache } from './firestore';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 
 const financeTypes = new Set(['entrada', 'saida']);
@@ -91,6 +92,28 @@ export function subscribeToFinancialClosures(storeId, onData, onError) {
   );
 }
 
+export async function listFinancialClosuresPage({
+  storeId,
+  pageSize = 50,
+  cursor = null,
+} = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.financialClosures, {
+    orderField: 'createdAt',
+    orderDirection: 'desc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialClosures, 'page-by-createdAt'),
+  });
+}
+
 export function validateManualExpenseInput(values) {
   const description = values.description?.trim();
   const cashierName = values.cashierName?.trim() || 'Geral';
@@ -127,6 +150,7 @@ export async function createManualExpense({ storeId, tenantId, values }) {
     updatedAt: serverTimestamp(),
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialEntries));
   return entryRef.id;
 }
 
@@ -156,6 +180,7 @@ export async function createFinancialClosure({ storeId, tenantId, values }) {
     updatedAt: serverTimestamp(),
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialClosures));
   return closureRef.id;
 }
 

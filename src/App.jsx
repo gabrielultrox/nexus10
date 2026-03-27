@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import AppErrorBoundary from './components/system/AppErrorBoundary';
@@ -10,6 +11,7 @@ import {
   playNavigation,
   unbindGlobalSoundEffects,
 } from './services/soundManager';
+import { queryClient } from './services/queryClient';
 
 function App() {
   const navigate = useNavigate();
@@ -78,7 +80,7 @@ function App() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <AppErrorBoundary
         resetKey={location.pathname}
         onReset={() => {
@@ -90,7 +92,7 @@ function App() {
         <AppRoutes />
       </AppErrorBoundary>
       {bootVisible ? <SystemBoot onComplete={handleBootComplete} /> : null}
-    </>
+    </QueryClientProvider>
   );
 }
 
