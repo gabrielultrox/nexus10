@@ -690,6 +690,16 @@ body::after {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow-rgb) 10%, transparent);
 }
 
+.theme-toggle:focus-visible,
+.sidebar__link:focus-visible,
+.notification-center__trigger:focus-visible,
+.page-tabs__tab:focus-visible,
+.commerce-shell__back-button:focus-visible,
+.commerce-shell__tab:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-cyan) 65%, white);
+  outline-offset: 2px;
+}
+
 .theme-toggle__label {
   font-family: var(--font-mono);
   font-size: 0.64rem;

@@ -139,11 +139,12 @@ function DashboardPage() {
   }
 
   return (
-    <div className="page-stack">
+    <main className="page-stack" aria-labelledby="dashboard-page-title">
       <PageIntro
         eyebrow="Overview"
         title="Dashboard Operacional"
         description="Indicadores, alertas e leitura rapida do turno."
+        titleId="dashboard-page-title"
       />
 
       <section className="dashboard-shell">
@@ -154,22 +155,31 @@ function DashboardPage() {
           onSetPreset={handlePresetChange}
         />
 
-        {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
+        {errorMessage ? (
+          <div className="auth-error" role="alert" aria-live="assertive">
+            {errorMessage}
+          </div>
+        ) : null}
 
-        {operations.reminders?.map((reminder) => (
-          <button
-            key={reminder.id}
-            type="button"
-            className={`dashboard-alert dashboard-alert--${reminder.type}`}
-            onClick={() => reminder.route && navigate(reminder.route)}
-          >
-            <span className="dashboard-alert__dot" aria-hidden="true" />
-            <div className="dashboard-alert__copy">
-              <strong>{reminder.title}</strong>
-              <span>{reminder.message}</span>
-            </div>
-          </button>
-        ))}
+        {operations.reminders?.length ? (
+          <section aria-label="Lembretes operacionais">
+            {operations.reminders.map((reminder) => (
+              <button
+                key={reminder.id}
+                type="button"
+                className={`dashboard-alert dashboard-alert--${reminder.type}`}
+                onClick={() => reminder.route && navigate(reminder.route)}
+                title={reminder.title}
+              >
+                <span className="dashboard-alert__dot" aria-hidden="true" />
+                <div className="dashboard-alert__copy">
+                  <strong>{reminder.title}</strong>
+                  <span>{reminder.message}</span>
+                </div>
+              </button>
+            ))}
+          </section>
+        ) : null}
 
         <DashboardKpiGrid items={kpis} />
         <Suspense fallback={<EmptyState message="Carregando graficos..." />}>
@@ -177,7 +187,7 @@ function DashboardPage() {
         </Suspense>
         <DashboardOperationalSummary operations={operations} />
       </section>
-    </div>
+    </main>
   )
 }
 

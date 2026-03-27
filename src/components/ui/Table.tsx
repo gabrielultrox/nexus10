@@ -19,6 +19,7 @@ function Table<TData extends Record<string, unknown>>({
   data,
   pageSize = 10,
   emptyMessage = 'Nenhum registro encontrado.',
+  caption,
   defaultSort = null,
   getRowKey,
 }: ITableProps<TData>) {
@@ -68,6 +69,7 @@ function Table<TData extends Record<string, unknown>>({
     <div className="ui-table-shell">
       <div className="ui-table-shell__scroller">
         <table className="ui-table">
+          {caption ? <caption className="ui-sr-only">{caption}</caption> : null}
           <thead>
             <tr>
               {columns.map((column) => {
@@ -76,6 +78,7 @@ function Table<TData extends Record<string, unknown>>({
                 return (
                   <th
                     key={column.key}
+                    scope="col"
                     style={column.width ? { width: column.width } : undefined}
                     aria-sort={
                       isSorted
@@ -90,6 +93,10 @@ function Table<TData extends Record<string, unknown>>({
                         type="button"
                         className={`ui-table__sort${isSorted ? ' is-active' : ''}`}
                         onClick={() => toggleSort(column)}
+                        aria-label={
+                          column.headerAriaLabel ??
+                          `Ordenar por ${String(column.label)}${isSorted ? `, ${sortState.direction}` : ''}`
+                        }
                       >
                         <span>{column.label}</span>
                         <span className="ui-table__sort-icon" aria-hidden="true">
@@ -120,7 +127,7 @@ function Table<TData extends Record<string, unknown>>({
             ) : (
               <tr>
                 <td colSpan={columns.length}>
-                  <div className="empty-state">
+                  <div className="empty-state" role="status" aria-live="polite">
                     <span className="empty-state__message">{emptyMessage}</span>
                   </div>
                 </td>
@@ -129,7 +136,7 @@ function Table<TData extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <div className="ui-table__pagination">
+      <nav className="ui-table__pagination" aria-label="Paginacao da tabela">
         <p className="ui-table__pagination-meta">
           Pagina {safePage} de {totalPages}
         </p>
@@ -138,6 +145,7 @@ function Table<TData extends Record<string, unknown>>({
             variant="ghost"
             disabled={safePage <= 1}
             onClick={() => setPage((value) => Math.max(1, value - 1))}
+            aria-label="Ir para a pagina anterior"
           >
             Anterior
           </Button>
@@ -145,11 +153,12 @@ function Table<TData extends Record<string, unknown>>({
             variant="ghost"
             disabled={safePage >= totalPages}
             onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+            aria-label="Ir para a proxima pagina"
           >
             Proxima
           </Button>
         </div>
-      </div>
+      </nav>
     </div>
   )
 }

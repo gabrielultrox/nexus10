@@ -36,7 +36,7 @@ type CardComponent = React.ForwardRefExoticComponent<
 
 const Card = Object.assign(
   forwardRef<HTMLElement, ICardProps>(function Card(
-    { children, className = '', interactive = false, ...props },
+    { children, className = '', interactive = false, as: Component = 'section', ...props },
     ref,
   ) {
     const classes = ['ui-card', interactive ? 'ui-card--interactive' : '', className]
@@ -44,9 +44,14 @@ const Card = Object.assign(
       .join(' ')
 
     return (
-      <section ref={ref} className={classes} {...props}>
+      <Component
+        ref={ref}
+        className={classes}
+        tabIndex={interactive ? 0 : props.tabIndex}
+        {...props}
+      >
         {children}
-      </section>
+      </Component>
     )
   }),
   {

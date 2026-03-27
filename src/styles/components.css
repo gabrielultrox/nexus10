@@ -2088,3 +2088,49 @@
     transition: none;
   }
 }
+
+.ui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-button:focus-visible,
+.ui-destructive-button:focus-visible,
+.ui-modal__close:focus-visible,
+.ui-table__sort:focus-visible,
+.ui-search-select__trigger:focus-visible,
+.ui-search-select__option:focus-visible,
+.ui-date-picker__trigger:focus-visible,
+.ui-date-picker__day:focus-visible,
+.ui-date-picker__nav:focus-visible,
+.ui-file-input__dropzone:focus-visible,
+.auth-pin__key:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-cyan) 65%, white);
+  outline-offset: 2px;
+}
+
+.ui-checkbox__input:focus-visible + .ui-checkbox__indicator,
+.ui-radio__input:focus-visible + .ui-radio__indicator {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--color-accent-cyan) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 6%, transparent);
+}
+
+.dashboard-filters__fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-search-select__option.is-active {
+  background: color-mix(in srgb, var(--surface-panel-highlight) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, transparent);
+}

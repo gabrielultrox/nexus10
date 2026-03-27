@@ -1,6 +1,7 @@
 import type {
   ButtonHTMLAttributes,
   CSSProperties,
+  ElementType,
   HTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
@@ -11,7 +12,7 @@ export type UIButtonType = 'button' | 'submit' | 'reset'
 export type UITableSortDirection = 'asc' | 'desc'
 
 export interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode
+  children?: ReactNode
   className?: string
   variant?: UIButtonVariant
   type?: UIButtonType
@@ -26,6 +27,7 @@ export interface ICardProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode
   className?: string
   interactive?: boolean
+  as?: ElementType
 }
 
 export interface IModalProps {
@@ -36,6 +38,8 @@ export interface IModalProps {
   footer?: ReactNode
   closeLabel?: string
   showCloseButton?: boolean
+  closeOnEscape?: boolean
+  initialFocusSelector?: string
   onClose: () => void
 }
 
@@ -45,6 +49,7 @@ export interface ITableColumn<TData extends Record<string, unknown>> {
   sortable?: boolean
   width?: CSSProperties['width']
   render?: (row: TData) => ReactNode
+  headerAriaLabel?: string
 }
 
 export interface ITableSortState<TData extends Record<string, unknown>> {
@@ -57,6 +62,7 @@ export interface ITableProps<TData extends Record<string, unknown>> {
   data: TData[]
   pageSize?: number
   emptyMessage?: ReactNode
+  caption?: ReactNode
   defaultSort?: ITableSortState<TData> | null
   getRowKey?: (row: TData, rowIndex: number) => string | number
 }

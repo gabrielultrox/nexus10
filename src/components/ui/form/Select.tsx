@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import type { IFormSelectProps, ISelectOption, ISelectOptionGroup } from './types'
 
@@ -30,13 +30,17 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
     error = false,
     value,
     name,
+    id,
     ...props
   },
   ref,
 ) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
   const shellRef = useRef<HTMLDivElement | null>(null)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const listboxId = useId()
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,13 +72,87 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
     })
   }, [flatOptions, query, supportsSearch])
 
+  useEffect(() => {
+    const selectedIndex = filteredOptions.findIndex((option) => option.value === value)
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0)
+  }, [filteredOptions, value])
+
+  useEffect(() => {
+    if (isOpen) {
+      searchInputRef.current?.focus()
+    } else {
+      setQuery('')
+    }
+  }, [isOpen])
+
   const selectedOption = flatOptions.find((option) => option.value === value)
+  const activeOption = filteredOptions[activeIndex]
+  const labelledBy = props['aria-labelledby']
 
   function emitValue(nextValue: string) {
     onValueChange?.(nextValue)
     onChange?.({
       target: { value: nextValue, name },
     } as never as React.ChangeEvent<HTMLSelectElement>)
+  }
+
+  function closeDropdown() {
+    setIsOpen(false)
+    setQuery('')
+  }
+
+  function openDropdown() {
+    if (disabled) {
+      return
+    }
+
+    setIsOpen(true)
+  }
+
+  function handleTriggerKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (disabled) {
+      return
+    }
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      openDropdown()
+      return
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      setIsOpen((current) => !current)
+    }
+
+    if (event.key === 'Escape') {
+      closeDropdown()
+    }
+  }
+
+  function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveIndex((current) => Math.min(filteredOptions.length - 1, current + 1))
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveIndex((current) => Math.max(0, current - 1))
+      return
+    }
+
+    if (event.key === 'Enter' && activeOption && !activeOption.disabled) {
+      event.preventDefault()
+      emitValue(activeOption.value)
+      closeDropdown()
+      return
+    }
+
+    if (event.key === 'Escape' || event.key === 'Tab') {
+      closeDropdown()
+    }
   }
 
   if (!supportsSearch) {
@@ -91,6 +169,7 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
       >
         <select
           ref={ref}
+          id={id}
           className="ui-select"
           disabled={disabled}
           value={value}
@@ -142,10 +221,23 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
         .join(' ')}
     >
       <button
+        id={id}
         type="button"
         className="ui-search-select__trigger"
         disabled={disabled}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-haspopup="listbox"
+        aria-label={props['aria-label']}
+        aria-labelledby={labelledBy}
+        aria-describedby={props['aria-describedby']}
+        aria-invalid={props['aria-invalid']}
+        aria-activedescendant={
+          isOpen && activeOption ? `${listboxId}-${activeOption.value}` : undefined
+        }
         onClick={() => setIsOpen((current) => !current)}
+        onKeyDown={handleTriggerKeyDown}
       >
         <span className={selectedOption ? '' : 'is-placeholder'}>
           {selectedOption?.label ?? placeholder ?? 'Selecione'}
@@ -155,37 +247,46 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
       {isOpen ? (
         <div className="ui-search-select__dropdown">
           <input
+            ref={searchInputRef}
             type="search"
             className="ui-input ui-search-select__search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
             placeholder={searchPlaceholder}
-            autoFocus
+            role="searchbox"
+            aria-controls={listboxId}
           />
-          <div className="ui-search-select__options">
+          <div id={listboxId} className="ui-search-select__options" role="listbox">
             {filteredOptions.length ? (
-              filteredOptions.map((option) => (
+              filteredOptions.map((option, optionIndex) => (
                 <button
                   key={option.value}
+                  id={`${listboxId}-${option.value}`}
                   type="button"
+                  role="option"
+                  aria-selected={option.value === value}
                   className={[
                     'ui-search-select__option',
                     option.value === value ? 'is-selected' : '',
+                    optionIndex === activeIndex ? 'is-active' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
                   disabled={option.disabled}
+                  onMouseEnter={() => setActiveIndex(optionIndex)}
                   onClick={() => {
                     emitValue(option.value)
-                    setIsOpen(false)
-                    setQuery('')
+                    closeDropdown()
                   }}
                 >
                   {option.label}
                 </button>
               ))
             ) : (
-              <div className="ui-search-select__empty">Nenhuma opcao encontrada.</div>
+              <div className="ui-search-select__empty" role="status" aria-live="polite">
+                Nenhuma opcao encontrada.
+              </div>
             )}
           </div>
         </div>

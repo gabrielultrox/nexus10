@@ -1,36 +1,45 @@
 function DashboardFilters({ startDate, endDate, onChange, onSetPreset }) {
   return (
-    <section className="dashboard-filters">
+    <form
+      className="dashboard-filters"
+      aria-label="Filtros do dashboard"
+      onSubmit={(event) => event.preventDefault()}
+    >
       <div className="dashboard-filters__copy">
         <strong className="dashboard-filters__title">Periodo operacional</strong>
       </div>
 
       <div className="dashboard-filters__fields-wrap">
-        <div className="dashboard-filters__fields">
+        <fieldset className="dashboard-filters__fields">
+          <legend className="ui-sr-only">Selecionar periodo operacional</legend>
           <div className="ui-field">
+            <label className="ui-label ui-sr-only" htmlFor="dashboard-start-date">
+              Data inicial
+            </label>
             <input
               id="dashboard-start-date"
               className="ui-input"
               type="date"
-              aria-label="Data inicial"
               value={startDate}
               onChange={(event) => onChange('startDate', event.target.value)}
             />
           </div>
 
           <div className="ui-field">
+            <label className="ui-label ui-sr-only" htmlFor="dashboard-end-date">
+              Data final
+            </label>
             <input
               id="dashboard-end-date"
               className="ui-input"
               type="date"
-              aria-label="Data final"
               value={endDate}
               onChange={(event) => onChange('endDate', event.target.value)}
             />
           </div>
-        </div>
+        </fieldset>
 
-        <div className="dashboard-filters__actions">
+        <div className="dashboard-filters__actions" role="group" aria-label="Atalhos de periodo">
           <button
             type="button"
             className="ui-button ui-button--ghost"
@@ -54,7 +63,7 @@ function DashboardFilters({ startDate, endDate, onChange, onSetPreset }) {
           </button>
         </div>
       </div>
-    </section>
+    </form>
   )
 }
 

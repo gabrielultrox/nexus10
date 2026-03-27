@@ -22,6 +22,8 @@ function LoginPage() {
   const [pinError, setPinError] = useState('')
   const [pinUnlocked, setPinUnlocked] = useState(false)
   const [customPinEnabled, setCustomPinEnabled] = useState(false)
+  const pinErrorId = 'login-pin-error'
+  const authErrorId = 'login-auth-error'
 
   const redirectPath = location.state?.from?.pathname ?? '/dashboard'
 
@@ -117,7 +119,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="auth-screen auth-sequence">
+    <main className="auth-screen auth-sequence" aria-labelledby="login-page-title">
       <div className="auth-sequence__chrome">
         <div className="auth-sequence__chrome-brand">
           <img src="/brand-bolt-red.svg" alt="" />
@@ -139,7 +141,9 @@ function LoginPage() {
           <div className="auth-pin__shell">
             <div className="auth-pin__hero">
               <p className="text-overline">Acesso local</p>
-              <h1 className="text-display">Confirmar PIN local</h1>
+              <h1 id="login-page-title" className="text-display">
+                Confirmar PIN local
+              </h1>
               <p className="text-body">
                 Confirme o PIN da loja para liberar o acesso rapido ao ambiente operacional.
               </p>
@@ -183,6 +187,8 @@ function LoginPage() {
               <div
                 className="auth-pin__dots"
                 aria-label={`PIN com ${pinValue.length} digitos preenchidos`}
+                role="status"
+                aria-live="polite"
               >
                 {[0, 1, 2, 3].map((index) => (
                   <span
@@ -192,7 +198,11 @@ function LoginPage() {
                 ))}
               </div>
 
-              {pinError ? <div className="auth-error">{pinError}</div> : null}
+              {pinError ? (
+                <div id={pinErrorId} className="auth-error" role="alert" aria-live="assertive">
+                  {pinError}
+                </div>
+              ) : null}
 
               <div className="auth-pin__keypad">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].map((digit) => (
@@ -202,6 +212,8 @@ function LoginPage() {
                     className="auth-pin__key"
                     onClick={() => handlePinDigit(digit)}
                     disabled={pinValue.length >= 4}
+                    aria-label={`Digito ${digit}`}
+                    aria-describedby={pinError ? pinErrorId : undefined}
                   >
                     {digit}
                   </button>
@@ -210,6 +222,8 @@ function LoginPage() {
                   type="button"
                   className="auth-pin__key auth-pin__key--wide"
                   onClick={handlePinBackspace}
+                  aria-label="Apagar ultimo digito"
+                  aria-describedby={pinError ? pinErrorId : undefined}
                 >
                   Backspace
                 </button>
@@ -259,6 +273,8 @@ function LoginPage() {
                   className="ui-input"
                   value={formState.operatorName}
                   onChange={(event) => handleChange('operatorName', event.target.value)}
+                  aria-invalid={Boolean(errorMessage || authError)}
+                  aria-describedby={errorMessage || authError ? authErrorId : undefined}
                 >
                   <option value="">Selecione</option>
                   {operatorOptions.map((operatorName) => (
@@ -281,11 +297,15 @@ function LoginPage() {
                   onChange={(event) => handleChange('password', event.target.value)}
                   placeholder="******"
                   autoComplete="current-password"
+                  aria-invalid={Boolean(errorMessage || authError)}
+                  aria-describedby={errorMessage || authError ? authErrorId : undefined}
                 />
               </div>
 
               {errorMessage || authError ? (
-                <div className="auth-error">{errorMessage || authError}</div>
+                <div id={authErrorId} className="auth-error" role="alert" aria-live="assertive">
+                  {errorMessage || authError}
+                </div>
               ) : null}
 
               <button
@@ -299,7 +319,7 @@ function LoginPage() {
           </div>
         </section>
       ) : null}
-    </div>
+    </main>
   )
 }
 
