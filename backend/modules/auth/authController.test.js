@@ -30,12 +30,30 @@ vi.mock('../../config/env.js', () => ({
 
 vi.mock('../../config/localOperators.js', () => ({
   getLocalOperatorProfile: getLocalOperatorProfileMock,
+  localOperatorProfiles: [
+    { operatorName: 'Gabriel', role: 'admin' },
+    { operatorName: 'Maria Eduarda', role: 'gerente' },
+  ],
 }))
 
 vi.mock('../../cache/cacheService.js', () => ({
   buildCacheKey: vi.fn(() => 'nexus10:session:profile:local-gabriel'),
   cacheSet: cacheSetMock,
 }))
+
+vi.mock('../../logging/logger.js', async () => {
+  const actual = await vi.importActual('../../logging/logger.js')
+  return {
+    ...actual,
+    createLoggerContext: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    withMethodLogging: vi.fn((_config, handler) => handler),
+  }
+})
 
 function createResponseMock() {
   return {
@@ -56,9 +74,7 @@ async function runRegisteredRoute(app, request) {
   const [, ...handlers] = app.post.mock.calls[0]
   const response = createResponseMock()
 
-  let index = 0
-
-  async function dispatch(error) {
+  async function dispatch(index, error) {
     if (error instanceof RequestValidationError) {
       response.status(error.statusCode).json({
         error: error.message,
@@ -70,16 +86,26 @@ async function runRegisteredRoute(app, request) {
     }
 
     const handler = handlers[index]
-    index += 1
 
     if (!handler) {
       return
     }
 
-    await handler(request, response, dispatch)
+    let nextPromise = null
+
+    const next = (nextError) => {
+      nextPromise = dispatch(index + 1, nextError)
+      return nextPromise
+    }
+
+    await handler(request, response, next)
+
+    if (nextPromise) {
+      await nextPromise
+    }
   }
 
-  await dispatch()
+  await dispatch(0)
   return response
 }
 
@@ -91,7 +117,7 @@ describe('registerAuthRoutes', () => {
 
   it('retorna 400 quando o operador nao e informado', async () => {
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -110,7 +136,7 @@ describe('registerAuthRoutes', () => {
 
   it('retorna 401 quando a senha estiver incorreta', async () => {
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -135,7 +161,7 @@ describe('registerAuthRoutes', () => {
     createCustomTokenMock.mockResolvedValue('custom-token-123')
 
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -167,7 +193,7 @@ describe('registerAuthRoutes', () => {
     })
 
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 

@@ -42,10 +42,13 @@ export interface AuthenticatedUserContext {
 }
 
 export interface RequestLoggerLike {
+  trace?: (payload: unknown, message?: string) => void
   debug?: (payload: unknown, message?: string) => void
   info: (payload: unknown, message?: string) => void
   warn: (payload: unknown, message?: string) => void
   error: (payload: unknown, message?: string) => void
+  fatal?: (payload: unknown, message?: string) => void
+  child?: (bindings: Record<string, unknown>) => RequestLoggerLike
 }
 
 export interface AuthSessionResponseBody {

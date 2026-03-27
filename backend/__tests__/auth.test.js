@@ -30,9 +30,8 @@ function createResponseMock() {
 async function runRegisteredRoute(app, request) {
   const [, ...handlers] = app.post.mock.calls[0]
   const response = createResponseMock()
-  let index = 0
 
-  async function dispatch(error) {
+  async function dispatch(index, error) {
     if (error instanceof RequestValidationError) {
       response.status(error.statusCode).json({
         error: error.message,
@@ -44,16 +43,26 @@ async function runRegisteredRoute(app, request) {
     }
 
     const handler = handlers[index]
-    index += 1
 
     if (!handler) {
       return
     }
 
-    await handler(request, response, dispatch)
+    let nextPromise = null
+
+    const next = (nextError) => {
+      nextPromise = dispatch(index + 1, nextError)
+      return nextPromise
+    }
+
+    await handler(request, response, next)
+
+    if (nextPromise) {
+      await nextPromise
+    }
   }
 
-  await dispatch()
+  await dispatch(0)
   return response
 }
 
@@ -115,6 +124,10 @@ async function loadAuthController({
 
   vi.doMock('../config/localOperators.js', () => ({
     getLocalOperatorProfile: getLocalOperatorProfileMock,
+    localOperatorProfiles: [
+      { operatorName: 'Gabriel', role: 'admin' },
+      { operatorName: 'Maria Eduarda', role: 'gerente' },
+    ],
   }))
 
   vi.doMock('../cache/cacheService.js', () => ({
@@ -124,6 +137,7 @@ async function loadAuthController({
 
   vi.doMock('../logging/logger.js', () => ({
     createLoggerContext: vi.fn(() => authLoggerMock),
+    withMethodLogging: vi.fn((_config, handler) => handler),
     serializeError: vi.fn((error) => ({
       type: error?.name ?? 'Error',
       message: error?.message ?? 'Unknown error',
@@ -140,17 +154,19 @@ describe('backend auth session route', () => {
 
   it('registra a rota POST /api/auth/session', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
     expect(app.post).toHaveBeenCalledTimes(1)
     expect(app.post.mock.calls[0][0]).toBe('/api/auth/session')
+    expect(app.get).toHaveBeenCalledTimes(1)
+    expect(app.get.mock.calls[0][0]).toBe('/api/auth/operators')
   })
 
   it('retorna 400 quando o payload falha na validacao', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -164,7 +180,7 @@ describe('backend auth session route', () => {
 
   it('retorna 401 quando o PIN estiver incorreto', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -182,7 +198,7 @@ describe('backend auth session route', () => {
     const { registerAuthRoutes } = await loadAuthController({
       localOperatorPassword: '',
     })
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -213,7 +229,7 @@ describe('backend auth session route', () => {
       profileOverride: profile,
       createCustomTokenResult: 'signed-custom-token',
     })
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -260,7 +276,7 @@ describe('backend auth session route', () => {
     const { registerAuthRoutes } = await loadAuthController({
       createCustomTokenError: new Error('Falha ao assinar token'),
     })
-    const app = { post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn() }
 
     registerAuthRoutes(app)
 

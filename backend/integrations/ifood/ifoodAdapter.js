@@ -1,3 +1,5 @@
+import { createLoggerContext, withMethodLogging } from '../../logging/logger.js'
+
 const defaultIfoodConfig = {
   authBaseUrl: 'https://merchant-api.ifood.com.br/authentication/v1.0',
   merchantBaseUrl: 'https://merchant-api.ifood.com.br',
@@ -21,13 +23,17 @@ function buildJsonHeaders(accessToken = null) {
 
 export function createIfoodAdapter({ fetchImpl = globalThis.fetch, config = {} } = {}) {
   if (typeof fetchImpl !== 'function') {
-    throw new Error('Um fetch compatível é obrigatório para o adapter do iFood.')
+    throw new Error('Um fetch compativel e obrigatorio para o adapter do iFood.')
   }
 
   const resolvedConfig = {
     ...defaultIfoodConfig,
     ...config,
   }
+
+  const adapterLogger = createLoggerContext({
+    module: 'integrations.ifood.adapter',
+  })
 
   async function requestJson(url, options = {}) {
     const response = await fetchImpl(url, options)
@@ -43,11 +49,16 @@ export function createIfoodAdapter({ fetchImpl = globalThis.fetch, config = {} }
     return payload
   }
 
-  return {
-    config: resolvedConfig,
-
-    async getAccessToken({ clientId, clientSecret }) {
-      return requestJson(`${resolvedConfig.authBaseUrl}/oauth/token`, {
+  const getAccessToken = withMethodLogging(
+    {
+      logger: adapterLogger,
+      action: 'ifood.get_access_token',
+      getStartPayload: ({ clientId }) => ({
+        client_id: clientId,
+      }),
+    },
+    async ({ clientId, clientSecret }) =>
+      requestJson(`${resolvedConfig.authBaseUrl}/oauth/token`, {
         method: 'POST',
         headers: buildJsonHeaders(),
         body: JSON.stringify({
@@ -55,32 +66,63 @@ export function createIfoodAdapter({ fetchImpl = globalThis.fetch, config = {} }
           clientId,
           clientSecret,
         }),
-      })
-    },
+      }),
+  )
 
-    async pollEvents({ accessToken }) {
-      return requestJson(`${resolvedConfig.merchantBaseUrl}${resolvedConfig.pollingPath}`, {
+  const pollEvents = withMethodLogging(
+    {
+      logger: adapterLogger,
+      action: 'ifood.poll_events',
+      getStartPayload: () => ({
+        endpoint: resolvedConfig.pollingPath,
+      }),
+    },
+    async ({ accessToken }) =>
+      requestJson(`${resolvedConfig.merchantBaseUrl}${resolvedConfig.pollingPath}`, {
         method: 'GET',
         headers: buildJsonHeaders(accessToken),
-      })
-    },
+      }),
+  )
 
-    async acknowledgeEvents({ accessToken, eventIds }) {
-      return requestJson(`${resolvedConfig.merchantBaseUrl}${resolvedConfig.acknowledgmentPath}`, {
+  const acknowledgeEvents = withMethodLogging(
+    {
+      logger: adapterLogger,
+      action: 'ifood.acknowledge_events',
+      getStartPayload: ({ eventIds }) => ({
+        event_count: Array.isArray(eventIds) ? eventIds.length : 0,
+      }),
+    },
+    async ({ accessToken, eventIds }) =>
+      requestJson(`${resolvedConfig.merchantBaseUrl}${resolvedConfig.acknowledgmentPath}`, {
         method: 'POST',
         headers: buildJsonHeaders(accessToken),
         body: JSON.stringify(eventIds),
-      })
-    },
+      }),
+  )
 
-    async getOrderDetails({ accessToken, orderId }) {
-      return requestJson(
+  const getOrderDetails = withMethodLogging(
+    {
+      logger: adapterLogger,
+      action: 'ifood.get_order_details',
+      getStartPayload: ({ orderId }) => ({
+        order_id: orderId,
+      }),
+    },
+    async ({ accessToken, orderId }) =>
+      requestJson(
         `${resolvedConfig.merchantBaseUrl}${resolvedConfig.orderDetailsPath}/${encodeURIComponent(orderId)}`,
         {
           method: 'GET',
           headers: buildJsonHeaders(accessToken),
         },
-      )
-    },
+      ),
+  )
+
+  return {
+    config: resolvedConfig,
+    getAccessToken,
+    pollEvents,
+    acknowledgeEvents,
+    getOrderDetails,
   }
 }
