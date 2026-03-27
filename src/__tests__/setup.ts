@@ -23,10 +23,12 @@ const localStorageMock = {
   store: {} as Record<string, string>,
 }
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-})
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+    writable: true,
+  })
+}
 
 vi.mock('firebase/app', () => ({
   initializeApp: vi.fn(() => ({ name: 'mock-app' })),

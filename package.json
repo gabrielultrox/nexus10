@@ -29,8 +29,9 @@
     "deploy:prod:manual": "vercel --prod -y",
     "release:auto": "node scripts/release-auto.mjs",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
     "firebase:login": "firebase login",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules",
     "firebase:deploy:indexes": "firebase deploy --only firestore:indexes"
