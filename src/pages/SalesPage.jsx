@@ -1,9 +1,10 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import PageTabs from '../components/common/PageTabs'
-import { Card, LoadingOverlay, Skeleton } from '../components/ui'
+import { Card, ErrorDisplay, LoadingOverlay, Skeleton } from '../components/ui'
 import { useDashboardSales, useStore } from '../hooks'
 import SalesModule from '../modules/sales/components/SalesModule'
+import { getApiErrorDisplayModel } from '../services/apiErrorHandler'
 
 function SalesPage() {
   const location = useLocation()
@@ -16,6 +17,7 @@ function SalesPage() {
     storeId: currentStoreId,
     enabled: viewMode === 'list',
   })
+  const salesErrorModel = salesQuery.error ? getApiErrorDisplayModel(salesQuery.error) : null
   const salesTabs = [
     { id: 'list', label: 'Lista de vendas' },
     { id: 'form', label: 'Nova venda' },
@@ -80,9 +82,16 @@ function SalesPage() {
                 <Skeleton lines={3} height="14px" />
               </div>
             ) : salesQuery.error ? (
-              <div className="auth-error" role="alert">
-                Nao foi possivel carregar o resumo das vendas.
-              </div>
+              <ErrorDisplay
+                code={salesErrorModel?.code}
+                title={salesErrorModel?.title}
+                message={
+                  salesErrorModel?.message ?? 'Nao foi possivel carregar o resumo das vendas.'
+                }
+                suggestion={salesErrorModel?.suggestion}
+                actionLabel="Tentar novamente"
+                onAction={() => salesQuery.refetch()}
+              />
             ) : (
               <div className="workspace-loading-grid">
                 <strong className="workspace-loading-card__value">
@@ -91,7 +100,7 @@ function SalesPage() {
                 <div className="workspace-loading-card__list">
                   {salesQuery.summary.items.slice(0, 3).map((item) => (
                     <span key={item.id} className="workspace-loading-card__item">
-                      {item.channelLabel ?? 'Canal nao informado'} · {item.status ?? 'Sem status'}
+                      {item.channelLabel ?? 'Canal nao informado'} - {item.status ?? 'Sem status'}
                     </span>
                   ))}
                 </div>

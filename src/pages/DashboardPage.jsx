@@ -7,8 +7,9 @@ import PageIntro from '../components/common/PageIntro'
 import DashboardFilters from '../components/dashboard/DashboardFilters'
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid'
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary'
-import { LoadingOverlay, Skeleton } from '../components/ui'
+import { ErrorDisplay, LoadingOverlay, Skeleton } from '../components/ui'
 import { useStore } from '../contexts/StoreContext'
+import { getApiErrorDisplayModel } from '../services/apiErrorHandler'
 import {
   buildDashboardData,
   getDefaultDashboardPeriod,
@@ -35,6 +36,7 @@ function DashboardPage() {
     loadDashboardOperationalSources(),
   )
   const [errorMessage, setErrorMessage] = useState('')
+  const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
 
   useEffect(() => {
@@ -63,6 +65,7 @@ function DashboardPage() {
     }
 
     setErrorMessage('')
+    setErrorObject(null)
     setIsDashboardLoading(true)
     const sourceLoadState = {
       sales: false,
@@ -102,10 +105,13 @@ function DashboardPage() {
       },
       onError(error) {
         setErrorMessage(error.message ?? 'Nao foi possivel carregar o dashboard operacional.')
+        setErrorObject(error)
         setIsDashboardLoading(false)
       },
     })
   }, [currentStoreId])
+
+  const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
 
   const { kpis, charts, operations } = useMemo(
     () =>
@@ -198,9 +204,17 @@ function DashboardPage() {
         />
 
         {errorMessage ? (
-          <div className="auth-error" role="alert" aria-live="assertive">
-            {errorMessage}
-          </div>
+          <ErrorDisplay
+            code={dashboardErrorModel?.code}
+            title={dashboardErrorModel?.title ?? 'Falha ao montar o dashboard'}
+            message={dashboardErrorModel?.message ?? errorMessage}
+            suggestion={
+              dashboardErrorModel?.suggestion ??
+              'Tente atualizar a pagina ou aguarde a proxima sincronizacao.'
+            }
+            actionLabel="Tentar novamente"
+            onAction={() => window.location.reload()}
+          />
         ) : null}
 
         {operations.reminders?.length ? (

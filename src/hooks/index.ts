@@ -18,6 +18,7 @@ export type { ConfirmTone, IConfirmApi, IConfirmOptions } from './useConfirm'
 
 export { useFetch } from './useFetch'
 export type { IUseFetchOptions, IUseFetchResult } from './useFetch'
+export { useError } from './useError'
 
 export { useOrders, useOrder, useOrderMutations } from './queries/useOrders'
 export type {

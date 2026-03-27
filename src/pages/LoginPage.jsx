@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import ThemeToggle from '../components/theme/ThemeToggle'
+import Button from '../components/ui/Button'
+import ErrorDisplay from '../components/ui/ErrorDisplay'
+import { useError } from '../hooks'
 import { useAuth } from '../contexts/AuthContext'
 import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess'
 import { playError, playSuccess } from '../services/soundManager'
@@ -17,6 +20,10 @@ function LoginPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({
+    operatorName: '',
+    password: '',
+  })
   const [stage, setStage] = useState('pin')
   const [pinValue, setPinValue] = useState('')
   const [pinError, setPinError] = useState('')
@@ -24,6 +31,15 @@ function LoginPage() {
   const [customPinEnabled, setCustomPinEnabled] = useState(false)
   const pinErrorId = 'login-pin-error'
   const authErrorId = 'login-auth-error'
+  const operatorErrorId = 'login-operator-error'
+  const passwordErrorId = 'login-password-error'
+  const { captureError, errorModel, clearError } = useError({
+    autoToast: false,
+    context: {
+      feature: 'auth',
+      action: 'login',
+    },
+  })
 
   const redirectPath = location.state?.from?.pathname ?? '/dashboard'
 
@@ -85,6 +101,12 @@ function LoginPage() {
   }, [pinValue, stage])
 
   function handleChange(field, value) {
+    clearError()
+    setErrorMessage('')
+    setFieldErrors((current) => ({
+      ...current,
+      [field]: '',
+    }))
     setFormState((current) => ({
       ...current,
       [field]: value,
@@ -105,13 +127,29 @@ function LoginPage() {
     event.preventDefault()
     setSubmitting(true)
     setErrorMessage('')
+    setFieldErrors({
+      operatorName: '',
+      password: '',
+    })
+
+    const nextFieldErrors = {
+      operatorName: formState.operatorName ? '' : 'Selecione um operador.',
+      password: formState.password ? '' : 'Informe a senha do operador.',
+    }
+
+    if (nextFieldErrors.operatorName || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors)
+      setSubmitting(false)
+      return
+    }
 
     try {
       await signIn(formState)
       playSuccess()
       navigate(redirectPath, { replace: true })
     } catch (error) {
-      setErrorMessage(error.message)
+      const normalized = captureError(error)
+      setErrorMessage(normalized.message)
       playError()
     } finally {
       setSubmitting(false)
@@ -270,11 +308,17 @@ function LoginPage() {
                 </label>
                 <Select
                   id="login-operator"
-                  className="ui-input"
+                  className={`ui-input${fieldErrors.operatorName ? ' is-error' : ''}`}
                   value={formState.operatorName}
                   onChange={(event) => handleChange('operatorName', event.target.value)}
-                  aria-invalid={Boolean(errorMessage || authError)}
-                  aria-describedby={errorMessage || authError ? authErrorId : undefined}
+                  aria-invalid={Boolean(fieldErrors.operatorName || errorMessage || authError)}
+                  aria-describedby={
+                    fieldErrors.operatorName
+                      ? operatorErrorId
+                      : errorMessage || authError
+                        ? authErrorId
+                        : undefined
+                  }
                 >
                   <option value="">Selecione</option>
                   {operatorOptions.map((operatorName) => (
@@ -283,6 +327,11 @@ function LoginPage() {
                     </option>
                   ))}
                 </Select>
+                {fieldErrors.operatorName ? (
+                  <p id={operatorErrorId} className="ui-field__error" role="alert">
+                    {fieldErrors.operatorName}
+                  </p>
+                ) : null}
               </div>
 
               <div className="ui-field">
@@ -291,30 +340,47 @@ function LoginPage() {
                 </label>
                 <input
                   id="login-password"
-                  className="ui-input"
+                  className={`ui-input${fieldErrors.password ? ' is-error' : ''}`}
                   type="password"
                   value={formState.password}
                   onChange={(event) => handleChange('password', event.target.value)}
                   placeholder="******"
                   autoComplete="current-password"
-                  aria-invalid={Boolean(errorMessage || authError)}
-                  aria-describedby={errorMessage || authError ? authErrorId : undefined}
+                  aria-invalid={Boolean(fieldErrors.password || errorMessage || authError)}
+                  aria-describedby={
+                    fieldErrors.password
+                      ? passwordErrorId
+                      : errorMessage || authError
+                        ? authErrorId
+                        : undefined
+                  }
                 />
+                {fieldErrors.password ? (
+                  <p id={passwordErrorId} className="ui-field__error" role="alert">
+                    {fieldErrors.password}
+                  </p>
+                ) : null}
               </div>
 
               {errorMessage || authError ? (
-                <div id={authErrorId} className="auth-error" role="alert" aria-live="assertive">
-                  {errorMessage || authError}
+                <div id={authErrorId}>
+                  <ErrorDisplay
+                    code={errorModel?.code}
+                    title={errorModel?.title ?? 'Falha na autenticacao'}
+                    message={errorMessage || authError}
+                    suggestion={errorModel?.suggestion ?? 'Revise os dados e tente novamente.'}
+                  />
                 </div>
               ) : null}
 
-              <button
+              <Button
                 type="submit"
-                className="ui-button ui-button--secondary auth-submit"
-                disabled={submitting}
+                variant="secondary"
+                className="auth-submit"
+                loading={submitting}
               >
-                {submitting ? 'Entrando...' : 'Entrar'}
-              </button>
+                Entrar
+              </Button>
             </form>
           </div>
         </section>

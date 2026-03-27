@@ -3,9 +3,10 @@ import '../styles/orders.css'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import PageTabs from '../components/common/PageTabs'
-import { Card, LoadingOverlay, Skeleton } from '../components/ui'
+import { Card, ErrorDisplay, LoadingOverlay, Skeleton } from '../components/ui'
 import { useDashboardOrders, useStore } from '../hooks'
 import OrdersModule from '../modules/orders/components/OrdersModule'
+import { getApiErrorDisplayModel } from '../services/apiErrorHandler'
 
 function OrdersPage() {
   const location = useLocation()
@@ -19,6 +20,7 @@ function OrdersPage() {
     storeId: currentStoreId,
     enabled: viewMode === 'list',
   })
+  const ordersErrorModel = ordersQuery.error ? getApiErrorDisplayModel(ordersQuery.error) : null
   const orderTabs = [
     { id: 'list', label: 'Lista de pedidos' },
     { id: 'form', label: viewMode === 'edit' ? 'Editar pedido' : 'Novo pedido' },
@@ -88,9 +90,16 @@ function OrdersPage() {
                 <Skeleton lines={3} height="14px" />
               </div>
             ) : ordersQuery.error ? (
-              <div className="auth-error" role="alert">
-                Nao foi possivel carregar o resumo dos pedidos.
-              </div>
+              <ErrorDisplay
+                code={ordersErrorModel?.code}
+                title={ordersErrorModel?.title}
+                message={
+                  ordersErrorModel?.message ?? 'Nao foi possivel carregar o resumo dos pedidos.'
+                }
+                suggestion={ordersErrorModel?.suggestion}
+                actionLabel="Tentar novamente"
+                onAction={() => ordersQuery.refetch()}
+              />
             ) : (
               <div className="workspace-loading-grid">
                 <strong className="workspace-loading-card__value">
@@ -99,7 +108,7 @@ function OrdersPage() {
                 <div className="workspace-loading-card__list">
                   {ordersQuery.summary.items.slice(0, 3).map((item) => (
                     <span key={item.id} className="workspace-loading-card__item">
-                      {item.customerName ?? 'Cliente sem nome'} · {item.status ?? 'Sem status'}
+                      {item.customerName ?? 'Cliente sem nome'} - {item.status ?? 'Sem status'}
                     </span>
                   ))}
                 </div>

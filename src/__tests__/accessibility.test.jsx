@@ -9,6 +9,7 @@ import Select from '../components/ui/Select'
 import Table from '../components/ui/Table'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/LoginPage'
+import { ToastProvider } from '../hooks'
 
 const mockNavigate = vi.fn()
 const mockUseAuth = vi.fn()
@@ -184,9 +185,11 @@ describe('Accessibility audit', () => {
 
   it('renders login page shell without accessibility violations', async () => {
     const { container } = render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>
+      </ToastProvider>,
     )
 
     expect(screen.getByRole('heading', { name: 'Confirmar PIN local' })).toBeInTheDocument()

@@ -3,10 +3,12 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import AppErrorBoundary from './components/system/AppErrorBoundary'
+import ErrorDisplay from './components/ui/ErrorDisplay'
 import SystemBoot from './components/system/SystemBoot'
 import { ensureFrontendEnvLoaded } from './config/env'
 import { useAuth, useConfirm, useStore, useToast } from './hooks'
 import AppRoutes from './routes'
+import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
 import { loadResettableLocalRecords } from './services/localAccess'
 import {
   bindGlobalSoundEffects,
@@ -47,6 +49,10 @@ function App() {
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false)
   const [routeAnimationKey, setRouteAnimationKey] = useState(0)
   const [isRoutePending, startRouteTransition] = useTransition()
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false,
+  )
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0)
   const lastPathRef = useRef(location.pathname)
   const bootVisible = !bootSequenceComplete || loading
 
@@ -65,6 +71,33 @@ function App() {
       unbindGlobalSoundEffects()
     }
   }, [])
+
+  useEffect(() => {
+    function syncOfflineState() {
+      setIsOffline(!navigator.onLine)
+      setOfflineQueueCount(getPendingOfflineRequestsCount())
+    }
+
+    async function handleReconnect() {
+      syncOfflineState()
+      const result = await retryPendingOfflineRequests().catch(() => null)
+
+      if (result?.flushedCount) {
+        toast.success(`${result.flushedCount} acao(oes) offline reenviada(s).`)
+      }
+
+      syncOfflineState()
+    }
+
+    syncOfflineState()
+    window.addEventListener('online', handleReconnect)
+    window.addEventListener('offline', syncOfflineState)
+
+    return () => {
+      window.removeEventListener('online', handleReconnect)
+      window.removeEventListener('offline', syncOfflineState)
+    }
+  }, [toast])
 
   useEffect(() => {
     if (bootVisible) {
@@ -173,6 +206,21 @@ function App() {
           }
         }}
       >
+        {isOffline ? (
+          <div className="app-offline-banner">
+            <ErrorDisplay
+              code="ERR_010"
+              variant="warning"
+              title="Modo offline ativo"
+              message="O app perdeu conexao com o servidor."
+              suggestion={
+                offlineQueueCount > 0
+                  ? `${offlineQueueCount} acao(oes) aguardando reenvio automatico ao reconectar.`
+                  : 'As proximas mutacoes podem entrar em fila para reenvio automatico.'
+              }
+            />
+          </div>
+        ) : null}
         <div
           key={routeAnimationKey}
           className={`motion-route-stage${isRoutePending ? ' is-transitioning' : ''}`}

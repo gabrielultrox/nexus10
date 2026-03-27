@@ -1,5 +1,6 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 
+import { captureErrorForMonitoring } from './apiErrorHandler'
 import { ErrorCode, ErrorHandler } from './errorHandler'
 
 function shouldRetry(failureCount: number, error: unknown) {
@@ -40,20 +41,20 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError(error, query) {
       const normalized = ErrorHandler.normalize(error)
-
-      console.error('React Query request failed', {
-        queryKey: query.queryKey,
-        error: normalized.toJSON(),
+      captureErrorForMonitoring(normalized, {
+        feature: 'react-query',
+        action: 'query',
+        queryKey: JSON.stringify(query.queryKey),
       })
     },
   }),
   mutationCache: new MutationCache({
     onError(error, _variables, _context, mutation) {
       const normalized = ErrorHandler.normalize(error)
-
-      console.error('React Query mutation failed', {
-        mutationKey: mutation.options.mutationKey,
-        error: normalized.toJSON(),
+      captureErrorForMonitoring(normalized, {
+        feature: 'react-query',
+        action: 'mutation',
+        mutationKey: JSON.stringify(mutation.options.mutationKey ?? []),
       })
     },
   }),
