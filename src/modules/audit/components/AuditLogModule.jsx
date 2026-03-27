@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
+import Button from '../../../components/ui/Button';
 import EmptyState from '../../../components/ui/EmptyState';
 import {
   buildAuditLogsCsv,
@@ -225,21 +226,21 @@ function AuditLogModule() {
         </div>
 
         <div className="audit-log-toolbar-actions">
-          <button type="button" className="ui-button ui-button--ghost" onClick={() => {
+          <Button type="button" variant="secondary" onClick={() => {
             setFilters({ ...INITIAL_FILTERS });
             setPage(1);
           }}>
             Limpar filtros
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className="ui-button ui-button--secondary"
+            variant="secondary"
             onClick={handleExportCsv}
             disabled={exporting || loading}
           >
             {exporting ? 'Exportando CSV...' : 'Exportar CSV'}
-          </button>
+          </Button>
         </div>
       </SurfaceCard>
 
@@ -287,22 +288,22 @@ function AuditLogModule() {
               </p>
 
               <div className="audit-log-pagination__actions">
-                <button
+                <Button
                   type="button"
-                  className="ui-button ui-button--ghost"
+                  variant="secondary"
                   onClick={() => setPage((current) => Math.max(current - 1, 1))}
                   disabled={pagination.page <= 1}
                 >
                   Anterior
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="ui-button ui-button--ghost"
+                  variant="secondary"
                   onClick={() => setPage((current) => current + 1)}
                   disabled={pagination.pages === 0 || pagination.page >= pagination.pages}
                 >
                   Proxima
-                </button>
+                </Button>
               </div>
             </div>
           </>

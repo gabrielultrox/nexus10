@@ -28,6 +28,7 @@ import {
   subscribeToCashState,
 } from '../../../services/cashStateService';
 import { playCashSuccess, playWarning } from '../../../services/soundManager';
+import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 
@@ -207,13 +208,9 @@ function CashHistoryTable({ records, onPrint, onDelete }) {
               <td className="ui-table__cell--muted">{formatDateTime(record.createdAtClient)}</td>
               <td>
                 <div className="cash-module__history-actions">
-                  <button
-                    type="button"
-                    className="ui-button ui-button--ghost"
-                    onClick={() => onPrint(record)}
-                  >
+                  <Button variant="secondary" onClick={() => onPrint(record)}>
                     Imprimir
-                  </button>
+                  </Button>
                   <DestructiveIconButton
                     className="native-module__delete-action"
                     onClick={() => onDelete(record.id)}
@@ -820,16 +817,12 @@ function CashModule() {
                 </div>
               ) : null}
 
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={clearForm}
-              >
+              <Button variant="secondary" onClick={clearForm}>
                 Limpar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="ui-button ui-button--primary"
+                variant="primary"
                 disabled={
                   isSaving
                   || (activeTab.id !== 'opening' && !isCashOpen)
@@ -848,7 +841,7 @@ function CashModule() {
                 }
               >
                 {activeTab.submitLabel}
-              </button>
+              </Button>
             </FormRow>
           )}
 
@@ -861,12 +854,12 @@ function CashModule() {
                 ) : null}
               </div>
               <div className="cash-module__form-actions">
-                <button type="button" className="ui-button ui-button--ghost" onClick={() => setConfirmAction(null)}>
+                <Button type="button" variant="secondary" onClick={() => setConfirmAction(null)}>
                   Cancelar
-                </button>
-                <button type="button" className="ui-button ui-button--primary" onClick={handleConfirmAction} disabled={isSaving}>
+                </Button>
+                <Button type="button" variant="primary" onClick={handleConfirmAction} disabled={isSaving}>
                   Confirmar
-                </button>
+                </Button>
               </div>
             </div>
           ) : null}
@@ -884,13 +877,9 @@ function CashModule() {
               Ver historico do caixa
             </Link>
             {records.length > 0 ? (
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={handleClearHistory}
-              >
+              <Button variant="secondary" onClick={handleClearHistory}>
                 Limpar historico
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>

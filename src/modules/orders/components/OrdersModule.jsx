@@ -22,6 +22,7 @@ import { subscribeToProducts } from '../../../services/productService';
 import { playDestructive, playError, playNotification, playPdvSuccess } from '../../../services/soundManager';
 import OrderDetailPanel from './OrderDetailPanel';
 import OrderFormPanel from './OrderFormPanel';
+import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
 import DestructiveIconButton from '../../../components/ui/DestructiveIconButton';
@@ -1006,8 +1007,8 @@ function OrdersModule({
                                     <div className="orders-domain__inline-confirm" onClick={(event) => event.stopPropagation()}>
                                       <p>{actionConfig.confirmMessage}</p>
                                       <div className="orders-domain__inline-confirm-actions">
-                                        <button
-                                          type="button"
+                                        <Button
+                                          variant="secondary"
                                           className="orders-domain__inline-button"
                                           onClick={(event) => {
                                             event.stopPropagation();
@@ -1015,19 +1016,19 @@ function OrdersModule({
                                           }}
                                         >
                                           Cancelar
-                                        </button>
-                                        <button
-                                          type="button"
+                                        </Button>
+                                        <Button
+                                          variant={actionConfig.tone === 'success' ? 'primary' : actionConfig.tone === 'info' ? 'secondary' : 'danger'}
                                           className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
                                           onClick={(event) => handleInlineActionConfirm(order, actionConfig, event)}
                                         >
                                           Confirmar
-                                        </button>
+                                        </Button>
                                       </div>
                                     </div>
                                   ) : (
-                                    <button
-                                      type="button"
+                                    <Button
+                                      variant={actionConfig.tone === 'success' ? 'primary' : actionConfig.tone === 'info' ? 'secondary' : 'danger'}
                                       className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
                                       onClick={(event) => {
                                         event.stopPropagation();
@@ -1035,7 +1036,7 @@ function OrdersModule({
                                       }}
                                     >
                                       {actionConfig.label}
-                                    </button>
+                                    </Button>
                                   )
                                 ) : order.domainStatus === 'CONVERTED_TO_SALE' ? (
                                   <span className="orders-domain__row-complete">Concluido</span>
