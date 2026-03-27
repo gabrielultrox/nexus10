@@ -1,6 +1,5 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express'
 import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
 import swaggerUi from 'swagger-ui-express'
 
 import { backendEnv, ensureBackendEnvLoaded } from './config/env.js'
@@ -10,6 +9,13 @@ import { registerAuthRoutes } from './modules/auth/authController.js'
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js'
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js'
 import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js'
+import {
+  authenticatedApiRateLimiter,
+  fileUploadRateLimiter,
+  ifoodWebhookRateLimiter,
+  loginRateLimiter,
+  publicRateLimiter,
+} from './middleware/rateLimiter.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { validateRequest } from './middleware/validateRequest.js'
 import { registerMonitoringRoutes } from './modules/admin/monitoringController.js'
@@ -114,18 +120,6 @@ export function buildContentSecurityPolicyDirectives(): Record<string, string[]>
   }
 }
 
-function createApiRateLimiter(max: number) {
-  return rateLimit({
-    windowMs: backendEnv.apiRateLimitWindowMs,
-    max,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-      error: 'Limite de requisicoes excedido. Aguarde antes de tentar novamente.',
-    },
-  })
-}
-
 export function createApp(): Express {
   ensureBackendEnvLoaded()
 
@@ -139,6 +133,7 @@ export function createApp(): Express {
 
   initializeSentry()
 
+  app.set('trust proxy', true)
   app.disable('x-powered-by')
   app.use(requestLogger)
   app.use(
@@ -195,25 +190,36 @@ export function createApp(): Express {
   })
 
   app.use('/api', express.json())
-  app.use('/api', createApiRateLimiter(backendEnv.apiRateLimitMax))
-  app.use('/api/auth/session', createApiRateLimiter(backendEnv.authRateLimitMax))
-  app.use('/webhooks/ifood', express.text({ type: '*/*' }))
+  app.use('/api/auth/login', loginRateLimiter)
+  app.use('/api/auth/session', loginRateLimiter)
+  app.use('/webhooks/ifood', express.text({ type: '*/*' }), ifoodWebhookRateLimiter)
+  app.use('/api/uploads', fileUploadRateLimiter)
 
-  app.get('/api/health', (_request: Request, response: Response<HealthResponseBody>) => {
-    response.json({
-      status: 'ok',
-      service: 'nexus-ifood-integration',
-      timestamp: new Date().toISOString(),
-    })
-  })
+  app.get(
+    '/api/health',
+    publicRateLimiter,
+    (_request: Request, response: Response<HealthResponseBody>) => {
+      response.json({
+        status: 'ok',
+        service: 'nexus-ifood-integration',
+        timestamp: new Date().toISOString(),
+      })
+    },
+  )
 
-  app.get('/api-docs.json', (_request: Request, response: Response) => {
+  app.get('/api-docs.json', publicRateLimiter, (_request: Request, response: Response) => {
     response.json(swaggerSpec)
   })
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions))
+  app.use(
+    '/api-docs',
+    publicRateLimiter,
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, swaggerUiOptions),
+  )
 
   registerAuthRoutes(app)
   app.use('/api', requireApiAuth)
+  app.use('/api', authenticatedApiRateLimiter)
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
   registerFinanceRoutes(app)
