@@ -867,6 +867,48 @@ function CashModule({ mode = 'cash' }) {
     totalDayAmount,
   ])
 
+  const financialPendingHighlights = useMemo(() => {
+    if (!isFinancialPendingView) {
+      return []
+    }
+
+    const byPriority = openFinancialPendingRecords.reduce(
+      (accumulator, record) => {
+        const priority = record?.priority ?? 'medium'
+        accumulator[priority] = (accumulator[priority] ?? 0) + 1
+        return accumulator
+      },
+      { high: 0, medium: 0, low: 0 },
+    )
+
+    return [
+      {
+        label: 'Alta prioridade',
+        value: String(byPriority.high).padStart(2, '0'),
+        meta: 'pedem retorno mais rapido',
+        tone: 'danger',
+      },
+      {
+        label: 'Media prioridade',
+        value: String(byPriority.medium).padStart(2, '0'),
+        meta: 'acompanhar no fluxo do dia',
+        tone: 'warning',
+      },
+      {
+        label: 'Baixa prioridade',
+        value: String(byPriority.low).padStart(2, '0'),
+        meta: 'pendencias sem urgencia imediata',
+        tone: 'neutral',
+      },
+      {
+        label: 'Valor em aberto',
+        value: formatCurrencyBRL(financialPendingAmount),
+        meta: 'impacto financeiro pendente',
+        tone: 'info',
+      },
+    ]
+  }, [financialPendingAmount, isFinancialPendingView, openFinancialPendingRecords])
+
   function handleTabChange(tabId) {
     if (isFinancialPendingView) {
       return
@@ -1779,6 +1821,19 @@ function CashModule({ mode = 'cash' }) {
 
       {isFinancialPendingView ? (
         <SurfaceCard title="Fila de pendencias financeiras">
+          <div className="cash-module__pending-highlights">
+            {financialPendingHighlights.map((item) => (
+              <article
+                key={item.label}
+                className={`cash-module__pending-highlight cash-module__pending-highlight--${item.tone}`}
+              >
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <small>{item.meta}</small>
+              </article>
+            ))}
+          </div>
+
           <div className="cash-module__history-toolbar">
             <span className="cash-module__history-counter">
               {`${filteredFinancialPendingRecords.length} visiveis - ${financialPendingRecords.length} no dia`}
