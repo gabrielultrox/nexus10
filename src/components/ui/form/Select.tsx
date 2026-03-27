@@ -28,6 +28,7 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
     onValueChange,
     onChange,
     error = false,
+    shellClassName = '',
     value,
     name,
     id,
@@ -172,7 +173,7 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
           'ui-select-shell',
           disabled ? 'is-disabled' : '',
           error ? 'is-error' : '',
-          className,
+          shellClassName,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -180,7 +181,7 @@ const Select = forwardRef<HTMLSelectElement, IFormSelectProps>(function Select(
         <select
           ref={ref}
           id={id}
-          className="ui-select"
+          className={['ui-select', className, error ? 'is-error' : ''].filter(Boolean).join(' ')}
           disabled={disabled}
           value={value}
           name={name}

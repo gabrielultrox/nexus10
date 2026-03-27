@@ -98,6 +98,7 @@ export interface IFormSelectProps
   searchable?: boolean
   searchPlaceholder?: string
   error?: boolean
+  shellClassName?: string
   children?: ReactNode
   onValueChange?: (value: string) => void
 }
