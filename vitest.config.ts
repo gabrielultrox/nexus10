@@ -38,7 +38,7 @@ export default defineConfig({
         'backend/errors/RequestValidationError.js',
         'backend/validation/schemas.js',
       ],
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       reportsDirectory: './coverage/backend',
       exclude: [
         'node_modules/',

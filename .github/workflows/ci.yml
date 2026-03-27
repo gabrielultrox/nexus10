@@ -10,21 +10,98 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  quality:
+  lint:
+    name: Lint (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    outputs:
-      lint_outcome: ${{ steps.lint.outcome }}
-      coverage_outcome: ${{ steps.coverage.outcome }}
-      statements_pct: ${{ steps.coverage_summary.outputs.statementsPct }}
-      branches_pct: ${{ steps.coverage_summary.outputs.branchesPct }}
-      functions_pct: ${{ steps.coverage_summary.outputs.functionsPct }}
-      lines_pct: ${{ steps.coverage_summary.outputs.linesPct }}
-      below_threshold: ${{ steps.coverage_summary.outputs.belowThreshold }}
-      coverage_warning: ${{ steps.coverage_summary.outputs.warning }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ESLint checks the React source tree and Prettier enforces repository formatting.
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier check
+        run: npm run format:check
+
+  backend_tests:
+    name: Backend tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backend Vitest suite
+        run: npm run test:backend
+
+  frontend_tests:
+    name: Frontend tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend Vitest suite
+        run: npm run test:frontend
+
+  coverage:
+    name: Coverage gate (Node 20)
+    runs-on: ubuntu-latest
+    outputs:
+      statements: ${{ steps.coverage_summary.outputs.statements }}
+      branches: ${{ steps.coverage_summary.outputs.branches }}
+      functions: ${{ steps.coverage_summary.outputs.functions }}
+      lines: ${{ steps.coverage_summary.outputs.lines }}
+
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -36,202 +113,133 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
-        id: lint
-        continue-on-error: true
-        run: npm run lint
-
-      - name: Run tests with coverage
-        id: coverage
-        continue-on-error: true
+      # This command already fails if coverage drops below the 70% thresholds in vitest.config.ts.
+      - name: Run coverage
         run: npm run test:coverage
 
-      - name: Parse coverage summary
+      - name: Read coverage summary
         id: coverage_summary
-        if: always()
         shell: bash
         run: |
           node <<'EOF' >> "$GITHUB_OUTPUT"
           const fs = require('node:fs')
-          const path = 'coverage/coverage-final.json'
-
-          const empty = {
-            statementsPct: '0.00',
-            branchesPct: '0.00',
-            functionsPct: '0.00',
-            linesPct: '0.00',
-            belowThreshold: 'true',
-            warning: 'Coverage report not generated.',
-          }
+          const path = 'coverage/backend/coverage-summary.json'
 
           if (!fs.existsSync(path)) {
-            for (const [key, value] of Object.entries(empty)) {
-              console.log(`${key}=${value}`)
-            }
-            process.exit(0)
+            throw new Error(`Coverage summary not found at ${path}`)
           }
 
-          const report = JSON.parse(fs.readFileSync(path, 'utf8'))
-          const totals = {
-            statements: { covered: 0, total: 0 },
-            branches: { covered: 0, total: 0 },
-            functions: { covered: 0, total: 0 },
-            lines: { covered: 0, total: 0 },
-          }
-
-          for (const file of Object.values(report)) {
-            if (!file || typeof file !== 'object') continue
-
-            if (file.s) {
-              for (const hits of Object.values(file.s)) {
-                totals.statements.total += 1
-                if (hits > 0) totals.statements.covered += 1
-              }
-            }
-
-            if (file.b) {
-              for (const branchHits of Object.values(file.b)) {
-                for (const hits of branchHits) {
-                  totals.branches.total += 1
-                  if (hits > 0) totals.branches.covered += 1
-                }
-              }
-            }
-
-            if (file.f) {
-              for (const hits of Object.values(file.f)) {
-                totals.functions.total += 1
-                if (hits > 0) totals.functions.covered += 1
-              }
-            }
-
-            if (file.statementMap) {
-              for (const [id] of Object.entries(file.statementMap)) {
-                const hits = file.s?.[id] ?? 0
-                totals.lines.total += 1
-                if (hits > 0) totals.lines.covered += 1
-              }
-            }
-          }
-
-          const pct = ({ covered, total }) => (total ? ((covered / total) * 100).toFixed(2) : '0.00')
-          const summary = {
-            statementsPct: pct(totals.statements),
-            branchesPct: pct(totals.branches),
-            functionsPct: pct(totals.functions),
-            linesPct: pct(totals.lines),
-          }
-
-          const belowThreshold = Object.values(summary).some((value) => Number(value) < 70)
-          const warning = belowThreshold
-            ? 'Warning: coverage is below the 70% target for this baseline.'
-            : 'Coverage is on or above the 70% target.'
-
-          for (const [key, value] of Object.entries({
-            ...summary,
-            belowThreshold: String(belowThreshold),
-            warning,
-          })) {
-            console.log(`${key}=${value}`)
-          }
+          const summary = JSON.parse(fs.readFileSync(path, 'utf8')).total
+          console.log(`statements=${summary.statements.pct}`)
+          console.log(`branches=${summary.branches.pct}`)
+          console.log(`functions=${summary.functions.pct}`)
+          console.log(`lines=${summary.lines.pct}`)
           EOF
 
-      - name: Fail quality job if lint or coverage failed
-        if: always()
-        shell: bash
-        run: |
-          failed=0
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/backend
+          if-no-files-found: error
+          retention-days: 14
 
-          if [ "${{ steps.lint.outcome }}" != "success" ]; then
-            echo "Lint failed."
-            failed=1
-          fi
-
-          if [ "${{ steps.coverage.outcome }}" != "success" ]; then
-            echo "Coverage step failed."
-            failed=1
-          fi
-
-          exit $failed
-
-  build:
+  build_frontend:
+    name: Build frontend (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run build
+      - name: Build frontend
         run: npm run build
 
-  pr-report:
+      # Bundle analysis is produced once to avoid duplicate artifacts across the matrix.
+      - name: Generate bundle analysis
+        if: matrix.node == 20
+        run: npm run analyze:bundle
+
+      - name: Upload bundle analysis artifact
+        if: matrix.node == 20
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: output/bundle-report.html
+          if-no-files-found: error
+          retention-days: 14
+
+  pr_comment:
+    name: PR status comment
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs:
-      - quality
-      - build
-    permissions:
-      pull-requests: write
+      - lint
+      - backend_tests
+      - frontend_tests
+      - coverage
+      - build_frontend
 
     steps:
-      - name: Comment PR status
+      - name: Publish PR comment
         uses: actions/github-script@v7
-        env:
-          LINT_OUTCOME: ${{ needs.quality.outputs.lint_outcome }}
-          COVERAGE_OUTCOME: ${{ needs.quality.outputs.coverage_outcome }}
-          BUILD_OUTCOME: ${{ needs.build.result }}
-          STATEMENTS_PCT: ${{ needs.quality.outputs.statements_pct }}
-          BRANCHES_PCT: ${{ needs.quality.outputs.branches_pct }}
-          FUNCTIONS_PCT: ${{ needs.quality.outputs.functions_pct }}
-          LINES_PCT: ${{ needs.quality.outputs.lines_pct }}
-          BELOW_THRESHOLD: ${{ needs.quality.outputs.below_threshold }}
-          COVERAGE_WARNING: ${{ needs.quality.outputs.coverage_warning }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const marker = '<!-- nexus10-ci-report -->'
-            const icon = (outcome) => outcome === 'success' ? '[pass]' : outcome === 'failure' ? '[fail]' : '[skip]'
-            const allPassed = ['success', 'success', 'success'].every((expected, index) => {
-              const outcomes = [
-                process.env.LINT_OUTCOME,
-                process.env.COVERAGE_OUTCOME,
-                process.env.BUILD_OUTCOME,
-              ]
-              return outcomes[index] === expected
-            })
+            const marker = '<!-- nexus10-ci-status -->'
+            const resultIcon = {
+              success: '✅',
+              failure: '❌',
+              cancelled: '⚪',
+              skipped: '⚪',
+            }
 
-            const statusLine = allPassed ? '## CI succeeded' : '## CI failed'
-            const warningBlock = process.env.BELOW_THRESHOLD === 'true'
-              ? `\n> ${process.env.COVERAGE_WARNING}\n`
-              : ''
+            const coverage = {
+              statements: '${{ needs.coverage.outputs.statements }}',
+              branches: '${{ needs.coverage.outputs.branches }}',
+              functions: '${{ needs.coverage.outputs.functions }}',
+              lines: '${{ needs.coverage.outputs.lines }}',
+            }
 
             const body = `${marker}
-            ${statusLine}
+            ## CI status
 
             | Job | Result |
             | --- | --- |
-            | Lint | ${icon(process.env.LINT_OUTCOME)} ${process.env.LINT_OUTCOME} |
-            | Test coverage | ${icon(process.env.COVERAGE_OUTCOME)} ${process.env.COVERAGE_OUTCOME} |
-            | Build | ${icon(process.env.BUILD_OUTCOME)} ${process.env.BUILD_OUTCOME} |
+            | Lint (ESLint + Prettier) | ${resultIcon['${{ needs.lint.result }}']} ${{ needs.lint.result }} |
+            | Backend tests | ${resultIcon['${{ needs.backend_tests.result }}']} ${{ needs.backend_tests.result }} |
+            | Frontend tests | ${resultIcon['${{ needs.frontend_tests.result }}']} ${{ needs.frontend_tests.result }} |
+            | Build frontend | ${resultIcon['${{ needs.build_frontend.result }}']} ${{ needs.build_frontend.result }} |
+            | Coverage gate | ${resultIcon['${{ needs.coverage.result }}']} ${{ needs.coverage.result }} |
 
-            ### Coverage
+            ### Coverage summary
 
             | Metric | Result |
             | --- | --- |
-            | Statements | ${process.env.STATEMENTS_PCT}% |
-            | Branches | ${process.env.BRANCHES_PCT}% |
-            | Functions | ${process.env.FUNCTIONS_PCT}% |
-            | Lines | ${process.env.LINES_PCT}% |
-            ${warningBlock}
+            | Statements | ${coverage.statements || 'n/a'}% |
+            | Branches | ${coverage.branches || 'n/a'}% |
+            | Functions | ${coverage.functions || 'n/a'}% |
+            | Lines | ${coverage.lines || 'n/a'}% |
+
+            Coverage fails the workflow if any metric is below 70%.
+
+            ### Artifacts
+
+            - `coverage-report`
+            - `bundle-analysis`
             `
 
             const { owner, repo } = context.repo
@@ -254,12 +262,11 @@ jobs:
                 comment_id: existing.id,
                 body,
               })
-              return
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              })
             }
-
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number,
-              body,
-            })
