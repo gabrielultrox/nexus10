@@ -1,57 +1,57 @@
-import { useEffect, useRef, useState } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { useLocation, useNavigate } from 'react-router-dom'
 
-import AppErrorBoundary from './components/system/AppErrorBoundary';
-import SystemBoot from './components/system/SystemBoot';
-import { useAuth } from './contexts/AuthContext';
-import AppRoutes from './routes';
+import AppErrorBoundary from './components/system/AppErrorBoundary'
+import SystemBoot from './components/system/SystemBoot'
+import { useAuth } from './contexts/AuthContext'
+import AppRoutes from './routes'
 import {
   bindGlobalSoundEffects,
   playNavigation,
   unbindGlobalSoundEffects,
-} from './services/soundManager';
-import { queryClient } from './services/queryClient';
+} from './services/soundManager'
+import { queryClient } from './services/queryClient'
 
 function App() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated, loading } = useAuth();
-  const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
-  const lastPathRef = useRef(location.pathname);
-  const bootVisible = !bootSequenceComplete || loading;
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isAuthenticated, loading } = useAuth()
+  const [bootSequenceComplete, setBootSequenceComplete] = useState(false)
+  const lastPathRef = useRef(location.pathname)
+  const bootVisible = !bootSequenceComplete || loading
 
   useEffect(() => {
-    const rootElement = document.documentElement;
-    rootElement.classList.toggle('app-booting', bootVisible);
+    const rootElement = document.documentElement
+    rootElement.classList.toggle('app-booting', bootVisible)
 
     return () => {
-      rootElement.classList.remove('app-booting');
-    };
-  }, [bootVisible]);
+      rootElement.classList.remove('app-booting')
+    }
+  }, [bootVisible])
 
   useEffect(() => {
-    bindGlobalSoundEffects();
+    bindGlobalSoundEffects()
     return () => {
-      unbindGlobalSoundEffects();
-    };
-  }, []);
+      unbindGlobalSoundEffects()
+    }
+  }, [])
 
   useEffect(() => {
     if (bootVisible) {
-      lastPathRef.current = location.pathname;
-      return;
+      lastPathRef.current = location.pathname
+      return
     }
 
     if (lastPathRef.current !== location.pathname) {
-      playNavigation();
-      lastPathRef.current = location.pathname;
+      playNavigation()
+      lastPathRef.current = location.pathname
     }
-  }, [bootVisible, location.pathname]);
+  }, [bootVisible, location.pathname])
 
   useEffect(() => {
     if (!bootSequenceComplete || loading) {
-      return;
+      return
     }
 
     if (!isAuthenticated && location.pathname !== '/login') {
@@ -62,21 +62,21 @@ function App() {
             pathname: location.pathname,
           },
         },
-      });
-      return;
+      })
+      return
     }
 
     if (isAuthenticated && location.pathname === '/login') {
-      const nextPath = location.state?.from?.pathname;
+      const nextPath = location.state?.from?.pathname
 
       navigate(nextPath && nextPath !== '/login' ? nextPath : '/dashboard', {
         replace: true,
-      });
+      })
     }
-  }, [bootSequenceComplete, isAuthenticated, loading, location.pathname, location.state, navigate]);
+  }, [bootSequenceComplete, isAuthenticated, loading, location.pathname, location.state, navigate])
 
   function handleBootComplete() {
-    setBootSequenceComplete(true);
+    setBootSequenceComplete(true)
   }
 
   return (
@@ -85,7 +85,7 @@ function App() {
         resetKey={location.pathname}
         onReset={() => {
           if (location.pathname !== '/dashboard' && isAuthenticated) {
-            navigate('/dashboard', { replace: true });
+            navigate('/dashboard', { replace: true })
           }
         }}
       >
@@ -93,7 +93,7 @@ function App() {
       </AppErrorBoundary>
       {bootVisible ? <SystemBoot onComplete={handleBootComplete} /> : null}
     </QueryClientProvider>
-  );
+  )
 }
 
-export default App;
+export default App

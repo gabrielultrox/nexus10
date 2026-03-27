@@ -1,6 +1,6 @@
-import { createPortal } from 'react-dom';
+import { createPortal } from 'react-dom'
 
-import Button from './Button';
+import Button from './Button'
 
 function Modal({
   open,
@@ -13,7 +13,7 @@ function Modal({
   onClose,
 }) {
   if (!open) {
-    return null;
+    return null
   }
 
   return createPortal(
@@ -59,7 +59,7 @@ function Modal({
       </section>
     </div>,
     document.body,
-  );
+  )
 }
 
-export default Modal;
+export default Modal

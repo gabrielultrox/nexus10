@@ -23,14 +23,22 @@ body::before {
   background:
     linear-gradient(var(--surface-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--surface-grid-line) 1px, transparent 1px);
-  background-size: 100% calc(var(--space-8) + var(--space-1)), calc(var(--space-8) + var(--space-1)) 100%;
+  background-size:
+    100% calc(var(--space-8) + var(--space-1)),
+    calc(var(--space-8) + var(--space-1)) 100%;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent 94%);
   opacity: 0.3;
 }
 
 body::after {
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 5%, transparent), transparent 18%, transparent 82%, color-mix(in srgb, var(--color-accent-amber) 5%, transparent)),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 5%, transparent),
+      transparent 18%,
+      transparent 82%,
+      color-mix(in srgb, var(--color-accent-amber) 5%, transparent)
+    ),
     repeating-linear-gradient(180deg, var(--surface-scanline) 0 1px, transparent 1px 4px);
   opacity: 0.08;
 }
@@ -177,7 +185,9 @@ body::after {
   width: 3px;
   border-radius: var(--radius-pill);
   background: transparent;
-  transition: background var(--transition-base), opacity var(--transition-base);
+  transition:
+    background var(--transition-base),
+    opacity var(--transition-base);
   opacity: 0;
 }
 
@@ -189,7 +199,11 @@ body::after {
 
 .sidebar__link--active {
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 5%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 5%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-highlight) 80%, transparent);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 20%, var(--color-border-default));
   color: var(--color-text-primary);
@@ -289,8 +303,16 @@ body::after {
   min-height: 100vh;
   padding: var(--space-4);
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 26%),
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-amber) 8%, transparent), transparent 22%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--color-accent-amber) 8%, transparent),
+      transparent 22%
+    ),
     var(--gradient-app);
 }
 
@@ -301,7 +323,9 @@ body::after {
   background:
     linear-gradient(var(--surface-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--surface-grid-line) 1px, transparent 1px);
-  background-size: 100% 34px, 34px 100%;
+  background-size:
+    100% 34px,
+    34px 100%;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.52), transparent 92%);
   opacity: 0.34;
 }
@@ -325,8 +349,16 @@ body::after {
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
   border-radius: var(--radius-shell);
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 40%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent));
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--color-accent-cyan) 6%, transparent),
+      transparent 40%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface-panel-strong) 98%, transparent),
+      color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent)
+    );
   box-shadow: 0 14px 32px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
 }
 
@@ -396,7 +428,11 @@ body::after {
   border: 1px solid color-mix(in srgb, var(--color-accent-amber) 12%, var(--color-border-subtle));
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 28%, transparent), transparent 34%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 28%, transparent),
+      transparent 34%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
@@ -538,7 +574,11 @@ body::after {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 24%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
   box-shadow: var(--shadow-lg);
 }
@@ -767,7 +807,11 @@ body::after {
   color: var(--color-accent-cyan);
   border-bottom-color: var(--color-accent-cyan);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 82%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 10%, transparent),
+      transparent 82%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 84%, transparent);
 }
 
@@ -783,8 +827,7 @@ body::after {
   background: color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
-  box-shadow:
-    0 10px 22px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
   overflow: hidden;
 }
 
@@ -819,7 +862,11 @@ body::after {
   border: 1px dashed var(--color-border-default);
   border-radius: var(--radius-base);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 70%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 8%, transparent),
+      transparent 70%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 72%, transparent);
 }
 
@@ -864,7 +911,11 @@ body::after {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 20%, transparent), transparent 26%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 20%, transparent),
+      transparent 26%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
   color: var(--color-text-primary);
   text-align: left;
@@ -1677,6 +1728,8 @@ body::after {
   flex-shrink: 0;
   background: currentColor;
   opacity: 0.8;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2.5 4.5H13.5M4.5 2.5H11.5M3.5 4.5H12.5V12.5C12.5 13.0523 12.0523 13.5 11.5 13.5H4.5C3.94772 13.5 3.5 13.0523 3.5 12.5V4.5Z' stroke='black' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2.5 4.5H13.5M4.5 2.5H11.5M3.5 4.5H12.5V12.5C12.5 13.0523 12.0523 13.5 11.5 13.5H4.5C3.94772 13.5 3.5 13.0523 3.5 12.5V4.5Z' stroke='black' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2.5 4.5H13.5M4.5 2.5H11.5M3.5 4.5H12.5V12.5C12.5 13.0523 12.0523 13.5 11.5 13.5H4.5C3.94772 13.5 3.5 13.0523 3.5 12.5V4.5Z' stroke='black' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2.5 4.5H13.5M4.5 2.5H11.5M3.5 4.5H12.5V12.5C12.5 13.0523 12.0523 13.5 11.5 13.5H4.5C3.94772 13.5 3.5 13.0523 3.5 12.5V4.5Z' stroke='black' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }

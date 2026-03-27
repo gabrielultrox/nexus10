@@ -1,25 +1,29 @@
-﻿import { getFinanceEntryDirection, isFinanceEntryActive, subscribeToFinancialEntries } from './finance';
-import { isOrderClosedStatus, isSalePosted } from './commerce';
-import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase';
-import { subscribeToInventoryItems } from './inventory';
-import { loadLocalRecords, loadResettableLocalRecords } from './localAccess';
-import { courierSeedRecords } from './operationsSeedData';
-import { subscribeToOrders } from './orders';
-import { subscribeToSales } from './sales';
+﻿import {
+  getFinanceEntryDirection,
+  isFinanceEntryActive,
+  subscribeToFinancialEntries,
+} from './finance'
+import { isOrderClosedStatus, isSalePosted } from './commerce'
+import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase'
+import { subscribeToInventoryItems } from './inventory'
+import { loadLocalRecords, loadResettableLocalRecords } from './localAccess'
+import { courierSeedRecords } from './operationsSeedData'
+import { subscribeToOrders } from './orders'
+import { subscribeToSales } from './sales'
 
-const delayedOrderThresholdMinutes = 35;
+const delayedOrderThresholdMinutes = 35
 
 function asDate(value) {
   if (!value) {
-    return null;
+    return null
   }
 
-  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
 }
 
 function parseMoney(value) {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const parsed = Number(value ?? 0)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function formatCurrency(value) {
@@ -27,15 +31,15 @@ function formatCurrency(value) {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2,
-  }).format(parseMoney(value));
+  }).format(parseMoney(value))
 }
 
 function formatInteger(value) {
-  return new Intl.NumberFormat('pt-BR').format(Number(value ?? 0));
+  return new Intl.NumberFormat('pt-BR').format(Number(value ?? 0))
 }
 
 function formatHourLabel(hour) {
-  return `${String(hour).padStart(2, '0')}h`;
+  return `${String(hour).padStart(2, '0')}h`
 }
 
 function getScheduleEntryTime(value) {
@@ -74,66 +78,66 @@ function buildDateLabel(date) {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-  }).format(date);
+  }).format(date)
 }
 
 function getDayKey(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function isWithinPeriod(value, startDate, endDate) {
-  const dateValue = asDate(value);
+  const dateValue = asDate(value)
 
   if (!dateValue) {
-    return false;
+    return false
   }
 
   if (startDate) {
-    const start = new Date(`${startDate}T00:00:00`);
+    const start = new Date(`${startDate}T00:00:00`)
     if (dateValue < start) {
-      return false;
+      return false
     }
   }
 
   if (endDate) {
-    const end = new Date(`${endDate}T23:59:59`);
+    const end = new Date(`${endDate}T23:59:59`)
     if (dateValue > end) {
-      return false;
+      return false
     }
   }
 
-  return true;
+  return true
 }
 
 function isOrderDelayed(order) {
-  const createdAt = asDate(order.createdAt);
+  const createdAt = asDate(order.createdAt)
 
   if (!createdAt || isOrderClosedStatus(order.domainStatus ?? order.status)) {
-    return false;
+    return false
   }
 
-  return (Date.now() - createdAt.getTime()) / 60000 >= delayedOrderThresholdMinutes;
+  return (Date.now() - createdAt.getTime()) / 60000 >= delayedOrderThresholdMinutes
 }
 
 function getStatusBadgeClass(status) {
-  const normalized = String(status ?? '').toLowerCase();
+  const normalized = String(status ?? '').toLowerCase()
 
   if (normalized.includes('rota')) {
-    return 'ui-badge--info';
+    return 'ui-badge--info'
   }
 
   if (normalized.includes('reserva')) {
-    return 'ui-badge--special';
+    return 'ui-badge--special'
   }
 
   if (normalized.includes('pendente')) {
-    return 'ui-badge--warning';
+    return 'ui-badge--warning'
   }
 
-  return 'ui-badge--success';
+  return 'ui-badge--success'
 }
 
 function shouldHighlightAdvanceReminder(now = new Date()) {
@@ -144,83 +148,85 @@ function shouldHighlightAdvanceReminder(now = new Date()) {
 }
 
 function buildDailySalesSeries(sales, startDate, endDate) {
-  const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date();
-  const end = endDate ? new Date(`${endDate}T23:59:59`) : new Date();
-  const dates = [];
-  const cursor = new Date(start);
+  const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date()
+  const end = endDate ? new Date(`${endDate}T23:59:59`) : new Date()
+  const dates = []
+  const cursor = new Date(start)
 
   while (cursor <= end && dates.length < 14) {
-    dates.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
+    dates.push(new Date(cursor))
+    cursor.setDate(cursor.getDate() + 1)
   }
 
   if (dates.length === 0) {
-    dates.push(new Date());
+    dates.push(new Date())
   }
 
   const totalsByDay = sales.reduce((accumulator, sale) => {
-    const saleDate = asDate(sale.createdAt);
+    const saleDate = asDate(sale.createdAt)
 
     if (!saleDate) {
-      return accumulator;
+      return accumulator
     }
 
-    const dayKey = getDayKey(saleDate);
-    accumulator.set(dayKey, (accumulator.get(dayKey) ?? 0) + parseMoney(sale.total));
-    return accumulator;
-  }, new Map());
+    const dayKey = getDayKey(saleDate)
+    accumulator.set(dayKey, (accumulator.get(dayKey) ?? 0) + parseMoney(sale.total))
+    return accumulator
+  }, new Map())
 
   return dates.map((date) => ({
     label: buildDateLabel(date),
     value: Number((totalsByDay.get(getDayKey(date)) ?? 0).toFixed(2)),
-  }));
+  }))
 }
 
 function buildHourlyOrdersSeries(orders, sales) {
-  const source = orders.length > 0 ? orders : sales;
+  const source = orders.length > 0 ? orders : sales
   const countsByHour = source.reduce((accumulator, item) => {
-    const dateValue = asDate(item.createdAt);
+    const dateValue = asDate(item.createdAt)
 
     if (!dateValue) {
-      return accumulator;
+      return accumulator
     }
 
-    const hour = dateValue.getHours();
-    accumulator.set(hour, (accumulator.get(hour) ?? 0) + 1);
-    return accumulator;
-  }, new Map());
+    const hour = dateValue.getHours()
+    accumulator.set(hour, (accumulator.get(hour) ?? 0) + 1)
+    return accumulator
+  }, new Map())
 
-  const populatedHours = Array.from(countsByHour.entries())
-    .sort((left, right) => left[0] - right[0]);
+  const populatedHours = Array.from(countsByHour.entries()).sort(
+    (left, right) => left[0] - right[0],
+  )
 
-  const selectedHours = populatedHours.length > 0
-    ? populatedHours.slice(Math.max(populatedHours.length - 8, 0))
-    : [[new Date().getHours(), 0]];
+  const selectedHours =
+    populatedHours.length > 0
+      ? populatedHours.slice(Math.max(populatedHours.length - 8, 0))
+      : [[new Date().getHours(), 0]]
 
   return selectedHours.map(([hour, value]) => ({
     label: formatHourLabel(hour),
     value,
-  }));
+  }))
 }
 
 export function getDefaultDashboardPeriod() {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 6);
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(endDate.getDate() - 6)
 
   return {
     startDate: getDayKey(startDate),
     endDate: getDayKey(endDate),
-  };
+  }
 }
 
 export function loadDashboardOperationalSources() {
-  const scheduleRecords = loadResettableLocalRecords('nexus-module-schedule', [], 3);
-  const machineChecklist = loadResettableLocalRecords('nexus-module-machine-history', [], 3);
-  const changeRecords = loadResettableLocalRecords('nexus-module-change', [], 3);
-  const advanceRecords = loadResettableLocalRecords('nexus-module-advances', [], 3);
-  const occurrenceRecords = loadResettableLocalRecords('nexus-module-occurrences', [], 3);
-  const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords);
+  const scheduleRecords = loadResettableLocalRecords('nexus-module-schedule', [], 3)
+  const machineChecklist = loadResettableLocalRecords('nexus-module-machine-history', [], 3)
+  const changeRecords = loadResettableLocalRecords('nexus-module-change', [], 3)
+  const advanceRecords = loadResettableLocalRecords('nexus-module-advances', [], 3)
+  const occurrenceRecords = loadResettableLocalRecords('nexus-module-occurrences', [], 3)
+  const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords)
 
   return {
     scheduleRecords,
@@ -229,29 +235,33 @@ export function loadDashboardOperationalSources() {
     advanceRecords,
     occurrenceRecords,
     courierRecords,
-  };
+  }
 }
 
 export function subscribeToDashboardSources(storeId, handlers) {
   if (!firebaseReady || !firebaseDb || !storeId || !canUseRemoteSync()) {
-    handlers.onSales?.([]);
-    handlers.onOrders?.([]);
-    handlers.onInventoryItems?.([]);
-    handlers.onFinancialEntries?.([]);
-    return () => {};
+    handlers.onSales?.([])
+    handlers.onOrders?.([])
+    handlers.onInventoryItems?.([])
+    handlers.onFinancialEntries?.([])
+    return () => {}
   }
 
-  const unsubscribers = [];
+  const unsubscribers = []
 
-  unsubscribers.push(subscribeToSales(storeId, handlers.onSales, handlers.onError));
-  unsubscribers.push(subscribeToInventoryItems(storeId, handlers.onInventoryItems, handlers.onError));
-  unsubscribers.push(subscribeToFinancialEntries(storeId, handlers.onFinancialEntries, handlers.onError));
+  unsubscribers.push(subscribeToSales(storeId, handlers.onSales, handlers.onError))
+  unsubscribers.push(
+    subscribeToInventoryItems(storeId, handlers.onInventoryItems, handlers.onError),
+  )
+  unsubscribers.push(
+    subscribeToFinancialEntries(storeId, handlers.onFinancialEntries, handlers.onError),
+  )
 
-  unsubscribers.push(subscribeToOrders(storeId, handlers.onOrders, handlers.onError));
+  unsubscribers.push(subscribeToOrders(storeId, handlers.onOrders, handlers.onError))
 
   return () => {
-    unsubscribers.forEach((unsubscribe) => unsubscribe?.());
-  };
+    unsubscribers.forEach((unsubscribe) => unsubscribe?.())
+  }
 }
 
 export function buildDashboardData({
@@ -263,56 +273,68 @@ export function buildDashboardData({
   endDate,
   operations,
 }) {
-  const completedSales = sales.filter((sale) => (
-    isSalePosted(sale.domainStatus ?? sale.status) && isWithinPeriod(sale.createdAt, startDate, endDate)
-  ));
-  const ordersInPeriod = orders.filter((order) => isWithinPeriod(order.createdAt, startDate, endDate));
-  const delayedOrders = ordersInPeriod.filter(isOrderDelayed);
-  const activeEntries = financialEntries.filter((entry) => (
-    isWithinPeriod(entry.createdAt, startDate, endDate) && isFinanceEntryActive(entry)
-  ));
+  const completedSales = sales.filter(
+    (sale) =>
+      isSalePosted(sale.domainStatus ?? sale.status) &&
+      isWithinPeriod(sale.createdAt, startDate, endDate),
+  )
+  const ordersInPeriod = orders.filter((order) =>
+    isWithinPeriod(order.createdAt, startDate, endDate),
+  )
+  const delayedOrders = ordersInPeriod.filter(isOrderDelayed)
+  const activeEntries = financialEntries.filter(
+    (entry) => isWithinPeriod(entry.createdAt, startDate, endDate) && isFinanceEntryActive(entry),
+  )
 
-  const totalSold = completedSales.reduce((total, sale) => total + parseMoney(sale.total), 0);
-  const totalSalesCount = completedSales.length;
-  const averageTicket = totalSalesCount > 0 ? totalSold / totalSalesCount : 0;
+  const totalSold = completedSales.reduce((total, sale) => total + parseMoney(sale.total), 0)
+  const totalSalesCount = completedSales.length
+  const averageTicket = totalSalesCount > 0 ? totalSold / totalSalesCount : 0
   const totalIncome = activeEntries
     .filter((entry) => getFinanceEntryDirection(entry) === 'entrada')
-    .reduce((total, entry) => total + parseMoney(entry.amount), 0);
+    .reduce((total, entry) => total + parseMoney(entry.amount), 0)
   const totalExpense = activeEntries
     .filter((entry) => getFinanceEntryDirection(entry) === 'saida')
-    .reduce((total, entry) => total + parseMoney(entry.amount), 0);
+    .reduce((total, entry) => total + parseMoney(entry.amount), 0)
   const lowStockItems = inventoryItems.filter(
     (item) => Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
-  );
-  const activeCouriers = operations.scheduleRecords.filter((record) => record.status !== 'Pendente');
+  )
+  const activeCouriers = operations.scheduleRecords.filter((record) => record.status !== 'Pendente')
 
-  const productsMap = new Map();
+  const productsMap = new Map()
   completedSales.forEach((sale) => {
     sale.items?.forEach((item) => {
-      const itemName = item.productSnapshot?.name ?? item.name;
+      const itemName = item.productSnapshot?.name ?? item.name
       const currentItem = productsMap.get(item.productId ?? itemName) ?? {
         id: item.productId ?? itemName,
         name: itemName,
         quantity: 0,
         revenue: 0,
-      };
+      }
 
-      currentItem.quantity += Number(item.quantity ?? 0);
-      currentItem.revenue += parseMoney(item.totalPrice ?? item.total);
-      productsMap.set(currentItem.id, currentItem);
-    });
-  });
+      currentItem.quantity += Number(item.quantity ?? 0)
+      currentItem.revenue += parseMoney(item.totalPrice ?? item.total)
+      productsMap.set(currentItem.id, currentItem)
+    })
+  })
 
   const topProducts = Array.from(productsMap.values())
     .sort((left, right) => right.quantity - left.quantity)
-    .slice(0, 5);
+    .slice(0, 5)
 
-  const openChanges = operations.changeRecords.filter((record) => record.status !== 'Retornou').length;
-  const openAdvances = operations.advanceRecords.filter((record) => record.status !== 'Baixado').length;
-  const openOccurrences = operations.occurrenceRecords.filter((record) => record.status !== 'Resolvida' && record.status !== 'Fechada').length;
-  const uncheckedMachines = operations.machineChecklist.filter((record) => record.status !== 'Presente').length;
-  const isSingleDay = startDate === endDate;
-  const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder();
+  const openChanges = operations.changeRecords.filter(
+    (record) => record.status !== 'Retornou',
+  ).length
+  const openAdvances = operations.advanceRecords.filter(
+    (record) => record.status !== 'Baixado',
+  ).length
+  const openOccurrences = operations.occurrenceRecords.filter(
+    (record) => record.status !== 'Resolvida' && record.status !== 'Fechada',
+  ).length
+  const uncheckedMachines = operations.machineChecklist.filter(
+    (record) => record.status !== 'Presente',
+  ).length
+  const isSingleDay = startDate === endDate
+  const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder()
 
   return {
     kpis: [
@@ -376,9 +398,7 @@ export function buildDashboardData({
         id: 'top-products',
         label: 'Top produtos',
         value: topProducts[0] ? formatInteger(topProducts[0].quantity) : '0',
-        meta: topProducts[0]
-          ? 'mix lider'
-          : 'sem venda',
+        meta: topProducts[0] ? 'mix lider' : 'sem venda',
         badgeText: 'mix',
         badgeClass: 'ui-badge--special',
         tone: 'blue',
@@ -408,15 +428,20 @@ export function buildDashboardData({
       },
     },
     operations: {
-      reminders: shouldShowAdvancesReminder ? [
-        {
-          id: 'advances-open',
-          type: 'warning',
-          title: openAdvances === 1 ? 'Existe 1 vale em aberto' : `Existem ${formatInteger(openAdvances)} vales em aberto`,
-          message: 'Desconte do entregador antes do fechamento do turno.',
-          route: '/advances',
-        },
-      ] : [],
+      reminders: shouldShowAdvancesReminder
+        ? [
+            {
+              id: 'advances-open',
+              type: 'warning',
+              title:
+                openAdvances === 1
+                  ? 'Existe 1 vale em aberto'
+                  : `Existem ${formatInteger(openAdvances)} vales em aberto`,
+              message: 'Desconte do entregador antes do fechamento do turno.',
+              route: '/advances',
+            },
+          ]
+        : [],
       activeShift: activeCouriers.slice(0, 5).map((record) => ({
         id: record.id,
         name: record.courier,
@@ -440,10 +465,17 @@ export function buildDashboardData({
       closing: [
         { id: 'income', label: 'Entradas', value: formatCurrency(totalIncome || totalSold) },
         { id: 'expense', label: 'Saidas', value: formatCurrency(totalExpense) },
-        { id: 'balance', label: 'Saldo', value: formatCurrency((totalIncome || totalSold) - totalExpense) },
-        { id: 'pending', label: 'Pendencias', value: formatInteger(openChanges + openAdvances + openOccurrences + uncheckedMachines) },
+        {
+          id: 'balance',
+          label: 'Saldo',
+          value: formatCurrency((totalIncome || totalSold) - totalExpense),
+        },
+        {
+          id: 'pending',
+          label: 'Pendencias',
+          value: formatInteger(openChanges + openAdvances + openOccurrences + uncheckedMachines),
+        },
       ],
     },
-  };
+  }
 }
-

@@ -1,4 +1,4 @@
-import MetricCard from '../../../components/common/MetricCard';
+import MetricCard from '../../../components/common/MetricCard'
 
 function CouriersStats({ items }) {
   return (
@@ -14,7 +14,7 @@ function CouriersStats({ items }) {
         />
       ))}
     </div>
-  );
+  )
 }
 
-export default CouriersStats;
+export default CouriersStats

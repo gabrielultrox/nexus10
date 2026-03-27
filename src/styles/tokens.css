@@ -47,7 +47,9 @@
   --shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 18px 46px rgba(0, 0, 0, 0.34);
   --shadow-lg: 0 28px 84px rgba(0, 0, 0, 0.48);
-  --shadow-focus: 0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 28%, transparent), 0 0 0 5px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+  --shadow-focus:
+    0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 28%, transparent),
+    0 0 0 5px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
   --shadow-card-hover: 0 20px 52px rgba(0, 0, 0, 0.28);
 
   --transition-fast: 160ms ease;
@@ -175,13 +177,10 @@
   --gradient-card:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
     linear-gradient(145deg, rgba(16, 17, 30, 0.96), rgba(8, 10, 18, 0.98));
-  --gradient-sidebar:
-    linear-gradient(180deg, rgba(7, 9, 17, 0.98), rgba(4, 5, 7, 0.98));
-  --gradient-shell-panel:
-    linear-gradient(145deg, rgba(12, 14, 25, 0.95), rgba(9, 10, 17, 0.9));
+  --gradient-sidebar: linear-gradient(180deg, rgba(7, 9, 17, 0.98), rgba(4, 5, 7, 0.98));
+  --gradient-shell-panel: linear-gradient(145deg, rgba(12, 14, 25, 0.95), rgba(9, 10, 17, 0.9));
   --gradient-brand-surface:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.22), rgba(0, 220, 255, 0.2)),
-    rgba(9, 10, 17, 0.96);
+    linear-gradient(135deg, rgba(245, 166, 35, 0.22), rgba(0, 220, 255, 0.2)), rgba(9, 10, 17, 0.96);
   --gradient-auth:
     radial-gradient(circle at top, rgba(0, 220, 255, 0.12), transparent 30%),
     radial-gradient(circle at bottom right, rgba(245, 166, 35, 0.1), transparent 28%),
@@ -258,7 +257,11 @@
   --surface-shell-edge: rgba(17, 24, 39, 0.06);
   --surface-ring-accent: rgba(0, 143, 93, 0.16);
   --surface-card-gloss: rgba(255, 255, 255, 0.6);
-  --surface-loader-bg: linear-gradient(180deg, rgba(244, 247, 251, 0.92), rgba(233, 239, 247, 0.96));
+  --surface-loader-bg: linear-gradient(
+    180deg,
+    rgba(244, 247, 251, 0.92),
+    rgba(233, 239, 247, 0.96)
+  );
   --color-shadow-rgb: #0f172a;
 
   --gradient-app:
@@ -268,10 +271,12 @@
   --gradient-card:
     linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
     linear-gradient(145deg, #ffffff, #f6f9fd);
-  --gradient-sidebar:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.98));
-  --gradient-shell-panel:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 252, 0.96));
+  --gradient-sidebar: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.98));
+  --gradient-shell-panel: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(241, 246, 252, 0.96)
+  );
   --gradient-brand-surface:
     linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(0, 125, 191, 0.12)),
     rgba(255, 255, 255, 0.94);
@@ -351,7 +356,11 @@
   --surface-shell-edge: rgba(101, 73, 35, 0.1);
   --surface-ring-accent: rgba(168, 108, 20, 0.18);
   --surface-card-gloss: rgba(255, 249, 236, 0.52);
-  --surface-loader-bg: linear-gradient(180deg, rgba(247, 236, 213, 0.94), rgba(231, 219, 198, 0.98));
+  --surface-loader-bg: linear-gradient(
+    180deg,
+    rgba(247, 236, 213, 0.94),
+    rgba(231, 219, 198, 0.98)
+  );
   --color-shadow-rgb: #5d4326;
 
   --gradient-app:
@@ -361,10 +370,12 @@
   --gradient-card:
     linear-gradient(180deg, rgba(255, 250, 239, 0.62), rgba(250, 239, 218, 0.62)),
     linear-gradient(145deg, #fbf1da, #eeddbd);
-  --gradient-sidebar:
-    linear-gradient(180deg, rgba(248, 236, 211, 0.98), rgba(231, 216, 191, 0.98));
-  --gradient-shell-panel:
-    linear-gradient(145deg, rgba(251, 241, 219, 0.96), rgba(236, 221, 192, 0.96));
+  --gradient-sidebar: linear-gradient(180deg, rgba(248, 236, 211, 0.98), rgba(231, 216, 191, 0.98));
+  --gradient-shell-panel: linear-gradient(
+    145deg,
+    rgba(251, 241, 219, 0.96),
+    rgba(236, 221, 192, 0.96)
+  );
   --gradient-brand-surface:
     linear-gradient(135deg, rgba(211, 154, 51, 0.18), rgba(120, 89, 41, 0.12)),
     rgba(249, 239, 218, 0.96);

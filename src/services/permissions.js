@@ -3,21 +3,21 @@ export const roles = {
   gerente: 'gerente',
   operador: 'operador',
   atendente: 'atendente',
-};
+}
 
 export const roleLabels = {
   [roles.admin]: 'Admin',
   [roles.gerente]: 'Gerente',
   [roles.operador]: 'Operador',
   [roles.atendente]: 'Atendente',
-};
+}
 
 const roleRank = {
   [roles.admin]: 0,
   [roles.gerente]: 1,
   [roles.operador]: 2,
   [roles.atendente]: 3,
-};
+}
 
 const allPermissions = [
   'dashboard:read',
@@ -40,7 +40,7 @@ const allPermissions = [
   'settings:write',
   'users:read',
   'users:write',
-];
+]
 
 export const rolePermissions = {
   [roles.admin]: allPermissions,
@@ -77,24 +77,24 @@ export const rolePermissions = {
     'customers:read',
     'customers:write',
   ],
-};
+}
 
 export function normalizeRole(rawRole) {
-  return Object.values(roles).includes(rawRole) ? rawRole : roles.operador;
+  return Object.values(roles).includes(rawRole) ? rawRole : roles.operador
 }
 
 export function getRoleLabel(role) {
-  return roleLabels[normalizeRole(role)];
+  return roleLabels[normalizeRole(role)]
 }
 
 export function hasPermission(role, permission) {
-  const resolvedRole = normalizeRole(role);
-  const permissions = rolePermissions[resolvedRole] ?? [];
-  return permissions.includes(permission);
+  const resolvedRole = normalizeRole(role)
+  const permissions = rolePermissions[resolvedRole] ?? []
+  return permissions.includes(permission)
 }
 
 export function buildRolePermissionFlags(role) {
-  const resolvedRole = normalizeRole(role);
+  const resolvedRole = normalizeRole(role)
 
   return {
     canReadStores: hasPermission(resolvedRole, 'dashboard:read'),
@@ -102,19 +102,19 @@ export function buildRolePermissionFlags(role) {
     canWriteOrders: hasPermission(resolvedRole, 'orders:write'),
     canWriteFinance: hasPermission(resolvedRole, 'finance:write'),
     canWriteUsers: hasPermission(resolvedRole, 'users:write'),
-  };
+  }
 }
 
 export function hasRoleAccess(role, requiredRoles = []) {
   if (!requiredRoles.length) {
-    return true;
+    return true
   }
 
-  const resolvedRole = normalizeRole(role);
-  const currentRank = roleRank[resolvedRole];
+  const resolvedRole = normalizeRole(role)
+  const currentRank = roleRank[resolvedRole]
 
   return requiredRoles.some((requiredRole) => {
-    const resolvedRequiredRole = normalizeRole(requiredRole);
-    return currentRank <= roleRank[resolvedRequiredRole];
-  });
+    const resolvedRequiredRole = normalizeRole(requiredRole)
+    return currentRank <= roleRank[resolvedRequiredRole]
+  })
 }

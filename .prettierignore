@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-backend
+coverage
+storybook-static
+logs
+.firebase
+.vercel
+.playwright-cli
+output
+tmp
+legacy
+public
+package-lock.json
+*.log
+*.err

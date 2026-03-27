@@ -31,19 +31,31 @@ function DashboardFilters({ startDate, endDate, onChange, onSetPreset }) {
         </div>
 
         <div className="dashboard-filters__actions">
-          <button type="button" className="ui-button ui-button--ghost" onClick={() => onSetPreset('today')}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost"
+            onClick={() => onSetPreset('today')}
+          >
             Hoje
           </button>
-          <button type="button" className="ui-button ui-button--ghost" onClick={() => onSetPreset('7d')}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost"
+            onClick={() => onSetPreset('7d')}
+          >
             7 dias
           </button>
-          <button type="button" className="ui-button ui-button--secondary" onClick={() => onSetPreset('30d')}>
+          <button
+            type="button"
+            className="ui-button ui-button--secondary"
+            onClick={() => onSetPreset('30d')}
+          >
             30 dias
           </button>
         </div>
       </div>
     </section>
-  );
+  )
 }
 
-export default DashboardFilters;
+export default DashboardFilters

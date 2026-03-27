@@ -1,7 +1,7 @@
-import { orderColumns } from '../schemas/orderSchema';
+import { orderColumns } from '../schemas/orderSchema'
 
 export function filterOrders(orders, filters) {
-  const searchTerm = filters.search.trim().toLowerCase();
+  const searchTerm = filters.search.trim().toLowerCase()
 
   return orders.filter((order) => {
     const matchesSearch =
@@ -18,23 +18,23 @@ export function filterOrders(orders, filters) {
       ]
         .join(' ')
         .toLowerCase()
-        .includes(searchTerm);
+        .includes(searchTerm)
 
-    const matchesStatus = filters.status === 'all' || order.status === filters.status;
-    const matchesOrigin = filters.origin === 'all' || order.origin === filters.origin;
-    const matchesHighPriority = !filters.highPriorityOnly || order.priority === 'high';
+    const matchesStatus = filters.status === 'all' || order.status === filters.status
+    const matchesOrigin = filters.origin === 'all' || order.origin === filters.origin
+    const matchesHighPriority = !filters.highPriorityOnly || order.priority === 'high'
 
-    return matchesSearch && matchesStatus && matchesOrigin && matchesHighPriority;
-  });
+    return matchesSearch && matchesStatus && matchesOrigin && matchesHighPriority
+  })
 }
 
 export function groupOrdersByStatus(orders) {
   return orderColumns.reduce((accumulator, column) => {
-    accumulator[column] = orders.filter((order) => order.status === column);
-    return accumulator;
-  }, {});
+    accumulator[column] = orders.filter((order) => order.status === column)
+    return accumulator
+  }, {})
 }
 
 export function countOrdersByStatus(orders, status) {
-  return orders.filter((order) => order.status === status).length;
+  return orders.filter((order) => order.status === status).length
 }

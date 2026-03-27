@@ -1,4 +1,4 @@
 interface:
-  display_name: "Smart Debugging Agent"
-  short_description: "Diagnose bugs and fix root causes"
-  default_prompt: "Use $smart-debugging-agent to diagnose this bug, find the root cause, and produce the corrected code."
+  display_name: 'Smart Debugging Agent'
+  short_description: 'Diagnose bugs and fix root causes'
+  default_prompt: 'Use $smart-debugging-agent to diagnose this bug, find the root cause, and produce the corrected code.'

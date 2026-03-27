@@ -1,23 +1,23 @@
-import UIMetricCard from '../ui/MetricCard';
+import UIMetricCard from '../ui/MetricCard'
 
 function resolveVariantFromBadgeClass(badgeClass = '') {
   if (badgeClass.includes('warning')) {
-    return 'warning';
+    return 'warning'
   }
 
   if (badgeClass.includes('danger')) {
-    return 'danger';
+    return 'danger'
   }
 
   if (badgeClass.includes('success')) {
-    return 'success';
+    return 'success'
   }
 
   if (badgeClass.includes('info')) {
-    return 'info';
+    return 'info'
   }
 
-  return 'neutral';
+  return 'neutral'
 }
 
 function MetricCard({
@@ -43,8 +43,7 @@ function MetricCard({
       className={className}
       valueClassName={valueClassName}
     />
-  );
+  )
 }
 
-export default MetricCard;
-
+export default MetricCard

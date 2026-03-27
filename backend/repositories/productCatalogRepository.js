@@ -1,15 +1,15 @@
-import { getAdminFirestore } from '../firebaseAdmin.js';
-import { backendEnv } from '../config/env.js';
-import { buildCacheKey, createCachedMethod } from '../cache/cacheService.js';
-import { createLoggerContext } from '../logging/logger.js';
+import { getAdminFirestore } from '../firebaseAdmin.js'
+import { backendEnv } from '../config/env.js'
+import { buildCacheKey, createCachedMethod } from '../cache/cacheService.js'
+import { createLoggerContext } from '../logging/logger.js'
 
-const productCatalogLogger = createLoggerContext({ module: 'repositories.product_catalog' });
+const productCatalogLogger = createLoggerContext({ module: 'repositories.product_catalog' })
 
 function mapDoc(documentSnapshot) {
   return {
     id: documentSnapshot.id,
     ...documentSnapshot.data(),
-  };
+  }
 }
 
 async function fetchProducts({ storeId, limit = 40 }) {
@@ -19,22 +19,25 @@ async function fetchProducts({ storeId, limit = 40 }) {
     .collection('products')
     .orderBy('updatedAt', 'desc')
     .limit(limit)
-    .get();
+    .get()
 
-  return snapshot.docs.map(mapDoc);
+  return snapshot.docs.map(mapDoc)
 }
 
-const cachedFetchProducts = createCachedMethod({
-  keyPrefix: 'store-products',
-  ttlSeconds: backendEnv.redisProductTtlSeconds,
-  keyBuilder: ({ storeId, limit = 40 }) => [storeId, limit],
-  logger: productCatalogLogger,
-}, fetchProducts);
+const cachedFetchProducts = createCachedMethod(
+  {
+    keyPrefix: 'store-products',
+    ttlSeconds: backendEnv.redisProductTtlSeconds,
+    keyBuilder: ({ storeId, limit = 40 }) => [storeId, limit],
+    logger: productCatalogLogger,
+  },
+  fetchProducts,
+)
 
 export async function listStoreProducts({ storeId, limit = 40 }) {
-  return cachedFetchProducts({ storeId, limit });
+  return cachedFetchProducts({ storeId, limit })
 }
 
 export function buildProductSearchCacheKey(storeId, limit = 40) {
-  return buildCacheKey('store-products', storeId, limit);
+  return buildCacheKey('store-products', storeId, limit)
 }

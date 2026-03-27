@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
-import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
-const ConfirmContext = createContext(null);
+const ConfirmContext = createContext(null)
 
 const DEFAULT_OPTIONS = {
   title: 'Confirmar acao',
@@ -10,31 +10,35 @@ const DEFAULT_OPTIONS = {
   confirmLabel: 'Confirmar',
   cancelLabel: 'Cancelar',
   tone: 'danger',
-};
+}
 
 export function ConfirmProvider({ children }) {
-  const [dialogState, setDialogState] = useState(null);
+  const [dialogState, setDialogState] = useState(null)
 
-  const ask = useCallback((options) => new Promise((resolve) => {
-    setDialogState({
-      ...DEFAULT_OPTIONS,
-      ...options,
-      resolve,
-    });
-  }), []);
+  const ask = useCallback(
+    (options) =>
+      new Promise((resolve) => {
+        setDialogState({
+          ...DEFAULT_OPTIONS,
+          ...options,
+          resolve,
+        })
+      }),
+    [],
+  )
 
   const closeDialog = useCallback((confirmed) => {
     setDialogState((current) => {
       if (!current) {
-        return current;
+        return current
       }
 
-      current.resolve(Boolean(confirmed));
-      return null;
-    });
-  }, []);
+      current.resolve(Boolean(confirmed))
+      return null
+    })
+  }, [])
 
-  const value = useMemo(() => ({ ask }), [ask]);
+  const value = useMemo(() => ({ ask }), [ask])
 
   return (
     <ConfirmContext.Provider value={value}>
@@ -50,15 +54,15 @@ export function ConfirmProvider({ children }) {
         onConfirm={() => closeDialog(true)}
       />
     </ConfirmContext.Provider>
-  );
+  )
 }
 
 export function useConfirm() {
-  const context = useContext(ConfirmContext);
+  const context = useContext(ConfirmContext)
 
   if (!context) {
-    throw new Error('useConfirm deve ser usado dentro de ConfirmProvider');
+    throw new Error('useConfirm deve ser usado dentro de ConfirmProvider')
   }
 
-  return context;
+  return context
 }

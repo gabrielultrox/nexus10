@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import ProductsModule from '../modules/products/components/ProductsModule';
+import PageIntro from '../components/common/PageIntro'
+import ProductsModule from '../modules/products/components/ProductsModule'
 
 function ProductsPage() {
   return (
@@ -12,7 +12,7 @@ function ProductsPage() {
 
       <ProductsModule />
     </div>
-  );
+  )
 }
 
-export default ProductsPage;
+export default ProductsPage

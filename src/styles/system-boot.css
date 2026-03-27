@@ -5,9 +5,21 @@
   display: block;
   padding: 0;
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--color-accent-cyan) 14%, transparent), transparent 32%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-red) 18%, transparent), transparent 28%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-bg-page) 92%, transparent), var(--color-bg-canvas));
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--color-accent-cyan) 14%, transparent),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--color-accent-red) 18%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg-page) 92%, transparent),
+      var(--color-bg-canvas)
+    );
   overflow: hidden;
   animation: system-boot-fade-in 420ms both;
 }
@@ -31,15 +43,27 @@
   background:
     linear-gradient(var(--surface-grid-line-strong) 1px, transparent 1px),
     linear-gradient(90deg, var(--surface-grid-line-strong) 1px, transparent 1px);
-  background-size: 100% 42px, 42px 100%;
+  background-size:
+    100% 42px,
+    42px 100%;
   opacity: 0.42;
   transform: perspective(900px) rotateX(74deg) scale(1.25);
   transform-origin: center bottom;
-  mask-image: linear-gradient(180deg, transparent 6%, rgba(0, 0, 0, 0.95) 34%, rgba(0, 0, 0, 0.25) 100%);
+  mask-image: linear-gradient(
+    180deg,
+    transparent 6%,
+    rgba(0, 0, 0, 0.95) 34%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
 }
 
 .system-boot__scanline {
-  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-accent-cyan) 20%, transparent) 48%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-accent-cyan) 20%, transparent) 48%,
+    transparent 100%
+  );
   opacity: 0.32;
   animation: system-boot-scan 3.4s ease-in-out infinite;
 }
@@ -52,8 +76,18 @@
 .system-boot__glitch-band {
   inset: 16% -8%;
   background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-red) 10%, transparent), transparent),
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent);
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-accent-red) 10%, transparent),
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent
+    );
   mix-blend-mode: screen;
   opacity: 0.36;
   animation: system-boot-glitch 6s steps(2, end) infinite;
@@ -62,7 +96,12 @@
 .system-boot__horizon {
   inset: auto -10% 14%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 34%, transparent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-accent-cyan) 34%, transparent),
+    transparent
+  );
   opacity: 0.5;
   box-shadow: 0 0 22px color-mix(in srgb, var(--color-accent-cyan) 16%, transparent);
 }
@@ -90,8 +129,16 @@
   gap: var(--space-4);
   padding: clamp(18px, 2.4vw, 28px);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 52%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 84%, transparent), color-mix(in srgb, var(--color-bg-canvas) 92%, transparent));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 52%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 84%, transparent),
+      color-mix(in srgb, var(--color-bg-canvas) 92%, transparent)
+    );
   backdrop-filter: blur(18px);
   overflow: hidden;
   box-sizing: border-box;
@@ -107,12 +154,23 @@
 
 .system-boot__shell::before {
   top: 0;
-  background: linear-gradient(90deg, transparent, var(--color-accent-red), var(--color-accent-cyan), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent-red),
+    var(--color-accent-cyan),
+    transparent
+  );
 }
 
 .system-boot__shell::after {
   bottom: 0;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-cyan) 22%, transparent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-accent-cyan) 22%, transparent),
+    transparent
+  );
   opacity: 0.6;
 }
 
@@ -286,8 +344,16 @@
   gap: 22px;
   padding: clamp(18px, 2.4vw, 26px);
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 44%),
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-red) 12%, transparent), transparent 58%),
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-red) 12%, transparent),
+      transparent 58%
+    ),
     color-mix(in srgb, var(--color-bg-card-alt) 70%, transparent);
 }
 
@@ -317,7 +383,13 @@
 .system-boot__copy-mark-line {
   width: 112px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent-red) 42%, transparent), color-mix(in srgb, var(--color-accent-cyan) 38%, transparent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-accent-red) 42%, transparent),
+    color-mix(in srgb, var(--color-accent-cyan) 38%, transparent),
+    transparent
+  );
   opacity: 0.9;
 }
 

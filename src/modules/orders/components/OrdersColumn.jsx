@@ -1,8 +1,8 @@
-import { orderStatusMap } from '../schemas/orderSchema';
-import OrderCard from './OrderCard';
+import { orderStatusMap } from '../schemas/orderSchema'
+import OrderCard from './OrderCard'
 
 function OrdersColumn({ status, orders, onAdvanceOrder, onOpenDetails, updatingOrderId }) {
-  const statusMeta = orderStatusMap[status];
+  const statusMeta = orderStatusMap[status]
 
   return (
     <section className={`ui-card orders-column ${statusMeta.columnClass}`}>
@@ -33,7 +33,7 @@ function OrdersColumn({ status, orders, onAdvanceOrder, onOpenDetails, updatingO
         )}
       </div>
     </section>
-  );
+  )
 }
 
-export default OrdersColumn;
+export default OrdersColumn

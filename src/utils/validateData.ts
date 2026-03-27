@@ -10,7 +10,8 @@ export interface IValidationResult<T> {
 
 function mapValidationErrors(error: Pick<ZodError, 'issues'>) {
   return error.issues.reduce<Record<string, string[]>>((accumulator, issue) => {
-    const path = issue.path.length > 0 ? issue.path.map((segment) => String(segment)).join('.') : 'root'
+    const path =
+      issue.path.length > 0 ? issue.path.map((segment) => String(segment)).join('.') : 'root'
     accumulator[path] = [...(accumulator[path] ?? []), issue.message]
     return accumulator
   }, {})
@@ -32,7 +33,11 @@ export function validateData<T>(schema: ZodTypeAny, data: unknown): IValidationR
   }
 }
 
-export function validateOrThrow<T>(schema: ZodTypeAny, data: unknown, context?: Record<string, unknown>): T {
+export function validateOrThrow<T>(
+  schema: ZodTypeAny,
+  data: unknown,
+  context?: Record<string, unknown>,
+): T {
   const result = validateData<T>(schema, data)
 
   if (result.success) {
@@ -49,9 +54,8 @@ export function validateOrThrow<T>(schema: ZodTypeAny, data: unknown, context?: 
 export function createValidator<T>(schema: ZodTypeAny) {
   return {
     validate: (data: unknown) => validateData<T>(schema, data),
-    validateOrThrow: (data: unknown, context?: Record<string, unknown>) => (
-      validateOrThrow<T>(schema, data, context)
-    ),
+    validateOrThrow: (data: unknown, context?: Record<string, unknown>) =>
+      validateOrThrow<T>(schema, data, context),
   }
 }
 
@@ -79,10 +83,13 @@ export async function validateFields<T extends Record<string, unknown>>(
       accumulator.success = false
       accumulator.errors = {
         ...(accumulator.errors ?? {}),
-        ...Object.entries(result.errors ?? {}).reduce<Record<string, string[]>>((mapped, [field, messages]) => {
-          mapped[`${key}.${field}`] = messages
-          return mapped
-        }, {}),
+        ...Object.entries(result.errors ?? {}).reduce<Record<string, string[]>>(
+          (mapped, [field, messages]) => {
+            mapped[`${key}.${field}`] = messages
+            return mapped
+          },
+          {},
+        ),
       }
       return accumulator
     },

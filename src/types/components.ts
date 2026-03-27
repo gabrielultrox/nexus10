@@ -1,9 +1,4 @@
-import type {
-  ButtonHTMLAttributes,
-  FormEvent,
-  MouseEventHandler,
-  ReactNode,
-} from 'react'
+import type { ButtonHTMLAttributes, FormEvent, MouseEventHandler, ReactNode } from 'react'
 
 export interface IBaseComponentProps {
   children?: ReactNode

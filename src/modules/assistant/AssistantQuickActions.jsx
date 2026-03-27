@@ -13,7 +13,7 @@ function AssistantQuickActions({ actions, onAction }) {
         </button>
       ))}
     </div>
-  );
+  )
 }
 
-export default AssistantQuickActions;
+export default AssistantQuickActions

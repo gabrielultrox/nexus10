@@ -111,16 +111,16 @@ function normalizePhone(phone) {
   return String(phone ?? '').replace(/\D/g, '')
 }
 
-export async function seedBaseCustomers({
-  storeId,
-  tenantId,
-  existingCustomers = [],
-}) {
+export async function seedBaseCustomers({ storeId, tenantId, existingCustomers = [] }) {
   const existingPhones = new Set(
     existingCustomers.map((customer) => normalizePhone(customer.phone ?? customer.phoneDisplay)),
   )
   const existingNames = new Set(
-    existingCustomers.map((customer) => String(customer.name ?? '').trim().toLowerCase()),
+    existingCustomers.map((customer) =>
+      String(customer.name ?? '')
+        .trim()
+        .toLowerCase(),
+    ),
   )
 
   let createdCount = 0
@@ -150,22 +150,30 @@ export async function seedBaseCustomers({
   }
 }
 
-export async function seedBaseProducts({
-  storeId,
-  tenantId,
-  existingProducts = [],
-}) {
+export async function seedBaseProducts({ storeId, tenantId, existingProducts = [] }) {
   const existingSkus = new Set(
-    existingProducts.map((product) => String(product.sku ?? '').trim().toLowerCase()).filter(Boolean),
+    existingProducts
+      .map((product) =>
+        String(product.sku ?? '')
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean),
   )
   const existingNames = new Set(
-    existingProducts.map((product) => String(product.name ?? '').trim().toLowerCase()),
+    existingProducts.map((product) =>
+      String(product.name ?? '')
+        .trim()
+        .toLowerCase(),
+    ),
   )
 
   let createdCount = 0
 
   for (const template of productSeedTemplates) {
-    const normalizedSku = String(template.sku ?? '').trim().toLowerCase()
+    const normalizedSku = String(template.sku ?? '')
+      .trim()
+      .toLowerCase()
     const normalizedName = template.name.trim().toLowerCase()
 
     if (existingSkus.has(normalizedSku) || existingNames.has(normalizedName)) {

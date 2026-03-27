@@ -1,5 +1,5 @@
-import Button from './Button';
-import Card from './Card';
+import Button from './Button'
+import Card from './Card'
 
 const meta = {
   title: 'UI/Card',
@@ -19,9 +19,9 @@ const meta = {
       description: 'Liga estados de hover para cards clicaveis.',
     },
   },
-};
+}
 
-export default meta;
+export default meta
 
 export const Basic = {
   render: (args) => (
@@ -34,7 +34,8 @@ export const Basic = {
       </Card.Header>
       <Card.Body>
         <p className="story-copy">
-          Use este componente para blocos operacionais, resumos, detalhes de entidade e containers de acao.
+          Use este componente para blocos operacionais, resumos, detalhes de entidade e containers
+          de acao.
         </p>
       </Card.Body>
       <Card.Footer>
@@ -45,4 +46,4 @@ export const Basic = {
   args: {
     interactive: false,
   },
-};
+}

@@ -1,5 +1,5 @@
-export const channelOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD'];
-export const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX'];
+export const channelOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD']
+export const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX']
 
 export function createEmptyItem() {
   return {
@@ -7,7 +7,7 @@ export function createEmptyItem() {
     productSnapshot: null,
     quantity: '1',
     unitPrice: '',
-  };
+  }
 }
 
 export function createInitialFormState() {
@@ -29,22 +29,22 @@ export function createInitialFormState() {
       discountValue: '0',
     },
     items: [createEmptyItem()],
-  };
+  }
 }
 
 export function asDate(value) {
   if (!value) {
-    return null;
+    return null
   }
 
-  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
 }
 
 export function formatDateTime(value) {
-  const dateValue = asDate(value);
+  const dateValue = asDate(value)
 
   if (!dateValue || Number.isNaN(dateValue.getTime())) {
-    return '--';
+    return '--'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -53,38 +53,38 @@ export function formatDateTime(value) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(dateValue);
+  }).format(dateValue)
 }
 
 export function isWithinPeriod(createdAt, startDate, endDate) {
-  const value = asDate(createdAt);
+  const value = asDate(createdAt)
 
   if (!value || Number.isNaN(value.getTime())) {
-    return false;
+    return false
   }
 
   if (startDate) {
-    const start = new Date(`${startDate}T00:00:00`);
+    const start = new Date(`${startDate}T00:00:00`)
     if (value < start) {
-      return false;
+      return false
     }
   }
 
   if (endDate) {
-    const end = new Date(`${endDate}T23:59:59`);
+    const end = new Date(`${endDate}T23:59:59`)
     if (value > end) {
-      return false;
+      return false
     }
   }
 
-  return true;
+  return true
 }
 
 export function parseDecimal(value) {
   const normalized = String(value ?? '')
     .replace(/\s+/g, '')
-    .replace(',', '.');
-  const parsed = Number(normalized);
+    .replace(',', '.')
+  const parsed = Number(normalized)
 
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) ? parsed : 0
 }

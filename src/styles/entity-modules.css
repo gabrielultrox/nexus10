@@ -31,7 +31,11 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-amber) 4%, transparent), transparent 16%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-amber) 4%, transparent),
+      transparent 16%
+    ),
     color-mix(in srgb, var(--surface-panel) 94%, var(--surface-panel-soft-alt));
   box-shadow: 0 10px 18px color-mix(in srgb, var(--color-shadow-rgb) 5%, transparent);
 }
@@ -42,7 +46,12 @@
   inset: 0 auto auto 0;
   width: 132px;
   height: 1px;
-  background: linear-gradient(90deg, var(--color-accent-amber), var(--color-accent-cyan), transparent);
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-amber),
+    var(--color-accent-cyan),
+    transparent
+  );
 }
 
 .entity-form-hero__eyebrow {

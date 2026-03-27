@@ -1,17 +1,17 @@
-import * as Sentry from '@sentry/node';
+import * as Sentry from '@sentry/node'
 
-import { backendEnv } from '../config/env.js';
-import { logger, serializeError } from '../logging/logger.js';
+import { backendEnv } from '../config/env.js'
+import { logger, serializeError } from '../logging/logger.js'
 
-let sentryInitialized = false;
+let sentryInitialized = false
 
 export function isSentryEnabled() {
-  return Boolean(backendEnv.sentryDsn);
+  return Boolean(backendEnv.sentryDsn)
 }
 
 export function initializeSentry() {
   if (sentryInitialized || !isSentryEnabled()) {
-    return;
+    return
   }
 
   Sentry.init({
@@ -21,83 +21,86 @@ export function initializeSentry() {
     release: backendEnv.sentryRelease || undefined,
     tracesSampleRate: backendEnv.sentryTracesSampleRate,
     sendDefaultPii: false,
-  });
+  })
 
-  sentryInitialized = true;
+  sentryInitialized = true
 
-  logger.info({
-    context: 'monitoring.sentry.init',
-    tracesSampleRate: backendEnv.sentryTracesSampleRate,
-    environment: backendEnv.nodeEnv,
-  }, 'Sentry monitoring initialized');
+  logger.info(
+    {
+      context: 'monitoring.sentry.init',
+      tracesSampleRate: backendEnv.sentryTracesSampleRate,
+      environment: backendEnv.nodeEnv,
+    },
+    'Sentry monitoring initialized',
+  )
 }
 
 export function captureError(error, context = {}) {
   if (!isSentryEnabled()) {
-    return null;
+    return null
   }
 
-  initializeSentry();
+  initializeSentry()
 
   Sentry.withScope((scope) => {
     Object.entries(context).forEach(([key, value]) => {
       if (value == null) {
-        return;
+        return
       }
 
       if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-        scope.setTag(key, String(value));
-        return;
+        scope.setTag(key, String(value))
+        return
       }
 
-      scope.setContext(key, value);
-    });
+      scope.setContext(key, value)
+    })
 
-    Sentry.captureException(error instanceof Error ? error : new Error('Unknown monitored error'));
-  });
+    Sentry.captureException(error instanceof Error ? error : new Error('Unknown monitored error'))
+  })
 
-  return true;
+  return true
 }
 
 export function captureMessage(message, context = {}, level = 'warning') {
   if (!isSentryEnabled()) {
-    return null;
+    return null
   }
 
-  initializeSentry();
+  initializeSentry()
 
   Sentry.withScope((scope) => {
     Object.entries(context).forEach(([key, value]) => {
       if (value == null) {
-        return;
+        return
       }
 
       if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-        scope.setTag(key, String(value));
-        return;
+        scope.setTag(key, String(value))
+        return
       }
 
-      scope.setContext(key, value);
-    });
+      scope.setContext(key, value)
+    })
 
-    Sentry.captureMessage(message, level);
-  });
+    Sentry.captureMessage(message, level)
+  })
 
-  return true;
+  return true
 }
 
 export async function flushSentry(timeout = 2000) {
   if (!isSentryEnabled()) {
-    return false;
+    return false
   }
 
-  initializeSentry();
-  return Sentry.flush(timeout);
+  initializeSentry()
+  return Sentry.flush(timeout)
 }
 
 export function buildMonitoredErrorPayload(error, context = {}) {
   return {
     ...context,
     error: serializeError(error),
-  };
+  }
 }

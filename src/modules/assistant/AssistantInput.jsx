@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 function AssistantInput({ disabled, onSend }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState('')
 
   function handleSubmit(event) {
-    event.preventDefault();
+    event.preventDefault()
 
-    const nextValue = value.trim();
+    const nextValue = value.trim()
 
     if (!nextValue) {
-      return;
+      return
     }
 
-    onSend(nextValue);
-    setValue('');
+    onSend(nextValue)
+    setValue('')
   }
 
   return (
@@ -29,7 +29,7 @@ function AssistantInput({ disabled, onSend }) {
         Enviar
       </button>
     </form>
-  );
+  )
 }
 
-export default AssistantInput;
+export default AssistantInput

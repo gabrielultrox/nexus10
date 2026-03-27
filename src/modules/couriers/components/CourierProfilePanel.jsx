@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
-import { courierShiftMap, courierStatusMap } from '../schemas/courierSchema';
+import { courierShiftMap, courierStatusMap } from '../schemas/courierSchema'
 
 function CourierProfilePanel({ courier }) {
-  const status = courierStatusMap[courier.status];
+  const status = courierStatusMap[courier.status]
 
   return (
     <section className="courier-profile-layout">
@@ -40,7 +40,10 @@ function CourierProfilePanel({ courier }) {
         </div>
 
         <div className="courier-profile-hero__actions">
-          <Link to={`/couriers/cadastro?edit=${courier.id}`} className="ui-button ui-button--secondary">
+          <Link
+            to={`/couriers/cadastro?edit=${courier.id}`}
+            className="ui-button ui-button--secondary"
+          >
             Editar cadastro
           </Link>
           <button type="button" className="ui-button ui-button--ghost">
@@ -93,7 +96,7 @@ function CourierProfilePanel({ courier }) {
         </div>
       </article>
     </section>
-  );
+  )
 }
 
-export default CourierProfilePanel;
+export default CourierProfilePanel

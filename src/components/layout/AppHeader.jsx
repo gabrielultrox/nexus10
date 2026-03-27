@@ -1,15 +1,15 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom'
 
-import { useAuth } from '../../contexts/AuthContext';
-import { getRouteByPathname } from '../../utils/routeCatalog';
-import NotificationCenter from '../notifications/NotificationCenter';
-import ThemeToggle from '../theme/ThemeToggle';
+import { useAuth } from '../../contexts/AuthContext'
+import { getRouteByPathname } from '../../utils/routeCatalog'
+import NotificationCenter from '../notifications/NotificationCenter'
+import ThemeToggle from '../theme/ThemeToggle'
 
 function AppHeader() {
-  const location = useLocation();
-  const { session, signOut } = useAuth();
-  const route = getRouteByPathname(location.pathname);
-  const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local';
+  const location = useLocation()
+  const { session, signOut } = useAuth()
+  const route = getRouteByPathname(location.pathname)
+  const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local'
 
   return (
     <header className="app-header">
@@ -37,7 +37,7 @@ function AppHeader() {
         </div>
       </div>
     </header>
-  );
+  )
 }
 
-export default AppHeader;
+export default AppHeader

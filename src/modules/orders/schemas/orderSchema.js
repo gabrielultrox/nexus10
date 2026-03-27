@@ -24,7 +24,7 @@ export const orderStatusMap = {
     badgeClass: 'ui-badge--danger',
     columnClass: 'orders-column--received',
   },
-};
+}
 
 export const orderPriorityMap = {
   normal: {
@@ -35,7 +35,7 @@ export const orderPriorityMap = {
     label: 'Urgente',
     badgeClass: 'ui-badge--danger',
   },
-};
+}
 
 export const orderStatusOptions = [
   { value: 'all', label: 'Todos os status' },
@@ -44,7 +44,7 @@ export const orderStatusOptions = [
   { value: 'out_for_delivery', label: 'Saiu' },
   { value: 'delivered', label: 'Entregue' },
   { value: 'cancelled', label: 'Cancelado' },
-];
+]
 
 export const orderOriginOptions = [
   { value: 'all', label: 'Todas as origens' },
@@ -52,6 +52,6 @@ export const orderOriginOptions = [
   { value: 'Ze Delivery', label: 'Ze Delivery' },
   { value: 'Anota Ai', label: 'Anota Ai' },
   { value: 'iFood', label: 'iFood' },
-];
+]
 
-export const orderColumns = ['received', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
+export const orderColumns = ['received', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']

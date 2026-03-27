@@ -1,45 +1,54 @@
-import { createClient } from 'redis';
+import { createClient } from 'redis'
 
-import { backendEnv } from '../config/env.js';
-import { createLoggerContext, serializeError } from '../logging/logger.js';
+import { backendEnv } from '../config/env.js'
+import { createLoggerContext, serializeError } from '../logging/logger.js'
 
-const redisLogger = createLoggerContext({ module: 'cache.redis' });
+const redisLogger = createLoggerContext({ module: 'cache.redis' })
 
-let redisClientPromise = null;
-let redisClientInstance = null;
+let redisClientPromise = null
+let redisClientInstance = null
 
 export function isRedisConfigured() {
-  return Boolean(backendEnv.redisUrl);
+  return Boolean(backendEnv.redisUrl)
 }
 
 function registerRedisEvents(client) {
   client.on('error', (error) => {
-    redisLogger.warn({
-      context: 'cache.redis.error',
-      error: serializeError(error),
-    }, 'Redis error');
-  });
+    redisLogger.warn(
+      {
+        context: 'cache.redis.error',
+        error: serializeError(error),
+      },
+      'Redis error',
+    )
+  })
 
   client.on('reconnecting', () => {
-    redisLogger.warn({
-      context: 'cache.redis.reconnecting',
-    }, 'Redis reconnecting');
-  });
+    redisLogger.warn(
+      {
+        context: 'cache.redis.reconnecting',
+      },
+      'Redis reconnecting',
+    )
+  })
 
   client.on('ready', () => {
-    redisLogger.info({
-      context: 'cache.redis.ready',
-    }, 'Redis ready');
-  });
+    redisLogger.info(
+      {
+        context: 'cache.redis.ready',
+      },
+      'Redis ready',
+    )
+  })
 }
 
 export async function getRedisClient() {
   if (!isRedisConfigured()) {
-    return null;
+    return null
   }
 
   if (redisClientInstance?.isOpen) {
-    return redisClientInstance;
+    return redisClientInstance
   }
 
   if (!redisClientPromise) {
@@ -48,43 +57,50 @@ export async function getRedisClient() {
       socket: {
         connectTimeout: backendEnv.redisSocketTimeoutMs,
       },
-    });
+    })
 
-    registerRedisEvents(client);
+    registerRedisEvents(client)
 
-    redisClientPromise = client.connect()
+    redisClientPromise = client
+      .connect()
       .then(() => {
-        redisClientInstance = client;
-        return client;
+        redisClientInstance = client
+        return client
       })
       .catch((error) => {
-        redisLogger.warn({
-          context: 'cache.redis.connect_failed',
-          error: serializeError(error),
-        }, 'Redis unavailable, using fallback data source');
-        redisClientPromise = null;
-        redisClientInstance = null;
-        return null;
-      });
+        redisLogger.warn(
+          {
+            context: 'cache.redis.connect_failed',
+            error: serializeError(error),
+          },
+          'Redis unavailable, using fallback data source',
+        )
+        redisClientPromise = null
+        redisClientInstance = null
+        return null
+      })
   }
 
-  return redisClientPromise;
+  return redisClientPromise
 }
 
 export async function disconnectRedisClient() {
   if (!redisClientInstance) {
-    return;
+    return
   }
 
   try {
-    await redisClientInstance.quit();
+    await redisClientInstance.quit()
   } catch (error) {
-    redisLogger.warn({
-      context: 'cache.redis.disconnect_failed',
-      error: serializeError(error),
-    }, 'Redis quit failed');
+    redisLogger.warn(
+      {
+        context: 'cache.redis.disconnect_failed',
+        error: serializeError(error),
+      },
+      'Redis quit failed',
+    )
   } finally {
-    redisClientInstance = null;
-    redisClientPromise = null;
+    redisClientInstance = null
+    redisClientPromise = null
   }
 }

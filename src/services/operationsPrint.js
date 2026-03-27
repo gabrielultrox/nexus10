@@ -4,30 +4,33 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
 }
 
 function renderSummaryItems(items = []) {
   return items
     .filter((item) => item?.label && item?.value != null)
-    .map((item) => `
+    .map(
+      (item) => `
       <div class="ops-print__summary-item">
         <span class="ops-print__summary-label">${escapeHtml(item.label)}</span>
         <strong class="ops-print__summary-value">${escapeHtml(item.value)}</strong>
       </div>
-    `)
-    .join('');
+    `,
+    )
+    .join('')
 }
 
 function renderRecordItems(records = []) {
   if (!records.length) {
     return `
       <div class="ops-print__empty">Nenhum registro encontrado para impressao.</div>
-    `;
+    `
   }
 
   return records
-    .map((record) => `
+    .map(
+      (record) => `
       <article class="ops-print__item">
         <div class="ops-print__item-top">
           <strong class="ops-print__item-title">${escapeHtml(record.title || 'Registro')}</strong>
@@ -37,17 +40,20 @@ function renderRecordItems(records = []) {
         <div class="ops-print__item-fields">
           ${(record.fields || [])
             .filter((field) => field?.label && field?.value != null)
-            .map((field) => `
+            .map(
+              (field) => `
               <div class="ops-print__field">
                 <span class="ops-print__field-label">${escapeHtml(field.label)}</span>
                 <strong class="ops-print__field-value">${escapeHtml(field.value)}</strong>
               </div>
-            `)
+            `,
+            )
             .join('')}
         </div>
       </article>
-    `)
-    .join('');
+    `,
+    )
+    .join('')
 }
 
 function buildPrintHtml(report) {
@@ -243,38 +249,38 @@ function buildPrintHtml(report) {
       </section>
     </main>
   </body>
-</html>`;
+</html>`
 }
 
 export function printOperationalReport(report) {
-  const printWindow = window.open('', '_blank', 'width=420,height=860');
+  const printWindow = window.open('', '_blank', 'width=420,height=860')
 
   if (!printWindow) {
-    throw new Error('Nao foi possivel abrir a janela de impressao.');
+    throw new Error('Nao foi possivel abrir a janela de impressao.')
   }
 
-  printWindow.document.open();
-  printWindow.document.write(buildPrintHtml(report));
-  printWindow.document.close();
-  printWindow.document.title = report.title || 'Relatorio operacional';
-  printWindow.focus();
+  printWindow.document.open()
+  printWindow.document.write(buildPrintHtml(report))
+  printWindow.document.close()
+  printWindow.document.title = report.title || 'Relatorio operacional'
+  printWindow.focus()
 
   const triggerPrint = () => {
     try {
-      printWindow.focus();
-      printWindow.print();
+      printWindow.focus()
+      printWindow.print()
     } catch {
       // Ignore print invocation errors to avoid blocking the shell.
     }
-  };
+  }
 
   printWindow.onload = () => {
-    triggerPrint();
-  };
+    triggerPrint()
+  }
 
   printWindow.onafterprint = () => {
-    printWindow.close();
-  };
+    printWindow.close()
+  }
 
-  printWindow.setTimeout(triggerPrint, 350);
+  printWindow.setTimeout(triggerPrint, 350)
 }

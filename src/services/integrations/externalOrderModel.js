@@ -1,28 +1,28 @@
 function asIsoString(value) {
   if (!value) {
-    return null;
+    return null
   }
 
   if (typeof value === 'string') {
-    return value;
+    return value
   }
 
   if (typeof value?.toDate === 'function') {
-    return value.toDate().toISOString();
+    return value.toDate().toISOString()
   }
 
-  const parsedDate = new Date(value);
-  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
+  const parsedDate = new Date(value)
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString()
 }
 
 function asNumber(value) {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const parsed = Number(value ?? 0)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function normalizeItems(items = []) {
   if (!Array.isArray(items)) {
-    return [];
+    return []
   }
 
   return items.map((item, index) => ({
@@ -30,20 +30,26 @@ function normalizeItems(items = []) {
     name: item?.name?.trim() || 'Item',
     quantity: asNumber(item?.quantity ?? 1),
     unitPrice: asNumber(item?.unitPrice ?? item?.price?.value),
-    totalPrice: asNumber(item?.totalPrice ?? item?.total?.value ?? (asNumber(item?.quantity ?? 1) * asNumber(item?.unitPrice ?? item?.price?.value))),
+    totalPrice: asNumber(
+      item?.totalPrice ??
+        item?.total?.value ??
+        asNumber(item?.quantity ?? 1) * asNumber(item?.unitPrice ?? item?.price?.value),
+    ),
     options: Array.isArray(item?.options) ? item.options : [],
     notes: item?.notes?.trim?.() ?? '',
-  }));
+  }))
 }
 
 export function buildExternalOrderDocumentId(source, merchantId, externalOrderId) {
-  return [source, merchantId, externalOrderId].filter(Boolean).join(':');
+  return [source, merchantId, externalOrderId].filter(Boolean).join(':')
 }
 
 export function normalizeExternalOrderRecord(order = {}) {
   return {
     externalOrderId: String(order.externalOrderId ?? order.id ?? '').trim(),
-    source: String(order.source ?? '').trim().toLowerCase(),
+    source: String(order.source ?? '')
+      .trim()
+      .toLowerCase(),
     merchantId: String(order.merchantId ?? '').trim(),
     displayId: String(order.displayId ?? order.orderNumber ?? '').trim(),
     customer: order.customer ?? {
@@ -73,7 +79,7 @@ export function normalizeExternalOrderRecord(order = {}) {
     createdAt: asIsoString(order.createdAt),
     updatedAt: asIsoString(order.updatedAt),
     raw: order.raw ?? null,
-  };
+  }
 }
 
 export function buildExternalOrderTimelineEntry({
@@ -93,7 +99,7 @@ export function buildExternalOrderTimelineEntry({
     description: description ?? '',
     happenedAt: asIsoString(happenedAt) ?? new Date().toISOString(),
     metadata,
-  };
+  }
 }
 
 export function buildExternalOrderTrackingEntry({
@@ -119,5 +125,5 @@ export function buildExternalOrderTrackingEntry({
     happenedAt: asIsoString(happenedAt) ?? new Date().toISOString(),
     eventId,
     location,
-  };
+  }
 }

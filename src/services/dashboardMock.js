@@ -113,4 +113,4 @@ export const dashboardMock = {
       { id: 'c4', label: 'Trocos', value: 'R$ 120' },
     ],
   },
-};
+}

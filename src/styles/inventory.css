@@ -41,7 +41,11 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-field);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 10%, transparent), transparent 20%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 10%, transparent),
+      transparent 20%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--color-bg-input));
   color: var(--color-text-secondary);
 }

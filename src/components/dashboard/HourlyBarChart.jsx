@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 function HourlyBarChart({ data }) {
-  const [activeLabel, setActiveLabel] = useState(null);
-  const max = Math.max(...data.map((item) => item.value), 1);
-  const activeItem = data.find((item) => item.label === activeLabel) ?? null;
+  const [activeLabel, setActiveLabel] = useState(null)
+  const max = Math.max(...data.map((item) => item.value), 1)
+  const activeItem = data.find((item) => item.label === activeLabel) ?? null
 
   return (
     <div className="bar-chart">
@@ -32,16 +32,13 @@ function HourlyBarChart({ data }) {
         </div>
       </div>
 
-      <div
-        className="bar-chart__axis"
-        style={{ '--chart-columns': data.length }}
-      >
+      <div className="bar-chart__axis" style={{ '--chart-columns': data.length }}>
         {data.map((item) => (
           <span key={item.label}>{item.label}</span>
         ))}
       </div>
     </div>
-  );
+  )
 }
 
-export default HourlyBarChart;
+export default HourlyBarChart

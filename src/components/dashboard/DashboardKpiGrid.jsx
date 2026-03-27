@@ -1,4 +1,4 @@
-import DashboardKpiCard from './DashboardKpiCard';
+import DashboardKpiCard from './DashboardKpiCard'
 
 function DashboardKpiGrid({ items }) {
   return (
@@ -7,7 +7,7 @@ function DashboardKpiGrid({ items }) {
         <DashboardKpiCard key={item.id} item={item} />
       ))}
     </section>
-  );
+  )
 }
 
-export default DashboardKpiGrid;
+export default DashboardKpiGrid

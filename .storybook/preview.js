@@ -1,10 +1,10 @@
-import React from 'react';
+import React from 'react'
 
-import '../src/styles/reset.css';
-import '../src/styles/tokens.css';
-import '../src/styles/typography.css';
-import '../src/styles/components.css';
-import '../src/styles/global.css';
+import '../src/styles/reset.css'
+import '../src/styles/tokens.css'
+import '../src/styles/typography.css'
+import '../src/styles/components.css'
+import '../src/styles/global.css'
 
 const preview = {
   parameters: {
@@ -40,6 +40,6 @@ const preview = {
         React.createElement(Story),
       ),
   ],
-};
+}
 
-export default preview;
+export default preview

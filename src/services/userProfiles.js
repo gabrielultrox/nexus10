@@ -1,11 +1,11 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 
-import { canUseRemoteSync, firebaseDb, firebaseReady } from './firebase';
-import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
-import { normalizeRole, roles } from './permissions';
+import { canUseRemoteSync, firebaseDb, firebaseReady } from './firebase'
+import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
+import { normalizeRole, roles } from './permissions'
 
-const DEFAULT_TENANT_ID = 'hora-dez';
-const DEFAULT_STORE_ID = 'hora-dez';
+const DEFAULT_TENANT_ID = 'hora-dez'
+const DEFAULT_STORE_ID = 'hora-dez'
 
 export const localOperatorProfiles = [
   { operatorName: 'Gabriel', role: roles.admin },
@@ -13,7 +13,7 @@ export const localOperatorProfiles = [
   { operatorName: 'Rafael', role: roles.operador },
   { operatorName: 'Ana Vitoria', role: roles.atendente },
   { operatorName: 'Rosa', role: roles.operador },
-];
+]
 
 function slugifyOperatorName(operatorName) {
   return operatorName
@@ -21,17 +21,17 @@ function slugifyOperatorName(operatorName) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+|-+$/g, '')
 }
 
 export function createLocalUserId(operatorName) {
-  return `local-${slugifyOperatorName(operatorName)}`;
+  return `local-${slugifyOperatorName(operatorName)}`
 }
 
 export function getDefaultUserProfile(operatorName) {
-  const trimmedName = operatorName?.trim() ?? '';
-  const fallback = localOperatorProfiles.find((profile) => profile.operatorName === trimmedName);
-  const uid = createLocalUserId(trimmedName);
+  const trimmedName = operatorName?.trim() ?? ''
+  const fallback = localOperatorProfiles.find((profile) => profile.operatorName === trimmedName)
+  const uid = createLocalUserId(trimmedName)
 
   return {
     uid,
@@ -44,34 +44,38 @@ export function getDefaultUserProfile(operatorName) {
     defaultStoreId: DEFAULT_STORE_ID,
     status: 'active',
     authMode: 'local',
-  };
+  }
 }
 
 export function getOperatorOptions() {
-  return localOperatorProfiles.map((profile) => profile.operatorName);
+  return localOperatorProfiles.map((profile) => profile.operatorName)
 }
 
 export async function resolveUserProfileByOperator(operatorName) {
-  const fallback = getDefaultUserProfile(operatorName);
+  const fallback = getDefaultUserProfile(operatorName)
 
   if (!firebaseReady || !firebaseDb || !canUseRemoteSync()) {
-    return fallback;
+    return fallback
   }
 
-  const userRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.users, fallback.uid);
-  const snapshot = await getDoc(userRef);
+  const userRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.users, fallback.uid)
+  const snapshot = await getDoc(userRef)
 
   if (!snapshot.exists()) {
-    await setDoc(userRef, {
-      ...fallback,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
+    await setDoc(
+      userRef,
+      {
+        ...fallback,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    )
 
-    return fallback;
+    return fallback
   }
 
-  const profileData = snapshot.data();
+  const profileData = snapshot.data()
 
   return {
     ...fallback,
@@ -81,20 +85,22 @@ export async function resolveUserProfileByOperator(operatorName) {
     displayName: profileData.displayName ?? fallback.displayName,
     role: normalizeRole(profileData.role ?? fallback.role),
     tenantId: profileData.tenantId ?? fallback.tenantId,
-    storeIds: Array.isArray(profileData.storeIds) && profileData.storeIds.length > 0
-      ? profileData.storeIds
-      : fallback.storeIds,
-    defaultStoreId: profileData.defaultStoreId
-      ?? (Array.isArray(profileData.storeIds) && profileData.storeIds[0])
-      ?? fallback.defaultStoreId,
+    storeIds:
+      Array.isArray(profileData.storeIds) && profileData.storeIds.length > 0
+        ? profileData.storeIds
+        : fallback.storeIds,
+    defaultStoreId:
+      profileData.defaultStoreId ??
+      (Array.isArray(profileData.storeIds) && profileData.storeIds[0]) ??
+      fallback.defaultStoreId,
     status: profileData.status ?? fallback.status,
-  };
+  }
 }
 
 export async function refreshSessionProfile(session) {
   if (!session?.operatorName) {
-    return session;
+    return session
   }
 
-  return resolveUserProfileByOperator(session.operatorName);
+  return resolveUserProfileByOperator(session.operatorName)
 }

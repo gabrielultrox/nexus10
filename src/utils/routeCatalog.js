@@ -136,7 +136,8 @@ export const routeDefinitions = [
     section: 'Analise',
     eyebrow: 'Analise',
     title: 'Analise',
-    description: 'Entrada unica da camada analitica, com seletor interno para relatorios e leituras historicas.',
+    description:
+      'Entrada unica da camada analitica, com seletor interno para relatorios e leituras historicas.',
     requiredRoles: ['gerente'],
   },
   {
@@ -200,7 +201,8 @@ export const routeDefinitions = [
     section: 'PDV',
     eyebrow: 'PDV',
     title: 'Central do PDV',
-    description: 'Entrada unica do PDV com atalhos para pedido, venda, catalogo, estoque, clientes e relatorios.',
+    description:
+      'Entrada unica do PDV com atalhos para pedido, venda, catalogo, estoque, clientes e relatorios.',
     requiredRoles: ['atendente'],
   },
   {
@@ -221,7 +223,8 @@ export const routeDefinitions = [
     section: 'PDV',
     eyebrow: 'PDV',
     title: 'Dominio de pedidos',
-    description: 'Pedidos comerciais e operacionais sem impacto definitivo em estoque ou financeiro.',
+    description:
+      'Pedidos comerciais e operacionais sem impacto definitivo em estoque ou financeiro.',
     requiredRoles: ['atendente'],
     hiddenInSidebar: true,
   },
@@ -290,16 +293,16 @@ export const routeDefinitions = [
     description: 'Preferencias, PIN local, sincronizacao e ajustes do app.',
     requiredRoles: ['admin'],
   },
-];
+]
 
 export function getRouteByPathname(pathname) {
-  const normalizedPath = pathname.replace(/^\/+/, '');
-  const directMatch = routeDefinitions.find((route) => route.path === normalizedPath);
+  const normalizedPath = pathname.replace(/^\/+/, '')
+  const directMatch = routeDefinitions.find((route) => route.path === normalizedPath)
 
   if (directMatch) {
-    return directMatch;
+    return directMatch
   }
 
-  const nestedMatch = routeDefinitions.find((route) => normalizedPath.startsWith(`${route.path}/`));
-  return nestedMatch ?? routeDefinitions[0];
+  const nestedMatch = routeDefinitions.find((route) => normalizedPath.startsWith(`${route.path}/`))
+  return nestedMatch ?? routeDefinitions[0]
 }

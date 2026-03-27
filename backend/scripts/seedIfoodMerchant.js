@@ -1,19 +1,29 @@
-import { backendEnv } from '../config/env.js';
-import { touchIntegrationMerchant } from '../repositories/integrationMerchantRepository.js';
+import { backendEnv } from '../config/env.js'
+import { touchIntegrationMerchant } from '../repositories/integrationMerchantRepository.js'
 
 function getArgValue(flag) {
-  const index = process.argv.indexOf(flag);
-  return index >= 0 ? process.argv[index + 1] : null;
+  const index = process.argv.indexOf(flag)
+  return index >= 0 ? process.argv[index + 1] : null
 }
 
 async function main() {
-  const storeId = getArgValue('--store') ?? 'hora-dez';
-  const merchantId = getArgValue('--merchant') ?? 'ifood-demo';
-  const name = getArgValue('--name') ?? 'iFood Demo Merchant';
-  const clientId = getArgValue('--client-id') ?? process.env.IFOOD_CLIENT_ID ?? 'replace-with-real-client-id';
-  const clientSecret = getArgValue('--client-secret') ?? process.env.IFOOD_CLIENT_SECRET ?? 'replace-with-real-client-secret';
-  const webhookSecret = getArgValue('--webhook-secret') ?? backendEnv.ifoodWebhookSecret ?? 'replace-with-real-webhook-secret';
-  const webhookUrl = getArgValue('--webhook-url') ?? backendEnv.ifoodWebhookUrl ?? `http://localhost:${backendEnv.port}/webhooks/ifood/${storeId}/${merchantId}`;
+  const storeId = getArgValue('--store') ?? 'hora-dez'
+  const merchantId = getArgValue('--merchant') ?? 'ifood-demo'
+  const name = getArgValue('--name') ?? 'iFood Demo Merchant'
+  const clientId =
+    getArgValue('--client-id') ?? process.env.IFOOD_CLIENT_ID ?? 'replace-with-real-client-id'
+  const clientSecret =
+    getArgValue('--client-secret') ??
+    process.env.IFOOD_CLIENT_SECRET ??
+    'replace-with-real-client-secret'
+  const webhookSecret =
+    getArgValue('--webhook-secret') ??
+    backendEnv.ifoodWebhookSecret ??
+    'replace-with-real-webhook-secret'
+  const webhookUrl =
+    getArgValue('--webhook-url') ??
+    backendEnv.ifoodWebhookUrl ??
+    `http://localhost:${backendEnv.port}/webhooks/ifood/${storeId}/${merchantId}`
 
   await touchIntegrationMerchant({
     storeId,
@@ -36,12 +46,12 @@ async function main() {
       status: 'active',
       lastSyncError: null,
     },
-  });
+  })
 
-  console.log(`Merchant iFood salvo em stores/${storeId}/integration_merchants/${merchantId}`);
+  console.log(`Merchant iFood salvo em stores/${storeId}/integration_merchants/${merchantId}`)
 }
 
 main().catch((error) => {
-  console.error(error.message ?? error);
-  process.exit(1);
-});
+  console.error(error.message ?? error)
+  process.exit(1)
+})

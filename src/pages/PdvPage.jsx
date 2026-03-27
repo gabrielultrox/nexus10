@@ -5,7 +5,15 @@ import PageIntro from '../components/common/PageIntro'
 import SurfaceCard from '../components/common/SurfaceCard'
 import { routeDefinitions } from '../utils/routeCatalog'
 
-const PDV_ROUTE_IDS = ['pos', 'orders', 'sales', 'products', 'inventory', 'customers', 'pos-reports']
+const PDV_ROUTE_IDS = [
+  'pos',
+  'orders',
+  'sales',
+  'products',
+  'inventory',
+  'customers',
+  'pos-reports',
+]
 
 function PdvPage() {
   const navigate = useNavigate()

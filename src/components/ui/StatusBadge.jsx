@@ -1,27 +1,27 @@
 function normalizeVariant(status = '') {
-  const normalized = String(status).trim().toLowerCase();
+  const normalized = String(status).trim().toLowerCase()
 
   if (['pendente', 'aberto', 'fila'].includes(normalized)) {
-    return 'warning';
+    return 'warning'
   }
 
   if (['lançada', 'lancada', 'ok', 'confirmado'].includes(normalized)) {
-    return 'success';
+    return 'success'
   }
 
   if (['atrasado', 'alerta', 'crítico', 'critico'].includes(normalized)) {
-    return 'danger';
+    return 'danger'
   }
 
   if (['enviado', 'turbo'].includes(normalized)) {
-    return 'info';
+    return 'info'
   }
 
-  return 'neutral';
+  return 'neutral'
 }
 
 function StatusBadge({ status = '', size = 'md', className = '' }) {
-  const variant = normalizeVariant(status);
+  const variant = normalizeVariant(status)
   const composedClassName = [
     'status-badge',
     `status-badge--${variant}`,
@@ -29,10 +29,9 @@ function StatusBadge({ status = '', size = 'md', className = '' }) {
     className,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(' ')
 
-  return <span className={composedClassName}>{status}</span>;
+  return <span className={composedClassName}>{status}</span>
 }
 
-export default StatusBadge;
-
+export default StatusBadge

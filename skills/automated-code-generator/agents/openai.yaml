@@ -1,4 +1,4 @@
 interface:
-  display_name: "Automated Code Generator"
-  short_description: "Generate modular production-ready code"
-  default_prompt: "Use $automated-code-generator to generate production-ready modules from this architecture."
+  display_name: 'Automated Code Generator'
+  short_description: 'Generate modular production-ready code'
+  default_prompt: 'Use $automated-code-generator to generate production-ready modules from this architecture.'

@@ -1,21 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react'
 
 const cardTypeLabelMap = {
   order: 'pedido',
   sale: 'venda',
   customer: 'cliente',
   product: 'produto',
-};
+}
 
 function AssistantMessageList({ messages, onNavigate }) {
-  const listRef = useRef(null);
+  const listRef = useRef(null)
 
   useEffect(() => {
     listRef.current?.scrollTo({
       top: listRef.current.scrollHeight,
       behavior: 'smooth',
-    });
-  }, [messages]);
+    })
+  }, [messages])
 
   return (
     <div ref={listRef} className="assistant-messages">
@@ -41,8 +41,12 @@ function AssistantMessageList({ messages, onNavigate }) {
                   disabled={!card.route}
                 >
                   <div className="assistant-result-card__header">
-                    <span className="assistant-result-card__type">{cardTypeLabelMap[card.type] ?? 'resultado'}</span>
-                    <span className="assistant-result-card__arrow">{card.route ? 'Abrir' : 'Consulta'}</span>
+                    <span className="assistant-result-card__type">
+                      {cardTypeLabelMap[card.type] ?? 'resultado'}
+                    </span>
+                    <span className="assistant-result-card__arrow">
+                      {card.route ? 'Abrir' : 'Consulta'}
+                    </span>
                   </div>
                   <strong>{card.title}</strong>
                   <small>{card.subtitle}</small>
@@ -74,7 +78,7 @@ function AssistantMessageList({ messages, onNavigate }) {
         </article>
       ))}
     </div>
-  );
+  )
 }
 
-export default AssistantMessageList;
+export default AssistantMessageList

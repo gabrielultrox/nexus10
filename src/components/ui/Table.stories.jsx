@@ -1,5 +1,5 @@
-import StatusBadge from './StatusBadge';
-import Table from './Table';
+import StatusBadge from './StatusBadge'
+import Table from './Table'
 
 const rows = [
   { id: '1', pedido: 'PED-2031', cliente: 'Cliente avulso', total: 18.9, status: 'aberto' },
@@ -8,7 +8,7 @@ const rows = [
   { id: '4', pedido: 'PED-2034', cliente: 'Maria', total: 31.7, status: 'aberto' },
   { id: '5', pedido: 'PED-2035', cliente: 'Eduardo', total: 21.2, status: 'despachado' },
   { id: '6', pedido: 'PED-2036', cliente: 'Ana', total: 66.9, status: 'aberto' },
-];
+]
 
 const columns = [
   { key: 'pedido', label: 'Pedido', sortable: true },
@@ -25,7 +25,7 @@ const columns = [
     sortable: true,
     render: (row) => <StatusBadge status={row.status} />,
   },
-];
+]
 
 const meta = {
   title: 'UI/Table',
@@ -45,9 +45,9 @@ const meta = {
       description: 'Quantidade de linhas por pagina.',
     },
   },
-};
+}
 
-export default meta;
+export default meta
 
 export const Default = {
   args: {
@@ -55,4 +55,4 @@ export const Default = {
     data: rows,
     pageSize: 4,
   },
-};
+}

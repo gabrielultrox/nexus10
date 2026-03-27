@@ -1,48 +1,48 @@
-import { machineSeedRecords } from './operationsSeedData';
+import { machineSeedRecords } from './operationsSeedData'
 
 function createId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
 }
 
 function getCurrentDateTimeLocal() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
 function getShiftLabel(timestamp) {
-  const date = timestamp ? new Date(timestamp) : new Date();
-  const hours = Number.isNaN(date.getHours()) ? new Date().getHours() : date.getHours();
+  const date = timestamp ? new Date(timestamp) : new Date()
+  const hours = Number.isNaN(date.getHours()) ? new Date().getHours() : date.getHours()
 
   if (hours < 6) {
-    return 'Madrugada';
+    return 'Madrugada'
   }
 
   if (hours < 12) {
-    return 'Manha';
+    return 'Manha'
   }
 
   if (hours < 18) {
-    return 'Tarde';
+    return 'Tarde'
   }
 
-  return 'Noite';
+  return 'Noite'
 }
 
 function formatRecordDateTime(timestamp, fallback = 'Agora') {
   if (!timestamp) {
-    return fallback;
+    return fallback
   }
 
-  const date = new Date(timestamp);
+  const date = new Date(timestamp)
 
   if (Number.isNaN(date.getTime())) {
-    return fallback;
+    return fallback
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -50,7 +50,7 @@ function formatRecordDateTime(timestamp, fallback = 'Agora') {
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+  }).format(date)
 }
 
 export const manualModuleConfigs = {
@@ -59,10 +59,12 @@ export const manualModuleConfigs = {
     dailyResetHour: 3,
     manualResetLabel: 'Resetar escala',
     formTitle: 'Adicionar entregador na escala',
-    formDescription: 'Monte a escala do dia por entregador, horario de entrada e maquininha do dia.',
+    formDescription:
+      'Monte a escala do dia por entregador, horario de entrada e maquininha do dia.',
     submitLabel: 'Adicionar na escala',
     emptyTitle: 'Nenhum entregador escalado',
-    emptyDescription: 'Cadastre os entregadores da escala do dia para organizar o turno manualmente.',
+    emptyDescription:
+      'Cadastre os entregadores da escala do dia para organizar o turno manualmente.',
     columns: ['Entregador', 'Entrada', 'Maquininha do dia', 'Status', 'Ultima atualizacao'],
     fields: [
       { name: 'courier', label: 'Entregador', type: 'select', options: [] },
@@ -77,7 +79,8 @@ export const manualModuleConfigs = {
     ],
     initialRecords: [],
     createRecord(values, context = {}) {
-      const entryTime = values.window.trim().replace(/\s+/g, '').split('-')[0] ?? values.window.trim();
+      const entryTime =
+        values.window.trim().replace(/\s+/g, '').split('-')[0] ?? values.window.trim()
 
       return {
         id: createId('schedule'),
@@ -87,27 +90,34 @@ export const manualModuleConfigs = {
         status: values.status,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.courier, record.window, record.machine, record.status, updateLabel];
+      return [record.courier, record.window, record.machine, record.status, updateLabel]
     },
   },
   'delivery-reading': {
     storageKey: 'nexus-module-delivery-reading',
     dailyResetHour: 3,
     formTitle: 'Registrar leitura de entrega',
-    formDescription: 'Lance o codigo, selecione o entregador e marque se a entrega e turbo ou ja foi fechada.',
+    formDescription:
+      'Lance o codigo, selecione o entregador e marque se a entrega e turbo ou ja foi fechada.',
     submitLabel: 'Registrar leitura',
     emptyTitle: 'Nenhuma leitura registrada',
     emptyDescription: 'Use esta area para registrar rapidamente as entregas lidas para o time.',
     columns: ['Codigo', 'Entregador', 'Turno', 'Turbo', 'Fechada', 'Registrado em'],
     fields: [
-      { name: 'deliveryCode', label: 'Codigo da entrega', placeholder: 'Ex: 10452', required: true },
+      {
+        name: 'deliveryCode',
+        label: 'Codigo da entrega',
+        placeholder: 'Ex: 10452',
+        required: true,
+      },
       { name: 'courier', label: 'Entregador', type: 'select', options: [], required: true },
       {
         name: 'turbo',
@@ -127,9 +137,9 @@ export const manualModuleConfigs = {
     actionLabel: 'Fechar entrega',
     initialRecords: [],
     createRecord(values, context = {}) {
-      const isClosed = Boolean(values.closed);
-      const isTurbo = Boolean(values.turbo);
-      const createdAtClient = new Date().toISOString();
+      const isClosed = Boolean(values.closed)
+      const isTurbo = Boolean(values.turbo)
+      const createdAtClient = new Date().toISOString()
 
       return {
         id: createId('delivery-reading'),
@@ -142,7 +152,7 @@ export const manualModuleConfigs = {
         createdAtClient,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
       return [
@@ -152,7 +162,7 @@ export const manualModuleConfigs = {
         record.turbo ? 'Sim' : 'Nao',
         record.closed ? 'Sim' : 'Nao',
         formatRecordDateTime(record.createdAtClient),
-      ];
+      ]
     },
     applyAction(record, context = {}) {
       return {
@@ -161,10 +171,10 @@ export const manualModuleConfigs = {
         status: 'Fechada',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
     getActionLabel(record) {
-      return record.closed ? 'Fechada' : 'Fechar entrega';
+      return record.closed ? 'Fechada' : 'Fechar entrega'
     },
   },
   machines: {
@@ -197,14 +207,15 @@ export const manualModuleConfigs = {
         status: values.status,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.device, record.holder, record.model, record.status, updateLabel];
+      return [record.device, record.holder, record.model, record.status, updateLabel]
     },
     applyAction(record, context = {}) {
       return {
@@ -212,7 +223,7 @@ export const manualModuleConfigs = {
         status: 'Ativa',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
   },
   'machine-history': {
@@ -232,11 +243,12 @@ export const manualModuleConfigs = {
     allowClearAll: false,
     actionLabel: 'Checklist do dia',
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.device, record.holder, record.model, record.status, updateLabel];
+      return [record.device, record.holder, record.model, record.status, updateLabel]
     },
     applyAction(record, context = {}) {
       return {
@@ -244,10 +256,10 @@ export const manualModuleConfigs = {
         status: record.status === 'Presente' ? 'Ausente' : 'Presente',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
     getActionLabel(record) {
-      return record.status === 'Presente' ? 'Marcar ausente' : 'Marcar presente';
+      return record.status === 'Presente' ? 'Marcar ausente' : 'Marcar presente'
     },
   },
   change: {
@@ -291,14 +303,15 @@ export const manualModuleConfigs = {
         status: values.status,
         returnedAt: '',
         returnedBy: '',
-      };
+      }
     },
     toRow(record) {
-      const returnLabel = record.returnedAt && record.returnedBy
-        ? `${record.returnedBy} - ${record.returnedAt}`
-        : 'Aguardando retorno';
+      const returnLabel =
+        record.returnedAt && record.returnedBy
+          ? `${record.returnedBy} - ${record.returnedAt}`
+          : 'Aguardando retorno'
 
-      return [record.origin, record.destination, record.value, record.status, returnLabel];
+      return [record.origin, record.destination, record.value, record.status, returnLabel]
     },
     markReturned(record, context = {}) {
       return {
@@ -306,7 +319,7 @@ export const manualModuleConfigs = {
         status: 'Concluido',
         returnedAt: context.returnedAt ?? record.returnedAt ?? '',
         returnedBy: context.returnedBy ?? record.returnedBy ?? '',
-      };
+      }
     },
   },
   advances: {
@@ -321,7 +334,12 @@ export const manualModuleConfigs = {
     fields: [
       { name: 'recipient', label: 'Entregador', type: 'select', options: [] },
       { name: 'value', label: 'Valor (R$)', placeholder: '0,00' },
-      { name: 'date', label: 'Data e hora', type: 'datetime-local', defaultValue: getCurrentDateTimeLocal },
+      {
+        name: 'date',
+        label: 'Data e hora',
+        type: 'datetime-local',
+        defaultValue: getCurrentDateTimeLocal,
+      },
       { name: 'reason', label: 'Motivo', placeholder: 'Ex: Vale alimentacao' },
     ],
     actionLabel: 'Baixar vale',
@@ -336,14 +354,22 @@ export const manualModuleConfigs = {
         status: 'Aguardando',
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.recipient, record.value, record.date, record.reason, record.status, updateLabel];
+      return [
+        record.recipient,
+        record.value,
+        record.date,
+        record.reason,
+        record.status,
+        updateLabel,
+      ]
     },
     applyAction(record, context = {}) {
       return {
@@ -351,14 +377,15 @@ export const manualModuleConfigs = {
         status: 'Baixado',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
   },
   discounts: {
     storageKey: 'nexus-module-discounts',
     dailyResetHour: 3,
     formTitle: 'Registrar desconto',
-    formDescription: 'Cadastre descontos operacionais com motivo e acompanhe o status da validacao.',
+    formDescription:
+      'Cadastre descontos operacionais com motivo e acompanhe o status da validacao.',
     submitLabel: 'Registrar desconto',
     emptyTitle: 'Nenhum desconto registrado',
     emptyDescription: 'Inclua os descontos do turno para consolidar motivo, valor e validacao.',
@@ -385,14 +412,15 @@ export const manualModuleConfigs = {
         status: values.status,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.order, record.reason, record.value, record.status, updateLabel];
+      return [record.order, record.reason, record.value, record.status, updateLabel]
     },
     applyAction(record, context = {}) {
       return {
@@ -400,7 +428,7 @@ export const manualModuleConfigs = {
         status: 'Validado',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
   },
   occurrences: {
@@ -434,14 +462,15 @@ export const manualModuleConfigs = {
         status: values.status,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.code, record.type, record.owner, record.status, updateLabel];
+      return [record.code, record.type, record.owner, record.status, updateLabel]
     },
     applyAction(record, context = {}) {
       return {
@@ -449,7 +478,7 @@ export const manualModuleConfigs = {
         status: 'Resolvida',
         updatedAt: context.updatedAt ?? record.updatedAt ?? '',
         updatedBy: context.updatedBy ?? record.updatedBy ?? '',
-      };
+      }
     },
   },
   map: {
@@ -477,18 +506,19 @@ export const manualModuleConfigs = {
         confirmed: values.confirmed,
         updatedAt: context.updatedAt ?? '',
         updatedBy: context.updatedBy ?? '',
-      };
+      }
     },
     toRow(record) {
-      const updateLabel = record.updatedAt && record.updatedBy
-        ? `${record.updatedBy} - ${record.updatedAt}`
-        : 'Sem atualizacao';
+      const updateLabel =
+        record.updatedAt && record.updatedBy
+          ? `${record.updatedBy} - ${record.updatedAt}`
+          : 'Sem atualizacao'
 
-      return [record.districts, record.confirmed, updateLabel];
+      return [record.districts, record.confirmed, updateLabel]
     },
   },
-};
+}
 
 export function getManualModuleConfig(path) {
-  return manualModuleConfigs[path] ?? null;
+  return manualModuleConfigs[path] ?? null
 }

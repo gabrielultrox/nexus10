@@ -15,7 +15,7 @@ const ifoodEventStatusMap = {
   CONCLUDED: 'delivered',
   CAN: 'cancelled',
   CANCELLED: 'cancelled',
-};
+}
 
 const ifoodEventGroupMap = {
   ORDER_STATUS: 'status',
@@ -27,7 +27,7 @@ const ifoodEventGroupMap = {
   CANCELLATION_REQUEST: 'cancellation_request',
   ORDER_TAKEOUT: 'takeout',
   ORDER_HANDSHAKE: 'handshake',
-};
+}
 
 const normalizedStatusLabels = {
   received: 'Recebido',
@@ -36,31 +36,44 @@ const normalizedStatusLabels = {
   delivered: 'Entregue',
   cancelled: 'Cancelado',
   unknown: 'Pendente de mapeamento',
-};
+}
 
 export function mapIfoodEventGroup(eventGroup) {
-  const normalizedGroup = String(eventGroup ?? '').trim().toUpperCase();
-  return ifoodEventGroupMap[normalizedGroup] ?? 'other';
+  const normalizedGroup = String(eventGroup ?? '')
+    .trim()
+    .toUpperCase()
+  return ifoodEventGroupMap[normalizedGroup] ?? 'other'
 }
 
 export function mapIfoodStatus(rawStatus) {
-  const normalizedKey = String(rawStatus ?? '').trim().toUpperCase();
-  return ifoodEventStatusMap[normalizedKey] ?? 'unknown';
+  const normalizedKey = String(rawStatus ?? '')
+    .trim()
+    .toUpperCase()
+  return ifoodEventStatusMap[normalizedKey] ?? 'unknown'
 }
 
 export function getNormalizedStatusLabel(status) {
-  return normalizedStatusLabels[status] ?? normalizedStatusLabels.unknown;
+  return normalizedStatusLabels[status] ?? normalizedStatusLabels.unknown
 }
 
 export function shouldCreateTrackingEntry(event = {}) {
-  return ['DSP', 'DISPATCHED', 'CON', 'CONCLUDED'].includes(String(event.code ?? event.fullCode ?? '').trim().toUpperCase())
-    || mapIfoodEventGroup(event.group ?? event.eventGroup) === 'tracking';
+  return (
+    ['DSP', 'DISPATCHED', 'CON', 'CONCLUDED'].includes(
+      String(event.code ?? event.fullCode ?? '')
+        .trim()
+        .toUpperCase(),
+    ) || mapIfoodEventGroup(event.group ?? event.eventGroup) === 'tracking'
+  )
 }
 
 export function resolveIfoodEventDescriptor(event = {}) {
-  const eventCode = String(event.code ?? '').trim().toUpperCase();
-  const fullCode = String(event.fullCode ?? '').trim().toUpperCase();
-  const normalizedStatus = mapIfoodStatus(eventCode || fullCode);
+  const eventCode = String(event.code ?? '')
+    .trim()
+    .toUpperCase()
+  const fullCode = String(event.fullCode ?? '')
+    .trim()
+    .toUpperCase()
+  const normalizedStatus = mapIfoodStatus(eventCode || fullCode)
 
   return {
     eventCode,
@@ -68,5 +81,5 @@ export function resolveIfoodEventDescriptor(event = {}) {
     normalizedStatus,
     normalizedStatusLabel: getNormalizedStatusLabel(normalizedStatus),
     eventGroup: mapIfoodEventGroup(event.group ?? event.eventGroup),
-  };
+  }
 }

@@ -1,35 +1,35 @@
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import PageTabs from '../components/common/PageTabs';
-import SalesModule from '../modules/sales/components/SalesModule';
+import PageTabs from '../components/common/PageTabs'
+import SalesModule from '../modules/sales/components/SalesModule'
 
 function SalesPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { saleId } = useParams();
-  const isNew = location.pathname === '/sales/new';
-  const viewMode = isNew ? 'create' : saleId ? 'detail' : 'list';
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { saleId } = useParams()
+  const isNew = location.pathname === '/sales/new'
+  const viewMode = isNew ? 'create' : saleId ? 'detail' : 'list'
   const salesTabs = [
     { id: 'list', label: 'Lista de vendas' },
     { id: 'form', label: 'Nova venda' },
     ...(saleId ? [{ id: 'detail', label: 'Detalhe da venda' }] : []),
-  ];
-  const activeTab = viewMode === 'list' ? 'list' : viewMode === 'create' ? 'form' : 'detail';
+  ]
+  const activeTab = viewMode === 'list' ? 'list' : viewMode === 'create' ? 'form' : 'detail'
 
   function handleTabChange(tabId) {
     if (tabId === 'list') {
-      navigate('/sales');
-      return;
+      navigate('/sales')
+      return
     }
 
     if (tabId === 'form') {
       navigate('/sales/new', {
         state: { resetNonce: Date.now() },
-      });
-      return;
+      })
+      return
     }
 
-    navigate(saleId ? `/sales/${saleId}` : '/sales');
+    navigate(saleId ? `/sales/${saleId}` : '/sales')
   }
 
   return (
@@ -37,7 +37,11 @@ function SalesPage() {
       <section className="workspace-header">
         <div className="workspace-header__copy">
           <h2 className="workspace-header__title">
-            {viewMode === 'create' ? 'Nova venda' : viewMode === 'detail' ? 'Detalhe da venda' : 'Lista de vendas'}
+            {viewMode === 'create'
+              ? 'Nova venda'
+              : viewMode === 'detail'
+                ? 'Detalhe da venda'
+                : 'Lista de vendas'}
           </h2>
           <p className="workspace-header__description">
             {viewMode === 'create'
@@ -62,7 +66,7 @@ function SalesPage() {
         onOpenList={() => navigate('/sales')}
       />
     </div>
-  );
+  )
 }
 
-export default SalesPage;
+export default SalesPage

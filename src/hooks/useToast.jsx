@@ -1,72 +1,70 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 
-import Toast from '../components/ui/Toast';
+import Toast from '../components/ui/Toast'
 
-const ToastContext = createContext(null);
+const ToastContext = createContext(null)
 
 function createToastId() {
-  return `toast-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  return `toast-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
 }
 
 export function ToastProvider({ children }) {
-  const timeoutMapRef = useRef(new Map());
-  const [toasts, setToasts] = useState([]);
+  const timeoutMapRef = useRef(new Map())
+  const [toasts, setToasts] = useState([])
 
   const removeToast = useCallback((toastId) => {
-    const timeoutId = timeoutMapRef.current.get(toastId);
+    const timeoutId = timeoutMapRef.current.get(toastId)
 
     if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutMapRef.current.delete(toastId);
+      clearTimeout(timeoutId)
+      timeoutMapRef.current.delete(toastId)
     }
 
     setToasts((currentToasts) =>
-      currentToasts.map((toast) =>
-        toast.id === toastId ? { ...toast, visible: false } : toast,
-      ),
-    );
+      currentToasts.map((toast) => (toast.id === toastId ? { ...toast, visible: false } : toast)),
+    )
 
     window.setTimeout(() => {
-      setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== toastId));
-    }, 150);
-  }, []);
+      setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== toastId))
+    }, 150)
+  }, [])
 
   const pushToast = useCallback(
     ({ message, variant = 'info', duration = 3000 }) => {
-      const toastId = createToastId();
-      const nextToast = { id: toastId, message, variant, visible: true };
+      const toastId = createToastId()
+      const nextToast = { id: toastId, message, variant, visible: true }
 
-      setToasts((currentToasts) => [...currentToasts, nextToast]);
+      setToasts((currentToasts) => [...currentToasts, nextToast])
 
       const timeoutId = window.setTimeout(() => {
-        removeToast(toastId);
-      }, duration);
+        removeToast(toastId)
+      }, duration)
 
-      timeoutMapRef.current.set(toastId, timeoutId);
-      return toastId;
+      timeoutMapRef.current.set(toastId, timeoutId)
+      return toastId
     },
     [removeToast],
-  );
+  )
 
   const value = useMemo(
     () => ({
       pushToast,
       success(message, options = {}) {
-        return pushToast({ message, variant: 'success', ...options });
+        return pushToast({ message, variant: 'success', ...options })
       },
       error(message, options = {}) {
-        return pushToast({ message, variant: 'error', ...options });
+        return pushToast({ message, variant: 'error', ...options })
       },
       warning(message, options = {}) {
-        return pushToast({ message, variant: 'warning', ...options });
+        return pushToast({ message, variant: 'warning', ...options })
       },
       info(message, options = {}) {
-        return pushToast({ message, variant: 'info', ...options });
+        return pushToast({ message, variant: 'info', ...options })
       },
       dismiss: removeToast,
     }),
     [pushToast, removeToast],
-  );
+  )
 
   return (
     <ToastContext.Provider value={value}>
@@ -82,16 +80,15 @@ export function ToastProvider({ children }) {
         ))}
       </div>
     </ToastContext.Provider>
-  );
+  )
 }
 
 export function useToast() {
-  const context = useContext(ToastContext);
+  const context = useContext(ToastContext)
 
   if (!context) {
-    throw new Error('useToast deve ser usado dentro de ToastProvider');
+    throw new Error('useToast deve ser usado dentro de ToastProvider')
   }
 
-  return context;
+  return context
 }
-

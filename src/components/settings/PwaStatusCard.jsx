@@ -1,11 +1,11 @@
-import SurfaceCard from '../common/SurfaceCard';
-import { usePwaInstall } from '../../hooks/usePwaInstall';
+import SurfaceCard from '../common/SurfaceCard'
+import { usePwaInstall } from '../../hooks/usePwaInstall'
 
 function PwaStatusCard() {
-  const { installApp, isInstallable, isOffline } = usePwaInstall();
+  const { installApp, isInstallable, isOffline } = usePwaInstall()
 
   async function handleInstall() {
-    await installApp();
+    await installApp()
   }
 
   return (
@@ -35,7 +35,8 @@ function PwaStatusCard() {
         </div>
 
         <p className="text-caption">
-          Use a instalacao local para fixar o app no terminal e manter os recursos essenciais disponiveis durante quedas de rede.
+          Use a instalacao local para fixar o app no terminal e manter os recursos essenciais
+          disponiveis durante quedas de rede.
         </p>
 
         <div className="pwa-status-card__actions">
@@ -50,7 +51,7 @@ function PwaStatusCard() {
         </div>
       </div>
     </SurfaceCard>
-  );
+  )
 }
 
-export default PwaStatusCard;
+export default PwaStatusCard

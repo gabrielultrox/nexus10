@@ -1,23 +1,23 @@
-import { normalizeSaleDomainStatus } from '../sales/saleValidationService.js';
-import { applyStockMovement } from './stockMovementService.js';
+import { normalizeSaleDomainStatus } from '../sales/saleValidationService.js'
+import { applyStockMovement } from './stockMovementService.js'
 
 function isPosted(status) {
-  return normalizeSaleDomainStatus(status, null) === 'POSTED';
+  return normalizeSaleDomainStatus(status, null) === 'POSTED'
 }
 
 function isReversal(status) {
-  const normalized = normalizeSaleDomainStatus(status, null);
-  return normalized === 'CANCELLED' || normalized === 'REVERSED';
+  const normalized = normalizeSaleDomainStatus(status, null)
+  return normalized === 'CANCELLED' || normalized === 'REVERSED'
 }
 
 export async function syncSaleStock({ storeId, tenantId = null, sale, previousStatus = null }) {
-  const items = Array.isArray(sale?.items) ? sale.items.filter((item) => item?.productId) : [];
+  const items = Array.isArray(sale?.items) ? sale.items.filter((item) => item?.productId) : []
 
   if (items.length === 0) {
     return {
       applied: false,
       movementCount: 0,
-    };
+    }
   }
 
   if (isPosted(sale.status) && !isPosted(previousStatus)) {
@@ -37,13 +37,13 @@ export async function syncSaleStock({ storeId, tenantId = null, sale, previousSt
           category: item.productSnapshot?.category ?? '',
           sku: item.productSnapshot?.sku ?? '',
         },
-      });
+      })
     }
 
     return {
       applied: true,
       movementCount: items.length,
-    };
+    }
   }
 
   if (isReversal(sale.status) && isPosted(previousStatus)) {
@@ -63,17 +63,17 @@ export async function syncSaleStock({ storeId, tenantId = null, sale, previousSt
           category: item.productSnapshot?.category ?? '',
           sku: item.productSnapshot?.sku ?? '',
         },
-      });
+      })
     }
 
     return {
       applied: true,
       movementCount: items.length,
-    };
+    }
   }
 
   return {
     applied: false,
     movementCount: 0,
-  };
+  }
 }

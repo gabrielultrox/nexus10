@@ -8,7 +8,9 @@ afterEach(() => {
 })
 
 const localStorageMock = {
-  getItem: vi.fn((key: string) => (key in localStorageMock.store ? localStorageMock.store[key] : null)),
+  getItem: vi.fn((key: string) =>
+    key in localStorageMock.store ? localStorageMock.store[key] : null,
+  ),
   setItem: vi.fn((key: string, value: string) => {
     localStorageMock.store[key] = value
   }),
@@ -58,11 +60,13 @@ vi.mock('firebase/firestore', () => ({
     delete: vi.fn(),
     commit: vi.fn(async () => undefined),
   })),
-  runTransaction: vi.fn(async (_db, updateFunction) => updateFunction({
-    get: vi.fn(async () => ({ exists: () => true, data: () => ({}) })),
-    set: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  })),
+  runTransaction: vi.fn(async (_db, updateFunction) =>
+    updateFunction({
+      get: vi.fn(async () => ({ exists: () => true, data: () => ({}) })),
+      set: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    }),
+  ),
   enableIndexedDbPersistence: vi.fn(async () => undefined),
 }))

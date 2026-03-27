@@ -1,44 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 
-import { useStore } from '../../contexts/StoreContext';
-import { getCurrentUser, loginAnonymously, logout, subscribeToAuthChanges } from '../../services/auth';
-import { FIRESTORE_COLLECTIONS } from '../../services/firestoreCollections';
-import { firebaseReady } from '../../services/firebase';
-import { getStoreDocument, setStoreDocument } from '../../services/firestore';
+import { useStore } from '../../contexts/StoreContext'
+import {
+  getCurrentUser,
+  loginAnonymously,
+  logout,
+  subscribeToAuthChanges,
+} from '../../services/auth'
+import { FIRESTORE_COLLECTIONS } from '../../services/firestoreCollections'
+import { firebaseReady } from '../../services/firebase'
+import { getStoreDocument, setStoreDocument } from '../../services/firestore'
 
 function FirebaseExamplePanel() {
-  const { currentStoreId } = useStore();
-  const [user, setUser] = useState(null);
-  const [statusMessage, setStatusMessage] = useState('Aguardando interação');
-  const [documentPreview, setDocumentPreview] = useState(null);
+  const { currentStoreId } = useStore()
+  const [user, setUser] = useState(null)
+  const [statusMessage, setStatusMessage] = useState('Aguardando interação')
+  const [documentPreview, setDocumentPreview] = useState(null)
 
   useEffect(() => {
     if (!firebaseReady) {
-      return undefined;
+      return undefined
     }
 
-    setUser(getCurrentUser());
+    setUser(getCurrentUser())
 
     const unsubscribe = subscribeToAuthChanges((nextUser) => {
-      setUser(nextUser);
-    });
+      setUser(nextUser)
+    })
 
-    return unsubscribe;
-  }, []);
+    return unsubscribe
+  }, [])
 
   async function handleAnonymousLogin() {
     try {
-      await loginAnonymously();
-      setStatusMessage('Autenticação anônima realizada com sucesso.');
+      await loginAnonymously()
+      setStatusMessage('Autenticação anônima realizada com sucesso.')
     } catch (error) {
-      setStatusMessage(`Erro no login: ${error.message}`);
+      setStatusMessage(`Erro no login: ${error.message}`)
     }
   }
 
   async function handleWriteDemoDocument() {
     try {
       if (!currentStoreId) {
-        throw new Error('Nenhuma store ativa disponível para este usuário.');
+        throw new Error('Nenhuma store ativa disponível para este usuário.')
       }
 
       await setStoreDocument(
@@ -51,39 +56,41 @@ function FirebaseExamplePanel() {
           message: 'Conexão básica com Firestore funcionando por storeId.',
         },
         { merge: true },
-      );
+      )
 
-      setStatusMessage('Documento de demonstração salvo no escopo da store.');
+      setStatusMessage('Documento de demonstração salvo no escopo da store.')
     } catch (error) {
-      setStatusMessage(`Erro ao gravar: ${error.message}`);
+      setStatusMessage(`Erro ao gravar: ${error.message}`)
     }
   }
 
   async function handleReadDemoDocument() {
     try {
       if (!currentStoreId) {
-        throw new Error('Nenhuma store ativa disponível para este usuário.');
+        throw new Error('Nenhuma store ativa disponível para este usuário.')
       }
 
       const documentData = await getStoreDocument(
         currentStoreId,
         FIRESTORE_COLLECTIONS.settings,
         'demo_connection',
-      );
+      )
 
-      setDocumentPreview(documentData);
-      setStatusMessage(documentData ? 'Documento carregado com sucesso.' : 'Documento ainda não existe.');
+      setDocumentPreview(documentData)
+      setStatusMessage(
+        documentData ? 'Documento carregado com sucesso.' : 'Documento ainda não existe.',
+      )
     } catch (error) {
-      setStatusMessage(`Erro ao ler: ${error.message}`);
+      setStatusMessage(`Erro ao ler: ${error.message}`)
     }
   }
 
   async function handleLogout() {
     try {
-      await logout();
-      setStatusMessage('Sessão encerrada com sucesso.');
+      await logout()
+      setStatusMessage('Sessão encerrada com sucesso.')
     } catch (error) {
-      setStatusMessage(`Erro ao sair: ${error.message}`);
+      setStatusMessage(`Erro ao sair: ${error.message}`)
     }
   }
 
@@ -116,13 +123,25 @@ function FirebaseExamplePanel() {
         </div>
 
         <div className="firebase-example-panel__actions">
-          <button type="button" className="ui-button ui-button--secondary" onClick={handleAnonymousLogin}>
+          <button
+            type="button"
+            className="ui-button ui-button--secondary"
+            onClick={handleAnonymousLogin}
+          >
             Login anônimo
           </button>
-          <button type="button" className="ui-button ui-button--ghost" onClick={handleWriteDemoDocument}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost"
+            onClick={handleWriteDemoDocument}
+          >
             Gravar demo
           </button>
-          <button type="button" className="ui-button ui-button--ghost" onClick={handleReadDemoDocument}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost"
+            onClick={handleReadDemoDocument}
+          >
             Ler demo
           </button>
           <button type="button" className="ui-button ui-button--danger" onClick={handleLogout}>
@@ -132,11 +151,13 @@ function FirebaseExamplePanel() {
 
         <div className="firebase-example-panel__preview">
           <span className="text-label">Preview do documento</span>
-          <pre>{documentPreview ? JSON.stringify(documentPreview, null, 2) : 'Sem leitura carregada.'}</pre>
+          <pre>
+            {documentPreview ? JSON.stringify(documentPreview, null, 2) : 'Sem leitura carregada.'}
+          </pre>
         </div>
       </div>
     </section>
-  );
+  )
 }
 
-export default FirebaseExamplePanel;
+export default FirebaseExamplePanel

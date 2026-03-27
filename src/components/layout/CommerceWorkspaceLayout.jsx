@@ -1,22 +1,22 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 
-import AssistantPanel from '../../modules/assistant/AssistantPanel';
-import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider';
+import AssistantPanel from '../../modules/assistant/AssistantPanel'
+import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider'
 
 function CommerceWorkspaceLayout() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isOrdersRoute = location.pathname.startsWith('/orders');
-  const activeTab = isOrdersRoute ? 'orders' : 'sales';
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isOrdersRoute = location.pathname.startsWith('/orders')
+  const activeTab = isOrdersRoute ? 'orders' : 'sales'
   const commerceTabs = [
     { id: 'orders', label: 'Pedidos' },
     { id: 'sales', label: 'Vendas' },
-  ];
+  ]
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.pathname])
 
   return (
     <AssistantContextProvider>
@@ -42,7 +42,7 @@ function CommerceWorkspaceLayout() {
                 Voltar ao app
               </button>
               {commerceTabs.map((tab) => {
-                const isActive = tab.id === activeTab;
+                const isActive = tab.id === activeTab
 
                 return (
                   <button
@@ -51,12 +51,14 @@ function CommerceWorkspaceLayout() {
                     className={[
                       'commerce-shell__tab',
                       isActive ? 'commerce-shell__tab--active' : '',
-                    ].filter(Boolean).join(' ')}
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                     onClick={() => navigate(tab.id === 'orders' ? '/orders' : '/sales')}
                   >
                     {tab.label}
                   </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -70,7 +72,7 @@ function CommerceWorkspaceLayout() {
         <AssistantPanel />
       </div>
     </AssistantContextProvider>
-  );
+  )
 }
 
-export default CommerceWorkspaceLayout;
+export default CommerceWorkspaceLayout

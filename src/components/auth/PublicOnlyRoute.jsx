@@ -1,9 +1,9 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom'
 
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext'
 
 function PublicOnlyRoute() {
-  const { loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = useAuth()
 
   if (loading) {
     return (
@@ -13,14 +13,14 @@ function PublicOnlyRoute() {
           <h1 className="text-page-title">Carregando autenticacao</h1>
         </div>
       </div>
-    );
+    )
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />
   }
 
-  return <Outlet />;
+  return <Outlet />
 }
 
-export default PublicOnlyRoute;
+export default PublicOnlyRoute

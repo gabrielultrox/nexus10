@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
-import Button from './Button';
-import Modal from './Modal';
+import Button from './Button'
+import Modal from './Modal'
 
 function ModalStoryDemo(args) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <>
@@ -27,11 +27,12 @@ function ModalStoryDemo(args) {
         }
       >
         <p className="story-copy">
-          Este modal serve para formularios curtos, confirmacoes ricas e fluxos que precisam de contexto isolado.
+          Este modal serve para formularios curtos, confirmacoes ricas e fluxos que precisam de
+          contexto isolado.
         </p>
       </Modal>
     </>
-  );
+  )
 }
 
 const meta = {
@@ -60,9 +61,9 @@ const meta = {
       description: 'Exibe o botao de fechar no canto superior direito.',
     },
   },
-};
+}
 
-export default meta;
+export default meta
 
 export const Default = {
   render: (args) => <ModalStoryDemo {...args} />,
@@ -71,4 +72,4 @@ export const Default = {
     description: 'Atualize os dados antes de salvar.',
     showCloseButton: true,
   },
-};
+}

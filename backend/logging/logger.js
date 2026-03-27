@@ -1,28 +1,28 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'node:fs'
+import path from 'node:path'
 
-import pino from 'pino';
+import pino from 'pino'
 
-import { backendEnv } from '../config/env.js';
+import { backendEnv } from '../config/env.js'
 
-const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
-const logsDirectory = path.resolve(process.cwd(), 'logs');
+const LOG_LEVELS = ['debug', 'info', 'warn', 'error']
+const logsDirectory = path.resolve(process.cwd(), 'logs')
 
 function resolveLogLevel() {
   if (backendEnv.nodeEnv === 'test' || process.env.VITEST) {
-    return 'silent';
+    return 'silent'
   }
 
-  const configured = String(backendEnv.logLevel ?? '').toLowerCase();
-  return LOG_LEVELS.includes(configured) ? configured : 'info';
+  const configured = String(backendEnv.logLevel ?? '').toLowerCase()
+  return LOG_LEVELS.includes(configured) ? configured : 'info'
 }
 
 function createStreamTargets() {
   if (backendEnv.nodeEnv !== 'production') {
-    return undefined;
+    return undefined
   }
 
-  fs.mkdirSync(logsDirectory, { recursive: true });
+  fs.mkdirSync(logsDirectory, { recursive: true })
 
   return pino.multistream([
     { stream: process.stdout },
@@ -33,7 +33,7 @@ function createStreamTargets() {
         sync: false,
       }),
     },
-  ]);
+  ])
 }
 
 const baseOptions = {
@@ -45,15 +45,15 @@ const baseOptions = {
   },
   formatters: {
     level(label) {
-      return { level: label };
+      return { level: label }
     },
   },
-};
+}
 
-export const logger = pino(baseOptions, createStreamTargets());
+export const logger = pino(baseOptions, createStreamTargets())
 
 export function createLoggerContext(context = {}) {
-  return logger.child(context);
+  return logger.child(context)
 }
 
 export function serializeError(error) {
@@ -62,12 +62,12 @@ export function serializeError(error) {
       type: error.name,
       message: error.message,
       stack: error.stack,
-    };
+    }
   }
 
   return {
     type: 'UnknownError',
     message: typeof error === 'string' ? error : 'Unexpected error',
     details: error,
-  };
+  }
 }

@@ -1,12 +1,12 @@
-import { orderOriginOptions, orderStatusOptions } from '../schemas/orderSchema';
-import Select from '../../../components/ui/Select';
+import { orderOriginOptions, orderStatusOptions } from '../schemas/orderSchema'
+import Select from '../../../components/ui/Select'
 
 function OrdersFilters({ filters, onChange }) {
   function updateFilter(field, value) {
     onChange((current) => ({
       ...current,
       [field]: value,
-    }));
+    }))
   }
 
   return (
@@ -70,9 +70,7 @@ function OrdersFilters({ filters, onChange }) {
         <span>Somente urgentes</span>
       </label>
     </div>
-  );
+  )
 }
 
-export default OrdersFilters;
-
-
+export default OrdersFilters

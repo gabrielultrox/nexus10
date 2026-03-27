@@ -1,18 +1,18 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom'
 
-import '../styles/couriers.css';
+import '../styles/couriers.css'
 
-import CourierProfilePanel from '../modules/couriers/components/CourierProfilePanel';
-import { findCourierById } from '../modules/couriers/utils/courierFilters';
-import { loadLocalRecords } from '../services/localAccess';
-import { courierSeedRecords } from '../services/operationsSeedData';
+import CourierProfilePanel from '../modules/couriers/components/CourierProfilePanel'
+import { findCourierById } from '../modules/couriers/utils/courierFilters'
+import { loadLocalRecords } from '../services/localAccess'
+import { courierSeedRecords } from '../services/operationsSeedData'
 
-const manualCourierStorageKey = 'nexus-manual-couriers';
+const manualCourierStorageKey = 'nexus-manual-couriers'
 
 function CourierProfilePage() {
-  const { courierId } = useParams();
-  const manualCouriers = loadLocalRecords(manualCourierStorageKey, courierSeedRecords);
-  const courier = findCourierById(manualCouriers, courierId);
+  const { courierId } = useParams()
+  const manualCouriers = loadLocalRecords(manualCourierStorageKey, courierSeedRecords)
+  const courier = findCourierById(manualCouriers, courierId)
 
   if (!courier) {
     return (
@@ -28,7 +28,7 @@ function CourierProfilePage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -37,7 +37,9 @@ function CourierProfilePage() {
         <div>
           <p className="text-overline">Perfil do entregador</p>
           <h1 className="text-page-title">{courier.name}</h1>
-          <p className="text-body">Perfil operacional com status atual, metricas e acoes principais.</p>
+          <p className="text-body">
+            Perfil operacional com status atual, metricas e acoes principais.
+          </p>
         </div>
 
         <Link to="/couriers" className="ui-button ui-button--ghost courier-back-link">
@@ -47,7 +49,7 @@ function CourierProfilePage() {
 
       <CourierProfilePanel courier={courier} />
     </div>
-  );
+  )
 }
 
-export default CourierProfilePage;
+export default CourierProfilePage

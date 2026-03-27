@@ -1,11 +1,29 @@
-import { loadAuditEvents } from './localAudit';
+import { loadAuditEvents } from './localAudit'
 
 const moduleContentByPath = {
   schedule: {
     metrics: [
-      { label: 'Entregadores escalados', value: '03', meta: 'Escala manual do dia em andamento', badgeText: 'online', badgeClass: 'ui-badge--success' },
-      { label: 'Entradas confirmadas', value: '92%', meta: '2 entradas ainda precisam de reforco', badgeText: 'alerta', badgeClass: 'ui-badge--warning' },
-      { label: 'Ajustes pendentes', value: '04', meta: 'Revisar a escala antes de 19:30', badgeText: 'fila', badgeClass: 'ui-badge--info' },
+      {
+        label: 'Entregadores escalados',
+        value: '03',
+        meta: 'Escala manual do dia em andamento',
+        badgeText: 'online',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Entradas confirmadas',
+        value: '92%',
+        meta: '2 entradas ainda precisam de reforco',
+        badgeText: 'alerta',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Ajustes pendentes',
+        value: '04',
+        meta: 'Revisar a escala antes de 19:30',
+        badgeText: 'fila',
+        badgeClass: 'ui-badge--info',
+      },
     ],
     panels: [
       {
@@ -19,9 +37,18 @@ const moduleContentByPath = {
       {
         title: 'Ajustes recentes',
         timeline: [
-          { title: 'Reforco noturno confirmado', meta: '2 entregadores adicionados ao turno ha 8 min' },
-          { title: 'Escala do jantar revisada', meta: 'Entrada principal ganhou uma rota de apoio extra' },
-          { title: 'Fila de pausa redistribuida', meta: 'Despacho manteve 100% das entradas de entrega abertas' },
+          {
+            title: 'Reforco noturno confirmado',
+            meta: '2 entregadores adicionados ao turno ha 8 min',
+          },
+          {
+            title: 'Escala do jantar revisada',
+            meta: 'Entrada principal ganhou uma rota de apoio extra',
+          },
+          {
+            title: 'Fila de pausa redistribuida',
+            meta: 'Despacho manteve 100% das entradas de entrega abertas',
+          },
         ],
       },
     ],
@@ -37,9 +64,27 @@ const moduleContentByPath = {
   },
   advances: {
     metrics: [
-      { label: 'Vales abertos', value: '05', meta: '2 vencem ainda hoje', badgeText: 'abertos', badgeClass: 'ui-badge--warning' },
-      { label: 'Total liberado', value: 'R$ 420', meta: 'Janela atual do turno', badgeText: 'caixa', badgeClass: 'ui-badge--info' },
-      { label: 'Baixas concluidas', value: '11', meta: 'Fechamento quase limpo', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+      {
+        label: 'Vales abertos',
+        value: '05',
+        meta: '2 vencem ainda hoje',
+        badgeText: 'abertos',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Total liberado',
+        value: 'R$ 420',
+        meta: 'Janela atual do turno',
+        badgeText: 'caixa',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Baixas concluidas',
+        value: '11',
+        meta: 'Fechamento quase limpo',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
     ],
     panels: [
       {
@@ -55,7 +100,10 @@ const moduleContentByPath = {
         timeline: [
           { title: 'Ultimo lancamento', meta: 'R$ 80 liberados para pista leste' },
           { title: 'Conferencia parcial', meta: 'Saldo do caixa 02 alinhado com o turno' },
-          { title: 'Previsao de fechamento', meta: 'Encerramento estimado sem pendencias criticas' },
+          {
+            title: 'Previsao de fechamento',
+            meta: 'Encerramento estimado sem pendencias criticas',
+          },
         ],
       },
     ],
@@ -71,9 +119,27 @@ const moduleContentByPath = {
   },
   discounts: {
     metrics: [
-      { label: 'Descontos ativos', value: '07', meta: '3 aguardando justificativa final', badgeText: 'revisao', badgeClass: 'ui-badge--warning' },
-      { label: 'Impacto do turno', value: 'R$ 184', meta: '1,8% do faturamento parcial', badgeText: 'financeiro', badgeClass: 'ui-badge--info' },
-      { label: 'Conferidos', value: '16', meta: 'Ultimas 24 horas', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+      {
+        label: 'Descontos ativos',
+        value: '07',
+        meta: '3 aguardando justificativa final',
+        badgeText: 'revisao',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Impacto do turno',
+        value: 'R$ 184',
+        meta: '1,8% do faturamento parcial',
+        badgeText: 'financeiro',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Conferidos',
+        value: '16',
+        meta: 'Ultimas 24 horas',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
     ],
     panels: [
       {
@@ -105,9 +171,27 @@ const moduleContentByPath = {
   },
   change: {
     metrics: [
-      { label: 'Trocos abertos', value: '03', meta: '1 acima de R$ 100', badgeText: 'alerta', badgeClass: 'ui-badge--warning' },
-      { label: 'Valor em circulacao', value: 'R$ 230', meta: 'Caixas 01 e 02', badgeText: 'caixa', badgeClass: 'ui-badge--info' },
-      { label: 'Retornos confirmados', value: '09', meta: 'Turno atual', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+      {
+        label: 'Trocos abertos',
+        value: '03',
+        meta: '1 acima de R$ 100',
+        badgeText: 'alerta',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Valor em circulacao',
+        value: 'R$ 230',
+        meta: 'Caixas 01 e 02',
+        badgeText: 'caixa',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Retornos confirmados',
+        value: '09',
+        meta: 'Turno atual',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
     ],
     panels: [
       {
@@ -139,9 +223,27 @@ const moduleContentByPath = {
   },
   machines: {
     metrics: [
-      { label: 'Dispositivos ativos', value: '14', meta: '12 em pista e 2 de reserva', badgeText: 'online', badgeClass: 'ui-badge--success' },
-      { label: 'Checklist pendente', value: '02', meta: 'Ultima ronda as 18:44', badgeText: 'fila', badgeClass: 'ui-badge--warning' },
-      { label: 'Sem entregador', value: '01', meta: 'Uma unidade ainda precisa de atribuicao', badgeText: 'critico', badgeClass: 'ui-badge--danger' },
+      {
+        label: 'Dispositivos ativos',
+        value: '14',
+        meta: '12 em pista e 2 de reserva',
+        badgeText: 'online',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Checklist pendente',
+        value: '02',
+        meta: 'Ultima ronda as 18:44',
+        badgeText: 'fila',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Sem entregador',
+        value: '01',
+        meta: 'Uma unidade ainda precisa de atribuicao',
+        badgeText: 'critico',
+        badgeClass: 'ui-badge--danger',
+      },
     ],
     panels: [
       {
@@ -173,25 +275,64 @@ const moduleContentByPath = {
   },
   'machine-history': {
     metrics: [
-      { label: 'Checklist do dia', value: 'Ativo', meta: 'Confirme quais maquininhas estao presentes no turno', badgeText: 'check', badgeClass: 'ui-badge--info' },
-      { label: 'Conferencia', value: 'Manual', meta: 'Base ligada ao cadastro real de maquininhas', badgeText: 'ok', badgeClass: 'ui-badge--success' },
-      { label: 'Foco', value: 'Presenca', meta: 'Sem eventos tecnicos ou historico mockado', badgeText: 'turno', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Checklist do dia',
+        value: 'Ativo',
+        meta: 'Confirme quais maquininhas estao presentes no turno',
+        badgeText: 'check',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Conferencia',
+        value: 'Manual',
+        meta: 'Base ligada ao cadastro real de maquininhas',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Foco',
+        value: 'Presenca',
+        meta: 'Sem eventos tecnicos ou historico mockado',
+        badgeText: 'turno',
+        badgeClass: 'ui-badge--special',
+      },
     ],
     panels: [
       {
         title: 'Leitura rapida',
         items: [
-          { label: 'Checklist por maquininha', value: 'Marque presente ou ausente no turno', tone: 'info' },
-          { label: 'Vinculo operacional', value: 'Usa entregador e modelo do cadastro atual', tone: 'success' },
-          { label: 'Revisao do dia', value: 'Atualize conforme as unidades chegarem', tone: 'warning' },
+          {
+            label: 'Checklist por maquininha',
+            value: 'Marque presente ou ausente no turno',
+            tone: 'info',
+          },
+          {
+            label: 'Vinculo operacional',
+            value: 'Usa entregador e modelo do cadastro atual',
+            tone: 'success',
+          },
+          {
+            label: 'Revisao do dia',
+            value: 'Atualize conforme as unidades chegarem',
+            tone: 'warning',
+          },
         ],
       },
       {
         title: 'Como usar',
         timeline: [
-          { title: 'Cadastre as maquininhas', meta: 'Inclua dispositivo, entregador e modelo no modulo principal' },
-          { title: 'Abra o checklist do dia', meta: 'Marque as unidades que estao presentes no turno' },
-          { title: 'Atualize conforme a operacao muda', meta: 'O status fica salvo localmente com horario e operador' },
+          {
+            title: 'Cadastre as maquininhas',
+            meta: 'Inclua dispositivo, entregador e modelo no modulo principal',
+          },
+          {
+            title: 'Abra o checklist do dia',
+            meta: 'Marque as unidades que estao presentes no turno',
+          },
+          {
+            title: 'Atualize conforme a operacao muda',
+            meta: 'O status fica salvo localmente com horario e operador',
+          },
         ],
       },
     ],
@@ -207,9 +348,27 @@ const moduleContentByPath = {
   },
   map: {
     metrics: [
-      { label: 'Bairros bloqueados', value: '03', meta: 'Locais sem entrega monitorados no Ze Delivery', badgeText: 'mapa', badgeClass: 'ui-badge--info' },
-      { label: 'Confirmacoes ativas', value: '03', meta: 'Bloqueios locais confirmados pela operacao', badgeText: 'check', badgeClass: 'ui-badge--warning' },
-      { label: 'Ultima revisao', value: '20 min', meta: 'Lista conferida pela operacao local', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+      {
+        label: 'Bairros bloqueados',
+        value: '03',
+        meta: 'Locais sem entrega monitorados no Ze Delivery',
+        badgeText: 'mapa',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Confirmacoes ativas',
+        value: '03',
+        meta: 'Bloqueios locais confirmados pela operacao',
+        badgeText: 'check',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Ultima revisao',
+        value: '20 min',
+        meta: 'Lista conferida pela operacao local',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
     ],
     panels: [
       {
@@ -223,9 +382,18 @@ const moduleContentByPath = {
       {
         title: 'Sinais operacionais',
         timeline: [
-          { title: 'Lista de bairros revisada', meta: 'Operacao confirmou os locais sem entrega do turno' },
-          { title: 'Bloqueio mantido no app', meta: 'Ze Delivery segue sem entrega nos bairros marcados' },
-          { title: 'Consulta rapida atualizada', meta: 'Base pronta para conferencia durante o dia' },
+          {
+            title: 'Lista de bairros revisada',
+            meta: 'Operacao confirmou os locais sem entrega do turno',
+          },
+          {
+            title: 'Bloqueio mantido no app',
+            meta: 'Ze Delivery segue sem entrega nos bairros marcados',
+          },
+          {
+            title: 'Consulta rapida atualizada',
+            meta: 'Base pronta para conferencia durante o dia',
+          },
         ],
       },
     ],
@@ -241,9 +409,27 @@ const moduleContentByPath = {
   },
   history: {
     metrics: [
-      { label: 'Dias consultados', value: '14', meta: 'Janela mais usada pela operacao', badgeText: 'historico', badgeClass: 'ui-badge--info' },
-      { label: 'Melhor fechamento', value: 'Sab', meta: 'R$ 8.420 no ultimo ciclo', badgeText: 'topo', badgeClass: 'ui-badge--success' },
-      { label: 'Dia atipico', value: 'Qua', meta: 'Ocorrencias acima do padrao', badgeText: 'revisao', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Dias consultados',
+        value: '14',
+        meta: 'Janela mais usada pela operacao',
+        badgeText: 'historico',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Melhor fechamento',
+        value: 'Sab',
+        meta: 'R$ 8.420 no ultimo ciclo',
+        badgeText: 'topo',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Dia atipico',
+        value: 'Qua',
+        meta: 'Ocorrencias acima do padrao',
+        badgeText: 'revisao',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -275,9 +461,27 @@ const moduleContentByPath = {
   },
   occurrences: {
     metrics: [
-      { label: 'Ocorrencias abertas', value: '04', meta: '2 em tratamento imediato', badgeText: 'critico', badgeClass: 'ui-badge--danger' },
-      { label: 'Resolvidas hoje', value: '12', meta: 'Resposta media de 18 min', badgeText: 'ok', badgeClass: 'ui-badge--success' },
-      { label: 'Tempo medio', value: '18 min', meta: 'SLA dentro da meta', badgeText: 'controle', badgeClass: 'ui-badge--info' },
+      {
+        label: 'Ocorrencias abertas',
+        value: '04',
+        meta: '2 em tratamento imediato',
+        badgeText: 'critico',
+        badgeClass: 'ui-badge--danger',
+      },
+      {
+        label: 'Resolvidas hoje',
+        value: '12',
+        meta: 'Resposta media de 18 min',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Tempo medio',
+        value: '18 min',
+        meta: 'SLA dentro da meta',
+        badgeText: 'controle',
+        badgeClass: 'ui-badge--info',
+      },
     ],
     panels: [
       {
@@ -309,9 +513,27 @@ const moduleContentByPath = {
   },
   'monthly-report': {
     metrics: [
-      { label: 'Faturamento mensal', value: 'R$ 186k', meta: '8% acima do mes anterior', badgeText: 'crescimento', badgeClass: 'ui-badge--success' },
-      { label: 'Ticket medio', value: 'R$ 46', meta: 'Estavel nas ultimas 4 semanas', badgeText: 'consistente', badgeClass: 'ui-badge--info' },
-      { label: 'Ponto de atencao', value: 'Segundas', meta: 'Menor conversao do calendario', badgeText: 'revisao', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Faturamento mensal',
+        value: 'R$ 186k',
+        meta: '8% acima do mes anterior',
+        badgeText: 'crescimento',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Ticket medio',
+        value: 'R$ 46',
+        meta: 'Estavel nas ultimas 4 semanas',
+        badgeText: 'consistente',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Ponto de atencao',
+        value: 'Segundas',
+        meta: 'Menor conversao do calendario',
+        badgeText: 'revisao',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -343,9 +565,27 @@ const moduleContentByPath = {
   },
   'orders-hour': {
     metrics: [
-      { label: 'Pico horario', value: '20h', meta: 'Janela com maior demanda do turno', badgeText: 'pico', badgeClass: 'ui-badge--warning' },
-      { label: 'Media por hora', value: '17', meta: 'Distribuicao saudavel na noite', badgeText: 'media', badgeClass: 'ui-badge--info' },
-      { label: 'Hora critica', value: '21h', meta: 'Tempo medio sobe junto com volume', badgeText: 'alerta', badgeClass: 'ui-badge--danger' },
+      {
+        label: 'Pico horario',
+        value: '20h',
+        meta: 'Janela com maior demanda do turno',
+        badgeText: 'pico',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Media por hora',
+        value: '17',
+        meta: 'Distribuicao saudavel na noite',
+        badgeText: 'media',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Hora critica',
+        value: '21h',
+        meta: 'Tempo medio sobe junto com volume',
+        badgeText: 'alerta',
+        badgeClass: 'ui-badge--danger',
+      },
     ],
     panels: [
       {
@@ -377,9 +617,27 @@ const moduleContentByPath = {
   },
   ratings: {
     metrics: [
-      { label: 'Nota media', value: '4.7', meta: 'Base das ultimas 48 horas', badgeText: 'alto', badgeClass: 'ui-badge--success' },
-      { label: 'Avaliacoes novas', value: '38', meta: 'Turno em andamento', badgeText: 'feedback', badgeClass: 'ui-badge--info' },
-      { label: 'Acoes abertas', value: '03', meta: 'Casos com retorno necessario', badgeText: 'atencao', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Nota media',
+        value: '4.7',
+        meta: 'Base das ultimas 48 horas',
+        badgeText: 'alto',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Avaliacoes novas',
+        value: '38',
+        meta: 'Turno em andamento',
+        badgeText: 'feedback',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Acoes abertas',
+        value: '03',
+        meta: 'Casos com retorno necessario',
+        badgeText: 'atencao',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -411,9 +669,27 @@ const moduleContentByPath = {
   },
   'audit-log': {
     metrics: [
-      { label: 'Eventos registrados', value: '184', meta: 'Ultimas 24 horas', badgeText: 'log', badgeClass: 'ui-badge--info' },
-      { label: 'Acoes sensiveis', value: '09', meta: 'Todas com rastreio completo', badgeText: 'seguro', badgeClass: 'ui-badge--success' },
-      { label: 'Desvios', value: '01', meta: 'Editar permissao de turno', badgeText: 'revisar', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Eventos registrados',
+        value: '184',
+        meta: 'Ultimas 24 horas',
+        badgeText: 'log',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Acoes sensiveis',
+        value: '09',
+        meta: 'Todas com rastreio completo',
+        badgeText: 'seguro',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Desvios',
+        value: '01',
+        meta: 'Editar permissao de turno',
+        badgeText: 'revisar',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -445,9 +721,27 @@ const moduleContentByPath = {
   },
   pos: {
     metrics: [
-      { label: 'Cestas montadas', value: '12', meta: '4 aguardando fechamento', badgeText: 'pdv', badgeClass: 'ui-badge--info' },
-      { label: 'Ticket medio', value: 'R$ 52', meta: 'Acima da media da noite', badgeText: 'alto', badgeClass: 'ui-badge--success' },
-      { label: 'Pendencias de cadastro', value: '02', meta: 'Clientes sem complemento', badgeText: 'revisar', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Cestas montadas',
+        value: '12',
+        meta: '4 aguardando fechamento',
+        badgeText: 'pdv',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Ticket medio',
+        value: 'R$ 52',
+        meta: 'Acima da media da noite',
+        badgeText: 'alto',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Pendencias de cadastro',
+        value: '02',
+        meta: 'Clientes sem complemento',
+        badgeText: 'revisar',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -479,9 +773,27 @@ const moduleContentByPath = {
   },
   sales: {
     metrics: [
-      { label: 'Vendas do turno', value: 'R$ 8.420', meta: '8% acima da meta parcial', badgeText: 'meta', badgeClass: 'ui-badge--success' },
-      { label: 'Conversao', value: '34%', meta: 'Canal mais forte: WhatsApp', badgeText: 'mix', badgeClass: 'ui-badge--info' },
-      { label: 'Cancelamentos', value: '02', meta: 'Sem desvio relevante', badgeText: 'controle', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Vendas do turno',
+        value: 'R$ 8.420',
+        meta: '8% acima da meta parcial',
+        badgeText: 'meta',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Conversao',
+        value: '34%',
+        meta: 'Canal mais forte: WhatsApp',
+        badgeText: 'mix',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Cancelamentos',
+        value: '02',
+        meta: 'Sem desvio relevante',
+        badgeText: 'controle',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -513,9 +825,27 @@ const moduleContentByPath = {
   },
   products: {
     metrics: [
-      { label: 'Itens ativos', value: '126', meta: '9 em destaque comercial', badgeText: 'catalogo', badgeClass: 'ui-badge--info' },
-      { label: 'Rupturas', value: '03', meta: 'Monitorar antes do pico final', badgeText: 'estoque', badgeClass: 'ui-badge--warning' },
-      { label: 'Mais vendidos', value: 'Burger X', meta: 'Lider nas ultimas 24 horas', badgeText: 'topo', badgeClass: 'ui-badge--success' },
+      {
+        label: 'Itens ativos',
+        value: '126',
+        meta: '9 em destaque comercial',
+        badgeText: 'catalogo',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Rupturas',
+        value: '03',
+        meta: 'Monitorar antes do pico final',
+        badgeText: 'estoque',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Mais vendidos',
+        value: 'Burger X',
+        meta: 'Lider nas ultimas 24 horas',
+        badgeText: 'topo',
+        badgeClass: 'ui-badge--success',
+      },
     ],
     panels: [
       {
@@ -547,9 +877,27 @@ const moduleContentByPath = {
   },
   customers: {
     metrics: [
-      { label: 'Clientes ativos', value: '248', meta: '48 retornaram nesta semana', badgeText: 'crm', badgeClass: 'ui-badge--info' },
-      { label: 'Frequentes', value: '62', meta: 'Pedidos recorrentes nos ultimos 30 dias', badgeText: 'fidelidade', badgeClass: 'ui-badge--success' },
-      { label: 'Atencao especial', value: '06', meta: 'Acompanhar experiencia e SLA', badgeText: 'vip', badgeClass: 'ui-badge--warning' },
+      {
+        label: 'Clientes ativos',
+        value: '248',
+        meta: '48 retornaram nesta semana',
+        badgeText: 'crm',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Frequentes',
+        value: '62',
+        meta: 'Pedidos recorrentes nos ultimos 30 dias',
+        badgeText: 'fidelidade',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Atencao especial',
+        value: '06',
+        meta: 'Acompanhar experiencia e SLA',
+        badgeText: 'vip',
+        badgeClass: 'ui-badge--warning',
+      },
     ],
     panels: [
       {
@@ -581,9 +929,27 @@ const moduleContentByPath = {
   },
   'pos-reports': {
     metrics: [
-      { label: 'Relatorios salvos', value: '18', meta: '3 favoritos da operacao', badgeText: 'pdv', badgeClass: 'ui-badge--info' },
-      { label: 'Periodo mais consultado', value: '7 dias', meta: 'Leitura padrao de lideranca', badgeText: 'padrao', badgeClass: 'ui-badge--success' },
-      { label: 'Exportacoes do dia', value: '04', meta: 'Sem falhas de geracao', badgeText: 'ok', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Relatorios salvos',
+        value: '18',
+        meta: '3 favoritos da operacao',
+        badgeText: 'pdv',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Periodo mais consultado',
+        value: '7 dias',
+        meta: 'Leitura padrao de lideranca',
+        badgeText: 'padrao',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Exportacoes do dia',
+        value: '04',
+        meta: 'Sem falhas de geracao',
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--special',
+      },
     ],
     panels: [
       {
@@ -613,31 +979,49 @@ const moduleContentByPath = {
       ],
     },
   },
-};
+}
 
 function formatAuditTime(timestamp) {
   return new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(timestamp));
+  }).format(new Date(timestamp))
 }
 
 function formatAuditDate(timestamp) {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-  }).format(new Date(timestamp));
+  }).format(new Date(timestamp))
 }
 
 function buildHistoryContent() {
-  const events = loadAuditEvents();
+  const events = loadAuditEvents()
 
   if (events.length === 0) {
     return {
       metrics: [
-        { label: 'Dias com atividade', value: '00', meta: 'Nenhum evento local registrado ainda', badgeText: 'historico', badgeClass: 'ui-badge--info' },
-        { label: 'Ultimo movimento', value: '--', meta: 'O historico sera alimentado pelas operacoes locais', badgeText: 'aguardando', badgeClass: 'ui-badge--warning' },
-        { label: 'Base auditavel', value: 'Pronta', meta: 'Novos eventos aparecerao automaticamente', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+        {
+          label: 'Dias com atividade',
+          value: '00',
+          meta: 'Nenhum evento local registrado ainda',
+          badgeText: 'historico',
+          badgeClass: 'ui-badge--info',
+        },
+        {
+          label: 'Ultimo movimento',
+          value: '--',
+          meta: 'O historico sera alimentado pelas operacoes locais',
+          badgeText: 'aguardando',
+          badgeClass: 'ui-badge--warning',
+        },
+        {
+          label: 'Base auditavel',
+          value: 'Pronta',
+          meta: 'Novos eventos aparecerao automaticamente',
+          badgeText: 'ok',
+          badgeClass: 'ui-badge--success',
+        },
       ],
       panels: [
         {
@@ -651,7 +1035,10 @@ function buildHistoryContent() {
         {
           title: 'Ultimos movimentos',
           timeline: [
-            { title: 'Sem eventos locais', meta: 'Cadastros, validacoes e exclusoes aparecerao aqui.' },
+            {
+              title: 'Sem eventos locais',
+              meta: 'Cadastros, validacoes e exclusoes aparecerao aqui.',
+            },
           ],
         },
       ],
@@ -660,37 +1047,58 @@ function buildHistoryContent() {
         columns: ['Data', 'Eventos', 'Ultimo ator', 'Leitura'],
         rows: [],
       },
-    };
+    }
   }
 
   const groupedByDate = events.reduce((accumulator, event) => {
-    const dateKey = formatAuditDate(event.timestamp);
-    const bucket = accumulator.get(dateKey) ?? [];
-    bucket.push(event);
-    accumulator.set(dateKey, bucket);
-    return accumulator;
-  }, new Map());
+    const dateKey = formatAuditDate(event.timestamp)
+    const bucket = accumulator.get(dateKey) ?? []
+    bucket.push(event)
+    accumulator.set(dateKey, bucket)
+    return accumulator
+  }, new Map())
 
-  const dayEntries = Array.from(groupedByDate.entries());
-  const mostActiveDay = dayEntries.reduce((best, current) => (
-    !best || current[1].length > best[1].length ? current : best
-  ), null);
-  const uniqueModules = new Set(events.map((event) => event.module));
+  const dayEntries = Array.from(groupedByDate.entries())
+  const mostActiveDay = dayEntries.reduce(
+    (best, current) => (!best || current[1].length > best[1].length ? current : best),
+    null,
+  )
+  const uniqueModules = new Set(events.map((event) => event.module))
 
   return {
     metrics: [
-      { label: 'Dias com atividade', value: String(dayEntries.length).padStart(2, '0'), meta: 'Historico local consolidado por dia', badgeText: 'historico', badgeClass: 'ui-badge--info' },
-      { label: 'Dia mais ativo', value: mostActiveDay?.[0] ?? '--', meta: `${mostActiveDay?.[1].length ?? 0} eventos registrados`, badgeText: 'topo', badgeClass: 'ui-badge--success' },
-      { label: 'Modulos auditados', value: String(uniqueModules.size).padStart(2, '0'), meta: 'Areas que ja geraram rastro operacional', badgeText: 'auditoria', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Dias com atividade',
+        value: String(dayEntries.length).padStart(2, '0'),
+        meta: 'Historico local consolidado por dia',
+        badgeText: 'historico',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Dia mais ativo',
+        value: mostActiveDay?.[0] ?? '--',
+        meta: `${mostActiveDay?.[1].length ?? 0} eventos registrados`,
+        badgeText: 'topo',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Modulos auditados',
+        value: String(uniqueModules.size).padStart(2, '0'),
+        meta: 'Areas que ja geraram rastro operacional',
+        badgeText: 'auditoria',
+        badgeClass: 'ui-badge--special',
+      },
     ],
     panels: [
       {
         title: 'Leitura rapida',
-        items: Array.from(uniqueModules).slice(0, 3).map((moduleName) => ({
-          label: moduleName,
-          value: `${events.filter((event) => event.module === moduleName).length} eventos`,
-          tone: 'info',
-        })),
+        items: Array.from(uniqueModules)
+          .slice(0, 3)
+          .map((moduleName) => ({
+            label: moduleName,
+            value: `${events.filter((event) => event.module === moduleName).length} eventos`,
+            tone: 'info',
+          })),
       },
       {
         title: 'Ultimos movimentos',
@@ -703,25 +1111,45 @@ function buildHistoryContent() {
     table: {
       title: 'Dias recentes',
       columns: ['Data', 'Eventos', 'Ultimo ator', 'Leitura'],
-      rows: dayEntries.slice(0, 7).map(([date, dayEvents]) => ([
-        date,
-        String(dayEvents.length),
-        dayEvents[0]?.actor ?? '--',
-        `${new Set(dayEvents.map((event) => event.module)).size} modulos`,
-      ])),
+      rows: dayEntries
+        .slice(0, 7)
+        .map(([date, dayEvents]) => [
+          date,
+          String(dayEvents.length),
+          dayEvents[0]?.actor ?? '--',
+          `${new Set(dayEvents.map((event) => event.module)).size} modulos`,
+        ]),
     },
-  };
+  }
 }
 
 function buildAuditLogContent() {
-  const events = loadAuditEvents();
+  const events = loadAuditEvents()
 
   if (events.length === 0) {
     return {
       metrics: [
-        { label: 'Eventos registrados', value: '00', meta: 'Nenhum evento local no audit log ainda', badgeText: 'log', badgeClass: 'ui-badge--info' },
-        { label: 'Atores ativos', value: '00', meta: 'Sem operadores com eventos rastreados', badgeText: 'atores', badgeClass: 'ui-badge--warning' },
-        { label: 'Cobertura', value: 'Pronta', meta: 'Cadastros e alteracoes passarao a alimentar o log', badgeText: 'ok', badgeClass: 'ui-badge--success' },
+        {
+          label: 'Eventos registrados',
+          value: '00',
+          meta: 'Nenhum evento local no audit log ainda',
+          badgeText: 'log',
+          badgeClass: 'ui-badge--info',
+        },
+        {
+          label: 'Atores ativos',
+          value: '00',
+          meta: 'Sem operadores com eventos rastreados',
+          badgeText: 'atores',
+          badgeClass: 'ui-badge--warning',
+        },
+        {
+          label: 'Cobertura',
+          value: 'Pronta',
+          meta: 'Cadastros e alteracoes passarao a alimentar o log',
+          badgeText: 'ok',
+          badgeClass: 'ui-badge--success',
+        },
       ],
       panels: [
         {
@@ -735,7 +1163,10 @@ function buildAuditLogContent() {
         {
           title: 'Sequencia recente',
           timeline: [
-            { title: 'Sem eventos', meta: 'O audit log sera preenchido automaticamente pelas acoes do app.' },
+            {
+              title: 'Sem eventos',
+              meta: 'O audit log sera preenchido automaticamente pelas acoes do app.',
+            },
           ],
         },
       ],
@@ -744,29 +1175,49 @@ function buildAuditLogContent() {
         columns: ['Horario', 'Actor', 'Acao', 'Modulo'],
         rows: [],
       },
-    };
+    }
   }
 
-  const uniqueActors = new Set(events.map((event) => event.actor));
+  const uniqueActors = new Set(events.map((event) => event.actor))
   const moduleCounts = events.reduce((accumulator, event) => {
-    accumulator[event.module] = (accumulator[event.module] ?? 0) + 1;
-    return accumulator;
-  }, {});
+    accumulator[event.module] = (accumulator[event.module] ?? 0) + 1
+    return accumulator
+  }, {})
 
   return {
     metrics: [
-      { label: 'Eventos registrados', value: String(events.length).padStart(2, '0'), meta: 'Rastro local das ultimas acoes', badgeText: 'log', badgeClass: 'ui-badge--info' },
-      { label: 'Atores ativos', value: String(uniqueActors.size).padStart(2, '0'), meta: 'Usuarios que deixaram rastro no shell', badgeText: 'atores', badgeClass: 'ui-badge--success' },
-      { label: 'Modulos tocados', value: String(Object.keys(moduleCounts).length).padStart(2, '0'), meta: 'Areas que geraram eventos no audit log', badgeText: 'cobertura', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Eventos registrados',
+        value: String(events.length).padStart(2, '0'),
+        meta: 'Rastro local das ultimas acoes',
+        badgeText: 'log',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Atores ativos',
+        value: String(uniqueActors.size).padStart(2, '0'),
+        meta: 'Usuarios que deixaram rastro no shell',
+        badgeText: 'atores',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Modulos tocados',
+        value: String(Object.keys(moduleCounts).length).padStart(2, '0'),
+        meta: 'Areas que geraram eventos no audit log',
+        badgeText: 'cobertura',
+        badgeClass: 'ui-badge--special',
+      },
     ],
     panels: [
       {
         title: 'Pontos de rastreio',
-        items: Object.entries(moduleCounts).slice(0, 3).map(([moduleName, count]) => ({
-          label: moduleName,
-          value: `${count} eventos`,
-          tone: 'info',
-        })),
+        items: Object.entries(moduleCounts)
+          .slice(0, 3)
+          .map(([moduleName, count]) => ({
+            label: moduleName,
+            value: `${count} eventos`,
+            tone: 'info',
+          })),
       },
       {
         title: 'Sequencia recente',
@@ -779,22 +1230,42 @@ function buildAuditLogContent() {
     table: {
       title: 'Eventos recentes',
       columns: ['Horario', 'Actor', 'Acao', 'Modulo'],
-      rows: events.slice(0, 12).map((event) => ([
-        formatAuditTime(event.timestamp),
-        event.actor,
-        event.action,
-        event.module,
-      ])),
+      rows: events
+        .slice(0, 12)
+        .map((event) => [
+          formatAuditTime(event.timestamp),
+          event.actor,
+          event.action,
+          event.module,
+        ]),
     },
-  };
+  }
 }
 
 function buildFallbackContent(route) {
   return {
     metrics: [
-      { label: 'Visibilidade', value: 'Alta', meta: `${route.section} pronto para operacao`, badgeText: 'nativo', badgeClass: 'ui-badge--info' },
-      { label: 'Cobertura', value: '100%', meta: `Fluxo de ${route.label.toLowerCase()} ativo no shell React`, badgeText: 'ok', badgeClass: 'ui-badge--success' },
-      { label: 'Ajustes', value: '03', meta: 'Espaco preparado para evolucoes modulares', badgeText: 'roadmap', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Visibilidade',
+        value: 'Alta',
+        meta: `${route.section} pronto para operacao`,
+        badgeText: 'nativo',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Cobertura',
+        value: '100%',
+        meta: `Fluxo de ${route.label.toLowerCase()} ativo no shell React`,
+        badgeText: 'ok',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Ajustes',
+        value: '03',
+        meta: 'Espaco preparado para evolucoes modulares',
+        badgeText: 'roadmap',
+        badgeClass: 'ui-badge--special',
+      },
     ],
     panels: [
       {
@@ -810,7 +1281,10 @@ function buildFallbackContent(route) {
         timeline: [
           { title: 'Interface migrada para React', meta: 'Sem dependencia do host legado' },
           { title: 'Visual padronizado', meta: 'Tokens, cards e tabela seguem o shell atual' },
-          { title: 'Base pronta para evolucao', meta: 'Incrementos futuros entram sem iframe antigo' },
+          {
+            title: 'Base pronta para evolucao',
+            meta: 'Incrementos futuros entram sem iframe antigo',
+          },
         ],
       },
     ],
@@ -823,17 +1297,17 @@ function buildFallbackContent(route) {
         ['Experiencia', 'Padronizada', 'Design system', 'Pronto'],
       ],
     },
-  };
+  }
 }
 
 export function getNativeModuleContent(route) {
   if (route.path === 'history') {
-    return buildHistoryContent();
+    return buildHistoryContent()
   }
 
   if (route.path === 'audit-log') {
-    return buildAuditLogContent();
+    return buildAuditLogContent()
   }
 
-  return moduleContentByPath[route.path] ?? buildFallbackContent(route);
+  return moduleContentByPath[route.path] ?? buildFallbackContent(route)
 }

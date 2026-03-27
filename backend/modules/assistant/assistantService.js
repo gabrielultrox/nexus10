@@ -43,7 +43,8 @@ function buildSearchErrorResponse(intentType) {
   return {
     intentType,
     title: 'Busca operacional',
-    answer: 'Nao consegui consultar os dados agora. Posso continuar ajudando com navegacao e explicacoes do sistema.',
+    answer:
+      'Nao consegui consultar os dados agora. Posso continuar ajudando com navegacao e explicacoes do sistema.',
     cards: [],
     navigationTarget: null,
     suggestions: ['Ajuda sobre pedidos', 'Abrir clientes', 'Nova venda'],
@@ -54,7 +55,8 @@ function buildUnknownFallback() {
   return {
     intentType: INTENTS.unknown,
     title: 'NEXA',
-    answer: 'Posso ajudar com explicacoes do sistema, navegacao entre modulos e busca segura por pedidos, vendas, clientes e produtos.',
+    answer:
+      'Posso ajudar com explicacoes do sistema, navegacao entre modulos e busca segura por pedidos, vendas, clientes e produtos.',
     cards: [],
     navigationTarget: null,
     suggestions: ['Ajuda sobre pedidos', 'Nova venda', 'Buscar cliente'],
@@ -77,10 +79,10 @@ function buildContextSuggestions(context = {}, cards = []) {
   }
 
   if (
-    context.routePath === '/couriers'
-    || context.routePath === '/schedule'
-    || context.routePath === '/machines'
-    || context.routePath === '/delivery-reading'
+    context.routePath === '/couriers' ||
+    context.routePath === '/schedule' ||
+    context.routePath === '/machines' ||
+    context.routePath === '/delivery-reading'
   ) {
     suggestions.push('Abrir escala', 'Abrir maquininhas')
   }
@@ -103,10 +105,14 @@ function buildSearchAnswerFallback(cards) {
 function buildSearchSuccessResponse(cards, answer) {
   return {
     intentType: INTENTS.search,
-    title: cards[0]?.type ? `Busca de ${cards[0].type === 'sale' ? 'vendas' : cards[0].type === 'order' ? 'pedidos' : cards[0].type === 'customer' ? 'clientes' : 'produtos'}` : 'Busca operacional',
+    title: cards[0]?.type
+      ? `Busca de ${cards[0].type === 'sale' ? 'vendas' : cards[0].type === 'order' ? 'pedidos' : cards[0].type === 'customer' ? 'clientes' : 'produtos'}`
+      : 'Busca operacional',
     answer,
     cards,
-    navigationTarget: cards[0]?.route ? { route: cards[0].route, label: 'Abrir primeiro resultado' } : null,
+    navigationTarget: cards[0]?.route
+      ? { route: cards[0].route, label: 'Abrir primeiro resultado' }
+      : null,
     suggestions: buildContextSuggestions({}, cards),
   }
 }
@@ -165,8 +171,12 @@ async function resolveHelpResponse({ intent, message, context }) {
       title: helpResponse.title,
       answer: llmAnswer || helpResponse.answer,
       cards: [],
-      navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
-      suggestions: buildContextSuggestions(context, []).concat(helpResponse.suggestions).slice(0, 3),
+      navigationTarget: intent.route
+        ? { route: intent.route, label: 'Abrir modulo relacionado' }
+        : null,
+      suggestions: buildContextSuggestions(context, [])
+        .concat(helpResponse.suggestions)
+        .slice(0, 3),
     }
   } catch (_error) {
     return {
@@ -174,8 +184,12 @@ async function resolveHelpResponse({ intent, message, context }) {
       title: helpResponse.title,
       answer: helpResponse.answer,
       cards: [],
-      navigationTarget: intent.route ? { route: intent.route, label: 'Abrir modulo relacionado' } : null,
-      suggestions: buildContextSuggestions(context, []).concat(helpResponse.suggestions).slice(0, 3),
+      navigationTarget: intent.route
+        ? { route: intent.route, label: 'Abrir modulo relacionado' }
+        : null,
+      suggestions: buildContextSuggestions(context, [])
+        .concat(helpResponse.suggestions)
+        .slice(0, 3),
     }
   }
 }

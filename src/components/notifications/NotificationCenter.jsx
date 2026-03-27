@@ -1,31 +1,31 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { useNotifications } from '../../contexts/NotificationsContext';
-import EmptyState from '../ui/EmptyState';
+import { useNotifications } from '../../contexts/NotificationsContext'
+import EmptyState from '../ui/EmptyState'
 
 function formatDateTime(value) {
-  const dateValue = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  const dateValue = typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
 
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(dateValue);
+  }).format(dateValue)
 }
 
 function NotificationCenter() {
-  const navigate = useNavigate();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications();
-  const [open, setOpen] = useState(false);
+  const navigate = useNavigate()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications()
+  const [open, setOpen] = useState(false)
 
   function handleNotificationClick(notification) {
-    markAsRead(notification.id);
+    markAsRead(notification.id)
 
     if (notification.metadata?.route) {
-      navigate(notification.metadata.route);
-      setOpen(false);
+      navigate(notification.metadata.route)
+      setOpen(false)
     }
   }
 
@@ -63,14 +63,22 @@ function NotificationCenter() {
                   key={notification.id}
                   className={`notification-center__item notification-center__item--${notification.type}${notification.read ? ' is-read' : ''}`}
                 >
-                  <button type="button" className="notification-center__item-main" onClick={() => handleNotificationClick(notification)}>
+                  <button
+                    type="button"
+                    className="notification-center__item-main"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
                     <div className="notification-center__item-top">
                       <strong>{notification.title}</strong>
                       <span>{formatDateTime(notification.createdAt)}</span>
                     </div>
                     <p>{notification.message}</p>
                   </button>
-                  <button type="button" className="notification-center__dismiss" onClick={() => dismiss(notification.id)}>
+                  <button
+                    type="button"
+                    className="notification-center__dismiss"
+                    onClick={() => dismiss(notification.id)}
+                  >
                     Fechar
                   </button>
                 </article>
@@ -80,8 +88,7 @@ function NotificationCenter() {
         </div>
       ) : null}
     </div>
-  );
+  )
 }
 
-export default NotificationCenter;
-
+export default NotificationCenter

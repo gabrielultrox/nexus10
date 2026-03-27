@@ -109,7 +109,9 @@ describe('Error Handler', () => {
   })
 
   it('returns user-friendly messages', () => {
-    expect(ErrorHandler.getUserMessage(new ValidationError('Campo invalido'))).toContain('dados informados')
+    expect(ErrorHandler.getUserMessage(new ValidationError('Campo invalido'))).toContain(
+      'dados informados',
+    )
     expect(ErrorHandler.getUserMessage(new NetworkError())).toContain('Sem conexao')
   })
 

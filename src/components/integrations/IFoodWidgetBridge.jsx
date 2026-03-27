@@ -1,47 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 
-import SurfaceCard from '../common/SurfaceCard';
-import { loadIfoodWidgetScript } from '../../services/ifoodWidget';
+import SurfaceCard from '../common/SurfaceCard'
+import { loadIfoodWidgetScript } from '../../services/ifoodWidget'
 
 function IFoodWidgetBridge({ merchantConfig, externalOrderId }) {
-  const [statusMessage, setStatusMessage] = useState('Widget do iFood aguardando configuracao.');
+  const [statusMessage, setStatusMessage] = useState('Widget do iFood aguardando configuracao.')
 
   useEffect(() => {
-    let active = true;
+    let active = true
 
     async function prepareWidget() {
       if (!merchantConfig?.widgetEnabled || !merchantConfig?.widgetId) {
-        setStatusMessage('Widget oficial indisponivel para esta loja.');
-        return;
+        setStatusMessage('Widget oficial indisponivel para esta loja.')
+        return
       }
 
       try {
-        await loadIfoodWidgetScript();
+        await loadIfoodWidgetScript()
 
         if (!active) {
-          return;
+          return
         }
 
         setStatusMessage(
           externalOrderId
             ? `Widget pronto para o pedido ${externalOrderId}.`
             : 'Widget oficial carregado e pronto para uso.',
-        );
+        )
       } catch (error) {
         if (!active) {
-          return;
+          return
         }
 
-        setStatusMessage(error.message ?? 'Nao foi possivel preparar o widget do iFood.');
+        setStatusMessage(error.message ?? 'Nao foi possivel preparar o widget do iFood.')
       }
     }
 
-    prepareWidget();
+    prepareWidget()
 
     return () => {
-      active = false;
-    };
-  }, [externalOrderId, merchantConfig?.widgetEnabled, merchantConfig?.widgetId]);
+      active = false
+    }
+  }, [externalOrderId, merchantConfig?.widgetEnabled, merchantConfig?.widgetId])
 
   return (
     <SurfaceCard title="Widget oficial iFood">
@@ -55,11 +55,12 @@ function IFoodWidgetBridge({ merchantConfig, externalOrderId }) {
           <strong>{merchantConfig?.widgetId ?? 'Nao configurado'}</strong>
         </div>
         <p className="text-caption">
-          O widget permanece desacoplado do tracking interno e pode ser habilitado por merchant no Firestore.
+          O widget permanece desacoplado do tracking interno e pode ser habilitado por merchant no
+          Firestore.
         </p>
       </div>
     </SurfaceCard>
-  );
+  )
 }
 
-export default IFoodWidgetBridge;
+export default IFoodWidgetBridge

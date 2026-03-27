@@ -56,13 +56,14 @@ export function useSaleMutations({ storeId, tenantId, createdBy = null } = {}) {
 
   const createSaleFromOrderMutation = useMutation({
     mutationKey: ['sales', 'create-from-order', storeId],
-    mutationFn: ({ orderId, values = {} }) => createSaleFromOrder({
-      storeId,
-      tenantId,
-      orderId,
-      values,
-      createdBy,
-    }),
+    mutationFn: ({ orderId, values = {} }) =>
+      createSaleFromOrder({
+        storeId,
+        tenantId,
+        orderId,
+        values,
+        createdBy,
+      }),
     onSuccess: () => {
       invalidateSales()
       toast.success('Venda gerada a partir do pedido.')
@@ -83,7 +84,8 @@ export function useSaleMutations({ storeId, tenantId, createdBy = null } = {}) {
 
   const updateSaleStatusMutation = useMutation({
     mutationKey: ['sales', 'status', storeId],
-    mutationFn: ({ saleId, status, actor = null }) => updateSaleStatus({ storeId, saleId, status, actor }),
+    mutationFn: ({ saleId, status, actor = null }) =>
+      updateSaleStatus({ storeId, saleId, status, actor }),
     onSuccess: (_result, variables) => {
       invalidateSales()
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(storeId, variables.saleId) })

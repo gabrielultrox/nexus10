@@ -50,9 +50,7 @@ function buildOrderPrintModel(order) {
     secondaryCode: order.code || '--',
     status: getOrderDomainStatusLabel(order.domainStatus),
     source:
-      order.origin ||
-      order.sourceLabel ||
-      getChannelLabel(order.sourceChannel ?? order.source),
+      order.origin || order.sourceLabel || getChannelLabel(order.sourceChannel ?? order.source),
     customer: order.customerName || 'Cliente avulso',
     customerPhone: order.customerSnapshot?.phone || 'Sem telefone',
     payment: order.paymentMethodLabel || getPaymentMethodLabel(order.paymentMethod),

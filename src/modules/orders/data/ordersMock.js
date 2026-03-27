@@ -104,4 +104,4 @@ export const ordersMock = [
     status: 'delivered',
     priority: 'normal',
   },
-];
+]

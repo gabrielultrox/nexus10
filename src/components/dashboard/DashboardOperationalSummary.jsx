@@ -1,5 +1,5 @@
-import SurfaceCard from '../common/SurfaceCard';
-import DashboardSectionHeader from './DashboardSectionHeader';
+import SurfaceCard from '../common/SurfaceCard'
+import DashboardSectionHeader from './DashboardSectionHeader'
 
 function DashboardOperationalSummary({ operations }) {
   return (
@@ -75,7 +75,7 @@ function DashboardOperationalSummary({ operations }) {
         </SurfaceCard>
       </div>
     </section>
-  );
+  )
 }
 
-export default DashboardOperationalSummary;
+export default DashboardOperationalSummary

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  createOrderSchema,
-  orderItemSchema,
-} from '../../schemas/order'
+import { createOrderSchema, orderItemSchema } from '../../schemas/order'
 import { ValidationError } from '../../services/errorHandler'
 import { validateOrThrow } from '../../utils/validateData'
 
@@ -24,11 +21,13 @@ describe('Order Schemas', () => {
   })
 
   it('rejects negative quantity', () => {
-    expect(() => orderItemSchema.parse({
-      productId: VALID_PRODUCT_ID,
-      quantity: -1,
-      price: 10,
-    })).toThrow()
+    expect(() =>
+      orderItemSchema.parse({
+        productId: VALID_PRODUCT_ID,
+        quantity: -1,
+        price: 10,
+      }),
+    ).toThrow()
   })
 
   it('validates a complete order payload', () => {
@@ -51,10 +50,16 @@ describe('Order Schemas', () => {
   })
 
   it('throws ValidationError with validateOrThrow for invalid payloads', () => {
-    expect(() => validateOrThrow(createOrderSchema, {
-      customerId: 'invalido',
-      paymentMethod: 'DINHEIRO',
-      items: [],
-    }, { feature: 'orders' })).toThrow(ValidationError)
+    expect(() =>
+      validateOrThrow(
+        createOrderSchema,
+        {
+          customerId: 'invalido',
+          paymentMethod: 'DINHEIRO',
+          items: [],
+        },
+        { feature: 'orders' },
+      ),
+    ).toThrow(ValidationError)
   })
 })

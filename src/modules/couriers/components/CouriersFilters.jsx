@@ -1,15 +1,12 @@
-import Select from '../../../components/ui/Select';
-import {
-  courierShiftOptions,
-  courierStatusOptions,
-} from '../schemas/courierSchema';
+import Select from '../../../components/ui/Select'
+import { courierShiftOptions, courierStatusOptions } from '../schemas/courierSchema'
 
 function CouriersFilters({ filters, onChange }) {
   function updateFilter(field, value) {
     onChange((current) => ({
       ...current,
       [field]: value,
-    }));
+    }))
   }
 
   return (
@@ -73,9 +70,7 @@ function CouriersFilters({ filters, onChange }) {
         <span>Somente fixos</span>
       </label>
     </div>
-  );
+  )
 }
 
-export default CouriersFilters;
-
-
+export default CouriersFilters

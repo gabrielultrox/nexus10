@@ -1,13 +1,13 @@
-import { createAuditRepository } from './auditRepository.js';
+import { createAuditRepository } from './auditRepository.js'
 
-const repository = createAuditRepository();
+const repository = createAuditRepository()
 
 function buildActor(actor) {
   return {
     id: actor?.id ?? actor?.uid ?? null,
     name: actor?.name ?? actor?.operatorName ?? actor?.displayName ?? 'Sistema',
     role: actor?.role ?? 'system',
-  };
+  }
 }
 
 export async function recordAuditEvent({
@@ -21,7 +21,7 @@ export async function recordAuditEvent({
   metadata = null,
 }) {
   if (!storeId || !action || !entityType || !entityId || !description) {
-    return null;
+    return null
   }
 
   return repository.createAuditLog({
@@ -37,5 +37,5 @@ export async function recordAuditEvent({
       metadata,
       createdAt: new Date(),
     },
-  });
+  })
 }

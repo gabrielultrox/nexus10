@@ -1,11 +1,6 @@
-import EmptyState from '../../../components/ui/EmptyState';
+import EmptyState from '../../../components/ui/EmptyState'
 
-function ReportStatList({
-  title,
-  items,
-  valueFormatter,
-  metaFormatter,
-}) {
+function ReportStatList({ title, items, valueFormatter, metaFormatter }) {
   return (
     <section className="report-list surface-card">
       <div className="surface-card__content">
@@ -24,7 +19,9 @@ function ReportStatList({
                 <div className="report-list__body">
                   <div className="report-list__top">
                     <strong>{item.label}</strong>
-                    <span>{valueFormatter?.(item) ?? item.value ?? item.total ?? item.quantity ?? 0}</span>
+                    <span>
+                      {valueFormatter?.(item) ?? item.value ?? item.total ?? item.quantity ?? 0}
+                    </span>
                   </div>
                   {metaFormatter ? <small>{metaFormatter(item)}</small> : null}
                 </div>
@@ -34,8 +31,7 @@ function ReportStatList({
         )}
       </div>
     </section>
-  );
+  )
 }
 
-export default ReportStatList;
-
+export default ReportStatList

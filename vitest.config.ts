@@ -19,10 +19,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: [
-      'src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-      'backend/**/*.{test,spec}.{js,ts}',
-    ],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'backend/**/*.{test,spec}.{js,ts}'],
     setupFiles: ['./src/__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
@@ -32,13 +29,7 @@ export default defineConfig({
         'src/schemas/order.ts',
       ],
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-        'coverage/',
-        'src/__tests__/',
-        'legacy/',
-      ],
+      exclude: ['node_modules/', 'dist/', 'coverage/', 'src/__tests__/', 'legacy/'],
       thresholds: {
         lines: 70,
         functions: 70,

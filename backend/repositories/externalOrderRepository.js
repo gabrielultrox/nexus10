@@ -1,4 +1,4 @@
-import { getAdminFirestore } from '../firebaseAdmin.js';
+import { getAdminFirestore } from '../firebaseAdmin.js'
 
 const COLLECTIONS = {
   stores: 'stores',
@@ -6,20 +6,19 @@ const COLLECTIONS = {
   externalOrderEvents: 'external_order_events',
   externalOrderTracking: 'external_order_tracking',
   integrationLogs: 'integration_logs',
-};
+}
 
 function getScopedCollection(storeId, collectionName) {
-  return getAdminFirestore()
-    .collection(COLLECTIONS.stores)
-    .doc(storeId)
-    .collection(collectionName);
+  return getAdminFirestore().collection(COLLECTIONS.stores).doc(storeId).collection(collectionName)
 }
 
 export function createBackendExternalOrderRepository() {
   return {
     async hasProcessedEvent(storeId, eventId) {
-      const snapshot = await getScopedCollection(storeId, COLLECTIONS.externalOrderEvents).doc(eventId).get();
-      return snapshot.exists;
+      const snapshot = await getScopedCollection(storeId, COLLECTIONS.externalOrderEvents)
+        .doc(eventId)
+        .get()
+      return snapshot.exists
     },
 
     async upsertOrder({ storeId, tenantId, order }) {
@@ -33,7 +32,7 @@ export function createBackendExternalOrderRepository() {
             firestoreUpdatedAt: new Date().toISOString(),
           },
           { merge: true },
-        );
+        )
     },
 
     async upsertEvent({ storeId, tenantId, event }) {
@@ -47,7 +46,7 @@ export function createBackendExternalOrderRepository() {
             firestoreUpdatedAt: new Date().toISOString(),
           },
           { merge: true },
-        );
+        )
     },
 
     async upsertTracking({ storeId, tenantId, trackingEntry }) {
@@ -61,11 +60,13 @@ export function createBackendExternalOrderRepository() {
             firestoreUpdatedAt: new Date().toISOString(),
           },
           { merge: true },
-        );
+        )
     },
 
     async appendLog({ storeId, tenantId, log }) {
-      const logId = log.id ?? `${log.source ?? 'integration'}:${Date.now()}:${Math.random().toString(16).slice(2, 8)}`;
+      const logId =
+        log.id ??
+        `${log.source ?? 'integration'}:${Date.now()}:${Math.random().toString(16).slice(2, 8)}`
 
       await getScopedCollection(storeId, COLLECTIONS.integrationLogs)
         .doc(logId)
@@ -78,7 +79,7 @@ export function createBackendExternalOrderRepository() {
             createdAt: log.createdAt ?? new Date().toISOString(),
           },
           { merge: true },
-        );
+        )
     },
-  };
+  }
 }

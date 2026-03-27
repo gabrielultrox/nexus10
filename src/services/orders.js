@@ -7,13 +7,23 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-} from 'firebase/firestore';
+} from 'firebase/firestore'
 
-import { requestBackend } from './backendApi';
-import { assertFirebaseReady, canUseRemoteSync, createRemoteSyncError, firebaseDb, guardRemoteSubscription } from './firebase';
-import { subscribeToExternalOrders } from './externalOrders';
-import { buildStoreQueryCacheKey, getPaginatedStoreCollectionDocuments, invalidateQueryCache } from './firestore';
-import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
+import { requestBackend } from './backendApi'
+import {
+  assertFirebaseReady,
+  canUseRemoteSync,
+  createRemoteSyncError,
+  firebaseDb,
+  guardRemoteSubscription,
+} from './firebase'
+import { subscribeToExternalOrders } from './externalOrders'
+import {
+  buildStoreQueryCacheKey,
+  getPaginatedStoreCollectionDocuments,
+  invalidateQueryCache,
+} from './firestore'
+import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
 import {
   formatCurrencyBRL,
   getChannelLabel,
@@ -24,26 +34,28 @@ import {
   normalizeOrderDomainStatus,
   normalizeOrderSaleStatus,
   normalizePaymentMethod,
-} from './commerce';
+} from './commerce'
 
-const orderStatusSequence = ['received', 'preparing', 'out_for_delivery', 'delivered'];
+const orderStatusSequence = ['received', 'preparing', 'out_for_delivery', 'delivered']
 
 function parseDomainMoney(value, fieldLabel) {
-  const normalized = String(value ?? 0).replace(/\s+/g, '').replace(',', '.');
-  const parsed = Number(normalized);
+  const normalized = String(value ?? 0)
+    .replace(/\s+/g, '')
+    .replace(',', '.')
+  const parsed = Number(normalized)
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error(`${fieldLabel} invalido.`);
+    throw new Error(`${fieldLabel} invalido.`)
   }
 
-  return Number(parsed.toFixed(2));
+  return Number(parsed.toFixed(2))
 }
 
 function normalizeProductSnapshot(item, index) {
-  const productName = item?.productSnapshot?.name?.trim() || item?.name?.trim();
+  const productName = item?.productSnapshot?.name?.trim() || item?.name?.trim()
 
   if (!productName) {
-    throw new Error(`Item ${index + 1} sem nome.`);
+    throw new Error(`Item ${index + 1} sem nome.`)
   }
 
   return {
@@ -51,25 +63,25 @@ function normalizeProductSnapshot(item, index) {
     name: productName,
     category: item?.productSnapshot?.category ?? '',
     sku: item?.productSnapshot?.sku ?? '',
-  };
+  }
 }
 
 function normalizeItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error('O pedido precisa ter ao menos um item.');
+    throw new Error('O pedido precisa ter ao menos um item.')
   }
 
   return items.map((item, index) => {
-    const quantity = Number(item?.quantity ?? 0);
-    const unitPrice = Number(item?.unitPrice ?? 0);
-    const productSnapshot = normalizeProductSnapshot(item, index);
+    const quantity = Number(item?.quantity ?? 0)
+    const unitPrice = Number(item?.unitPrice ?? 0)
+    const productSnapshot = normalizeProductSnapshot(item, index)
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw new Error(`Quantidade invalida no item ${index + 1}.`);
+      throw new Error(`Quantidade invalida no item ${index + 1}.`)
     }
 
     if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-      throw new Error(`Preco invalido no item ${index + 1}.`);
+      throw new Error(`Preco invalido no item ${index + 1}.`)
     }
 
     return {
@@ -78,42 +90,45 @@ function normalizeItems(items) {
       quantity,
       unitPrice: Number(unitPrice.toFixed(2)),
       totalPrice: Number((quantity * unitPrice).toFixed(2)),
-    };
-  });
+    }
+  })
 }
 
 function normalizeTotals(items, values) {
   const subtotalFromItems = Number(
     items.reduce((total, item) => total + Number(item.totalPrice ?? 0), 0).toFixed(2),
-  );
-  const totals = values?.totals ?? {};
-  const freight = parseDomainMoney(totals.freight ?? values.freight ?? values.shipping ?? 0, 'Frete');
-  const extraAmount = parseDomainMoney(totals.extraAmount ?? values.extraAmount ?? 0, 'Adicional');
+  )
+  const totals = values?.totals ?? {}
+  const freight = parseDomainMoney(
+    totals.freight ?? values.freight ?? values.shipping ?? 0,
+    'Frete',
+  )
+  const extraAmount = parseDomainMoney(totals.extraAmount ?? values.extraAmount ?? 0, 'Adicional')
   const discountPercent = parseDomainMoney(
     totals.discountPercent ?? values.discountPercent ?? 0,
     'Desconto percentual',
-  );
+  )
   const discountValue = parseDomainMoney(
     totals.discountValue ?? values.discountValue ?? values.discount ?? 0,
     'Desconto',
-  );
-  const informedSubtotal = totals.subtotal != null
-    ? parseDomainMoney(totals.subtotal, 'Subtotal')
-    : subtotalFromItems;
+  )
+  const informedSubtotal =
+    totals.subtotal != null ? parseDomainMoney(totals.subtotal, 'Subtotal') : subtotalFromItems
 
   if (Math.abs(informedSubtotal - subtotalFromItems) > 0.01) {
-    throw new Error('Subtotal inconsistente com os itens informados.');
+    throw new Error('Subtotal inconsistente com os itens informados.')
   }
 
   const expectedTotal = Number(
     (informedSubtotal + extraAmount + freight - discountValue).toFixed(2),
-  );
-  const informedTotal = totals.total != null
-    ? parseDomainMoney(totals.total, 'Total')
-    : parseDomainMoney(values.total ?? expectedTotal, 'Total');
+  )
+  const informedTotal =
+    totals.total != null
+      ? parseDomainMoney(totals.total, 'Total')
+      : parseDomainMoney(values.total ?? expectedTotal, 'Total')
 
   if (Math.abs(informedTotal - expectedTotal) > 0.01) {
-    throw new Error('Total inconsistente com subtotal, frete, adicional e desconto.');
+    throw new Error('Total inconsistente com subtotal, frete, adicional e desconto.')
   }
 
   return {
@@ -123,63 +138,63 @@ function normalizeTotals(items, values) {
     discountPercent,
     discountValue,
     total: informedTotal,
-  };
+  }
 }
 
 function normalizeCustomerSnapshot(values) {
-  const source = values.customerSnapshot ?? {};
-  const name = source.name?.trim() || values.customerName?.trim() || 'Cliente avulso';
+  const source = values.customerSnapshot ?? {}
+  const name = source.name?.trim() || values.customerName?.trim() || 'Cliente avulso'
 
   return {
     id: source.id ?? values.customerId ?? null,
     name,
     phone: source.phone ?? values.customerPhone ?? '',
     neighborhood: source.neighborhood ?? values.neighborhood ?? '',
-  };
+  }
 }
 
 function normalizeAddress(values) {
-  const source = values.address ?? {};
+  const source = values.address ?? {}
 
   return {
     neighborhood: source.neighborhood ?? values.neighborhood ?? '',
     addressLine: source.addressLine ?? values.addressLine ?? '',
     reference: source.reference ?? values.reference ?? '',
     complement: source.complement ?? values.complement ?? '',
-  };
+  }
 }
 
 function asDate(value) {
   if (!value) {
-    return null;
+    return null
   }
 
-  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
 }
 
 function parseMoney(value) {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const parsed = Number(value ?? 0)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function formatTime(value) {
-  const dateValue = asDate(value);
+  const dateValue = asDate(value)
 
   if (!dateValue) {
-    return '--:--';
+    return '--:--'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
-  }).format(dateValue);
+  }).format(dateValue)
 }
 
 function formatDateTime(value) {
-  const dateValue = asDate(value);
+  const dateValue = asDate(value)
 
   if (!dateValue) {
-    return 'Sem data';
+    return 'Sem data'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -187,92 +202,99 @@ function formatDateTime(value) {
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(dateValue);
+  }).format(dateValue)
 }
 
 function formatWaitTime(value) {
-  const dateValue = asDate(value);
+  const dateValue = asDate(value)
 
   if (!dateValue) {
-    return '--';
+    return '--'
   }
 
-  const diffMinutes = Math.max(0, Math.round((Date.now() - dateValue.getTime()) / 60000));
+  const diffMinutes = Math.max(0, Math.round((Date.now() - dateValue.getTime()) / 60000))
 
   if (diffMinutes < 60) {
-    return `${diffMinutes} min`;
+    return `${diffMinutes} min`
   }
 
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
-  return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  const hours = Math.floor(diffMinutes / 60)
+  const minutes = diffMinutes % 60
+  return `${hours}h ${String(minutes).padStart(2, '0')}m`
 }
 
 function normalizePriority(rawOrder, createdAt) {
-  const rawPriority = String(rawOrder.priority ?? '').trim().toLowerCase();
+  const rawPriority = String(rawOrder.priority ?? '')
+    .trim()
+    .toLowerCase()
 
   if (rawPriority === 'high' || rawPriority === 'urgent') {
-    return 'high';
+    return 'high'
   }
 
   if (!createdAt) {
-    return 'normal';
+    return 'normal'
   }
 
-  return (Date.now() - createdAt.getTime()) / 60000 >= 35 ? 'high' : 'normal';
+  return (Date.now() - createdAt.getTime()) / 60000 >= 35 ? 'high' : 'normal'
 }
 
 function buildItemsSummary(items) {
   if (!Array.isArray(items) || items.length === 0) {
-    return 'Itens nao informados';
+    return 'Itens nao informados'
   }
 
   const summary = items
     .slice(0, 3)
     .map((item) => {
-      const quantity = Number(item?.quantity ?? 0);
-      const name = item?.productSnapshot?.name?.trim() || item?.name?.trim() || 'Item';
-      return quantity > 0 ? `${quantity}x ${name}` : name;
+      const quantity = Number(item?.quantity ?? 0)
+      const name = item?.productSnapshot?.name?.trim() || item?.name?.trim() || 'Item'
+      return quantity > 0 ? `${quantity}x ${name}` : name
     })
-    .join(' | ');
+    .join(' | ')
 
-  return items.length > 3 ? `${summary} +${items.length - 3}` : summary;
+  return items.length > 3 ? `${summary} +${items.length - 3}` : summary
 }
 
 function mergeOrdersBySource(internalOrders, externalOrders) {
   return [...internalOrders, ...externalOrders].sort((left, right) => {
-    const leftDate = left.updatedAt?.getTime?.() ?? left.createdAt?.getTime?.() ?? 0;
-    const rightDate = right.updatedAt?.getTime?.() ?? right.createdAt?.getTime?.() ?? 0;
-    return rightDate - leftDate;
-  });
+    const leftDate = left.updatedAt?.getTime?.() ?? left.createdAt?.getTime?.() ?? 0
+    const rightDate = right.updatedAt?.getTime?.() ?? right.createdAt?.getTime?.() ?? 0
+    return rightDate - leftDate
+  })
 }
 
 function getOrdersCollectionRef(storeId) {
-  assertFirebaseReady();
-  return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders);
+  assertFirebaseReady()
+  return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders)
 }
 
 function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
-  const createdAt = asDate(data.createdAt);
-  const updatedAt = asDate(data.updatedAt) ?? createdAt;
-  const domainStatus = normalizeOrderDomainStatus(data.status);
-  const status = mapOrderDomainStatusToLegacyBoardStatus(domainStatus);
-  const saleStatus = normalizeOrderSaleStatus(data.saleStatus, data.saleId ? 'LAUNCHED' : 'NOT_LAUNCHED');
-  const channel = normalizeChannel(data.source ?? data.origin, isExternal ? 'IFOOD' : null);
+  const createdAt = asDate(data.createdAt)
+  const updatedAt = asDate(data.updatedAt) ?? createdAt
+  const domainStatus = normalizeOrderDomainStatus(data.status)
+  const status = mapOrderDomainStatusToLegacyBoardStatus(domainStatus)
+  const saleStatus = normalizeOrderSaleStatus(
+    data.saleStatus,
+    data.saleId ? 'LAUNCHED' : 'NOT_LAUNCHED',
+  )
+  const channel = normalizeChannel(data.source ?? data.origin, isExternal ? 'IFOOD' : null)
   const paymentMethod = normalizePaymentMethod(
     data.paymentPreview?.method ?? data.paymentMethod ?? data.payment?.method,
     null,
-  );
-  const totalAmount = parseMoney(data.totals?.total ?? data.total);
-  const customerName = data.customerSnapshot?.name?.trim() || data.customerName?.trim() || 'Cliente';
-  const neighborhood = data.address?.neighborhood?.trim()
-    || data.customerSnapshot?.neighborhood?.trim()
-    || data.neighborhood?.trim()
-    || 'Bairro nao informado';
-  const courierName = data.courierSnapshot?.name?.trim()
-    || data.courierName?.trim()
-    || data.assignedCourierName?.trim()
-    || 'Nao atribuido';
+  )
+  const totalAmount = parseMoney(data.totals?.total ?? data.total)
+  const customerName = data.customerSnapshot?.name?.trim() || data.customerName?.trim() || 'Cliente'
+  const neighborhood =
+    data.address?.neighborhood?.trim() ||
+    data.customerSnapshot?.neighborhood?.trim() ||
+    data.neighborhood?.trim() ||
+    'Bairro nao informado'
+  const courierName =
+    data.courierSnapshot?.name?.trim() ||
+    data.courierName?.trim() ||
+    data.assignedCourierName?.trim() ||
+    'Nao atribuido'
 
   return {
     id,
@@ -281,7 +303,7 @@ function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
     domainStatus,
     saleStatus,
     sourceChannel: channel,
-    source: channel ? getChannelLabel(channel) : (isExternal ? 'iFood' : 'Nao informado'),
+    source: channel ? getChannelLabel(channel) : isExternal ? 'iFood' : 'Nao informado',
     origin: channel ? getChannelLabel(channel) : (data.origin ?? 'Nao informado'),
     paymentMethod,
     paymentMethodLabel: paymentMethod ? getPaymentMethodLabel(paymentMethod) : 'Nao informado',
@@ -305,117 +327,128 @@ function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
     externalStatus: data.externalStatus ?? null,
     normalizedStatus: status,
     syncErrorMessage: data.sync?.lastSyncError ?? null,
-  };
+  }
 }
 
 function normalizeOrder(documentSnapshot) {
-  return normalizeOrderRecord(documentSnapshot.id, documentSnapshot.data());
+  return normalizeOrderRecord(documentSnapshot.id, documentSnapshot.data())
 }
 
 function normalizeExternalOrder(order) {
-  const channel = normalizeChannel(order.source ?? 'IFOOD', 'IFOOD');
-  const paymentMethod = normalizePaymentMethod(order.paymentMethod, null);
+  const channel = normalizeChannel(order.source ?? 'IFOOD', 'IFOOD')
+  const paymentMethod = normalizePaymentMethod(order.paymentMethod, null)
 
-  return normalizeOrderRecord(order.id, {
-    ...order,
-    source: channel,
-    paymentMethod,
-    customerSnapshot: {
-      id: order.customer?.id ?? null,
-      name: order.customer?.name ?? 'Cliente iFood',
-      neighborhood: order.customer?.address?.neighborhood ?? '',
-      phone: order.customer?.phone ?? '',
+  return normalizeOrderRecord(
+    order.id,
+    {
+      ...order,
+      source: channel,
+      paymentMethod,
+      customerSnapshot: {
+        id: order.customer?.id ?? null,
+        name: order.customer?.name ?? 'Cliente iFood',
+        neighborhood: order.customer?.address?.neighborhood ?? '',
+        phone: order.customer?.phone ?? '',
+      },
+      address: {
+        neighborhood: order.customer?.address?.neighborhood ?? '',
+        addressLine: order.customer?.address?.streetName ?? '',
+        reference: order.customer?.address?.reference ?? '',
+        complement: order.customer?.address?.complement ?? '',
+      },
+      totals: {
+        subtotal: parseMoney(order.subtotal),
+        freight: parseMoney(order.shipping),
+        extraAmount: 0,
+        discountPercent: 0,
+        discountValue: parseMoney(order.discount),
+        total: parseMoney(order.total),
+      },
     },
-    address: {
-      neighborhood: order.customer?.address?.neighborhood ?? '',
-      addressLine: order.customer?.address?.streetName ?? '',
-      reference: order.customer?.address?.reference ?? '',
-      complement: order.customer?.address?.complement ?? '',
-    },
-    totals: {
-      subtotal: parseMoney(order.subtotal),
-      freight: parseMoney(order.shipping),
-      extraAmount: 0,
-      discountPercent: 0,
-      discountValue: parseMoney(order.discount),
-      total: parseMoney(order.total),
-    },
-  }, { isExternal: true });
+    { isExternal: true },
+  )
 }
 
 export function subscribeToOrders(storeId, onData, onError) {
   if (!storeId || !canUseRemoteSync()) {
-    onData([]);
-    return () => {};
+    onData([])
+    return () => {}
   }
 
-  const ordersQuery = query(getOrdersCollectionRef(storeId), orderBy('createdAt', 'desc'));
-  let internalOrders = [];
-  let externalOrders = [];
+  const ordersQuery = query(getOrdersCollectionRef(storeId), orderBy('createdAt', 'desc'))
+  let internalOrders = []
+  let externalOrders = []
 
   function emitMergedOrders() {
-    onData(mergeOrdersBySource(internalOrders, externalOrders));
+    onData(mergeOrdersBySource(internalOrders, externalOrders))
   }
 
   const unsubscribeInternal = guardRemoteSubscription(
-    () => onSnapshot(
-      ordersQuery,
-      (snapshot) => {
-        internalOrders = snapshot.docs.map(normalizeOrder);
-        emitMergedOrders();
-      },
-      onError,
-    ),
+    () =>
+      onSnapshot(
+        ordersQuery,
+        (snapshot) => {
+          internalOrders = snapshot.docs.map(normalizeOrder)
+          emitMergedOrders()
+        },
+        onError,
+      ),
     {
       onFallback() {
-        internalOrders = [];
-        externalOrders = [];
-        emitMergedOrders();
+        internalOrders = []
+        externalOrders = []
+        emitMergedOrders()
       },
       onError,
     },
-  );
+  )
 
   const unsubscribeExternal = subscribeToExternalOrders(
     storeId,
     (orders) => {
-      externalOrders = orders.map(normalizeExternalOrder);
-      emitMergedOrders();
+      externalOrders = orders.map(normalizeExternalOrder)
+      emitMergedOrders()
     },
     onError,
-  );
+  )
 
   return () => {
-    unsubscribeInternal?.();
-    unsubscribeExternal?.();
-  };
+    unsubscribeInternal?.()
+    unsubscribeExternal?.()
+  }
 }
 
 export function getNextOrderStatus(currentStatus) {
-  const currentIndex = orderStatusSequence.indexOf(currentStatus);
+  const currentIndex = orderStatusSequence.indexOf(currentStatus)
 
   if (currentIndex === -1 || currentIndex === orderStatusSequence.length - 1) {
-    return null;
+    return null
   }
 
-  return orderStatusSequence[currentIndex + 1];
+  return orderStatusSequence[currentIndex + 1]
 }
 
 export async function getOrderById({ storeId, orderId }) {
   if (!canUseRemoteSync()) {
-    throw createRemoteSyncError();
+    throw createRemoteSyncError()
   }
 
-  assertFirebaseReady();
+  assertFirebaseReady()
 
-  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
-  const snapshot = await getDoc(orderRef);
+  const orderRef = doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.orders,
+    orderId,
+  )
+  const snapshot = await getDoc(orderRef)
 
   if (!snapshot.exists()) {
-    return null;
+    return null
   }
 
-  return normalizeOrder(snapshot);
+  return normalizeOrder(snapshot)
 }
 
 export async function createOrder({ storeId, tenantId, values, createdBy = null }) {
@@ -426,10 +459,10 @@ export async function createOrder({ storeId, tenantId, values, createdBy = null 
       values,
       createdBy,
     },
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
-  return data.id;
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
+  return data.id
 }
 
 export async function updateOrder({ storeId, orderId, values }) {
@@ -438,18 +471,18 @@ export async function updateOrder({ storeId, orderId, values }) {
     body: {
       values,
     },
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
-  return data.id;
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
+  return data.id
 }
 
 export async function markOrderAsDispatched({ storeId, orderId }) {
   await requestBackend(`/stores/${storeId}/orders/${orderId}/dispatch`, {
     method: 'POST',
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
 }
 
 export async function convertOrderToSale({
@@ -466,23 +499,19 @@ export async function convertOrderToSale({
       values,
       createdBy,
     },
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
-  return data.saleId;
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
+  return data.saleId
 }
 
-export async function listOrdersPage({
-  storeId,
-  pageSize = 50,
-  cursor = null,
-} = {}) {
+export async function listOrdersPage({ storeId, pageSize = 50, cursor = null } = {}) {
   if (!storeId || !canUseRemoteSync()) {
     return {
       items: [],
       nextCursor: null,
       hasMore: false,
-    };
+    }
   }
 
   return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.orders, {
@@ -491,38 +520,51 @@ export async function listOrdersPage({
     pageSize,
     cursor,
     cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders, 'page-by-createdAt'),
-  });
+  })
 }
 
 export async function deleteOrder({ storeId, orderId }) {
   const data = await requestBackend(`/stores/${storeId}/orders/${orderId}`, {
     method: 'DELETE',
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
-  return data.id;
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
+  return data.id
 }
 
 export async function updateOrderStatus({ storeId, orderId, status }) {
-  const allowedStatuses = new Set([...orderStatusSequence, 'cancelled', 'OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']);
+  const allowedStatuses = new Set([
+    ...orderStatusSequence,
+    'cancelled',
+    'OPEN',
+    'DISPATCHED',
+    'CONVERTED_TO_SALE',
+    'CANCELLED',
+  ])
 
   if (!allowedStatuses.has(status)) {
-    throw new Error('Status de pedido invalido.');
+    throw new Error('Status de pedido invalido.')
   }
 
   if (!canUseRemoteSync()) {
-    throw createRemoteSyncError();
+    throw createRemoteSyncError()
   }
 
-  assertFirebaseReady();
-  const orderRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders, orderId);
+  assertFirebaseReady()
+  const orderRef = doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.orders,
+    orderId,
+  )
 
   await updateDoc(orderRef, {
     status,
     updatedAt: serverTimestamp(),
-  });
+  })
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders))
 }
 
 export function validateOrderInput(values) {

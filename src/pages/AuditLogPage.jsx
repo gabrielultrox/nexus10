@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import AuditLogModule from '../modules/audit/components/AuditLogModule';
+import PageIntro from '../components/common/PageIntro'
+import AuditLogModule from '../modules/audit/components/AuditLogModule'
 
 function AuditLogPage() {
   return (
@@ -12,7 +12,7 @@ function AuditLogPage() {
 
       <AuditLogModule />
     </div>
-  );
+  )
 }
 
-export default AuditLogPage;
+export default AuditLogPage

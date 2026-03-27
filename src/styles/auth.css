@@ -20,7 +20,9 @@
   background:
     linear-gradient(var(--surface-grid-line-strong) 1px, transparent 1px),
     linear-gradient(90deg, var(--surface-grid-line-strong) 1px, transparent 1px);
-  background-size: 100% 34px, 34px 100%;
+  background-size:
+    100% 34px,
+    34px 100%;
   opacity: 0.42;
 }
 
@@ -94,15 +96,27 @@
 
 .auth-sequence__backdrop::before {
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--color-accent-cyan) 18%, transparent), transparent 34%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-red) 18%, transparent), transparent 32%);
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--color-accent-cyan) 18%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--color-accent-red) 18%, transparent),
+      transparent 32%
+    );
   opacity: 0.9;
 }
 
 .auth-sequence__backdrop::after {
   background:
     linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-bg-page) 22%, transparent)),
-    repeating-linear-gradient(90deg, transparent 0 62px, color-mix(in srgb, var(--surface-grid-line-strong) 35%, transparent) 62px 63px);
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 62px,
+      color-mix(in srgb, var(--surface-grid-line-strong) 35%, transparent) 62px 63px
+    );
   opacity: 0.55;
 }
 
@@ -146,7 +160,11 @@
   border: 1px solid var(--color-border-default);
   border-radius: 30px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 80%, transparent), transparent 18%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 80%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 88%, transparent);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(22px);
@@ -161,7 +179,13 @@
   inset: 0 auto auto 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-accent-red), var(--color-accent-cyan), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent-red),
+    var(--color-accent-cyan),
+    transparent
+  );
 }
 
 .auth-boot__frame {
@@ -245,8 +269,16 @@
   padding: var(--space-6);
   border-radius: 28px;
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-cyan) 12%, transparent), transparent 45%),
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-red) 12%, transparent), transparent 58%);
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-cyan) 12%, transparent),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-red) 12%, transparent),
+      transparent 58%
+    );
   border: 1px solid var(--color-border-subtle);
 }
 
@@ -268,8 +300,16 @@
 .auth-boot__halo {
   inset: -12%;
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-red) 18%, transparent), transparent 42%),
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-cyan) 14%, transparent), transparent 58%);
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-red) 18%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent-cyan) 14%, transparent),
+      transparent 58%
+    );
   filter: blur(8px);
   animation: auth-core-breathe 4.8s ease-in-out infinite;
 }
@@ -307,7 +347,12 @@
 .auth-boot__scanline {
   inset: 16%;
   border: 1px solid transparent;
-  background: linear-gradient(180deg, transparent 42%, color-mix(in srgb, var(--color-accent-cyan) 40%, transparent) 50%, transparent 58%);
+  background: linear-gradient(
+    180deg,
+    transparent 42%,
+    color-mix(in srgb, var(--color-accent-cyan) 40%, transparent) 50%,
+    transparent 58%
+  );
   opacity: 0.6;
   mix-blend-mode: screen;
   animation: auth-scanline 3.2s ease-in-out infinite;
@@ -430,9 +475,21 @@
   align-items: center;
   padding: clamp(24px, 4vw, 48px);
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 34%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-red) 10%, transparent), transparent 32%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 72%, transparent), transparent 22%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--color-accent-red) 10%, transparent),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 72%, transparent),
+      transparent 22%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 92%, transparent);
 }
 
@@ -462,7 +519,11 @@
   height: 62px;
   border-radius: 18px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 75%, transparent), transparent 34%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 75%, transparent),
+      transparent 34%
+    ),
     color-mix(in srgb, var(--surface-panel) 88%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent-red) 18%, transparent);
   box-shadow: 0 16px 30px color-mix(in srgb, var(--color-accent-red) 10%, transparent);
@@ -517,7 +578,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-red) 18%, transparent);
   border-radius: 22px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-status-danger-bg) 72%, transparent), transparent),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-status-danger-bg) 72%, transparent),
+      transparent
+    ),
     color-mix(in srgb, var(--color-bg-card-alt) 86%, transparent);
 }
 
@@ -547,7 +612,11 @@
   overflow: hidden;
   padding: clamp(18px, 3vw, 28px);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 78%, transparent), transparent 22%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 78%, transparent),
+      transparent 22%
+    ),
     color-mix(in srgb, var(--color-bg-card-alt) 94%, transparent);
   box-shadow:
     0 24px 50px color-mix(in srgb, var(--color-accent-cyan) 8%, transparent),
@@ -559,8 +628,16 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 34%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-accent-red) 10%, transparent), transparent 34%);
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--color-accent-red) 10%, transparent),
+      transparent 34%
+    );
   pointer-events: none;
 }
 
@@ -615,7 +692,11 @@
 }
 
 .auth-pin__dot--filled {
-  background: linear-gradient(135deg, var(--color-accent-red), color-mix(in srgb, var(--color-accent-red) 55%, white));
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-red),
+    color-mix(in srgb, var(--color-accent-red) 55%, white)
+  );
   box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent-red) 22%, transparent);
   transform: scaleY(1.1) translateY(-1px);
   opacity: 1;
@@ -634,7 +715,11 @@
   border: 1px solid var(--color-border-default);
   border-radius: 20px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 75%, transparent), transparent 30%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 75%, transparent),
+      transparent 30%
+    ),
     color-mix(in srgb, var(--surface-panel) 92%, transparent);
   color: var(--color-text-primary);
   font-family: var(--font-display);
@@ -665,7 +750,9 @@
 }
 
 .auth-pin--unlocked .auth-pin__panel {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-green) 25%, transparent), 0 0 34px color-mix(in srgb, var(--color-accent-green) 20%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent-green) 25%, transparent),
+    0 0 34px color-mix(in srgb, var(--color-accent-green) 20%, transparent);
 }
 
 .auth-pin--unlocked .auth-pin__signal-mark {
@@ -720,8 +807,7 @@
   gap: var(--space-6);
   padding: 36px;
   background:
-    linear-gradient(180deg, var(--surface-card-gloss), transparent 24%),
-    var(--gradient-card);
+    linear-gradient(180deg, var(--surface-card-gloss), transparent 24%), var(--gradient-card);
   border: 1px solid var(--color-border-strong);
   border-radius: 28px;
   box-shadow: var(--shadow-lg);
@@ -739,7 +825,13 @@
   inset: 0 auto auto 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-accent-red), var(--color-accent-cyan), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent-red),
+    var(--color-accent-cyan),
+    transparent
+  );
 }
 
 .auth-card__hero,

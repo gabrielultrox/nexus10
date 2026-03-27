@@ -1,11 +1,11 @@
-import { formatCurrencyBRL } from './commerce';
+import { formatCurrencyBRL } from './commerce'
 
 const CASH_RECEIPT_META = {
   brand: 'DELIVERY HORA DEZ',
   phone: '(37) 9953-8008',
   document: '24.858.962/0002-25',
   cityLine: 'Divinopolis, MG',
-};
+}
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -13,14 +13,14 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
 }
 
 function formatPrintableDate(value) {
-  const normalized = new Date(value);
+  const normalized = new Date(value)
 
   if (Number.isNaN(normalized.getTime())) {
-    return '--';
+    return '--'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -29,23 +29,23 @@ function formatPrintableDate(value) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(normalized);
+  }).format(normalized)
 }
 
 function buildReceiptText(entry) {
-  const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0);
-  const courierLine = entry.courierName?.trim() ? ` Entregador: ${entry.courierName.trim()}.` : '';
-  const observation = entry.note?.trim() ? ` Observacao: ${entry.note.trim()}.` : '';
+  const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0)
+  const courierLine = entry.courierName?.trim() ? ` Entregador: ${entry.courierName.trim()}.` : ''
+  const observation = entry.note?.trim() ? ` Observacao: ${entry.note.trim()}.` : ''
 
-  return `Recebi de ${CASH_RECEIPT_META.brand} a importancia de ${amountLabel}, referente a ${entry.kindLabel?.toLowerCase()}.${courierLine} Operador responsavel: ${entry.operatorName}.${observation}`;
+  return `Recebi de ${CASH_RECEIPT_META.brand} a importancia de ${amountLabel}, referente a ${entry.kindLabel?.toLowerCase()}.${courierLine} Operador responsavel: ${entry.operatorName}.${observation}`
 }
 
 function buildPrintHtml(entry) {
-  const createdAt = formatPrintableDate(entry.createdAtClient);
-  const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0);
-  const note = entry.note?.trim() || 'Sem observacao';
-  const operatorName = entry.operatorName || 'Operador local';
-  const courierName = entry.courierName?.trim() || '';
+  const createdAt = formatPrintableDate(entry.createdAtClient)
+  const amountLabel = entry.amountLabel || formatCurrencyBRL(entry.amount ?? 0)
+  const note = entry.note?.trim() || 'Sem observacao'
+  const operatorName = entry.operatorName || 'Operador local'
+  const courierName = entry.courierName?.trim() || ''
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -270,11 +270,15 @@ function buildPrintHtml(entry) {
             <span class="receipt__label">Operador</span>
             <span class="receipt__data">${escapeHtml(operatorName)}</span>
           </div>
-          ${courierName ? `
+          ${
+            courierName
+              ? `
           <div class="receipt__row">
             <span class="receipt__label">Entregador</span>
             <span class="receipt__data">${escapeHtml(courierName)}</span>
-          </div>` : ''}
+          </div>`
+              : ''
+          }
           <div class="receipt__row">
             <span class="receipt__label">Data</span>
             <span class="receipt__data">${escapeHtml(createdAt)}</span>
@@ -302,38 +306,38 @@ function buildPrintHtml(entry) {
       </section>
     </main>
   </body>
-</html>`;
+</html>`
 }
 
 export function printCashReceipt(entry) {
-  const printWindow = window.open('', '_blank', 'width=420,height=860');
+  const printWindow = window.open('', '_blank', 'width=420,height=860')
 
   if (!printWindow) {
-    throw new Error('Nao foi possivel abrir a janela de impressao.');
+    throw new Error('Nao foi possivel abrir a janela de impressao.')
   }
 
-  printWindow.document.open();
-  printWindow.document.write(buildPrintHtml(entry));
-  printWindow.document.close();
-  printWindow.document.title = entry.receiptCode || 'Recibo de caixa';
-  printWindow.focus();
+  printWindow.document.open()
+  printWindow.document.write(buildPrintHtml(entry))
+  printWindow.document.close()
+  printWindow.document.title = entry.receiptCode || 'Recibo de caixa'
+  printWindow.focus()
 
   const triggerPrint = () => {
     try {
-      printWindow.focus();
-      printWindow.print();
+      printWindow.focus()
+      printWindow.print()
     } catch {
       // Ignore print invocation errors to avoid blocking the shell.
     }
-  };
+  }
 
   printWindow.onload = () => {
-    triggerPrint();
-  };
+    triggerPrint()
+  }
 
   printWindow.onafterprint = () => {
-    printWindow.close();
-  };
+    printWindow.close()
+  }
 
-  printWindow.setTimeout(triggerPrint, 350);
+  printWindow.setTimeout(triggerPrint, 350)
 }

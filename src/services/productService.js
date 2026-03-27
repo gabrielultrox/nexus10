@@ -9,39 +9,44 @@ import {
   serverTimestamp,
   updateDoc,
   writeBatch,
-} from 'firebase/firestore';
+} from 'firebase/firestore'
 
-import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
+import {
+  assertFirebaseReady,
+  canUseRemoteSync,
+  firebaseDb,
+  guardRemoteSubscription,
+} from './firebase'
 import {
   buildStoreQueryCacheKey,
   getPaginatedStoreCollectionDocuments,
   getStoreDocumentsByIds,
   invalidateQueryCache,
-} from './firestore';
-import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
-import { deleteInventoryItemForProduct, ensureInventoryItemForProduct } from './inventory';
+} from './firestore'
+import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
+import { deleteInventoryItemForProduct, ensureInventoryItemForProduct } from './inventory'
 
 function parseDecimal(value, fieldLabel) {
   const normalized = String(value ?? '')
     .replace(/\s+/g, '')
-    .replace(',', '.');
-  const parsed = Number(normalized);
+    .replace(',', '.')
+  const parsed = Number(normalized)
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error(`${fieldLabel} invalido.`);
+    throw new Error(`${fieldLabel} invalido.`)
   }
 
-  return parsed;
+  return parsed
 }
 
 function parseInteger(value, fieldLabel) {
-  const parsed = Number.parseInt(String(value ?? '').trim(), 10);
+  const parsed = Number.parseInt(String(value ?? '').trim(), 10)
 
   if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(`${fieldLabel} invalido.`);
+    throw new Error(`${fieldLabel} invalido.`)
   }
 
-  return parsed;
+  return parsed
 }
 
 export function normalizeProductCategory(value) {
@@ -50,19 +55,19 @@ export function normalizeProductCategory(value) {
     .split(/\s+/)
     .filter(Boolean)
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
-    .join(' ');
+    .join(' ')
 }
 
 export function validateProductInput(values) {
-  const name = values.name?.trim();
-  const category = normalizeProductCategory(values.category);
+  const name = values.name?.trim()
+  const category = normalizeProductCategory(values.category)
 
   if (!name) {
-    throw new Error('Informe o nome do produto.');
+    throw new Error('Informe o nome do produto.')
   }
 
   if (!category) {
-    throw new Error('Informe a categoria do produto.');
+    throw new Error('Informe a categoria do produto.')
   }
 
   return {
@@ -71,11 +76,14 @@ export function validateProductInput(values) {
     price: parseDecimal(values.price, 'Preco'),
     cost: parseDecimal(values.cost, 'Custo'),
     stock: parseInteger(values.stock, 'Estoque'),
-    minimumStock: parseInteger(values.minimumStock === '' ? 0 : (values.minimumStock ?? 0), 'Estoque minimo'),
+    minimumStock: parseInteger(
+      values.minimumStock === '' ? 0 : (values.minimumStock ?? 0),
+      'Estoque minimo',
+    ),
     sku: values.sku?.trim() ?? '',
     description: values.description?.trim() ?? '',
     status: values.status?.trim() || 'active',
-  };
+  }
 }
 
 function buildInventorySnapshot(storeId, tenantId, productId, product) {
@@ -102,51 +110,53 @@ function buildInventorySnapshot(storeId, tenantId, productId, product) {
 }
 
 function getProductsCollectionRef(storeId) {
-  assertFirebaseReady();
-  return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.products);
+  assertFirebaseReady()
+  return collection(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.products,
+  )
 }
 
 export function subscribeToProducts(storeId, onData, onError) {
   if (!storeId || !canUseRemoteSync()) {
-    onData([]);
-    return () => {};
+    onData([])
+    return () => {}
   }
 
-  const productsQuery = query(getProductsCollectionRef(storeId), orderBy('name'));
+  const productsQuery = query(getProductsCollectionRef(storeId), orderBy('name'))
 
   return guardRemoteSubscription(
-    () => onSnapshot(
-      productsQuery,
-      (snapshot) => {
-        const products = snapshot.docs.map((documentSnapshot) => ({
-          id: documentSnapshot.id,
-          ...documentSnapshot.data(),
-        }));
+    () =>
+      onSnapshot(
+        productsQuery,
+        (snapshot) => {
+          const products = snapshot.docs.map((documentSnapshot) => ({
+            id: documentSnapshot.id,
+            ...documentSnapshot.data(),
+          }))
 
-        onData(products);
-      },
-      onError,
-    ),
+          onData(products)
+        },
+        onError,
+      ),
     {
       onFallback() {
-        onData([]);
+        onData([])
       },
       onError,
     },
-  );
+  )
 }
 
-export async function listProductsPage({
-  storeId,
-  pageSize = 50,
-  cursor = null,
-} = {}) {
+export async function listProductsPage({ storeId, pageSize = 50, cursor = null } = {}) {
   if (!storeId || !canUseRemoteSync()) {
     return {
       items: [],
       nextCursor: null,
       hasMore: false,
-    };
+    }
   }
 
   return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.products, {
@@ -155,20 +165,20 @@ export async function listProductsPage({
     pageSize,
     cursor,
     cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products, 'page-by-name'),
-  });
+  })
 }
 
 export async function getProductsByIds({ storeId, productIds = [] } = {}) {
   if (!storeId || !canUseRemoteSync()) {
-    return [];
+    return []
   }
 
-  return getStoreDocumentsByIds(storeId, FIRESTORE_COLLECTIONS.products, productIds);
+  return getStoreDocumentsByIds(storeId, FIRESTORE_COLLECTIONS.products, productIds)
 }
 
 export async function createProduct({ storeId, tenantId, values }) {
-  const payload = validateProductInput(values);
-  const productsRef = getProductsCollectionRef(storeId);
+  const payload = validateProductInput(values)
+  const productsRef = getProductsCollectionRef(storeId)
 
   const productRef = await addDoc(productsRef, {
     ...payload,
@@ -176,66 +186,72 @@ export async function createProduct({ storeId, tenantId, values }) {
     tenantId: tenantId ?? null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  })
 
   await ensureInventoryItemForProduct({
     storeId,
     tenantId,
     productId: productRef.id,
     product: payload,
-  });
+  })
 
-  invalidateQueryCache([
-    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
-  ]);
+  invalidateQueryCache([buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products)])
 
-  return productRef.id;
+  return productRef.id
 }
 
 export async function updateProduct({ storeId, productId, values }) {
-  const payload = validateProductInput(values);
-  const productRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.products, productId);
+  const payload = validateProductInput(values)
+  const productRef = doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.products,
+    productId,
+  )
 
   await updateDoc(productRef, {
     ...payload,
     updatedAt: serverTimestamp(),
-  });
+  })
 
   await ensureInventoryItemForProduct({
     storeId,
     productId,
     product: payload,
-  });
+  })
 
-  invalidateQueryCache([
-    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
-  ]);
+  invalidateQueryCache([buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products)])
 }
 
 export async function deleteProduct({ storeId, productId }) {
-  assertFirebaseReady();
-  const productRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.products, productId);
-  await deleteDoc(productRef);
-  await deleteInventoryItemForProduct({ storeId, productId });
-  invalidateQueryCache([
-    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
-  ]);
+  assertFirebaseReady()
+  const productRef = doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.products,
+    productId,
+  )
+  await deleteDoc(productRef)
+  await deleteInventoryItemForProduct({ storeId, productId })
+  invalidateQueryCache([buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products)])
 }
 
 export async function applyMinimumStockDefaults({ storeId, tenantId, products, minimumStock = 1 }) {
-  assertFirebaseReady();
+  assertFirebaseReady()
 
   const eligibleProducts = products.filter(
     (product) => Number(product.stock ?? 0) > 0 && Number(product.minimumStock ?? 0) <= 0,
-  );
+  )
 
   if (eligibleProducts.length === 0) {
-    return { updatedCount: 0 };
+    return { updatedCount: 0 }
   }
 
   for (let index = 0; index < eligibleProducts.length; index += 400) {
-    const batch = writeBatch(firebaseDb);
-    const chunk = eligibleProducts.slice(index, index + 400);
+    const batch = writeBatch(firebaseDb)
+    const chunk = eligibleProducts.slice(index, index + 400)
 
     chunk.forEach((product) => {
       const productRef = doc(
@@ -244,20 +260,24 @@ export async function applyMinimumStockDefaults({ storeId, tenantId, products, m
         storeId,
         FIRESTORE_COLLECTIONS.products,
         product.id,
-      );
+      )
       const inventoryRef = doc(
         firebaseDb,
         FIRESTORE_COLLECTIONS.stores,
         storeId,
         FIRESTORE_COLLECTIONS.inventoryItems,
         product.id,
-      );
+      )
 
-      batch.set(productRef, {
-        minimumStock,
-        tenantId: product.tenantId ?? tenantId ?? null,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      batch.set(
+        productRef,
+        {
+          minimumStock,
+          tenantId: product.tenantId ?? tenantId ?? null,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      )
 
       batch.set(
         inventoryRef,
@@ -266,23 +286,17 @@ export async function applyMinimumStockDefaults({ storeId, tenantId, products, m
           minimumStock,
         }),
         { merge: true },
-      );
-    });
+      )
+    })
 
-    await batch.commit();
+    await batch.commit()
   }
 
-  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products));
-  return { updatedCount: eligibleProducts.length };
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products))
+  return { updatedCount: eligibleProducts.length }
 }
 
-export async function bulkUpdateProducts({
-  storeId,
-  tenantId,
-  productIds,
-  products,
-  changes,
-}) {
+export async function bulkUpdateProducts({ storeId, tenantId, productIds, products, changes }) {
   assertFirebaseReady()
 
   const selectedIds = Array.from(new Set((productIds ?? []).filter(Boolean)))
@@ -338,16 +352,18 @@ export async function bulkUpdateProducts({
         ...normalizedChanges,
       }
 
-      batch.set(productRef, {
-        ...normalizedChanges,
-        updatedAt: serverTimestamp(),
-        tenantId: product.tenantId ?? tenantId ?? null,
-      }, { merge: true })
       batch.set(
-        inventoryRef,
-        buildInventorySnapshot(storeId, tenantId, product.id, nextProduct),
+        productRef,
+        {
+          ...normalizedChanges,
+          updatedAt: serverTimestamp(),
+          tenantId: product.tenantId ?? tenantId ?? null,
+        },
         { merge: true },
       )
+      batch.set(inventoryRef, buildInventorySnapshot(storeId, tenantId, product.id, nextProduct), {
+        merge: true,
+      })
     })
 
     await batch.commit()
@@ -391,16 +407,18 @@ export async function normalizeProductCategories({ storeId, tenantId, products }
         product.id,
       )
 
-      batch.set(productRef, {
-        category: nextProduct.category,
-        updatedAt: serverTimestamp(),
-        tenantId: product.tenantId ?? tenantId ?? null,
-      }, { merge: true })
       batch.set(
-        inventoryRef,
-        buildInventorySnapshot(storeId, tenantId, product.id, nextProduct),
+        productRef,
+        {
+          category: nextProduct.category,
+          updatedAt: serverTimestamp(),
+          tenantId: product.tenantId ?? tenantId ?? null,
+        },
         { merge: true },
       )
+      batch.set(inventoryRef, buildInventorySnapshot(storeId, tenantId, product.id, nextProduct), {
+        merge: true,
+      })
     })
 
     await batch.commit()

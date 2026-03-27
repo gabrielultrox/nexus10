@@ -182,7 +182,10 @@
       color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent),
       color-mix(in srgb, var(--surface-panel) 96%, var(--surface-panel-soft-alt))
     );
-  background-size: 100% 25%, 16.66% 100%, auto;
+  background-size:
+    100% 25%,
+    16.66% 100%,
+    auto;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent);
 }
 
@@ -250,7 +253,11 @@
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-field) var(--radius-field) var(--radius-xs) var(--radius-xs);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 6%, transparent), transparent 20%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-static-white) 6%, transparent),
+      transparent 20%
+    ),
     linear-gradient(180deg, var(--color-accent-cyan), var(--color-status-info-bg));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 12%, transparent),
@@ -509,8 +516,7 @@
   border-radius: var(--radius-sm);
   background:
     linear-gradient(var(--border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px),
-    var(--bg-surface);
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px), var(--bg-surface);
   box-shadow: none;
 }
 
@@ -589,9 +595,11 @@
   border-radius: 0;
   background:
     linear-gradient(var(--border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px),
-    transparent;
-  background-size: 100% 25%, 16.66% 100%, auto;
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px), transparent;
+  background-size:
+    100% 25%,
+    16.66% 100%,
+    auto;
 }
 
 .trend-chart__stop--top {
@@ -867,7 +875,8 @@
 }
 
 @keyframes dashboard-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
 

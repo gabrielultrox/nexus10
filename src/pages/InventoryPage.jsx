@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import InventoryModule from '../modules/inventory/components/InventoryModule';
+import PageIntro from '../components/common/PageIntro'
+import InventoryModule from '../modules/inventory/components/InventoryModule'
 
 function InventoryPage() {
   return (
@@ -12,7 +12,7 @@ function InventoryPage() {
 
       <InventoryModule />
     </div>
-  );
+  )
 }
 
-export default InventoryPage;
+export default InventoryPage

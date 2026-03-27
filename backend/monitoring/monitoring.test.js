@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../config/env.js', () => ({
   backendEnv: {
@@ -13,7 +13,7 @@ vi.mock('../config/env.js', () => ({
     sentryTracesSampleRate: 0.2,
     nodeEnv: 'test',
   },
-}));
+}))
 
 vi.mock('../logging/logger.js', () => ({
   logger: {
@@ -22,21 +22,23 @@ vi.mock('../logging/logger.js', () => ({
     error: vi.fn(),
   },
   serializeError: (error) => ({ message: error?.message ?? 'unknown' }),
-}));
+}))
 
 vi.mock('./sentry.js', () => ({
   captureMessage: vi.fn(),
-}));
+}))
 
 describe('monitoring metrics and alerts', () => {
   beforeEach(async () => {
-    vi.resetModules();
-  });
+    vi.resetModules()
+  })
 
   it('calcula error rate e p95 a partir das requests coletadas', async () => {
-    const { recordRequestMetric, getMonitoringSnapshot, resetMonitoringMetrics } = await import('./metrics.js');
+    const { recordRequestMetric, getMonitoringSnapshot, resetMonitoringMetrics } = await import(
+      './metrics.js'
+    )
 
-    resetMonitoringMetrics();
+    resetMonitoringMetrics()
 
     recordRequestMetric({
       method: 'GET',
@@ -45,7 +47,7 @@ describe('monitoring metrics and alerts', () => {
       statusCode: 200,
       durationMs: 120,
       isIfoodWebhook: false,
-    });
+    })
     recordRequestMetric({
       method: 'POST',
       route: '/api/stores/:storeId/orders',
@@ -53,18 +55,18 @@ describe('monitoring metrics and alerts', () => {
       statusCode: 500,
       durationMs: 1600,
       isIfoodWebhook: false,
-    });
+    })
 
-    const snapshot = getMonitoringSnapshot();
+    const snapshot = getMonitoringSnapshot()
 
-    expect(snapshot.summary.totalRequests).toBe(2);
-    expect(snapshot.summary.errorRate).toBe(50);
-    expect(snapshot.summary.p95).toBe(1600);
-  });
+    expect(snapshot.summary.totalRequests).toBe(2)
+    expect(snapshot.summary.errorRate).toBe(50)
+    expect(snapshot.summary.p95).toBe(1600)
+  })
 
   it('dispara alertas quando thresholds sao ultrapassados', async () => {
-    const { evaluateMonitoringAlerts } = await import('./alerts.js');
-    const { captureMessage } = await import('./sentry.js');
+    const { evaluateMonitoringAlerts } = await import('./alerts.js')
+    const { captureMessage } = await import('./sentry.js')
 
     await evaluateMonitoringAlerts({
       summary: {
@@ -76,8 +78,8 @@ describe('monitoring metrics and alerts', () => {
         failureCount: 4,
         errorRate: 12,
       },
-    });
+    })
 
-    expect(captureMessage).toHaveBeenCalledTimes(3);
-  });
-});
+    expect(captureMessage).toHaveBeenCalledTimes(3)
+  })
+})

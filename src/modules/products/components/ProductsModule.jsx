@@ -20,7 +20,7 @@ import {
 } from '../../../services/productService'
 import { playError, playSuccess } from '../../../services/soundManager'
 import Select from '../../../components/ui/Select'
-import EmptyState from '../../../components/ui/EmptyState';
+import EmptyState from '../../../components/ui/EmptyState'
 
 const initialFormState = {
   name: '',
@@ -142,55 +142,89 @@ function ProductsModule() {
     () => Array.from(new Set(products.map((product) => product.category).filter(Boolean))).sort(),
     [products],
   )
-  const auditSets = useMemo(() => ({
-    suspiciousNameIds: new Set(catalogAudit.possibleEncodingIssues.map((product) => product.id)),
-    duplicateSkuIds: new Set(catalogAudit.duplicateSkuGroups.flat().map((product) => product.id)),
-    duplicateNameIds: new Set(catalogAudit.duplicateNameGroups.flat().map((product) => product.id)),
-    uncategorizedIds: new Set(catalogAudit.uncategorized.map((product) => product.id)),
-  }), [catalogAudit])
+  const auditSets = useMemo(
+    () => ({
+      suspiciousNameIds: new Set(catalogAudit.possibleEncodingIssues.map((product) => product.id)),
+      duplicateSkuIds: new Set(catalogAudit.duplicateSkuGroups.flat().map((product) => product.id)),
+      duplicateNameIds: new Set(
+        catalogAudit.duplicateNameGroups.flat().map((product) => product.id),
+      ),
+      uncategorizedIds: new Set(catalogAudit.uncategorized.map((product) => product.id)),
+    }),
+    [catalogAudit],
+  )
 
   const visibleProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     return products.filter((product) => {
-      const matchesSearch = normalizedSearch.length === 0 || [
-        product.name,
-        product.category,
-        product.sku,
-        product.barcode,
-      ].join(' ').toLowerCase().includes(normalizedSearch)
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [product.name, product.category, product.sku, product.barcode]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearch)
       const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter
       const matchesStatus = statusFilter === 'all' || product.status === statusFilter
-      const matchesQuality = qualityFilter === 'all'
-        || (qualityFilter === 'missing-price' && Number(product.price ?? 0) <= 0)
-        || (qualityFilter === 'missing-cost' && Number(product.cost ?? 0) <= 0)
-        || (qualityFilter === 'missing-minimum' && Number(product.minimumStock ?? 0) <= 0)
-        || (qualityFilter === 'duplicate-sku' && auditSets.duplicateSkuIds.has(product.id))
-        || (qualityFilter === 'duplicate-name' && auditSets.duplicateNameIds.has(product.id))
-        || (qualityFilter === 'suspicious' && auditSets.suspiciousNameIds.has(product.id))
-        || (qualityFilter === 'uncategorized' && auditSets.uncategorizedIds.has(product.id))
+      const matchesQuality =
+        qualityFilter === 'all' ||
+        (qualityFilter === 'missing-price' && Number(product.price ?? 0) <= 0) ||
+        (qualityFilter === 'missing-cost' && Number(product.cost ?? 0) <= 0) ||
+        (qualityFilter === 'missing-minimum' && Number(product.minimumStock ?? 0) <= 0) ||
+        (qualityFilter === 'duplicate-sku' && auditSets.duplicateSkuIds.has(product.id)) ||
+        (qualityFilter === 'duplicate-name' && auditSets.duplicateNameIds.has(product.id)) ||
+        (qualityFilter === 'suspicious' && auditSets.suspiciousNameIds.has(product.id)) ||
+        (qualityFilter === 'uncategorized' && auditSets.uncategorizedIds.has(product.id))
 
       return matchesSearch && matchesCategory && matchesStatus && matchesQuality
     })
   }, [auditSets, categoryFilter, products, qualityFilter, searchTerm, statusFilter])
 
   useEffect(() => {
-    setSelectedProductIds((current) => current.filter((productId) => products.some((product) => product.id === productId)))
+    setSelectedProductIds((current) =>
+      current.filter((productId) => products.some((product) => product.id === productId)),
+    )
   }, [products])
 
   const metrics = useMemo(() => {
     const activeProducts = products.filter((product) => product.status === 'active').length
-    const lowStock = products.filter((product) => Number(product.stock ?? 0) <= Number(product.minimumStock ?? 0)).length
+    const lowStock = products.filter(
+      (product) => Number(product.stock ?? 0) <= Number(product.minimumStock ?? 0),
+    ).length
     const inventoryValue = products.reduce(
       (total, product) => total + Number(product.stock ?? 0) * Number(product.cost ?? 0),
       0,
     )
 
     return [
-      { label: 'Produtos', value: String(products.length).padStart(2, '0'), meta: 'base cadastrada na store atual', badgeText: 'real', badgeClass: 'ui-badge--info' },
-      { label: 'Ativos', value: String(activeProducts).padStart(2, '0'), meta: 'disponiveis para uso no PDV', badgeText: 'online', badgeClass: 'ui-badge--success' },
-      { label: 'Estoque baixo', value: String(lowStock).padStart(2, '0'), meta: 'produtos abaixo do estoque minimo', badgeText: 'alerta', badgeClass: 'ui-badge--warning' },
-      { label: 'Custo em estoque', value: formatCurrency(inventoryValue), meta: 'custo consolidado da base atual', badgeText: 'financeiro', badgeClass: 'ui-badge--special' },
+      {
+        label: 'Produtos',
+        value: String(products.length).padStart(2, '0'),
+        meta: 'base cadastrada na store atual',
+        badgeText: 'real',
+        badgeClass: 'ui-badge--info',
+      },
+      {
+        label: 'Ativos',
+        value: String(activeProducts).padStart(2, '0'),
+        meta: 'disponiveis para uso no PDV',
+        badgeText: 'online',
+        badgeClass: 'ui-badge--success',
+      },
+      {
+        label: 'Estoque baixo',
+        value: String(lowStock).padStart(2, '0'),
+        meta: 'produtos abaixo do estoque minimo',
+        badgeText: 'alerta',
+        badgeClass: 'ui-badge--warning',
+      },
+      {
+        label: 'Custo em estoque',
+        value: formatCurrency(inventoryValue),
+        meta: 'custo consolidado da base atual',
+        badgeText: 'financeiro',
+        badgeClass: 'ui-badge--special',
+      },
     ]
   }, [products])
 
@@ -236,7 +270,11 @@ function ProductsModule() {
 
     try {
       if (editingProductId) {
-        await updateProduct({ storeId: currentStoreId, productId: editingProductId, values: formState })
+        await updateProduct({
+          storeId: currentStoreId,
+          productId: editingProductId,
+          values: formState,
+        })
         await recordAuditLog({
           storeId: currentStoreId,
           tenantId,
@@ -248,7 +286,11 @@ function ProductsModule() {
         })
         setFeedbackMessage('Produto atualizado com sucesso.')
       } else {
-        const productId = await createProduct({ storeId: currentStoreId, tenantId, values: formState })
+        const productId = await createProduct({
+          storeId: currentStoreId,
+          tenantId,
+          values: formState,
+        })
         await recordAuditLog({
           storeId: currentStoreId,
           tenantId,
@@ -288,7 +330,11 @@ function ProductsModule() {
     clearFeedback()
 
     try {
-      const result = await seedBaseProducts({ storeId: currentStoreId, tenantId, existingProducts: products })
+      const result = await seedBaseProducts({
+        storeId: currentStoreId,
+        tenantId,
+        existingProducts: products,
+      })
       await recordAuditLog({
         storeId: currentStoreId,
         tenantId,
@@ -298,7 +344,11 @@ function ProductsModule() {
         entityId: 'base-seed',
         description: `Base inicial de produtos processada com ${result.createdCount} novos itens.`,
       })
-      setFeedbackMessage(result.createdCount > 0 ? `${result.createdCount} produtos iniciais adicionados.` : 'A base inicial de produtos ja esta completa.')
+      setFeedbackMessage(
+        result.createdCount > 0
+          ? `${result.createdCount} produtos iniciais adicionados.`
+          : 'A base inicial de produtos ja esta completa.',
+      )
       playSuccess()
     } catch (error) {
       setErrorMessage(error.message)
@@ -325,7 +375,11 @@ function ProductsModule() {
     clearFeedback()
 
     try {
-      const result = await applyMinimumStockDefaults({ storeId: currentStoreId, tenantId, products })
+      const result = await applyMinimumStockDefaults({
+        storeId: currentStoreId,
+        tenantId,
+        products,
+      })
       await recordAuditLog({
         storeId: currentStoreId,
         tenantId,
@@ -335,7 +389,11 @@ function ProductsModule() {
         entityId: 'bulk-minimum-stock',
         description: `${result.updatedCount} produto(s) receberam estoque minimo padrao.`,
       })
-      setFeedbackMessage(result.updatedCount > 0 ? `${result.updatedCount} produto(s) receberam estoque minimo padrao.` : 'Nenhum produto precisava de estoque minimo padrao.')
+      setFeedbackMessage(
+        result.updatedCount > 0
+          ? `${result.updatedCount} produto(s) receberam estoque minimo padrao.`
+          : 'Nenhum produto precisava de estoque minimo padrao.',
+      )
       playSuccess()
     } catch (error) {
       setErrorMessage(error.message)
@@ -362,7 +420,11 @@ function ProductsModule() {
     clearFeedback()
 
     try {
-      const result = await normalizeProductCategories({ storeId: currentStoreId, tenantId, products })
+      const result = await normalizeProductCategories({
+        storeId: currentStoreId,
+        tenantId,
+        products,
+      })
       await recordAuditLog({
         storeId: currentStoreId,
         tenantId,
@@ -372,7 +434,11 @@ function ProductsModule() {
         entityId: 'bulk-category-normalization',
         description: `${result.updatedCount} produto(s) tiveram a categoria padronizada.`,
       })
-      setFeedbackMessage(result.updatedCount > 0 ? `${result.updatedCount} produto(s) tiveram a categoria padronizada.` : 'As categorias ja estavam padronizadas.')
+      setFeedbackMessage(
+        result.updatedCount > 0
+          ? `${result.updatedCount} produto(s) tiveram a categoria padronizada.`
+          : 'As categorias ja estavam padronizadas.',
+      )
       playSuccess()
     } catch (error) {
       setErrorMessage(error.message)
@@ -507,16 +573,18 @@ function ProductsModule() {
   }
 
   function toggleProductSelection(productId) {
-    setSelectedProductIds((current) => (
+    setSelectedProductIds((current) =>
       current.includes(productId)
         ? current.filter((id) => id !== productId)
-        : [...current, productId]
-    ))
+        : [...current, productId],
+    )
   }
 
   function toggleVisibleSelection() {
     const visibleIds = visibleProducts.map((product) => product.id)
-    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((productId) => selectedProductIds.includes(productId))
+    const allVisibleSelected =
+      visibleIds.length > 0 &&
+      visibleIds.every((productId) => selectedProductIds.includes(productId))
 
     setSelectedProductIds((current) => {
       if (allVisibleSelected) {
@@ -565,20 +633,54 @@ function ProductsModule() {
             <p className="text-body">Priorize itens que atrapalham busca, filtro e venda.</p>
           </div>
           <div className="entity-form-actions entity-form-actions--inline">
-            <button type="button" className="ui-button ui-button--ghost" onClick={handleNormalizeCategories} disabled={normalizingCategories || !can('catalog:write')}>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleNormalizeCategories}
+              disabled={normalizingCategories || !can('catalog:write')}
+            >
               {normalizingCategories ? 'Padronizando...' : 'Padronizar categorias'}
             </button>
-            <button type="button" className="ui-button ui-button--ghost" onClick={handleApplyMinimumStockDefaults} disabled={fixingMinimums || !can('catalog:write')}>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleApplyMinimumStockDefaults}
+              disabled={fixingMinimums || !can('catalog:write')}
+            >
               {fixingMinimums ? 'Corrigindo...' : 'Corrigir estoque minimo'}
             </button>
           </div>
         </div>
 
         <div className="card-grid">
-          <MetricCard label="Nomes suspeitos" value={String(catalogAudit.possibleEncodingIssues.length).padStart(2, '0')} meta="itens com possivel problema de texto" badgeText="texto" badgeClass="ui-badge--warning" />
-          <MetricCard label="Minimo zerado" value={String(catalogAudit.zeroMinimumStock.length).padStart(2, '0')} meta="produtos com saldo positivo e sem minimo" badgeText="estoque" badgeClass="ui-badge--special" />
-          <MetricCard label="SKU duplicado" value={String(catalogAudit.duplicateSkuGroups.length).padStart(2, '0')} meta="grupos com codigo repetido" badgeText="sku" badgeClass="ui-badge--info" />
-          <MetricCard label="Categoria vazia" value={String(catalogAudit.uncategorized.length).padStart(2, '0')} meta="itens sem categoria definida" badgeText="catalogo" badgeClass="ui-badge--danger" />
+          <MetricCard
+            label="Nomes suspeitos"
+            value={String(catalogAudit.possibleEncodingIssues.length).padStart(2, '0')}
+            meta="itens com possivel problema de texto"
+            badgeText="texto"
+            badgeClass="ui-badge--warning"
+          />
+          <MetricCard
+            label="Minimo zerado"
+            value={String(catalogAudit.zeroMinimumStock.length).padStart(2, '0')}
+            meta="produtos com saldo positivo e sem minimo"
+            badgeText="estoque"
+            badgeClass="ui-badge--special"
+          />
+          <MetricCard
+            label="SKU duplicado"
+            value={String(catalogAudit.duplicateSkuGroups.length).padStart(2, '0')}
+            meta="grupos com codigo repetido"
+            badgeText="sku"
+            badgeClass="ui-badge--info"
+          />
+          <MetricCard
+            label="Categoria vazia"
+            value={String(catalogAudit.uncategorized.length).padStart(2, '0')}
+            meta="itens sem categoria definida"
+            badgeText="catalogo"
+            badgeClass="ui-badge--danger"
+          />
         </div>
 
         <div className="entity-table-wrap entity-table-wrap--dense">
@@ -594,7 +696,9 @@ function ProductsModule() {
               <tr>
                 <td className="ui-table__cell--strong">Nomes com texto suspeito</td>
                 <td>{catalogAudit.possibleEncodingIssues[0]?.name ?? '-'}</td>
-                <td className="ui-table__cell--numeric">{catalogAudit.possibleEncodingIssues.length}</td>
+                <td className="ui-table__cell--numeric">
+                  {catalogAudit.possibleEncodingIssues.length}
+                </td>
               </tr>
               <tr>
                 <td className="ui-table__cell--strong">Produtos com minimo zerado</td>
@@ -603,13 +707,25 @@ function ProductsModule() {
               </tr>
               <tr>
                 <td className="ui-table__cell--strong">Grupos de SKU duplicado</td>
-                <td>{catalogAudit.duplicateSkuGroups[0]?.map((product) => product.sku || product.name).join(' / ') ?? '-'}</td>
-                <td className="ui-table__cell--numeric">{catalogAudit.duplicateSkuGroups.length}</td>
+                <td>
+                  {catalogAudit.duplicateSkuGroups[0]
+                    ?.map((product) => product.sku || product.name)
+                    .join(' / ') ?? '-'}
+                </td>
+                <td className="ui-table__cell--numeric">
+                  {catalogAudit.duplicateSkuGroups.length}
+                </td>
               </tr>
               <tr>
                 <td className="ui-table__cell--strong">Grupos de nome duplicado</td>
-                <td>{catalogAudit.duplicateNameGroups[0]?.map((product) => product.name).join(' / ') ?? '-'}</td>
-                <td className="ui-table__cell--numeric">{catalogAudit.duplicateNameGroups.length}</td>
+                <td>
+                  {catalogAudit.duplicateNameGroups[0]
+                    ?.map((product) => product.name)
+                    .join(' / ') ?? '-'}
+                </td>
+                <td className="ui-table__cell--numeric">
+                  {catalogAudit.duplicateNameGroups.length}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -621,8 +737,12 @@ function ProductsModule() {
           <div className="entity-form-shell__header">
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">Catalogo ativo</span>
-              <h4 className="entity-form-hero__title">{editingProductId ? 'Atualize o produto em foco' : 'Cadastre e revise o catalogo'}</h4>
-              <p className="entity-form-hero__description">Defina identidade, faixa comercial e saldo inicial de forma mais direta.</p>
+              <h4 className="entity-form-hero__title">
+                {editingProductId ? 'Atualize o produto em foco' : 'Cadastre e revise o catalogo'}
+              </h4>
+              <p className="entity-form-hero__description">
+                Defina identidade, faixa comercial e saldo inicial de forma mais direta.
+              </p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">SKU pronto para PDV</span>
                 <span className="ui-badge ui-badge--warning">Controle de minimo</span>
@@ -631,21 +751,26 @@ function ProductsModule() {
             </div>
 
             <div className="entity-form-aside">
-                <div className="entity-form-aside__card">
-                  <span className="entity-form-aside__label">Produtos ativos</span>
-                  <strong>{String(metrics[1]?.value ?? '00')}</strong>
-                  <p className="text-body">Itens liberados para pedido e venda.</p>
-                </div>
-                <div className="entity-form-aside__card">
-                  <span className="entity-form-aside__label">Estoque baixo</span>
-                  <strong>{String(metrics[2]?.value ?? '00')}</strong>
-                  <p className="text-body">Itens que pedem revisao do saldo minimo.</p>
-                </div>
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Produtos ativos</span>
+                <strong>{String(metrics[1]?.value ?? '00')}</strong>
+                <p className="text-body">Itens liberados para pedido e venda.</p>
               </div>
+              <div className="entity-form-aside__card">
+                <span className="entity-form-aside__label">Estoque baixo</span>
+                <strong>{String(metrics[2]?.value ?? '00')}</strong>
+                <p className="text-body">Itens que pedem revisao do saldo minimo.</p>
+              </div>
+            </div>
           </div>
 
           <div className="entity-form-actions entity-form-actions--inline">
-            <button type="button" className="ui-button ui-button--ghost" onClick={handleSeedProducts} disabled={seeding || saving || !can('catalog:write')}>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={handleSeedProducts}
+              disabled={seeding || saving || !can('catalog:write')}
+            >
               {seeding ? 'Preparando base...' : 'Popular base inicial'}
             </button>
           </div>
@@ -659,19 +784,46 @@ function ProductsModule() {
 
               <div className="entity-stack">
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-name">Nome</label>
-                  <input id="product-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
-                  <span className="entity-field-hint">Use um nome curto e facil de reconhecer durante a venda.</span>
+                  <label className="ui-label" htmlFor="product-name">
+                    Nome
+                  </label>
+                  <input
+                    id="product-name"
+                    className="ui-input"
+                    value={formState.name}
+                    onChange={(event) => updateField('name', event.target.value)}
+                  />
+                  <span className="entity-field-hint">
+                    Use um nome curto e facil de reconhecer durante a venda.
+                  </span>
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-category">Categoria</label>
-                  <input id="product-category" className="ui-input" value={formState.category} onChange={(event) => updateField('category', event.target.value)} />
-                  <span className="entity-field-hint">Ajuda na organizacao da base e nos filtros da operacao.</span>
+                  <label className="ui-label" htmlFor="product-category">
+                    Categoria
+                  </label>
+                  <input
+                    id="product-category"
+                    className="ui-input"
+                    value={formState.category}
+                    onChange={(event) => updateField('category', event.target.value)}
+                  />
+                  <span className="entity-field-hint">
+                    Ajuda na organizacao da base e nos filtros da operacao.
+                  </span>
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-sku">SKU</label>
-                  <input id="product-sku" className="ui-input" value={formState.sku} onChange={(event) => updateField('sku', event.target.value)} />
-                  <span className="entity-field-hint">Codigo interno para consulta rapida, importacoes e conferencia.</span>
+                  <label className="ui-label" htmlFor="product-sku">
+                    SKU
+                  </label>
+                  <input
+                    id="product-sku"
+                    className="ui-input"
+                    value={formState.sku}
+                    onChange={(event) => updateField('sku', event.target.value)}
+                  />
+                  <span className="entity-field-hint">
+                    Codigo interno para consulta rapida, importacoes e conferencia.
+                  </span>
                 </div>
               </div>
             </div>
@@ -684,24 +836,63 @@ function ProductsModule() {
 
               <div className="entity-stack">
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-price">Preco</label>
-                  <input id="product-price" className="ui-input" value={formState.price} onChange={(event) => updateField('price', event.target.value)} placeholder="0.00" />
+                  <label className="ui-label" htmlFor="product-price">
+                    Preco
+                  </label>
+                  <input
+                    id="product-price"
+                    className="ui-input"
+                    value={formState.price}
+                    onChange={(event) => updateField('price', event.target.value)}
+                    placeholder="0.00"
+                  />
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-cost">Custo</label>
-                  <input id="product-cost" className="ui-input" value={formState.cost} onChange={(event) => updateField('cost', event.target.value)} placeholder="0.00" />
+                  <label className="ui-label" htmlFor="product-cost">
+                    Custo
+                  </label>
+                  <input
+                    id="product-cost"
+                    className="ui-input"
+                    value={formState.cost}
+                    onChange={(event) => updateField('cost', event.target.value)}
+                    placeholder="0.00"
+                  />
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-stock">Estoque</label>
-                  <input id="product-stock" className="ui-input" value={formState.stock} onChange={(event) => updateField('stock', event.target.value)} placeholder="0" />
+                  <label className="ui-label" htmlFor="product-stock">
+                    Estoque
+                  </label>
+                  <input
+                    id="product-stock"
+                    className="ui-input"
+                    value={formState.stock}
+                    onChange={(event) => updateField('stock', event.target.value)}
+                    placeholder="0"
+                  />
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-minimum-stock">Estoque minimo</label>
-                  <input id="product-minimum-stock" className="ui-input" value={formState.minimumStock} onChange={(event) => updateField('minimumStock', event.target.value)} placeholder="0" />
+                  <label className="ui-label" htmlFor="product-minimum-stock">
+                    Estoque minimo
+                  </label>
+                  <input
+                    id="product-minimum-stock"
+                    className="ui-input"
+                    value={formState.minimumStock}
+                    onChange={(event) => updateField('minimumStock', event.target.value)}
+                    placeholder="0"
+                  />
                 </div>
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="product-status">Status</label>
-                  <Select id="product-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                  <label className="ui-label" htmlFor="product-status">
+                    Status
+                  </label>
+                  <Select
+                    id="product-status"
+                    className="ui-select"
+                    value={formState.status}
+                    onChange={(event) => updateField('status', event.target.value)}
+                  >
                     <option value="active">Ativo</option>
                     <option value="inactive">Inativo</option>
                   </Select>
@@ -715,8 +906,16 @@ function ProductsModule() {
                 <h4 className="entity-form-section__title">Descricao operacional</h4>
               </div>
               <div className="ui-field">
-                <label className="ui-label" htmlFor="product-description">Descricao</label>
-                <textarea id="product-description" className="ui-textarea" rows={4} value={formState.description} onChange={(event) => updateField('description', event.target.value)} />
+                <label className="ui-label" htmlFor="product-description">
+                  Descricao
+                </label>
+                <textarea
+                  id="product-description"
+                  className="ui-textarea"
+                  rows={4}
+                  value={formState.description}
+                  onChange={(event) => updateField('description', event.target.value)}
+                />
               </div>
             </div>
 
@@ -726,14 +925,20 @@ function ProductsModule() {
                   Cancelar edicao
                 </button>
               ) : null}
-              <button type="submit" className="ui-button ui-button--primary" disabled={saving || !can('catalog:write')}>
+              <button
+                type="submit"
+                className="ui-button ui-button--primary"
+                disabled={saving || !can('catalog:write')}
+              >
                 {saving ? 'Salvando...' : editingProductId ? 'Salvar produto' : 'Cadastrar produto'}
               </button>
             </div>
           </form>
         </div>
 
-        {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+        {feedbackMessage ? (
+          <div className="auth-error auth-error--success">{feedbackMessage}</div>
+        ) : null}
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       </SurfaceCard>
 
@@ -741,33 +946,66 @@ function ProductsModule() {
         <div className="entity-toolbar-shell entity-toolbar-shell--section">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Produtos com quantidade em estoque</p>
-            <p className="text-body">Use busca e filtros para localizar o item e revisar a saude do cadastro.</p>
+            <p className="text-body">
+              Use busca e filtros para localizar o item e revisar a saude do cadastro.
+            </p>
           </div>
           <div className="entity-toolbar entity-toolbar--filters">
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-search">Buscar</label>
-              <input id="products-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome, categoria, SKU ou codigo de barras" />
+              <label className="ui-label" htmlFor="products-search">
+                Buscar
+              </label>
+              <input
+                id="products-search"
+                className="ui-input"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Nome, categoria, SKU ou codigo de barras"
+              />
             </div>
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-category-filter">Categoria</label>
-              <Select id="products-category-filter" className="ui-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <label className="ui-label" htmlFor="products-category-filter">
+                Categoria
+              </label>
+              <Select
+                id="products-category-filter"
+                className="ui-select"
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+              >
                 <option value="all">Todas</option>
                 {categories.map((category) => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
                 ))}
               </Select>
             </div>
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-status-filter">Status</label>
-              <Select id="products-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <label className="ui-label" htmlFor="products-status-filter">
+                Status
+              </label>
+              <Select
+                id="products-status-filter"
+                className="ui-select"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
               </Select>
             </div>
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-quality-filter">Qualidade</label>
-              <Select id="products-quality-filter" className="ui-select" value={qualityFilter} onChange={(event) => setQualityFilter(event.target.value)}>
+              <label className="ui-label" htmlFor="products-quality-filter">
+                Qualidade
+              </label>
+              <Select
+                id="products-quality-filter"
+                className="ui-select"
+                value={qualityFilter}
+                onChange={(event) => setQualityFilter(event.target.value)}
+              >
                 <option value="all">Todos</option>
                 <option value="missing-price">Sem preco</option>
                 <option value="missing-cost">Sem custo</option>
@@ -792,16 +1030,39 @@ function ProductsModule() {
           </div>
           <div className="entity-toolbar entity-toolbar--bulk">
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-bulk-category">Categoria</label>
-              <input id="products-bulk-category" className="ui-input" value={bulkState.category} onChange={(event) => updateBulkField('category', event.target.value)} placeholder="Categoria padrao" />
+              <label className="ui-label" htmlFor="products-bulk-category">
+                Categoria
+              </label>
+              <input
+                id="products-bulk-category"
+                className="ui-input"
+                value={bulkState.category}
+                onChange={(event) => updateBulkField('category', event.target.value)}
+                placeholder="Categoria padrao"
+              />
             </div>
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-bulk-minimum">Estoque minimo</label>
-              <input id="products-bulk-minimum" className="ui-input" value={bulkState.minimumStock} onChange={(event) => updateBulkField('minimumStock', event.target.value)} placeholder="0" />
+              <label className="ui-label" htmlFor="products-bulk-minimum">
+                Estoque minimo
+              </label>
+              <input
+                id="products-bulk-minimum"
+                className="ui-input"
+                value={bulkState.minimumStock}
+                onChange={(event) => updateBulkField('minimumStock', event.target.value)}
+                placeholder="0"
+              />
             </div>
             <div className="ui-field">
-              <label className="ui-label" htmlFor="products-bulk-status">Status</label>
-              <Select id="products-bulk-status" className="ui-select" value={bulkState.status} onChange={(event) => updateBulkField('status', event.target.value)}>
+              <label className="ui-label" htmlFor="products-bulk-status">
+                Status
+              </label>
+              <Select
+                id="products-bulk-status"
+                className="ui-select"
+                value={bulkState.status}
+                onChange={(event) => updateBulkField('status', event.target.value)}
+              >
                 <option value="keep">Manter atual</option>
                 <option value="active">Ativar</option>
                 <option value="inactive">Inativar</option>
@@ -811,7 +1072,14 @@ function ProductsModule() {
               <button type="button" className="ui-button ui-button--ghost" onClick={resetBulkForm}>
                 Limpar lote
               </button>
-              <button type="button" className="ui-button ui-button--primary" onClick={handleApplyBulkEdit} disabled={applyingBulkEdit || selectedProductIds.length === 0 || !can('catalog:write')}>
+              <button
+                type="button"
+                className="ui-button ui-button--primary"
+                onClick={handleApplyBulkEdit}
+                disabled={
+                  applyingBulkEdit || selectedProductIds.length === 0 || !can('catalog:write')
+                }
+              >
                 {applyingBulkEdit ? 'Aplicando...' : 'Aplicar lote'}
               </button>
             </div>
@@ -831,7 +1099,10 @@ function ProductsModule() {
                     <input
                       type="checkbox"
                       aria-label="Selecionar produtos visiveis"
-                      checked={visibleProducts.length > 0 && visibleProducts.every((product) => selectedProductIds.includes(product.id))}
+                      checked={
+                        visibleProducts.length > 0 &&
+                        visibleProducts.every((product) => selectedProductIds.includes(product.id))
+                      }
                       onChange={toggleVisibleSelection}
                     />
                   </th>
@@ -851,7 +1122,14 @@ function ProductsModule() {
                   const issueBadges = buildIssueBadges(product, auditSets)
 
                   return (
-                    <tr key={product.id} className={selectedProductIds.includes(product.id) ? 'entity-table__row--selected' : undefined}>
+                    <tr
+                      key={product.id}
+                      className={
+                        selectedProductIds.includes(product.id)
+                          ? 'entity-table__row--selected'
+                          : undefined
+                      }
+                    >
                       <td>
                         <input
                           type="checkbox"
@@ -873,7 +1151,10 @@ function ProductsModule() {
                             <span className="ui-badge ui-badge--success">OK</span>
                           ) : (
                             issueBadges.slice(0, 3).map((badge) => (
-                              <span key={`${product.id}-${badge.label}`} className={`ui-badge ${badge.tone}`}>
+                              <span
+                                key={`${product.id}-${badge.label}`}
+                                className={`ui-badge ${badge.tone}`}
+                              >
                                 {badge.label}
                               </span>
                             ))
@@ -881,10 +1162,20 @@ function ProductsModule() {
                         </div>
                       </td>
                       <td className="entity-table__actions">
-                        <button type="button" className="ui-button ui-button--ghost" onClick={() => handleEdit(product)} disabled={!can('catalog:write')}>
+                        <button
+                          type="button"
+                          className="ui-button ui-button--ghost"
+                          onClick={() => handleEdit(product)}
+                          disabled={!can('catalog:write')}
+                        >
                           Editar
                         </button>
-                        <button type="button" className="ui-button ui-button--danger" onClick={() => handleDelete(product.id)} disabled={!can('catalog:write')}>
+                        <button
+                          type="button"
+                          className="ui-button ui-button--danger"
+                          onClick={() => handleDelete(product.id)}
+                          disabled={!can('catalog:write')}
+                        >
                           Excluir
                         </button>
                       </td>
@@ -901,5 +1192,3 @@ function ProductsModule() {
 }
 
 export default ProductsModule
-
-

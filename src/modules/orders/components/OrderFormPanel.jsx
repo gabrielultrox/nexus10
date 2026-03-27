@@ -140,14 +140,22 @@ function OrderFormPanel({
             />
 
             <div className="commerce-step__footer">
-              <button type="button" className="ui-button ui-button--ghost" onClick={() => setStep(1)}>
+              <button
+                type="button"
+                className="ui-button ui-button--ghost"
+                onClick={() => setStep(1)}
+              >
                 Voltar
               </button>
               <div className="commerce-step__footer-actions">
                 <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>
                   Cancelar
                 </button>
-                <button type="submit" className="ui-button ui-button--primary" disabled={saving || !canWrite}>
+                <button
+                  type="submit"
+                  className="ui-button ui-button--primary"
+                  disabled={saving || !canWrite}
+                >
                   {saving ? 'Salvando...' : 'Lancar'}
                 </button>
               </div>

@@ -20,7 +20,7 @@ function FinanceIndicators({ items }) {
         </div>
       </div>
     </section>
-  );
+  )
 }
 
-export default FinanceIndicators;
+export default FinanceIndicators

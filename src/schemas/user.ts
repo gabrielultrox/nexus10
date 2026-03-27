@@ -12,7 +12,11 @@ export const loginSchema = z.object({
 })
 
 export const createUserSchema = z.object({
-  name: z.string().trim().min(3, 'Nome deve ter no minimo 3 caracteres.').max(100, 'Nome deve ter no maximo 100 caracteres.'),
+  name: z
+    .string()
+    .trim()
+    .min(3, 'Nome deve ter no minimo 3 caracteres.')
+    .max(100, 'Nome deve ter no maximo 100 caracteres.'),
   email: z.string().trim().email('Informe um e-mail valido.'),
   role: z.nativeEnum(UserRole),
   pin: z

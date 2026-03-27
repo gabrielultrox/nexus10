@@ -1,23 +1,23 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-import { chromium } from 'playwright';
+import { chromium } from 'playwright'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, '..');
-const docsDir = path.join(projectRoot, 'docs');
-const assetsDir = path.join(docsDir, 'presentation-assets');
-const outputHtml = path.join(docsDir, 'leitura-entregas-apresentacao.html');
-const outputPdf = path.join(docsDir, 'leitura-entregas-apresentacao.pdf');
-const appUrl = 'http://127.0.0.1:5173/delivery-reading';
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.resolve(__dirname, '..')
+const docsDir = path.join(projectRoot, 'docs')
+const assetsDir = path.join(docsDir, 'presentation-assets')
+const outputHtml = path.join(docsDir, 'leitura-entregas-apresentacao.html')
+const outputPdf = path.join(docsDir, 'leitura-entregas-apresentacao.pdf')
+const appUrl = 'http://127.0.0.1:5173/delivery-reading'
 
 const sampleCouriers = [
   { id: 'courier-1', name: 'Arthur' },
   { id: 'courier-2', name: 'Kelvin' },
   { id: 'courier-3', name: 'Gustavo' },
   { id: 'courier-4', name: 'Tito' },
-];
+]
 
 const sampleReadings = [
   {
@@ -65,11 +65,11 @@ const sampleReadings = [
     updatedAt: '18:48',
     updatedBy: 'Gabriel',
   },
-];
+]
 
 function toFileUrl(targetPath) {
-  const normalized = path.resolve(targetPath).replace(/\\/g, '/');
-  return `file:///${normalized}`;
+  const normalized = path.resolve(targetPath).replace(/\\/g, '/')
+  return `file:///${normalized}`
 }
 
 function buildHtml({ screenshots, generatedAt }) {
@@ -452,117 +452,123 @@ function buildHtml({ screenshots, generatedAt }) {
       </section>
     </main>
   </body>
-</html>`;
+</html>`
 }
 
 async function ensureDirectories() {
-  await fs.mkdir(docsDir, { recursive: true });
-  await fs.mkdir(assetsDir, { recursive: true });
+  await fs.mkdir(docsDir, { recursive: true })
+  await fs.mkdir(assetsDir, { recursive: true })
 }
 
 async function takeScreenshots() {
-  console.log('Launching browser for screenshots...');
+  console.log('Launching browser for screenshots...')
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: true,
-  });
+  })
 
   const context = await browser.newContext({
     viewport: { width: 1440, height: 980 },
     colorScheme: 'dark',
-  });
+  })
 
-  await context.addInitScript(({ couriers, readings }) => {
-    window.localStorage.setItem('nexus10-theme', 'dark');
-    window.localStorage.setItem('nexus-manual-couriers', JSON.stringify(couriers));
-    window.localStorage.setItem('nexus-module-delivery-reading', JSON.stringify(readings));
-  }, {
-    couriers: sampleCouriers,
-    readings: sampleReadings,
-  });
+  await context.addInitScript(
+    ({ couriers, readings }) => {
+      window.localStorage.setItem('nexus10-theme', 'dark')
+      window.localStorage.setItem('nexus-manual-couriers', JSON.stringify(couriers))
+      window.localStorage.setItem('nexus-module-delivery-reading', JSON.stringify(readings))
+    },
+    {
+      couriers: sampleCouriers,
+      readings: sampleReadings,
+    },
+  )
 
-  const page = await context.newPage();
-  page.setDefaultTimeout(20000);
+  const page = await context.newPage()
+  page.setDefaultTimeout(20000)
 
-  console.log('Opening app...');
-  await page.goto(appUrl, { waitUntil: 'domcontentloaded' });
-  console.log('Waiting boot...');
-  await page.waitForTimeout(3800);
+  console.log('Opening app...')
+  await page.goto(appUrl, { waitUntil: 'domcontentloaded' })
+  console.log('Waiting boot...')
+  await page.waitForTimeout(3800)
 
-  console.log('Unlocking PIN...');
+  console.log('Unlocking PIN...')
   for (const digit of ['0', '1', '0', '1']) {
-    await page.getByRole('button', { name: digit, exact: true }).click();
+    await page.getByRole('button', { name: digit, exact: true }).click()
   }
 
-  console.log('Submitting login...');
-  await page.waitForSelector('#login-operator', { state: 'visible' });
-  await page.selectOption('#login-operator', 'Gabriel');
-  await page.fill('#login-password', '01');
-  await page.getByRole('button', { name: 'Entrar' }).click();
-  await page.waitForURL('**/delivery-reading');
-  await page.waitForTimeout(1000);
+  console.log('Submitting login...')
+  await page.waitForSelector('#login-operator', { state: 'visible' })
+  await page.selectOption('#login-operator', 'Gabriel')
+  await page.fill('#login-password', '01')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await page.waitForURL('**/delivery-reading')
+  await page.waitForTimeout(1000)
 
-  const overviewPath = path.join(assetsDir, 'delivery-reading-overview-mobile.png');
-  const openPath = path.join(assetsDir, 'delivery-reading-open-mobile.png');
-  const afterPath = path.join(assetsDir, 'delivery-reading-after-mobile.png');
-  const closedPath = path.join(assetsDir, 'delivery-reading-closed-mobile.png');
+  const overviewPath = path.join(assetsDir, 'delivery-reading-overview-mobile.png')
+  const openPath = path.join(assetsDir, 'delivery-reading-open-mobile.png')
+  const afterPath = path.join(assetsDir, 'delivery-reading-after-mobile.png')
+  const closedPath = path.join(assetsDir, 'delivery-reading-closed-mobile.png')
 
-  const modulePage = page.locator('.page-stack.native-module-page--delivery-reading');
+  const modulePage = page.locator('.page-stack.native-module-page--delivery-reading')
 
-  console.log('Capturing overview...');
-  await page.screenshot({ path: overviewPath, fullPage: false });
+  console.log('Capturing overview...')
+  await page.screenshot({ path: overviewPath, fullPage: false })
 
-  console.log('Capturing open state...');
-  await modulePage.screenshot({ path: openPath });
+  console.log('Capturing open state...')
+  await modulePage.screenshot({ path: openPath })
 
-  console.log('Triggering close action...');
-  await page.locator('.delivery-reading__section--open .delivery-reading__close-button').first().click();
-  await page.waitForTimeout(700);
+  console.log('Triggering close action...')
+  await page
+    .locator('.delivery-reading__section--open .delivery-reading__close-button')
+    .first()
+    .click()
+  await page.waitForTimeout(700)
 
-  console.log('Capturing after state...');
-  await modulePage.screenshot({ path: afterPath });
+  console.log('Capturing after state...')
+  await modulePage.screenshot({ path: afterPath })
 
-  console.log('Capturing closed state...');
-  await page.locator('.delivery-reading__section--closed').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(250);
-  await modulePage.screenshot({ path: closedPath });
+  console.log('Capturing closed state...')
+  await page.locator('.delivery-reading__section--closed').scrollIntoViewIfNeeded()
+  await page.waitForTimeout(250)
+  await modulePage.screenshot({ path: closedPath })
 
-  console.log('Closing browser after screenshots...');
-  await browser.close();
+  console.log('Closing browser after screenshots...')
+  await browser.close()
 
   return {
     overview: `presentation-assets/${path.basename(overviewPath)}`,
     open: `presentation-assets/${path.basename(openPath)}`,
     after: `presentation-assets/${path.basename(afterPath)}`,
     closed: `presentation-assets/${path.basename(closedPath)}`,
-  };
+  }
 }
 
 async function buildPresentation() {
-  await ensureDirectories();
-  console.log('Building screenshots...');
-  const screenshots = await takeScreenshots();
+  await ensureDirectories()
+  console.log('Building screenshots...')
+  const screenshots = await takeScreenshots()
   const generatedAt = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date());
+  }).format(new Date())
 
-  const html = buildHtml({ screenshots, generatedAt });
-  await fs.writeFile(outputHtml, html, 'utf8');
-  console.log(`HTML written: ${outputHtml}`);
+  const html = buildHtml({ screenshots, generatedAt })
+  await fs.writeFile(outputHtml, html, 'utf8')
+  console.log(`HTML written: ${outputHtml}`)
 
-  console.log('Launching browser for PDF...');
+  console.log('Launching browser for PDF...')
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: true,
-  });
-  const page = await browser.newPage();
-  page.setDefaultTimeout(20000);
-  await page.goto(toFileUrl(outputHtml), { waitUntil: 'networkidle' });
-  console.log('Rendering PDF...');
+  })
+  const page = await browser.newPage()
+  page.setDefaultTimeout(20000)
+  await page.goto(toFileUrl(outputHtml), { waitUntil: 'networkidle' })
+  console.log('Rendering PDF...')
   await page.pdf({
     path: outputPdf,
     format: 'A4',
@@ -573,14 +579,14 @@ async function buildPresentation() {
       bottom: '0',
       left: '0',
     },
-  });
-  await browser.close();
+  })
+  await browser.close()
 
-  console.log(`HTML: ${outputHtml}`);
-  console.log(`PDF: ${outputPdf}`);
+  console.log(`HTML: ${outputHtml}`)
+  console.log(`PDF: ${outputPdf}`)
 }
 
 buildPresentation().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+  process.exitCode = 1
+})

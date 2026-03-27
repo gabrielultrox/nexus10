@@ -1,4 +1,4 @@
-const seedTimestamp = '2026-03-11T12:00:00.000Z';
+const seedTimestamp = '2026-03-11T12:00:00.000Z'
 
 function buildCourier(name, phone, machine, options = {}) {
   return {
@@ -23,7 +23,7 @@ function buildCourier(name, phone, machine, options = {}) {
     ],
     createdAtClient: seedTimestamp,
     updatedAtClient: seedTimestamp,
-  };
+  }
 }
 
 function buildMachine(device, holder, options = {}) {
@@ -37,7 +37,7 @@ function buildMachine(device, holder, options = {}) {
     updatedBy: options.updatedBy ?? 'Codex',
     createdAtClient: seedTimestamp,
     updatedAtClient: seedTimestamp,
-  };
+  }
 }
 
 export const courierSeedRecords = [
@@ -59,7 +59,7 @@ export const courierSeedRecords = [
   buildCourier('Nathan', '3788498424', 'Sem maquininha'),
   buildCourier('Terra', '3799673620', '017'),
   buildCourier('Ygor Fernandes', '3791994386', 'Sem maquininha'),
-];
+]
 
 export const machineSeedRecords = [
   buildMachine('017', 'Terra'),
@@ -73,4 +73,4 @@ export const machineSeedRecords = [
   buildMachine('777', 'Gabriel'),
   buildMachine('848', 'Sem entregador'),
   buildMachine('881', 'Sem entregador'),
-];
+]

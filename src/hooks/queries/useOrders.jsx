@@ -59,7 +59,9 @@ export function useOrderMutations({ storeId, tenantId, createdBy = null } = {}) 
     mutationFn: ({ orderId, values }) => updateOrder({ storeId, orderId, values }),
     onSuccess: (_result, variables) => {
       invalidateOrders()
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(storeId, variables.orderId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.detail(storeId, variables.orderId),
+      })
       toast.success('Pedido atualizado.')
     },
     onError: handleError,
@@ -81,7 +83,9 @@ export function useOrderMutations({ storeId, tenantId, createdBy = null } = {}) 
     mutationFn: ({ orderId, status }) => updateOrderStatus({ storeId, orderId, status }),
     onSuccess: (_result, variables) => {
       invalidateOrders()
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(storeId, variables.orderId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.detail(storeId, variables.orderId),
+      })
       toast.success('Status do pedido atualizado.')
     },
     onError: handleError,

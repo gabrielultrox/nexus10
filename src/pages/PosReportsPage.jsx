@@ -1,9 +1,9 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react'
 
-import PageIntro from '../components/common/PageIntro';
-import EmptyState from '../components/ui/EmptyState';
+import PageIntro from '../components/common/PageIntro'
+import EmptyState from '../components/ui/EmptyState'
 
-const PosReportsModule = lazy(() => import('../modules/reports/components/PosReportsModule'));
+const PosReportsModule = lazy(() => import('../modules/reports/components/PosReportsModule'))
 
 function PosReportsPage() {
   return (
@@ -18,7 +18,7 @@ function PosReportsPage() {
         <PosReportsModule />
       </Suspense>
     </div>
-  );
+  )
 }
 
-export default PosReportsPage;
+export default PosReportsPage

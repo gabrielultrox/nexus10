@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import HistoryTimelineModule from '../modules/history/components/HistoryTimelineModule';
+import PageIntro from '../components/common/PageIntro'
+import HistoryTimelineModule from '../modules/history/components/HistoryTimelineModule'
 
 function HistoryPage() {
   return (
@@ -12,7 +12,7 @@ function HistoryPage() {
 
       <HistoryTimelineModule />
     </div>
-  );
+  )
 }
 
-export default HistoryPage;
+export default HistoryPage

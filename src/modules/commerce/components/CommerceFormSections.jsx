@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { formatCurrencyBRL, getChannelLabel, getPaymentMethodLabel } from '../../../services/commerce'
+import {
+  formatCurrencyBRL,
+  getChannelLabel,
+  getPaymentMethodLabel,
+} from '../../../services/commerce'
 import Select from '../../../components/ui/Select'
 
 function normalizeSearchToken(value) {
@@ -12,8 +16,11 @@ function normalizeSearchToken(value) {
 }
 
 function buildOptionLabel(option, entityLabel) {
-  const secondaryToken = option?.sku || option?.phoneDisplay || option?.phone || option?.category || ''
-  return secondaryToken ? `${option?.name ?? entityLabel} - ${secondaryToken}` : `${option?.name ?? entityLabel}`
+  const secondaryToken =
+    option?.sku || option?.phoneDisplay || option?.phone || option?.category || ''
+  return secondaryToken
+    ? `${option?.name ?? entityLabel} - ${secondaryToken}`
+    : `${option?.name ?? entityLabel}`
 }
 
 function findOptionBySearch(options, query, allowPartial = false) {
@@ -27,7 +34,11 @@ function findOptionBySearch(options, query, allowPartial = false) {
     const nameToken = normalizeSearchToken(option.name)
     const secondaryToken = normalizeSearchToken(option.sku || option.phoneDisplay || option.phone)
     const labelToken = normalizeSearchToken(buildOptionLabel(option))
-    return nameToken === normalizedQuery || secondaryToken === normalizedQuery || labelToken === normalizedQuery
+    return (
+      nameToken === normalizedQuery ||
+      secondaryToken === normalizedQuery ||
+      labelToken === normalizedQuery
+    )
   })
 
   if (exactMatch || !allowPartial) {
@@ -78,23 +89,25 @@ function SearchSelectField({
       return options.slice(0, 8)
     }
 
-    return options.filter((option) => {
-      const haystack = [
-        option.name,
-        option.category,
-        option.sku,
-        option.barcode,
-        option.phoneDisplay,
-        option.phone,
-        option.neighborhood,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+    return options
+      .filter((option) => {
+        const haystack = [
+          option.name,
+          option.category,
+          option.sku,
+          option.barcode,
+          option.phoneDisplay,
+          option.phone,
+          option.neighborhood,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
 
-      return haystack.includes(normalizedQuery)
-    }).slice(0, 8)
+        return haystack.includes(normalizedQuery)
+      })
+      .slice(0, 8)
   }, [options, query])
 
   useEffect(() => {
@@ -102,11 +115,14 @@ function SearchSelectField({
     setQuery((current) => (current === nextQuery ? current : nextQuery))
   }, [entityLabel, selectedOption])
 
-  useEffect(() => () => {
-    if (closeTimeoutRef.current) {
-      window.clearTimeout(closeTimeoutRef.current)
-    }
-  }, [])
+  useEffect(
+    () => () => {
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current)
+      }
+    },
+    [],
+  )
 
   function commitSelection(nextQuery, { allowPartial = false } = {}) {
     const option = findOptionBySearch(options, nextQuery, allowPartial)
@@ -167,7 +183,11 @@ function SearchSelectField({
               }}
             >
               <span>{option.name}</span>
-              <small>{[option.sku, option.phoneDisplay || option.phone, option.category].filter(Boolean).join(' - ') || 'Sem classificacao'}</small>
+              <small>
+                {[option.sku, option.phoneDisplay || option.phone, option.category]
+                  .filter(Boolean)
+                  .join(' - ') || 'Sem classificacao'}
+              </small>
             </button>
           ))}
         </div>
@@ -176,13 +196,7 @@ function SearchSelectField({
   )
 }
 
-function ProductPickerDialog({
-  open,
-  products,
-  selectedProductId,
-  onClose,
-  onSelect,
-}) {
+function ProductPickerDialog({ open, products, selectedProductId, onClose, onSelect }) {
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const searchRef = useRef(null)
@@ -192,12 +206,7 @@ function ProductPickerDialog({
 
     const base = normalizedQuery
       ? products.filter((option) => {
-          const haystack = [
-            option.name,
-            option.category,
-            option.sku,
-            option.barcode,
-          ]
+          const haystack = [option.name, option.category, option.sku, option.barcode]
             .join(' ')
             .toLowerCase()
             .normalize('NFD')
@@ -284,8 +293,18 @@ function ProductPickerDialog({
   }
 
   return (
-    <div className="commerce-picker" role="dialog" aria-modal="true" aria-label="Pesquisar produtos">
-      <button type="button" className="commerce-picker__backdrop" onClick={onClose} aria-label="Fechar pesquisa de produtos" />
+    <div
+      className="commerce-picker"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pesquisar produtos"
+    >
+      <button
+        type="button"
+        className="commerce-picker__backdrop"
+        onClick={onClose}
+        aria-label="Fechar pesquisa de produtos"
+      />
 
       <div className="commerce-picker__panel">
         <div className="commerce-picker__header">
@@ -293,7 +312,11 @@ function ProductPickerDialog({
             <span className="commerce-picker__eyebrow">Pesquisa</span>
             <strong className="commerce-picker__title">Itens da operacao</strong>
           </div>
-          <button type="button" className="ui-button ui-button--ghost commerce-picker__close" onClick={onClose}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost commerce-picker__close"
+            onClick={onClose}
+          >
             Esc
           </button>
         </div>
@@ -370,16 +393,27 @@ export function CommerceIdentitySection({
 
       <div className="entity-stack">
         <div className="ui-field">
-          <label className="ui-label" htmlFor={channelId}>{channelLabel}</label>
-          <Select id={channelId} className="ui-select" value={channelValue} onChange={(event) => onFieldChange(channelField, event.target.value)}>
+          <label className="ui-label" htmlFor={channelId}>
+            {channelLabel}
+          </label>
+          <Select
+            id={channelId}
+            className="ui-select"
+            value={channelValue}
+            onChange={(event) => onFieldChange(channelField, event.target.value)}
+          >
             {channelOptions.map((channel) => (
-              <option key={channel} value={channel}>{getChannelLabel(channel)}</option>
+              <option key={channel} value={channel}>
+                {getChannelLabel(channel)}
+              </option>
             ))}
           </Select>
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={customerFieldId}>Cliente</label>
+          <label className="ui-label" htmlFor={customerFieldId}>
+            Cliente
+          </label>
           <SearchSelectField
             options={[{ id: '', name: 'Cliente avulso', phoneDisplay: '' }, ...customers]}
             value={customerValue}
@@ -390,10 +424,19 @@ export function CommerceIdentitySection({
         </div>
 
         <div className="ui-field">
-          <label className="ui-label" htmlFor={paymentId}>Forma de pagamento</label>
-          <Select id={paymentId} className="ui-select" value={paymentValue} onChange={(event) => onFieldChange('paymentMethod', event.target.value)}>
+          <label className="ui-label" htmlFor={paymentId}>
+            Forma de pagamento
+          </label>
+          <Select
+            id={paymentId}
+            className="ui-select"
+            value={paymentValue}
+            onChange={(event) => onFieldChange('paymentMethod', event.target.value)}
+          >
             {paymentOptions.map((paymentMethod) => (
-              <option key={paymentMethod} value={paymentMethod}>{getPaymentMethodLabel(paymentMethod)}</option>
+              <option key={paymentMethod} value={paymentMethod}>
+                {getPaymentMethodLabel(paymentMethod)}
+              </option>
             ))}
           </Select>
         </div>
@@ -431,7 +474,9 @@ export function CommerceItemsStep({
   const [pickerOpen, setPickerOpen] = useState(false)
   const currentItemIndex = Math.max(items.length - 1, 0)
   const currentItem = items[currentItemIndex] ?? {}
-  const validItems = draftItems.map((item, index) => ({ ...item, itemIndex: index })).filter((item) => item.productId)
+  const validItems = draftItems
+    .map((item, index) => ({ ...item, itemIndex: index }))
+    .filter((item) => item.productId)
 
   useEffect(() => {
     if (!didInitialFocus.current) {
@@ -536,7 +581,9 @@ export function CommerceItemsStep({
       add: () => addButtonRef.current?.focus(),
     }
     const nextField = backwards
-      ? { add: 'price', price: 'quantity', discount: 'price', quantity: 'product', product: 'add' }[field]
+      ? { add: 'price', price: 'quantity', discount: 'price', quantity: 'product', product: 'add' }[
+          field
+        ]
       : { product: 'quantity', quantity: 'price', price: 'add', discount: 'add' }[field]
 
     if (!backwards && field === 'add') {
@@ -597,7 +644,9 @@ export function CommerceItemsStep({
         <div className="commerce-step__input-row">
           <div className="commerce-product-search commerce-product-search--trigger">
             <button
-              ref={(element) => { productRefs.current[currentItemIndex] = element }}
+              ref={(element) => {
+                productRefs.current[currentItemIndex] = element
+              }}
               type="button"
               className="ui-input commerce-product-search__trigger"
               onClick={() => setPickerOpen(true)}
@@ -613,20 +662,62 @@ export function CommerceItemsStep({
             >
               <span className={currentItem.productId ? '' : 'commerce-product-search__placeholder'}>
                 {currentItem.productId
-                  ? buildOptionLabel(products.find((product) => product.id === currentItem.productId) ?? {}, 'Produto')
+                  ? buildOptionLabel(
+                      products.find((product) => product.id === currentItem.productId) ?? {},
+                      'Produto',
+                    )
                   : 'F9 - Pesquisar produto'}
               </span>
               <span className="commerce-product-search__shortcut">F9</span>
             </button>
           </div>
-          <input ref={quantityRef} className="ui-input" type="number" min="1" step="1" placeholder="Qtd" value={currentItem.quantity ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'quantity', event.target.value)} onKeyDown={handleEntryKeyDown('quantity')} />
-          <input ref={unitPriceRef} className="ui-input" type="number" min="0" step="0.01" placeholder="Valor" value={currentItem.unitPrice ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'unitPrice', event.target.value)} onKeyDown={handleEntryKeyDown('price')} />
-          <input ref={discountRef} className="ui-input" type="number" min="0" step="0.01" placeholder="Desc. %" value={currentItem.discountPercent ?? ''} onChange={(event) => onItemChange(currentItemIndex, 'discountPercent', event.target.value)} onKeyDown={handleEntryKeyDown('discount')} tabIndex={-1} />
+          <input
+            ref={quantityRef}
+            className="ui-input"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Qtd"
+            value={currentItem.quantity ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'quantity', event.target.value)}
+            onKeyDown={handleEntryKeyDown('quantity')}
+          />
+          <input
+            ref={unitPriceRef}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Valor"
+            value={currentItem.unitPrice ?? ''}
+            onChange={(event) => onItemChange(currentItemIndex, 'unitPrice', event.target.value)}
+            onKeyDown={handleEntryKeyDown('price')}
+          />
+          <input
+            ref={discountRef}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Desc. %"
+            value={currentItem.discountPercent ?? ''}
+            onChange={(event) =>
+              onItemChange(currentItemIndex, 'discountPercent', event.target.value)
+            }
+            onKeyDown={handleEntryKeyDown('discount')}
+            tabIndex={-1}
+          />
           <div className="commerce-step__line-total">
             <span>Total</span>
             <strong>{formatCurrencyBRL(draftItems[currentItemIndex]?.totalPrice ?? 0)}</strong>
           </div>
-          <button ref={addButtonRef} type="button" className="ui-button ui-button--primary commerce-step__add-button" onClick={commitCurrentLine} onKeyDown={handleEntryKeyDown('add')}>
+          <button
+            ref={addButtonRef}
+            type="button"
+            className="ui-button ui-button--primary commerce-step__add-button"
+            onClick={commitCurrentLine}
+            onKeyDown={handleEntryKeyDown('add')}
+          >
             +
           </button>
         </div>
@@ -649,17 +740,28 @@ export function CommerceItemsStep({
             <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__item-row">
               <div className="commerce-step__item-main">
                 <span>{item.productSnapshot?.name ?? item.product?.name ?? 'Produto'}</span>
-                <small>{item.product?.category ?? item.productSnapshot?.category ?? 'Sem categoria'}</small>
+                <small>
+                  {item.product?.category ?? item.productSnapshot?.category ?? 'Sem categoria'}
+                </small>
               </div>
               <span>{item.quantity}</span>
               <span>{formatCurrencyBRL(item.unitPrice)}</span>
               <span>{Number(item.discountPercent ?? 0)}%</span>
               <strong>{formatCurrencyBRL(item.totalPrice ?? 0)}</strong>
               <div className="commerce-step__item-actions">
-                <button type="button" className="ui-button ui-button--ghost commerce-step__edit-button" onClick={() => handleEditItem(item)}>
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost commerce-step__edit-button"
+                  onClick={() => handleEditItem(item)}
+                >
                   Editar
                 </button>
-                <button type="button" className="ui-button commerce-step__remove-button" aria-label="Remover item" onClick={() => onRemoveItem(item.itemIndex)}>
+                <button
+                  type="button"
+                  className="ui-button commerce-step__remove-button"
+                  aria-label="Remover item"
+                  onClick={() => onRemoveItem(item.itemIndex)}
+                >
                   x
                 </button>
               </div>
@@ -676,7 +778,12 @@ export function CommerceItemsStep({
               Voltar
             </button>
           ) : null}
-          <button type="button" className="ui-button ui-button--primary" disabled={!hasValidItems} onClick={onAdvance}>
+          <button
+            type="button"
+            className="ui-button ui-button--primary"
+            disabled={!hasValidItems}
+            onClick={onAdvance}
+          >
             Avancar {'->'}
           </button>
         </div>
@@ -716,24 +823,60 @@ export function CommerceAddressSection({
 
       <div className="entity-stack">
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-neighborhood`}>Bairro</label>
-          <input id={`${itemPrefix}-neighborhood`} className="ui-input" value={address.neighborhood} onChange={(event) => onAddressChange('neighborhood', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-neighborhood`}>
+            Bairro
+          </label>
+          <input
+            id={`${itemPrefix}-neighborhood`}
+            className="ui-input"
+            value={address.neighborhood}
+            onChange={(event) => onAddressChange('neighborhood', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-address`}>Endereco</label>
-          <input id={`${itemPrefix}-address`} className="ui-input" value={address.addressLine} onChange={(event) => onAddressChange('addressLine', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-address`}>
+            Endereco
+          </label>
+          <input
+            id={`${itemPrefix}-address`}
+            className="ui-input"
+            value={address.addressLine}
+            onChange={(event) => onAddressChange('addressLine', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-reference`}>Referencia</label>
-          <input id={`${itemPrefix}-reference`} className="ui-input" value={address.reference} onChange={(event) => onAddressChange('reference', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-reference`}>
+            Referencia
+          </label>
+          <input
+            id={`${itemPrefix}-reference`}
+            className="ui-input"
+            value={address.reference}
+            onChange={(event) => onAddressChange('reference', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-complement`}>Complemento</label>
-          <input id={`${itemPrefix}-complement`} className="ui-input" value={address.complement} onChange={(event) => onAddressChange('complement', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-complement`}>
+            Complemento
+          </label>
+          <input
+            id={`${itemPrefix}-complement`}
+            className="ui-input"
+            value={address.complement}
+            onChange={(event) => onAddressChange('complement', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-notes`}>Observacoes</label>
-          <textarea id={`${itemPrefix}-notes`} className="ui-textarea" rows={4} value={notes} onChange={(event) => onFieldChange('notes', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-notes`}>
+            Observacoes
+          </label>
+          <textarea
+            id={`${itemPrefix}-notes`}
+            className="ui-textarea"
+            rows={4}
+            value={notes}
+            onChange={(event) => onFieldChange('notes', event.target.value)}
+          />
         </div>
       </div>
     </div>
@@ -758,29 +901,84 @@ export function CommerceTotalsSection({
 
       <div className={`${domainClassName}__totals-grid`}>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-freight`}>Frete</label>
-          <input id={`${itemPrefix}-freight`} className="ui-input" type="number" min="0" step="0.01" value={totals.freight} onChange={(event) => onTotalsChange('freight', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-freight`}>
+            Frete
+          </label>
+          <input
+            id={`${itemPrefix}-freight`}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={totals.freight}
+            onChange={(event) => onTotalsChange('freight', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-extra`}>Adicional</label>
-          <input id={`${itemPrefix}-extra`} className="ui-input" type="number" min="0" step="0.01" value={totals.extraAmount} onChange={(event) => onTotalsChange('extraAmount', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-extra`}>
+            Adicional
+          </label>
+          <input
+            id={`${itemPrefix}-extra`}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={totals.extraAmount}
+            onChange={(event) => onTotalsChange('extraAmount', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-discount-percent`}>Desconto (%)</label>
-          <input id={`${itemPrefix}-discount-percent`} className="ui-input" type="number" min="0" step="0.01" value={totals.discountPercent} onChange={(event) => onTotalsChange('discountPercent', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-discount-percent`}>
+            Desconto (%)
+          </label>
+          <input
+            id={`${itemPrefix}-discount-percent`}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={totals.discountPercent}
+            onChange={(event) => onTotalsChange('discountPercent', event.target.value)}
+          />
         </div>
         <div className="ui-field">
-          <label className="ui-label" htmlFor={`${itemPrefix}-discount-value`}>Desconto (R$)</label>
-          <input id={`${itemPrefix}-discount-value`} className="ui-input" type="number" min="0" step="0.01" value={totals.discountValue} onChange={(event) => onTotalsChange('discountValue', event.target.value)} />
+          <label className="ui-label" htmlFor={`${itemPrefix}-discount-value`}>
+            Desconto (R$)
+          </label>
+          <input
+            id={`${itemPrefix}-discount-value`}
+            className="ui-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={totals.discountValue}
+            onChange={(event) => onTotalsChange('discountValue', event.target.value)}
+          />
         </div>
       </div>
 
       <div className={`${domainClassName}__summary`}>
-        <div className={`${domainClassName}__summary-row`}><span>Subtotal</span><strong>{formatCurrencyBRL(calculatedTotals.subtotal)}</strong></div>
-        <div className={`${domainClassName}__summary-row`}><span>Frete</span><strong>{formatCurrencyBRL(calculatedTotals.freight)}</strong></div>
-        <div className={`${domainClassName}__summary-row`}><span>Adicional</span><strong>{formatCurrencyBRL(calculatedTotals.extraAmount)}</strong></div>
-        <div className={`${domainClassName}__summary-row`}><span>Desconto</span><strong>{formatCurrencyBRL(calculatedTotals.discountValue)}</strong></div>
-        <div className={`${domainClassName}__summary-row ${domainClassName}__summary-row--total`}><span>Total final</span><strong>{formatCurrencyBRL(calculatedTotals.total)}</strong></div>
+        <div className={`${domainClassName}__summary-row`}>
+          <span>Subtotal</span>
+          <strong>{formatCurrencyBRL(calculatedTotals.subtotal)}</strong>
+        </div>
+        <div className={`${domainClassName}__summary-row`}>
+          <span>Frete</span>
+          <strong>{formatCurrencyBRL(calculatedTotals.freight)}</strong>
+        </div>
+        <div className={`${domainClassName}__summary-row`}>
+          <span>Adicional</span>
+          <strong>{formatCurrencyBRL(calculatedTotals.extraAmount)}</strong>
+        </div>
+        <div className={`${domainClassName}__summary-row`}>
+          <span>Desconto</span>
+          <strong>{formatCurrencyBRL(calculatedTotals.discountValue)}</strong>
+        </div>
+        <div className={`${domainClassName}__summary-row ${domainClassName}__summary-row--total`}>
+          <span>Total final</span>
+          <strong>{formatCurrencyBRL(calculatedTotals.total)}</strong>
+        </div>
       </div>
     </div>
   )
@@ -815,12 +1013,19 @@ export function CommerceFinishStep({
               ) : (
                 <div className="commerce-step__summary-items">
                   {summaryItems.map((item) => (
-                    <div key={`${item.productId}-${item.itemIndex}`} className="commerce-step__summary-item">
+                    <div
+                      key={`${item.productId}-${item.itemIndex}`}
+                      className="commerce-step__summary-item"
+                    >
                       <div className="commerce-step__summary-copy">
                         <span>{item.name}</span>
-                        <small>{item.quantity}x {formatCurrencyBRL(item.unitPrice)}</small>
+                        <small>
+                          {item.quantity}x {formatCurrencyBRL(item.unitPrice)}
+                        </small>
                       </div>
-                      <strong className="commerce-step__summary-value">{formatCurrencyBRL(item.totalPrice)}</strong>
+                      <strong className="commerce-step__summary-value">
+                        {formatCurrencyBRL(item.totalPrice)}
+                      </strong>
                     </div>
                   ))}
                 </div>
@@ -837,5 +1042,3 @@ export function CommerceFinishStep({
     </section>
   )
 }
-
-

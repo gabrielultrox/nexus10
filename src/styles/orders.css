@@ -68,12 +68,16 @@
 
 .workspace-shell--orders .workspace-nav .ui-button--primary,
 .workspace-shell--sales .workspace-nav .ui-button--primary {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-amber) 26%, transparent), 0 16px 36px color-mix(in srgb, var(--color-accent-amber) 20%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent-amber) 26%, transparent),
+    0 16px 36px color-mix(in srgb, var(--color-accent-amber) 20%, transparent);
 }
 
 .workspace-shell--orders .workspace-nav .ui-button--secondary,
 .workspace-shell--sales .workspace-nav .ui-button--secondary {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 24%, transparent), 0 16px 36px color-mix(in srgb, var(--color-accent-cyan) 18%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 24%, transparent),
+    0 16px 36px color-mix(in srgb, var(--color-accent-cyan) 18%, transparent);
 }
 
 .orders-domain {
@@ -143,7 +147,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 6%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel) 98%, transparent);
 }
 
@@ -159,7 +167,9 @@
 
 .orders-domain__item-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr) auto;
+  grid-template-columns:
+    minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr)
+    auto;
   gap: var(--space-2);
   align-items: end;
   min-width: 0;
@@ -167,7 +177,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 12%, var(--color-border-subtle));
   border-radius: var(--radius-section);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 4%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 97%, var(--surface-panel));
 }
 
@@ -182,7 +196,11 @@
   border-radius: var(--radius-section);
   overflow: hidden;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 3%, transparent), transparent 14%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 3%, transparent),
+      transparent 14%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 97%, var(--surface-panel));
 }
 
@@ -230,7 +248,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 12%, var(--color-border-subtle));
   border-radius: var(--radius-section);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 3%, transparent), transparent 14%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 3%, transparent),
+      transparent 14%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 97%, var(--surface-panel));
 }
 
@@ -291,7 +313,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 14%, var(--color-border-subtle));
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 22%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 22%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
@@ -412,7 +438,11 @@
 .orders-domain__timeline-card--launched,
 .sales-domain__timeline-card--muted {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 18%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-soft) 98%, var(--surface-panel));
 }
 
@@ -501,14 +531,20 @@
 
 .sales-domain__item-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr) auto;
+  grid-template-columns:
+    minmax(180px, 1.5fr) repeat(2, minmax(96px, 0.58fr)) minmax(118px, 0.62fr)
+    auto;
   gap: var(--space-2);
   align-items: end;
   padding: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-accent-primary) 24%, var(--color-border-subtle));
   border-radius: var(--radius-section);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 6%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-primary) 6%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 97%, var(--surface-panel));
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 4%, transparent);
 }
@@ -521,10 +557,15 @@
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--color-accent-secondary) 20%, var(--color-border-subtle));
+  border: 1px solid
+    color-mix(in srgb, var(--color-accent-secondary) 20%, var(--color-border-subtle));
   border-radius: var(--radius-section);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 6%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-primary) 6%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 97%, var(--surface-panel));
 }
 
@@ -565,7 +606,8 @@
 
 .sales-domain__summary-row--total {
   padding-top: var(--space-2);
-  border-top: 1px solid color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-border-subtle));
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-border-subtle));
   color: var(--color-text-primary);
   margin-top: var(--space-1);
 }
@@ -582,7 +624,8 @@
   align-items: flex-start;
   gap: var(--space-4);
   padding: var(--space-3) 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-accent-secondary) 14%, var(--color-border-subtle));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-accent-secondary) 14%, var(--color-border-subtle));
 }
 
 .sales-domain__item-line:last-child {
@@ -604,8 +647,16 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--surface-panel) 94%, transparent));
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 96%, transparent),
+      color-mix(in srgb, var(--surface-panel) 94%, transparent)
+    );
 }
 
 .commerce-signal-bar__copy {
@@ -645,7 +696,11 @@
   overflow: hidden;
   border-radius: var(--radius-panel);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 18%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
@@ -669,15 +724,31 @@
   border-color: color-mix(in srgb, var(--color-accent-primary) 24%, var(--color-border-subtle));
   padding: var(--space-3);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 7%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--surface-panel) 97%, transparent));
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-primary) 7%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 98%, transparent),
+      color-mix(in srgb, var(--surface-panel) 97%, transparent)
+    );
 }
 
 .sales-domain .commerce-signal-bar {
   border-color: color-mix(in srgb, var(--color-accent-primary) 20%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 10%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--surface-panel) 94%, transparent));
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-primary) 10%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 96%, transparent),
+      color-mix(in srgb, var(--surface-panel) 94%, transparent)
+    );
 }
 
 .commerce-detail-band {
@@ -901,7 +972,11 @@
 .commerce-step > .entity-form-section,
 .commerce-step__finish-grid > .entity-form-section {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 16%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 8%, transparent),
+      transparent 16%
+    ),
     color-mix(in srgb, var(--surface-panel) 94%, transparent);
 }
 
@@ -977,7 +1052,11 @@
 
 .commerce-step__item-row--header {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 8%, transparent), transparent 20%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 8%, transparent),
+      transparent 20%
+    ),
     color-mix(in srgb, var(--surface-panel-soft) 96%, var(--surface-panel));
   color: var(--color-text-muted);
   font-family: var(--font-mono);
@@ -1332,23 +1411,43 @@
 .orders-domain .commerce-panel--items {
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
 .orders-domain .commerce-step__input-row {
   border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
 .orders-domain .commerce-step__line-total {
   border-color: color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 46%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-cyan) 8%, transparent),
+      transparent 46%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 96%, var(--surface-panel));
 }
 
@@ -1368,31 +1467,60 @@
 .orders-domain .commerce-step__footer {
   border-top-color: color-mix(in srgb, var(--color-accent-cyan) 16%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 16%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+      transparent 16%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--color-bg-panel));
 }
 
 .sales-domain .commerce-panel--items {
-  border: 1px solid color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
+  border: 1px solid
+    color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-secondary) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
 .sales-domain .commerce-step__input-row {
   border-color: color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 14%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-secondary) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 14%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
 }
 
 .sales-domain .commerce-step__line-total {
   border-color: color-mix(in srgb, var(--color-accent-secondary) 18%, var(--color-border-subtle));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-secondary) 8%, transparent), transparent 46%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-secondary) 8%, transparent),
+      transparent 46%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 96%, var(--surface-panel));
 }
 
@@ -1410,10 +1538,22 @@
 }
 
 .sales-domain .commerce-step__footer {
-  border-top-color: color-mix(in srgb, var(--color-accent-secondary) 16%, var(--color-border-subtle));
+  border-top-color: color-mix(
+    in srgb,
+    var(--color-accent-secondary) 16%,
+    var(--color-border-subtle)
+  );
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 6%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 16%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-secondary) 6%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+      transparent 16%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--color-bg-panel));
 }
 
@@ -1670,7 +1810,6 @@
   .commerce-step__footer-actions .ui-button {
     width: 100%;
   }
-
 }
 
 .workspace-shell {
@@ -1929,7 +2068,10 @@
   color: var(--text-muted);
   font-size: 14px;
   line-height: 1;
-  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
 }
 
 .orders-domain__delete-button:hover:not(:disabled) {

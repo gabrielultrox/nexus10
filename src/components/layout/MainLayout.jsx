@@ -1,9 +1,9 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom'
 
-import AssistantPanel from '../../modules/assistant/AssistantPanel';
-import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider';
-import AppHeader from './AppHeader';
-import Sidebar from './Sidebar';
+import AssistantPanel from '../../modules/assistant/AssistantPanel'
+import { AssistantContextProvider } from '../../modules/assistant/AssistantContextProvider'
+import AppHeader from './AppHeader'
+import Sidebar from './Sidebar'
 
 function MainLayout() {
   return (
@@ -23,7 +23,7 @@ function MainLayout() {
         <AssistantPanel />
       </div>
     </AssistantContextProvider>
-  );
+  )
 }
 
-export default MainLayout;
+export default MainLayout

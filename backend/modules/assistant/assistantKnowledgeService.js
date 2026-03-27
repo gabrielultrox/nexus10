@@ -8,7 +8,8 @@ function buildHelpResponse(title, answer, suggestions = []) {
 
 const knowledgeEntries = [
   {
-    match: (text) => text.includes('diferenca') && text.includes('pedido') && text.includes('venda'),
+    match: (text) =>
+      text.includes('diferenca') && text.includes('pedido') && text.includes('venda'),
     response: buildHelpResponse(
       'Pedido x venda',
       'Pedido e um registro comercial e operacional. Venda e o evento real que baixa estoque, cria financeiro e registra auditoria.',
@@ -16,7 +17,8 @@ const knowledgeEntries = [
     ),
   },
   {
-    match: (text) => text.includes('gerar venda') || (text.includes('como') && text.includes('venda')),
+    match: (text) =>
+      text.includes('gerar venda') || (text.includes('como') && text.includes('venda')),
     response: buildHelpResponse(
       'Como gerar uma venda',
       'Voce pode criar uma venda direta em Vendas ou gerar uma venda a partir de um pedido no detalhe do pedido usando o botao Gerar venda.',
@@ -24,7 +26,8 @@ const knowledgeEntries = [
     ),
   },
   {
-    match: (text) => text.includes('cadastrar cliente') || (text.includes('como') && text.includes('cliente')),
+    match: (text) =>
+      text.includes('cadastrar cliente') || (text.includes('como') && text.includes('cliente')),
     response: buildHelpResponse(
       'Como cadastrar cliente',
       'Abra o modulo Clientes, use o formulario principal para informar nome, telefone e endereco, e salve o cadastro para usar depois em pedidos e vendas.',

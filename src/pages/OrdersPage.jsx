@@ -1,38 +1,39 @@
-import '../styles/orders.css';
+import '../styles/orders.css'
 
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import PageTabs from '../components/common/PageTabs';
-import OrdersModule from '../modules/orders/components/OrdersModule';
+import PageTabs from '../components/common/PageTabs'
+import OrdersModule from '../modules/orders/components/OrdersModule'
 
 function OrdersPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { orderId } = useParams();
-  const isNew = location.pathname === '/orders/new';
-  const isEdit = location.pathname.endsWith('/edit');
-  const viewMode = isNew ? 'create' : isEdit ? 'edit' : orderId ? 'detail' : 'list';
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { orderId } = useParams()
+  const isNew = location.pathname === '/orders/new'
+  const isEdit = location.pathname.endsWith('/edit')
+  const viewMode = isNew ? 'create' : isEdit ? 'edit' : orderId ? 'detail' : 'list'
   const orderTabs = [
     { id: 'list', label: 'Lista de pedidos' },
     { id: 'form', label: viewMode === 'edit' ? 'Editar pedido' : 'Novo pedido' },
     ...(orderId ? [{ id: 'detail', label: 'Detalhe do pedido' }] : []),
-  ];
-  const activeTab = viewMode === 'list' ? 'list' : viewMode === 'create' || viewMode === 'edit' ? 'form' : 'detail';
+  ]
+  const activeTab =
+    viewMode === 'list' ? 'list' : viewMode === 'create' || viewMode === 'edit' ? 'form' : 'detail'
 
   function handleTabChange(tabId) {
     if (tabId === 'list') {
-      navigate('/orders');
-      return;
+      navigate('/orders')
+      return
     }
 
     if (tabId === 'form') {
       navigate('/orders/new', {
         state: { resetNonce: Date.now() },
-      });
-      return;
+      })
+      return
     }
 
-    navigate(orderId ? `/orders/${orderId}` : '/orders');
+    navigate(orderId ? `/orders/${orderId}` : '/orders')
   }
 
   return (
@@ -74,7 +75,7 @@ function OrdersPage() {
         onOpenList={() => navigate('/orders')}
       />
     </div>
-  );
+  )
 }
 
-export default OrdersPage;
+export default OrdersPage

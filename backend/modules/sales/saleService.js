@@ -1,58 +1,58 @@
-import { normalizeOrderStatus } from '../orders/orderValidationService.js';
-import { createSaleRepository } from './saleRepository.js';
-import { postSaleLifecycle } from './salePostingService.js';
+import { normalizeOrderStatus } from '../orders/orderValidationService.js'
+import { createSaleRepository } from './saleRepository.js'
+import { postSaleLifecycle } from './salePostingService.js'
 import {
   buildCreatedBy,
   createSaleError,
   normalizeSaleDomainStatus,
   validateSaleInput,
-} from './saleValidationService.js';
+} from './saleValidationService.js'
 
-const repository = createSaleRepository();
-const reversibleStatuses = new Set(['POSTED']);
-const saleInfrastructureTimeoutMs = 5000;
+const repository = createSaleRepository()
+const reversibleStatuses = new Set(['POSTED'])
+const saleInfrastructureTimeoutMs = 5000
 
 function validateStoreId(storeId) {
   if (!String(storeId ?? '').trim()) {
-    throw createSaleError('storeId e obrigatorio.');
+    throw createSaleError('storeId e obrigatorio.')
   }
 }
 
 function validateSaleId(saleId) {
   if (!String(saleId ?? '').trim()) {
-    throw createSaleError('saleId e obrigatorio.');
+    throw createSaleError('saleId e obrigatorio.')
   }
 }
 
 function validateOrderId(orderId) {
   if (!String(orderId ?? '').trim()) {
-    throw createSaleError('orderId e obrigatorio.');
+    throw createSaleError('orderId e obrigatorio.')
   }
 }
 
 function serializeDate(value) {
   if (!value) {
-    return null;
+    return null
   }
 
   if (typeof value?.toDate === 'function') {
-    return value.toDate().toISOString();
+    return value.toDate().toISOString()
   }
 
   if (value instanceof Date) {
-    return value.toISOString();
+    return value.toISOString()
   }
 
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
 }
 
 function mapSaleResponse(snapshot) {
   if (!snapshot) {
-    return null;
+    return null
   }
 
-  const { id, data } = snapshot;
+  const { id, data } = snapshot
 
   return {
     id,
@@ -60,7 +60,7 @@ function mapSaleResponse(snapshot) {
     createdAt: serializeDate(data.createdAt),
     updatedAt: serializeDate(data.updatedAt),
     launchedAt: serializeDate(data.launchedAt),
-  };
+  }
 }
 
 function buildOrderSnapshot(orderId, order) {
@@ -70,12 +70,12 @@ function buildOrderSnapshot(orderId, order) {
     status: normalizeOrderStatus(order.status, 'OPEN'),
     domainStatus: normalizeOrderStatus(order.status, 'OPEN'),
     total: order.totals?.total ?? 0,
-  };
+  }
 }
 
 function buildSeededOrderData(orderId, values = {}) {
   if (!Array.isArray(values.items) || values.items.length === 0 || !values.totals) {
-    return null;
+    return null
   }
 
   return {
@@ -95,7 +95,7 @@ function buildSeededOrderData(orderId, values = {}) {
       notes: values.notes ?? '',
       tenantId: values.orderTenantId ?? null,
     },
-  };
+  }
 }
 
 function withInfrastructureTimeout(promise, label) {
@@ -103,29 +103,25 @@ function withInfrastructureTimeout(promise, label) {
     promise,
     new Promise((_, reject) => {
       setTimeout(() => {
-        reject(createSaleError(
-          `Tempo excedido ao concluir ${label}.`,
-          504,
-          'SALE_TIMEOUT',
-        ));
-      }, saleInfrastructureTimeoutMs);
+        reject(createSaleError(`Tempo excedido ao concluir ${label}.`, 504, 'SALE_TIMEOUT'))
+      }, saleInfrastructureTimeoutMs)
     }),
-  ]);
+  ])
 }
 
 function normalizeInfrastructureError(error) {
   if (error?.code === 'SALE_TIMEOUT') {
-    return error;
+    return error
   }
 
-  const message = String(error?.message ?? '');
+  const message = String(error?.message ?? '')
 
   if (/RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)) {
     return createSaleError(
       'Sistema temporariamente sobrecarregado para lancar a venda. Tente novamente em instantes.',
       503,
       'SALE_INFRA_UNAVAILABLE',
-    );
+    )
   }
 
   if (/DEADLINE_EXCEEDED|deadline exceeded/i.test(message)) {
@@ -133,26 +129,22 @@ function normalizeInfrastructureError(error) {
       'Tempo excedido ao lancar a venda. Tente novamente em instantes.',
       504,
       'SALE_INFRA_TIMEOUT',
-    );
+    )
   }
 
-  return error;
+  return error
 }
 
 function isRecoverablePostingError(error) {
-  return ['SALE_TIMEOUT', 'SALE_INFRA_TIMEOUT', 'SALE_INFRA_UNAVAILABLE'].includes(error?.code)
-    || /Tempo excedido ao concluir o posting da venda/i.test(String(error?.message ?? ''));
+  return (
+    ['SALE_TIMEOUT', 'SALE_INFRA_TIMEOUT', 'SALE_INFRA_UNAVAILABLE'].includes(error?.code) ||
+    /Tempo excedido ao concluir o posting da venda/i.test(String(error?.message ?? ''))
+  )
 }
 
-function buildSaleDocument({
-  storeId,
-  tenantId,
-  validatedSale,
-  createdBy,
-  orderSnapshot = null,
-}) {
-  const actor = buildCreatedBy(createdBy);
-  const now = new Date();
+function buildSaleDocument({ storeId, tenantId, validatedSale, createdBy, orderSnapshot = null }) {
+  const actor = buildCreatedBy(createdBy)
+  const now = new Date()
 
   return {
     ...validatedSale,
@@ -166,15 +158,16 @@ function buildSaleDocument({
     launchedBy: actor,
     createdAt: now,
     updatedAt: now,
-  };
+  }
 }
 
 function mergeOrderIntoSaleValues(order, values = {}, orderId) {
-  const paymentMethod = values.payment?.method
-    ?? values.paymentMethod
-    ?? order.paymentPreview?.method
-    ?? order.payment?.method
-    ?? null;
+  const paymentMethod =
+    values.payment?.method ??
+    values.paymentMethod ??
+    order.paymentPreview?.method ??
+    order.payment?.method ??
+    null
 
   return {
     code: values.code ?? undefined,
@@ -190,16 +183,10 @@ function mergeOrderIntoSaleValues(order, values = {}, orderId) {
     address: values.address ?? order.address,
     notes: values.notes ?? order.notes ?? '',
     status: 'POSTED',
-  };
+  }
 }
 
-async function finalizeSaleCreation({
-  storeId,
-  tenantId,
-  saleId,
-  saleData,
-  actor,
-}) {
+async function finalizeSaleCreation({ storeId, tenantId, saleId, saleData, actor }) {
   try {
     const postingFlags = await withInfrastructureTimeout(
       postSaleLifecycle({
@@ -213,13 +200,13 @@ async function finalizeSaleCreation({
         actor,
       }),
       'o posting da venda',
-    );
+    )
 
     const nextData = {
       ...saleData,
       ...postingFlags,
       updatedAt: new Date(),
-    };
+    }
 
     await withInfrastructureTimeout(
       repository.markPostingFlags({
@@ -229,35 +216,35 @@ async function finalizeSaleCreation({
         financialPosted: postingFlags.financialPosted,
       }),
       'a confirmacao do posting',
-    );
+    )
 
     return {
       id: saleId,
       data: nextData,
-    };
+    }
   } catch (error) {
-    throw normalizeInfrastructureError(error);
+    throw normalizeInfrastructureError(error)
   }
 }
 
 async function safeCleanup(task) {
-  await withInfrastructureTimeout(task, 'a limpeza da operacao').catch(() => {});
+  await withInfrastructureTimeout(task, 'a limpeza da operacao').catch(() => {})
 }
 
 export async function createDirectSale({ storeId, tenantId = null, values, createdBy = null }) {
-  validateStoreId(storeId);
+  validateStoreId(storeId)
 
   const validatedSale = validateSaleInput({
     ...values,
     source: 'DIRECT',
     status: 'POSTED',
-  });
+  })
   const saleData = buildSaleDocument({
     storeId,
     tenantId,
     validatedSale,
     createdBy,
-  });
+  })
 
   const createdSale = await withInfrastructureTimeout(
     repository.createDirectSale({
@@ -265,7 +252,7 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
       payload: saleData,
     }),
     'a criacao inicial da venda',
-  );
+  )
 
   try {
     const persistedSale = await finalizeSaleCreation({
@@ -274,12 +261,12 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
       saleId: createdSale.id,
       saleData,
       actor: buildCreatedBy(createdBy),
-    });
+    })
 
-    return mapSaleResponse(persistedSale);
+    return mapSaleResponse(persistedSale)
   } catch (error) {
     if (isRecoverablePostingError(error)) {
-      return mapSaleResponse(createdSale);
+      return mapSaleResponse(createdSale)
     }
 
     await safeCleanup(
@@ -287,9 +274,9 @@ export async function createDirectSale({ storeId, tenantId = null, values, creat
         storeId,
         saleId: createdSale.id,
       }),
-    );
+    )
 
-    throw error;
+    throw error
   }
 }
 
@@ -300,28 +287,28 @@ export async function createSaleFromOrder({
   values = {},
   createdBy = null,
 }) {
-  validateStoreId(storeId);
-  validateOrderId(orderId);
+  validateStoreId(storeId)
+  validateOrderId(orderId)
 
-  const order = buildSeededOrderData(orderId, values)
-    ?? await repository.getOrderById({ storeId, orderId });
+  const order =
+    buildSeededOrderData(orderId, values) ?? (await repository.getOrderById({ storeId, orderId }))
 
   if (!order) {
-    throw createSaleError('Pedido nao encontrado.', 404, 'ORDER_NOT_FOUND');
+    throw createSaleError('Pedido nao encontrado.', 404, 'ORDER_NOT_FOUND')
   }
 
   if (normalizeOrderStatus(order.data.status, 'OPEN') === 'CANCELLED') {
-    throw createSaleError('Pedidos cancelados nao podem gerar venda.', 409, 'ORDER_CANCELLED');
+    throw createSaleError('Pedidos cancelados nao podem gerar venda.', 409, 'ORDER_CANCELLED')
   }
 
-  const validatedSale = validateSaleInput(mergeOrderIntoSaleValues(order.data, values, orderId));
+  const validatedSale = validateSaleInput(mergeOrderIntoSaleValues(order.data, values, orderId))
   const saleData = buildSaleDocument({
     storeId,
     tenantId: tenantId ?? order.data.tenantId ?? null,
     validatedSale,
     createdBy,
     orderSnapshot: buildOrderSnapshot(orderId, order.data),
-  });
+  })
 
   const createdSale = await withInfrastructureTimeout(
     repository.createSaleFromOrder({
@@ -331,7 +318,7 @@ export async function createSaleFromOrder({
       previousOrderStatus: normalizeOrderStatus(order.data.status, 'OPEN'),
     }),
     'a criacao inicial da venda a partir do pedido',
-  );
+  )
 
   try {
     const persistedSale = await finalizeSaleCreation({
@@ -340,13 +327,13 @@ export async function createSaleFromOrder({
       saleId: createdSale.id,
       saleData,
       actor: buildCreatedBy(createdBy),
-    });
+    })
 
     return {
       orderId,
       saleId: createdSale.id,
       sale: mapSaleResponse(persistedSale),
-    };
+    }
   } catch (error) {
     if (isRecoverablePostingError(error)) {
       return {
@@ -356,7 +343,7 @@ export async function createSaleFromOrder({
           id: createdSale.id,
           data: saleData,
         }),
-      };
+      }
     }
 
     await safeCleanup(
@@ -366,59 +353,63 @@ export async function createSaleFromOrder({
         saleId: createdSale.id,
         previousOrderStatus: createdSale.previousOrderStatus,
       }),
-    );
+    )
 
-    throw error;
+    throw error
   }
 }
 
 export async function deleteSale({ storeId, saleId }) {
-  validateStoreId(storeId);
-  validateSaleId(saleId);
+  validateStoreId(storeId)
+  validateSaleId(saleId)
 
   const deletedSale = await repository.deleteSaleRecord({
     storeId,
     saleId,
-  });
+  })
 
-  return mapSaleResponse(deletedSale);
+  return mapSaleResponse(deletedSale)
 }
 
 export async function updateSaleStatus({ storeId, saleId, status, actor = null }) {
-  validateStoreId(storeId);
-  validateSaleId(saleId);
+  validateStoreId(storeId)
+  validateSaleId(saleId)
 
-  const currentSale = await repository.getSaleById({ storeId, saleId });
+  const currentSale = await repository.getSaleById({ storeId, saleId })
 
   if (!currentSale) {
-    throw createSaleError('Venda nao encontrada.', 404, 'SALE_NOT_FOUND');
+    throw createSaleError('Venda nao encontrada.', 404, 'SALE_NOT_FOUND')
   }
 
-  const nextStatus = normalizeSaleDomainStatus(status, null);
+  const nextStatus = normalizeSaleDomainStatus(status, null)
 
   if (!nextStatus) {
-    throw createSaleError('Status de venda invalido.');
+    throw createSaleError('Status de venda invalido.')
   }
 
-  const currentStatus = normalizeSaleDomainStatus(currentSale.data.status, 'POSTED');
+  const currentStatus = normalizeSaleDomainStatus(currentSale.data.status, 'POSTED')
 
   if (nextStatus === currentStatus) {
-    return mapSaleResponse(currentSale);
+    return mapSaleResponse(currentSale)
   }
 
   if (!reversibleStatuses.has(currentStatus)) {
-    throw createSaleError('Esta venda nao pode mais ser alterada.', 409, 'SALE_ALREADY_CLOSED');
+    throw createSaleError('Esta venda nao pode mais ser alterada.', 409, 'SALE_ALREADY_CLOSED')
   }
 
   if (nextStatus === 'POSTED') {
-    throw createSaleError('A venda ja foi lancada e nao pode voltar para POSTED.', 409, 'SALE_STATUS_INVALID');
+    throw createSaleError(
+      'A venda ja foi lancada e nao pode voltar para POSTED.',
+      409,
+      'SALE_STATUS_INVALID',
+    )
   }
 
   const updatedSale = await repository.updateSaleStatus({
     storeId,
     saleId,
     status: nextStatus,
-  });
+  })
 
   const postingFlags = await postSaleLifecycle({
     storeId,
@@ -429,14 +420,14 @@ export async function updateSaleStatus({ storeId, saleId, status, actor = null }
     },
     previousStatus: updatedSale.previousStatus,
     actor: buildCreatedBy(actor),
-  });
+  })
 
   await repository.markPostingFlags({
     storeId,
     saleId,
     stockPosted: postingFlags.stockPosted,
     financialPosted: postingFlags.financialPosted,
-  });
+  })
 
   return mapSaleResponse({
     id: saleId,
@@ -445,5 +436,5 @@ export async function updateSaleStatus({ storeId, saleId, status, actor = null }
       ...postingFlags,
       updatedAt: new Date(),
     },
-  });
+  })
 }

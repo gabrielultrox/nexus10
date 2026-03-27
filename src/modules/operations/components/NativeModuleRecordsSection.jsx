@@ -12,7 +12,9 @@ const ROW_EXIT_DURATION_MS = 200
 const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
 
 function getStatusBadgeClass(value) {
-  const normalized = String(value ?? '').trim().toLowerCase()
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase()
 
   if (
     normalized.includes('retorn') ||
@@ -49,7 +51,9 @@ function getStatusBadgeClass(value) {
 }
 
 function canShowReturnAction(record) {
-  const normalized = String(record?.status ?? '').trim().toLowerCase()
+  const normalized = String(record?.status ?? '')
+    .trim()
+    .toLowerCase()
 
   return !(
     normalized.includes('retorn') ||
@@ -62,7 +66,11 @@ function renderNativeModuleCell(routePath, column, cell, index) {
   const normalizedColumn = String(column ?? '').toLowerCase()
   const normalizedValue = String(cell ?? '').toLowerCase()
 
-  if (normalizedColumn.includes('status') || normalizedColumn.includes('estado') || normalizedColumn.includes('presenca')) {
+  if (
+    normalizedColumn.includes('status') ||
+    normalizedColumn.includes('estado') ||
+    normalizedColumn.includes('presenca')
+  ) {
     return <span className={`ui-badge ${getStatusBadgeClass(cell)}`}>{cell}</span>
   }
 
@@ -82,7 +90,11 @@ function renderNativeModuleCell(routePath, column, cell, index) {
     return <span className="ui-table__cell--numeric ui-table__cell--strong">{cell}</span>
   }
 
-  if (normalizedColumn.includes('destino') || normalizedColumn.includes('retorno') || normalizedColumn.includes('atualizacao')) {
+  if (
+    normalizedColumn.includes('destino') ||
+    normalizedColumn.includes('retorno') ||
+    normalizedColumn.includes('atualizacao')
+  ) {
     return <span className="ui-table__cell--muted">{cell}</span>
   }
 
@@ -90,7 +102,10 @@ function renderNativeModuleCell(routePath, column, cell, index) {
     return <span className="ui-table__cell--strong">{cell}</span>
   }
 
-  if (normalizedValue.includes('sem atualizacao') || normalizedValue.includes('aguardando retorno')) {
+  if (
+    normalizedValue.includes('sem atualizacao') ||
+    normalizedValue.includes('aguardando retorno')
+  ) {
     return <span className="ui-table__cell--muted">{cell}</span>
   }
 
@@ -102,9 +117,11 @@ function ModuleEmptyState({ message }) {
 }
 
 function getPrefersReducedMotion() {
-  return typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
 }
 
 function getExitDuration() {
@@ -131,18 +148,11 @@ function getContextHistoryLink(routePath) {
 }
 
 function normalizeScheduleWindow(windowLabel = '') {
-  return String(windowLabel)
-    .replace(/\s+/g, '')
-    .split('-')[0]
-    .trim()
-    .toLowerCase()
+  return String(windowLabel).replace(/\s+/g, '').split('-')[0].trim().toLowerCase()
 }
 
 function formatScheduleEntryTime(windowLabel = '') {
-  return String(windowLabel)
-    .replace(/\s+/g, '')
-    .split('-')[0]
-    .trim()
+  return String(windowLabel).replace(/\s+/g, '').split('-')[0].trim()
 }
 
 function NativeModuleToolbar({
@@ -215,7 +225,11 @@ function NativeModuleToolbar({
             className="ui-input"
             type="text"
             value={searchTerm}
-            placeholder={routePath === 'machines' ? 'Dispositivo, entregador ou modelo' : 'Buscar nos registros'}
+            placeholder={
+              routePath === 'machines'
+                ? 'Dispositivo, entregador ou modelo'
+                : 'Buscar nos registros'
+            }
             onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
@@ -258,7 +272,11 @@ function NativeModuleToolbar({
           ) : null}
           {routePath === 'schedule' ? (
             <div className="native-module__toolbar-menu" ref={menuRef}>
-              <button type="button" className="ui-button ui-button--ghost" onClick={onExportSchedule}>
+              <button
+                type="button"
+                className="ui-button ui-button--ghost"
+                onClick={onExportSchedule}
+              >
                 Exportar escala
               </button>
               <button
@@ -314,36 +332,64 @@ function NativeModuleToolbar({
             </div>
           ) : null}
           {routePath === 'machines' ? (
-            <button type="button" className="ui-button ui-button--secondary" onClick={onExportMachines}>
+            <button
+              type="button"
+              className="ui-button ui-button--secondary"
+              onClick={onExportMachines}
+            >
               Exportar presentes
             </button>
           ) : null}
           {routePath === 'change' ? (
             <>
-              <button type="button" className="ui-button ui-button--secondary" onClick={onExportDeliveredChanges}>
+              <button
+                type="button"
+                className="ui-button ui-button--secondary"
+                onClick={onExportDeliveredChanges}
+              >
                 Exportar entregues
               </button>
-              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintDeliveredChanges}>
+              <button
+                type="button"
+                className="ui-button ui-button--ghost"
+                onClick={onPrintDeliveredChanges}
+              >
                 Imprimir entregues
               </button>
             </>
           ) : null}
           {routePath === 'delivery-reading' ? (
             <>
-              <button type="button" className="ui-button ui-button--secondary" onClick={onExportClosedDeliveries}>
+              <button
+                type="button"
+                className="ui-button ui-button--secondary"
+                onClick={onExportClosedDeliveries}
+              >
                 Exportar fechadas
               </button>
-              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintClosedDeliveries}>
+              <button
+                type="button"
+                className="ui-button ui-button--ghost"
+                onClick={onPrintClosedDeliveries}
+              >
                 Imprimir fechadas
               </button>
             </>
           ) : null}
           {routePath === 'advances' ? (
             <>
-              <button type="button" className="ui-button ui-button--secondary" onClick={onExportPaidAdvances}>
+              <button
+                type="button"
+                className="ui-button ui-button--secondary"
+                onClick={onExportPaidAdvances}
+              >
                 Exportar baixados
               </button>
-              <button type="button" className="ui-button ui-button--ghost" onClick={onPrintPaidAdvances}>
+              <button
+                type="button"
+                className="ui-button ui-button--ghost"
+                onClick={onPrintPaidAdvances}
+              >
                 Imprimir baixados
               </button>
             </>
@@ -375,7 +421,9 @@ function NativeModuleMachineHistory({ groups }) {
       <div className="machine-history__layout">
         <aside className="machine-history__calendar">
           <p className="machine-history__calendar-title">
-            {new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date())}
+            {new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(
+              new Date(),
+            )}
           </p>
           <div className="machine-history__calendar-grid">
             {Array.from({ length: 31 }, (_, index) => {
@@ -451,9 +499,12 @@ function NativeModuleSchedule({
       if (!accumulator.some((item) => item.key === dayKey)) {
         accumulator.push({
           key: dayKey,
-          label: dayKey === todayKey
-            ? 'Hoje'
-            : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(dayKey)),
+          label:
+            dayKey === todayKey
+              ? 'Hoje'
+              : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(
+                  new Date(dayKey),
+                ),
         })
       }
 
@@ -490,7 +541,11 @@ function NativeModuleSchedule({
           <p className="schedule-records__eyebrow">Painel de turno</p>
           <strong className="schedule-records__title">Cobertura por entrada</strong>
         </div>
-        <div className="schedule-records__view-toggle" role="tablist" aria-label="Visualizacao da escala">
+        <div
+          className="schedule-records__view-toggle"
+          role="tablist"
+          aria-label="Visualizacao da escala"
+        >
           <button
             type="button"
             className={`schedule-records__view-button${viewMode === 'list' ? ' is-active' : ''}`}
@@ -512,7 +567,9 @@ function NativeModuleSchedule({
         <div className="schedule-grid">
           <div
             className="schedule-grid__table"
-            style={{ gridTemplateColumns: `120px repeat(${scheduleDays.length}, minmax(180px, 1fr))` }}
+            style={{
+              gridTemplateColumns: `120px repeat(${scheduleDays.length}, minmax(180px, 1fr))`,
+            }}
           >
             <div className="schedule-grid__head-cell schedule-grid__head-cell--window">Entrada</div>
             {scheduleDays.map((day) => (
@@ -523,12 +580,16 @@ function NativeModuleSchedule({
 
             {scheduleWindows.map((windowLabel) => (
               <div key={windowLabel} className="schedule-grid__row-group">
-                <div className="schedule-grid__window-cell">{formatScheduleEntryTime(windowLabel)}</div>
+                <div className="schedule-grid__window-cell">
+                  {formatScheduleEntryTime(windowLabel)}
+                </div>
                 {scheduleDays.map((day) => {
-                  const matchingRecords = records.filter((record) => (
-                    normalizeScheduleWindow(record.window) === normalizeScheduleWindow(windowLabel)
-                    && (record.dayKey ?? record.date ?? todayKey) === day.key
-                  ))
+                  const matchingRecords = records.filter(
+                    (record) =>
+                      normalizeScheduleWindow(record.window) ===
+                        normalizeScheduleWindow(windowLabel) &&
+                      (record.dayKey ?? record.date ?? todayKey) === day.key,
+                  )
 
                   if (matchingRecords.length === 0) {
                     return (
@@ -544,13 +605,13 @@ function NativeModuleSchedule({
                   }
 
                   return (
-                    <div key={`${day.key}-${windowLabel}`} className="schedule-grid__slot schedule-grid__slot--filled">
+                    <div
+                      key={`${day.key}-${windowLabel}`}
+                      className="schedule-grid__slot schedule-grid__slot--filled"
+                    >
                       {matchingRecords.map((record) => {
                         return (
-                          <div
-                            key={record.id}
-                            className="schedule-grid__entry"
-                          >
+                          <div key={record.id} className="schedule-grid__entry">
                             <button
                               type="button"
                               className="schedule-grid__entry-header"
@@ -558,13 +619,19 @@ function NativeModuleSchedule({
                             >
                               <span className="schedule-grid__entry-name">{record.courier}</span>
                               <span className="ui-badge ui-badge--info">
-                                {record.machine && record.machine !== 'Sem maquininha' ? record.machine : 'Sem maquininha'}
+                                {record.machine && record.machine !== 'Sem maquininha'
+                                  ? record.machine
+                                  : 'Sem maquininha'}
                               </span>
                             </button>
                             <div className="schedule-grid__entry-editor">
                               <Select
                                 className="ui-select schedule-grid__entry-select"
-                                value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
+                                value={
+                                  scheduleMachineDrafts[record.id] ??
+                                  record.machine ??
+                                  'Sem maquininha'
+                                }
                                 onChange={(event) => onDraftChange(record.id, event.target.value)}
                               >
                                 {scheduleMachineOptions.map((option) => (
@@ -578,9 +645,10 @@ function NativeModuleSchedule({
                                 className="ui-button ui-button--secondary schedule-grid__entry-save"
                                 onClick={() => onUpdate(record.id)}
                                 disabled={
-                                  exitingIds.has(record.id)
-                                  || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                                    === (record.machine ?? 'Sem maquininha')
+                                  exitingIds.has(record.id) ||
+                                  (scheduleMachineDrafts[record.id] ??
+                                    record.machine ??
+                                    'Sem maquininha') === (record.machine ?? 'Sem maquininha')
                                 }
                               >
                                 Salvar
@@ -651,9 +719,9 @@ function NativeModuleSchedule({
                     className="ui-button ui-button--secondary"
                     onClick={() => onUpdate(record.id)}
                     disabled={
-                      exitingIds.has(record.id)
-                      || (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                        === (record.machine ?? 'Sem maquininha')
+                      exitingIds.has(record.id) ||
+                      (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha') ===
+                        (record.machine ?? 'Sem maquininha')
                     }
                   >
                     Salvar maquininha do dia
@@ -675,26 +743,40 @@ function NativeModuleSchedule({
 }
 
 function isCompletedChangeRecord(record) {
-  const normalized = String(record?.status ?? '').trim().toLowerCase()
+  const normalized = String(record?.status ?? '')
+    .trim()
+    .toLowerCase()
 
   return (
-    normalized.includes('conclu')
-    || normalized.includes('retorn')
-    || normalized.includes('recebid')
+    normalized.includes('conclu') || normalized.includes('retorn') || normalized.includes('recebid')
   )
 }
 
 function getReturnActionStateLabel(record) {
-  const normalized = String(record?.status ?? '').trim().toLowerCase()
+  const normalized = String(record?.status ?? '')
+    .trim()
+    .toLowerCase()
 
-  if (normalized.includes('conclu') || normalized.includes('retorn') || normalized.includes('recebid')) {
+  if (
+    normalized.includes('conclu') ||
+    normalized.includes('retorn') ||
+    normalized.includes('recebid')
+  ) {
     return 'Retorno concluido'
   }
 
   return ''
 }
 
-function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confirmedCount, totalCount, exitingIds }) {
+function NativeModuleMachines({
+  records,
+  onDelete,
+  onToggle,
+  onConfirmAll,
+  confirmedCount,
+  totalCount,
+  exitingIds,
+}) {
   const allConfirmed = totalCount > 0 && confirmedCount === totalCount
 
   return (
@@ -713,7 +795,9 @@ function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confi
           />
           <span>Confirmar todos presentes</span>
         </label>
-        <span className="machine-operations__bulk-count">{confirmedCount} de {totalCount} confirmadas</span>
+        <span className="machine-operations__bulk-count">
+          {confirmedCount} de {totalCount} confirmadas
+        </span>
       </div>
       <div className="machine-operations__list">
         {records.map((record) => {
@@ -727,7 +811,9 @@ function NativeModuleMachines({ records, onDelete, onToggle, onConfirmAll, confi
               className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
             >
               <strong className="machine-operations__row-device">{record.device}</strong>
-              <span className="machine-operations__row-meta">{record.holder || 'Sem entregador'}</span>
+              <span className="machine-operations__row-meta">
+                {record.holder || 'Sem entregador'}
+              </span>
               <span className="machine-operations__row-meta">{record.model}</span>
               <span className={`ui-badge ${statusClass}`}>{statusLabel}</span>
               <label
@@ -792,144 +878,149 @@ function NativeModuleTable({
         <tbody>
           {manager
             ? visibleRecords.map((record, rowIndex) => {
-              const row = manager.toRow(record)
-              const isEditableRecord = routePath === 'change' || routePath === 'advances'
-              const editableFieldValue = routePath === 'change'
-                ? (record.origin ?? '')
-                : (record.recipient ?? '')
-              const nextEditableFieldValue = String(
-                editableRecordDrafts?.[record.id]
-                ?? editableFieldValue,
-              ).trim()
+                const row = manager.toRow(record)
+                const isEditableRecord = routePath === 'change' || routePath === 'advances'
+                const editableFieldValue =
+                  routePath === 'change' ? (record.origin ?? '') : (record.recipient ?? '')
+                const nextEditableFieldValue = String(
+                  editableRecordDrafts?.[record.id] ?? editableFieldValue,
+                ).trim()
 
-              return (
+                return (
+                  <tr
+                    key={record.id}
+                    className={`${record.id === freshRecordId ? 'ui-table__row-fresh-top' : 'ui-table__row-enter'}${record.id === highlightedRecordId ? ' native-module__table-row--highlighted' : ''}${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
+                    style={{
+                      '--row-delay': `${Math.min(rowIndex * 40, 240)}ms`,
+                      '--row-flash-color':
+                        routePath === 'delivery-reading' ? 'rgba(34, 197, 94, 0.08)' : undefined,
+                    }}
+                  >
+                    {row.map((cell, index) => (
+                      <td
+                        key={`${record.id}-${index}`}
+                        className={index === 0 ? 'ui-table__cell--strong' : undefined}
+                      >
+                        {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
+                      </td>
+                    ))}
+                    <td
+                      className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible native-module__actions-cell--editable-record' : ''}${routePath === 'advances' ? ' native-module__actions-cell--editable-record' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}
+                    >
+                      {routePath === 'schedule' ? (
+                        <div className="native-module__inline-editor">
+                          <Select
+                            className="ui-select native-module__inline-select"
+                            value={
+                              scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'
+                            }
+                            onChange={(event) => onDraftChange(record.id, event.target.value)}
+                          >
+                            {scheduleMachineOptions.map((option) => (
+                              <option key={`${record.id}-${option}`} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </Select>
+                          <button
+                            type="button"
+                            className="ui-button ui-button--secondary native-module__table-action"
+                            onClick={() => onScheduleUpdate(record.id)}
+                            disabled={
+                              exitingIds.has(record.id) ||
+                              (scheduleMachineDrafts[record.id] ??
+                                record.machine ??
+                                'Sem maquininha') === (record.machine ?? 'Sem maquininha')
+                            }
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      ) : null}
+                      {isEditableRecord ? (
+                        <div className="native-module__inline-editor native-module__inline-editor--record-field">
+                          <Select
+                            className="ui-select native-module__inline-select"
+                            value={nextEditableFieldValue}
+                            onChange={(event) =>
+                              onEditableRecordDraftChange(record.id, event.target.value)
+                            }
+                          >
+                            {editableRecordOptions.map((option) => (
+                              <option key={`${record.id}-${option}`} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </Select>
+                          <button
+                            type="button"
+                            className="ui-button ui-button--secondary native-module__table-action"
+                            onClick={() => onEditableRecordUpdate(record.id)}
+                            disabled={
+                              exitingIds.has(record.id) ||
+                              !nextEditableFieldValue ||
+                              nextEditableFieldValue === String(editableFieldValue).trim()
+                            }
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      ) : null}
+                      <div className="native-module__action-group">
+                        {manager.actionLabel ? (
+                          <button
+                            type="button"
+                            className="ui-button ui-button--secondary native-module__table-action"
+                            onClick={() => onApplyAction(record.id)}
+                            disabled={exitingIds.has(record.id)}
+                          >
+                            {manager.getActionLabel?.(record) ?? manager.actionLabel}
+                          </button>
+                        ) : null}
+                        {manager.returnActionLabel && canShowReturnAction(record) ? (
+                          <button
+                            type="button"
+                            className="native-module__return-action"
+                            disabled={exitingIds.has(record.id)}
+                            onClick={() => onMarkReturned(record.id)}
+                          >
+                            {manager.returnActionLabel}
+                          </button>
+                        ) : null}
+                        {manager.returnActionLabel && !canShowReturnAction(record) ? (
+                          <span className="native-module__action-state-label">
+                            {getReturnActionStateLabel(record)}
+                          </span>
+                        ) : null}
+                        {manager.allowDelete !== false ? (
+                          <DestructiveIconButton
+                            className="native-module__delete-action"
+                            disabled={exitingIds.has(record.id)}
+                            onClick={() => onDelete(record.id)}
+                            label="Excluir registro"
+                          />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
+            : tableRows.map((row, rowIndex) => (
                 <tr
-                  key={record.id}
-                  className={`${record.id === freshRecordId ? 'ui-table__row-fresh-top' : 'ui-table__row-enter'}${record.id === highlightedRecordId ? ' native-module__table-row--highlighted' : ''}${exitingIds.has(record.id) ? ' ui-table__row-exit' : ''}`}
-                  style={{
-                    '--row-delay': `${Math.min(rowIndex * 40, 240)}ms`,
-                    '--row-flash-color': routePath === 'delivery-reading'
-                      ? 'rgba(34, 197, 94, 0.08)'
-                      : undefined,
-                  }}
+                  key={`${routePath}-${row.join('-')}`}
+                  className="ui-table__row-enter"
+                  style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
                 >
                   {row.map((cell, index) => (
                     <td
-                      key={`${record.id}-${index}`}
+                      key={`${routePath}-${row[0]}-${index}`}
                       className={index === 0 ? 'ui-table__cell--strong' : undefined}
                     >
                       {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
                     </td>
                   ))}
-                  <td className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible native-module__actions-cell--editable-record' : ''}${routePath === 'advances' ? ' native-module__actions-cell--editable-record' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}>
-                    {routePath === 'schedule' ? (
-                      <div className="native-module__inline-editor">
-                        <Select
-                          className="ui-select native-module__inline-select"
-                          value={scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'}
-                          onChange={(event) => onDraftChange(record.id, event.target.value)}
-                        >
-                          {scheduleMachineOptions.map((option) => (
-                            <option key={`${record.id}-${option}`} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </Select>
-                        <button
-                          type="button"
-                          className="ui-button ui-button--secondary native-module__table-action"
-                          onClick={() => onScheduleUpdate(record.id)}
-                          disabled={
-                            exitingIds.has(record.id)
-                            || (
-                            (scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha')
-                            === (record.machine ?? 'Sem maquininha')
-                            )
-                          }
-                        >
-                          Salvar
-                        </button>
-                      </div>
-                    ) : null}
-                    {isEditableRecord ? (
-                      <div className="native-module__inline-editor native-module__inline-editor--record-field">
-                        <Select
-                          className="ui-select native-module__inline-select"
-                          value={nextEditableFieldValue}
-                          onChange={(event) => onEditableRecordDraftChange(record.id, event.target.value)}
-                        >
-                          {editableRecordOptions.map((option) => (
-                            <option key={`${record.id}-${option}`} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </Select>
-                        <button
-                          type="button"
-                          className="ui-button ui-button--secondary native-module__table-action"
-                          onClick={() => onEditableRecordUpdate(record.id)}
-                          disabled={
-                            exitingIds.has(record.id)
-                            || !nextEditableFieldValue
-                            || nextEditableFieldValue === String(editableFieldValue).trim()
-                          }
-                        >
-                          Salvar
-                        </button>
-                      </div>
-                    ) : null}
-                    <div className="native-module__action-group">
-                      {manager.actionLabel ? (
-                        <button
-                          type="button"
-                          className="ui-button ui-button--secondary native-module__table-action"
-                          onClick={() => onApplyAction(record.id)}
-                          disabled={exitingIds.has(record.id)}
-                        >
-                          {manager.getActionLabel?.(record) ?? manager.actionLabel}
-                        </button>
-                      ) : null}
-                      {manager.returnActionLabel && canShowReturnAction(record) ? (
-                        <button
-                          type="button"
-                          className="native-module__return-action"
-                          disabled={exitingIds.has(record.id)}
-                          onClick={() => onMarkReturned(record.id)}
-                        >
-                          {manager.returnActionLabel}
-                        </button>
-                      ) : null}
-                      {manager.returnActionLabel && !canShowReturnAction(record) ? (
-                        <span className="native-module__action-state-label">
-                          {getReturnActionStateLabel(record)}
-                        </span>
-                      ) : null}
-                      {manager.allowDelete !== false ? (
-                        <DestructiveIconButton
-                          className="native-module__delete-action"
-                          disabled={exitingIds.has(record.id)}
-                          onClick={() => onDelete(record.id)}
-                          label="Excluir registro"
-                        />
-                      ) : null}
-                    </div>
-                  </td>
                 </tr>
-              )
-            })
-            : tableRows.map((row, rowIndex) => (
-              <tr
-                key={`${routePath}-${row.join('-')}`}
-                className="ui-table__row-enter"
-                style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}
-              >
-                {row.map((cell, index) => (
-                  <td key={`${routePath}-${row[0]}-${index}`} className={index === 0 ? 'ui-table__cell--strong' : undefined}>
-                    {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+              ))}
         </tbody>
       </table>
     </div>
@@ -969,19 +1060,19 @@ function NativeModuleRecordsSection(props) {
     setSearchTerm,
     setStatusFilter,
     visibleCount,
-  handleExportScheduleImage,
-  handleExportScheduleMachinesImage,
-  handleExportMachineChecklistImage,
-  handleExportDeliveredChangesImage,
-  handlePrintDeliveredChanges,
-  handleExportClosedDeliveriesImage,
-  handlePrintClosedDeliveries,
-  handleExportPaidAdvancesImage,
-  handlePrintPaidAdvances,
-  handleExportBackup,
-  handleManualReset,
-  handleClearAll,
-  tableColumns,
+    handleExportScheduleImage,
+    handleExportScheduleMachinesImage,
+    handleExportMachineChecklistImage,
+    handleExportDeliveredChangesImage,
+    handlePrintDeliveredChanges,
+    handleExportClosedDeliveriesImage,
+    handlePrintClosedDeliveries,
+    handleExportPaidAdvancesImage,
+    handlePrintPaidAdvances,
+    handleExportBackup,
+    handleManualReset,
+    handleClearAll,
+    tableColumns,
     handleMarkReturned,
     freshRecordId,
     highlightedRecordId,
@@ -1003,15 +1094,18 @@ function NativeModuleRecordsSection(props) {
       return { open: 0, closed: 0 }
     }
 
-    return visibleRecords.reduce((accumulator, record) => {
-      if (record.closed) {
-        accumulator.closed += 1
-      } else {
-        accumulator.open += 1
-      }
+    return visibleRecords.reduce(
+      (accumulator, record) => {
+        if (record.closed) {
+          accumulator.closed += 1
+        } else {
+          accumulator.open += 1
+        }
 
-      return accumulator
-    }, { open: 0, closed: 0 })
+        return accumulator
+      },
+      { open: 0, closed: 0 },
+    )
   }, [isDeliveryReading, visibleRecords])
 
   const deliveryReadingVisibleRecords = useMemo(() => {
@@ -1019,9 +1113,9 @@ function NativeModuleRecordsSection(props) {
       return visibleRecords
     }
 
-    return visibleRecords.filter((record) => (
-      deliveryReadingTab === 'closed' ? Boolean(record.closed) : !record.closed
-    ))
+    return visibleRecords.filter((record) =>
+      deliveryReadingTab === 'closed' ? Boolean(record.closed) : !record.closed,
+    )
   }, [deliveryReadingTab, isDeliveryReading, visibleRecords])
 
   const changeCounts = useMemo(() => {
@@ -1029,15 +1123,18 @@ function NativeModuleRecordsSection(props) {
       return { pending: 0, completed: 0 }
     }
 
-    return visibleRecords.reduce((accumulator, record) => {
-      if (isCompletedChangeRecord(record)) {
-        accumulator.completed += 1
-      } else {
-        accumulator.pending += 1
-      }
+    return visibleRecords.reduce(
+      (accumulator, record) => {
+        if (isCompletedChangeRecord(record)) {
+          accumulator.completed += 1
+        } else {
+          accumulator.pending += 1
+        }
 
-      return accumulator
-    }, { pending: 0, completed: 0 })
+        return accumulator
+      },
+      { pending: 0, completed: 0 },
+    )
   }, [isChangeModule, visibleRecords])
 
   const changeVisibleRecords = useMemo(() => {
@@ -1045,9 +1142,11 @@ function NativeModuleRecordsSection(props) {
       return visibleRecords
     }
 
-    return visibleRecords.filter((record) => (
-      changeTab === 'completed' ? isCompletedChangeRecord(record) : !isCompletedChangeRecord(record)
-    ))
+    return visibleRecords.filter((record) =>
+      changeTab === 'completed'
+        ? isCompletedChangeRecord(record)
+        : !isCompletedChangeRecord(record),
+    )
   }, [changeTab, isChangeModule, visibleRecords])
 
   useEffect(() => {
@@ -1186,7 +1285,11 @@ function NativeModuleRecordsSection(props) {
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
       {isDeliveryReading ? (
-        <div className="delivery-reading__list-tabs" role="tablist" aria-label="Filtrar leituras por estado">
+        <div
+          className="delivery-reading__list-tabs"
+          role="tablist"
+          aria-label="Filtrar leituras por estado"
+        >
           <button
             type="button"
             className={`delivery-reading__list-tab${deliveryReadingTab === 'open' ? ' is-active' : ''}`}
@@ -1207,7 +1310,11 @@ function NativeModuleRecordsSection(props) {
       ) : null}
 
       {isChangeModule ? (
-        <div className="delivery-reading__list-tabs" role="tablist" aria-label="Filtrar trocos por estado">
+        <div
+          className="delivery-reading__list-tabs"
+          role="tablist"
+          aria-label="Filtrar trocos por estado"
+        >
           <button
             type="button"
             className={`delivery-reading__list-tab${changeTab === 'pending' ? ' is-active' : ''}`}
@@ -1229,7 +1336,9 @@ function NativeModuleRecordsSection(props) {
 
       {isMachineHistory ? (
         <NativeModuleMachineHistory groups={machineHistoryGroups} />
-      ) : ((isMachineChecklist ? visibleMachineChecklistRecords.length === 0 : (!isSchedule && displayedRecords.length === 0)) && manager) ? (
+      ) : (isMachineChecklist
+          ? visibleMachineChecklistRecords.length === 0
+          : !isSchedule && displayedRecords.length === 0) && manager ? (
         <ModuleEmptyState
           message={records.length === 0 ? manager.emptyTitle : 'Nenhum resultado encontrado'}
         />
@@ -1284,5 +1393,3 @@ function NativeModuleRecordsSection(props) {
 }
 
 export default NativeModuleRecordsSection
-
-

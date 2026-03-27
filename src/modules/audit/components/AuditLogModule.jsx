@@ -1,25 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 
-import MetricCard from '../../../components/common/MetricCard';
-import SurfaceCard from '../../../components/common/SurfaceCard';
-import Button from '../../../components/ui/Button';
-import EmptyState from '../../../components/ui/EmptyState';
+import MetricCard from '../../../components/common/MetricCard'
+import SurfaceCard from '../../../components/common/SurfaceCard'
+import Button from '../../../components/ui/Button'
+import EmptyState from '../../../components/ui/EmptyState'
 import {
   buildAuditLogsCsv,
   listAdminAuditLogs,
   listAllAdminAuditLogs,
-} from '../../../services/adminAuditLogs';
+} from '../../../services/adminAuditLogs'
 
 const INITIAL_FILTERS = {
   date: '',
   actor: '',
   action: '',
   resource: '',
-};
+}
 
 function formatDateTime(value) {
   if (!value) {
-    return '--';
+    return '--'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -28,86 +28,88 @@ function formatDateTime(value) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value));
+  }).format(new Date(value))
 }
 
 function downloadCsvFile(content) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  const stamp = new Date().toISOString().slice(0, 10)
 
-  anchor.href = url;
-  anchor.download = `audit-logs-${stamp}.csv`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  anchor.href = url
+  anchor.download = `audit-logs-${stamp}.csv`
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
 }
 
 function AuditLogModule() {
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
-  const [page, setPage] = useState(1);
-  const [logs, setLogs] = useState([]);
+  const [filters, setFilters] = useState(INITIAL_FILTERS)
+  const [page, setPage] = useState(1)
+  const [logs, setLogs] = useState([])
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
     total: 0,
     pages: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  })
+  const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
 
     async function loadAuditLogs() {
-      setLoading(true);
-      setErrorMessage('');
+      setLoading(true)
+      setErrorMessage('')
 
       try {
         const response = await listAdminAuditLogs({
           ...filters,
           page,
           limit: pagination.limit,
-        });
+        })
 
         if (!isMounted) {
-          return;
+          return
         }
 
-        setLogs(response.items ?? []);
-        setPagination(response.pagination ?? {
-          page,
-          limit: pagination.limit,
-          total: 0,
-          pages: 0,
-        });
+        setLogs(response.items ?? [])
+        setPagination(
+          response.pagination ?? {
+            page,
+            limit: pagination.limit,
+            total: 0,
+            pages: 0,
+          },
+        )
       } catch (error) {
         if (!isMounted) {
-          return;
+          return
         }
 
-        setLogs([]);
-        setErrorMessage(error.message ?? 'Nao foi possivel carregar os logs de auditoria.');
+        setLogs([])
+        setErrorMessage(error.message ?? 'Nao foi possivel carregar os logs de auditoria.')
       } finally {
         if (isMounted) {
-          setLoading(false);
+          setLoading(false)
         }
       }
     }
 
-    loadAuditLogs();
+    loadAuditLogs()
 
     return () => {
-      isMounted = false;
-    };
-  }, [filters, page, pagination.limit]);
+      isMounted = false
+    }
+  }, [filters, page, pagination.limit])
 
   const metrics = useMemo(() => {
-    const uniqueActors = new Set(logs.map((log) => log.actorName).filter(Boolean));
-    const uniqueResources = new Set(logs.map((log) => log.resource).filter(Boolean));
+    const uniqueActors = new Set(logs.map((log) => log.actorName).filter(Boolean))
+    const uniqueResources = new Set(logs.map((log) => log.resource).filter(Boolean))
 
     return [
       {
@@ -138,28 +140,28 @@ function AuditLogModule() {
         badgeText: 'escopo',
         badgeClass: 'ui-badge--warning',
       },
-    ];
-  }, [logs, pagination.page, pagination.total]);
+    ]
+  }, [logs, pagination.page, pagination.total])
 
   function updateFilter(key, value) {
-    setPage(1);
+    setPage(1)
     setFilters((current) => ({
       ...current,
       [key]: value,
-    }));
+    }))
   }
 
   async function handleExportCsv() {
-    setExporting(true);
+    setExporting(true)
 
     try {
-      const exportItems = await listAllAdminAuditLogs(filters);
-      const csvContent = buildAuditLogsCsv(exportItems);
-      downloadCsvFile(csvContent);
+      const exportItems = await listAllAdminAuditLogs(filters)
+      const csvContent = buildAuditLogsCsv(exportItems)
+      downloadCsvFile(csvContent)
     } catch (error) {
-      setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.');
+      setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.')
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
   }
 
@@ -181,7 +183,9 @@ function AuditLogModule() {
       <SurfaceCard title="Filtros de auditoria">
         <div className="entity-toolbar audit-log-toolbar audit-log-toolbar--filters">
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-date">Data</label>
+            <label className="ui-label" htmlFor="audit-log-date">
+              Data
+            </label>
             <input
               id="audit-log-date"
               className="ui-input"
@@ -192,7 +196,9 @@ function AuditLogModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-actor">Ator</label>
+            <label className="ui-label" htmlFor="audit-log-actor">
+              Ator
+            </label>
             <input
               id="audit-log-actor"
               className="ui-input"
@@ -203,7 +209,9 @@ function AuditLogModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-action">Acao</label>
+            <label className="ui-label" htmlFor="audit-log-action">
+              Acao
+            </label>
             <input
               id="audit-log-action"
               className="ui-input"
@@ -214,7 +222,9 @@ function AuditLogModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-resource">Recurso</label>
+            <label className="ui-label" htmlFor="audit-log-resource">
+              Recurso
+            </label>
             <input
               id="audit-log-resource"
               className="ui-input"
@@ -226,10 +236,14 @@ function AuditLogModule() {
         </div>
 
         <div className="audit-log-toolbar-actions">
-          <Button type="button" variant="secondary" onClick={() => {
-            setFilters({ ...INITIAL_FILTERS });
-            setPage(1);
-          }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setFilters({ ...INITIAL_FILTERS })
+              setPage(1)
+            }}
+          >
             Limpar filtros
           </Button>
 
@@ -284,7 +298,8 @@ function AuditLogModule() {
 
             <div className="audit-log-pagination">
               <p className="audit-log-pagination__summary">
-                Pagina {pagination.page} de {Math.max(pagination.pages, 1)} · {pagination.total} registros
+                Pagina {pagination.page} de {Math.max(pagination.pages, 1)} · {pagination.total}{' '}
+                registros
               </p>
 
               <div className="audit-log-pagination__actions">
@@ -310,9 +325,7 @@ function AuditLogModule() {
         )}
       </SurfaceCard>
     </section>
-  );
+  )
 }
 
-export default AuditLogModule;
-
-
+export default AuditLogModule

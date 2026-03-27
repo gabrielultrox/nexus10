@@ -1,4 +1,4 @@
-const bearerSecurity = [{ bearerAuth: [] }];
+const bearerSecurity = [{ bearerAuth: [] }]
 
 export const swaggerSpec = {
   openapi: '3.0.3',
@@ -28,10 +28,34 @@ export const swaggerSpec = {
       },
     },
     parameters: {
-      StoreId: { name: 'storeId', in: 'path', required: true, schema: { type: 'string' }, example: 'store-demo-001' },
-      OrderId: { name: 'orderId', in: 'path', required: true, schema: { type: 'string' }, example: 'ord_20260327_001' },
-      SaleId: { name: 'saleId', in: 'path', required: true, schema: { type: 'string' }, example: 'sale_20260327_001' },
-      MerchantId: { name: 'merchantId', in: 'path', required: true, schema: { type: 'string' }, example: 'ifood-merchant-001' },
+      StoreId: {
+        name: 'storeId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'store-demo-001',
+      },
+      OrderId: {
+        name: 'orderId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'ord_20260327_001',
+      },
+      SaleId: {
+        name: 'saleId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'sale_20260327_001',
+      },
+      MerchantId: {
+        name: 'merchantId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'ifood-merchant-001',
+      },
     },
     schemas: {
       ErrorResponse: {
@@ -73,7 +97,15 @@ export const swaggerSpec = {
           defaultStoreId: { type: 'string', example: 'store-demo-001' },
           storeIds: { type: 'array', items: { type: 'string' }, example: ['store-demo-001'] },
         },
-        required: ['uid', 'operatorName', 'displayName', 'role', 'tenantId', 'defaultStoreId', 'storeIds'],
+        required: [
+          'uid',
+          'operatorName',
+          'displayName',
+          'role',
+          'tenantId',
+          'defaultStoreId',
+          'storeIds',
+        ],
       },
       AuthSessionRequest: {
         type: 'object',
@@ -193,7 +225,12 @@ export const swaggerSpec = {
           items: { type: 'array', items: { $ref: '#/components/schemas/OrderItemInput' } },
           totals: { $ref: '#/components/schemas/OrderTotals' },
           paymentMethod: { type: 'string', enum: ['CASH', 'CARD', 'PIX'], example: 'PIX' },
-          payment: { type: 'object', properties: { method: { type: 'string', enum: ['CASH', 'CARD', 'PIX'], example: 'PIX' } } },
+          payment: {
+            type: 'object',
+            properties: {
+              method: { type: 'string', enum: ['CASH', 'CARD', 'PIX'], example: 'PIX' },
+            },
+          },
           notes: { type: 'string', example: 'Venda direta do balcao' },
         },
         required: ['items'],
@@ -208,7 +245,13 @@ export const swaggerSpec = {
       },
       SaleStatusRequest: {
         type: 'object',
-        properties: { status: { type: 'string', enum: ['POSTED', 'CANCELLED', 'REVERSED'], example: 'REVERSED' } },
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['POSTED', 'CANCELLED', 'REVERSED'],
+            example: 'REVERSED',
+          },
+        },
         required: ['status'],
       },
       SaleResponse: {
@@ -288,7 +331,8 @@ export const swaggerSpec = {
       },
       IfoodWebhookTextBody: {
         type: 'string',
-        example: '{"id":"evt-001","code":"PLACED","fullCode":"PLC","orderId":"ifood-order-001","createdAt":"2026-03-27T15:00:00.000Z"}',
+        example:
+          '{"id":"evt-001","code":"PLACED","fullCode":"PLC","orderId":"ifood-order-001","createdAt":"2026-03-27T15:00:00.000Z"}',
       },
       IfoodProcessResponse: {
         type: 'object',
@@ -306,7 +350,11 @@ export const swaggerSpec = {
         type: 'object',
         properties: {
           message: { type: 'string', example: 'Qual foi o faturamento do dia?' },
-          context: { type: 'object', additionalProperties: true, example: { scope: 'today', module: 'sales' } },
+          context: {
+            type: 'object',
+            additionalProperties: true,
+            example: { scope: 'today', module: 'sales' },
+          },
         },
         required: ['message'],
       },
@@ -316,14 +364,17 @@ export const swaggerSpec = {
           data: {
             type: 'object',
             additionalProperties: true,
-            example: { summary: 'O faturamento do dia foi R$ 3.250,00.', sources: ['sales', 'financialClosures'] },
+            example: {
+              summary: 'O faturamento do dia foi R$ 3.250,00.',
+              sources: ['sales', 'financialClosures'],
+            },
           },
         },
       },
     },
   },
   paths: {},
-};
+}
 
 swaggerSpec.paths['/api/health'] = {
   get: {
@@ -332,11 +383,13 @@ swaggerSpec.paths['/api/health'] = {
     responses: {
       200: {
         description: 'API operacional',
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/HealthResponse' } } },
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/HealthResponse' } },
+        },
       },
     },
   },
-};
+}
 
 swaggerSpec.paths['/api/auth/session'] = {
   post: {
@@ -347,18 +400,36 @@ swaggerSpec.paths['/api/auth/session'] = {
       content: {
         'application/json': {
           schema: { $ref: '#/components/schemas/AuthSessionRequest' },
-          examples: { default: { value: { pin: '1234', operator: 'Gabriel', storeId: 'store-demo-001' } } },
+          examples: {
+            default: { value: { pin: '1234', operator: 'Gabriel', storeId: 'store-demo-001' } },
+          },
         },
       },
     },
     responses: {
-      200: { description: 'Sessao criada', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthSessionResponse' } } } },
-      400: { description: 'Payload invalido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationErrorResponse' } } } },
-      401: { description: 'PIN incorreto', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-      503: { description: 'Senha operacional ausente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+      200: {
+        description: 'Sessao criada',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/AuthSessionResponse' } },
+        },
+      },
+      400: {
+        description: 'Payload invalido',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/ValidationErrorResponse' } },
+        },
+      },
+      401: {
+        description: 'PIN incorreto',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
+      503: {
+        description: 'Senha operacional ausente',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
     },
   },
-};
+}
 
 swaggerSpec.paths['/api/admin/audit-logs'] = {
   get: {
@@ -367,18 +438,36 @@ swaggerSpec.paths['/api/admin/audit-logs'] = {
     summary: 'Lista logs de auditoria com filtros e paginacao',
     parameters: [
       { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, example: 1 },
-      { name: 'limit', in: 'query', schema: { type: 'integer', default: 50, maximum: 200 }, example: 50 },
+      {
+        name: 'limit',
+        in: 'query',
+        schema: { type: 'integer', default: 50, maximum: 200 },
+        example: 50,
+      },
       { name: 'actor', in: 'query', schema: { type: 'string' }, example: 'Gabriel' },
       { name: 'action', in: 'query', schema: { type: 'string' }, example: 'order.created' },
       { name: 'resource', in: 'query', schema: { type: 'string' }, example: 'order' },
-      { name: 'date', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-27' },
+      {
+        name: 'date',
+        in: 'query',
+        schema: { type: 'string', format: 'date' },
+        example: '2026-03-27',
+      },
     ],
     responses: {
-      200: { description: 'Pagina de logs', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuditLogListResponse' } } } },
-      403: { description: 'Acesso restrito a admin', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+      200: {
+        description: 'Pagina de logs',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/AuditLogListResponse' } },
+        },
+      },
+      403: {
+        description: 'Acesso restrito a admin',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
     },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/orders'] = {
   post: {
@@ -398,8 +487,17 @@ swaggerSpec.paths['/api/stores/{storeId}/orders'] = {
                 values: {
                   source: 'BALCAO',
                   customerId: 'customer-001',
-                  items: [{ productId: 'prod_coca_2l', quantity: 2, unitPrice: 12.5, totalPrice: 25 }],
-                  totals: { subtotal: 25, freight: 4, extraAmount: 0, discountPercent: 0, discountValue: 0, total: 29 },
+                  items: [
+                    { productId: 'prod_coca_2l', quantity: 2, unitPrice: 12.5, totalPrice: 25 },
+                  ],
+                  totals: {
+                    subtotal: 25,
+                    freight: 4,
+                    extraAmount: 0,
+                    discountPercent: 0,
+                    discountValue: 0,
+                    total: 29,
+                  },
                   paymentMethod: 'PIX',
                   notes: 'Sem cebola',
                 },
@@ -410,50 +508,100 @@ swaggerSpec.paths['/api/stores/{storeId}/orders'] = {
       },
     },
     responses: {
-      201: { description: 'Pedido criado', content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } } },
-      400: { description: 'Payload invalido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationErrorResponse' } } } },
+      201: {
+        description: 'Pedido criado',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } },
+      },
+      400: {
+        description: 'Payload invalido',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/ValidationErrorResponse' } },
+        },
+      },
     },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/orders/{orderId}'] = {
   patch: {
     tags: ['Orders'],
     security: bearerSecurity,
     summary: 'Atualiza um pedido',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/OrderId' }],
-    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderMutationRequest' } } } },
-    responses: { 200: { description: 'Pedido atualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': { schema: { $ref: '#/components/schemas/OrderMutationRequest' } },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Pedido atualizado',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } },
+      },
+    },
   },
   delete: {
     tags: ['Orders'],
     security: bearerSecurity,
     summary: 'Exclui um pedido',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/OrderId' }],
-    responses: { 200: { description: 'Pedido excluido', content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
+    responses: {
+      200: {
+        description: 'Pedido excluido',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/orders/{orderId}/dispatch'] = {
   post: {
     tags: ['Orders'],
     security: bearerSecurity,
     summary: 'Marca um pedido como despachado',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/OrderId' }],
-    responses: { 200: { description: 'Pedido despachado', content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
+    responses: {
+      200: {
+        description: 'Pedido despachado',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/orders/{orderId}/convert-to-sale'] = {
   post: {
     tags: ['Orders', 'Sales'],
     security: bearerSecurity,
     summary: 'Converte pedido em venda',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/OrderId' }],
-    requestBody: { required: false, content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderMutationRequest' } } } },
-    responses: { 200: { description: 'Venda gerada a partir do pedido', content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
+    requestBody: {
+      required: false,
+      content: {
+        'application/json': { schema: { $ref: '#/components/schemas/OrderMutationRequest' } },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Venda gerada a partir do pedido',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/sales'] = {
   post: {
@@ -474,7 +622,14 @@ swaggerSpec.paths['/api/stores/{storeId}/sales'] = {
                   channel: 'BALCAO',
                   customerId: 'customer-001',
                   items: [{ productId: 'prod_coca_2l', quantity: 1, unitPrice: 12.5 }],
-                  totals: { subtotal: 12.5, freight: 0, extraAmount: 0, discountPercent: 0, discountValue: 0, total: 12.5 },
+                  totals: {
+                    subtotal: 12.5,
+                    freight: 0,
+                    extraAmount: 0,
+                    discountPercent: 0,
+                    discountValue: 0,
+                    total: 12.5,
+                  },
                   paymentMethod: 'PIX',
                   payment: { method: 'PIX' },
                 },
@@ -484,44 +639,83 @@ swaggerSpec.paths['/api/stores/{storeId}/sales'] = {
         },
       },
     },
-    responses: { 201: { description: 'Venda criada', content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } } } },
+    responses: {
+      201: {
+        description: 'Venda criada',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/orders/{orderId}/sales'] = {
   post: {
     tags: ['Sales'],
     security: bearerSecurity,
     summary: 'Cria venda a partir de um pedido',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/OrderId' }],
-    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleMutationRequest' } } } },
-    responses: { 201: { description: 'Venda criada a partir do pedido', content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': { schema: { $ref: '#/components/schemas/SaleMutationRequest' } },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Venda criada a partir do pedido',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/sales/{saleId}/status'] = {
   patch: {
     tags: ['Sales'],
     security: bearerSecurity,
     summary: 'Atualiza o status de uma venda',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/SaleId' }],
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/SaleId' },
+    ],
     requestBody: {
       required: true,
-      content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleStatusRequest' }, examples: { reverse: { value: { status: 'REVERSED' } } } } },
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/SaleStatusRequest' },
+          examples: { reverse: { value: { status: 'REVERSED' } } },
+        },
+      },
     },
-    responses: { 200: { description: 'Status atualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } } } },
+    responses: {
+      200: {
+        description: 'Status atualizado',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/sales/{saleId}'] = {
   delete: {
     tags: ['Sales'],
     security: bearerSecurity,
     summary: 'Exclui uma venda',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/SaleId' }],
-    responses: { 200: { description: 'Venda excluida', content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } } } },
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/SaleId' },
+    ],
+    responses: {
+      200: {
+        description: 'Venda excluida',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/SaleResponse' } } },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/stores/{storeId}/assistant/query'] = {
   post: {
@@ -529,10 +723,22 @@ swaggerSpec.paths['/api/stores/{storeId}/assistant/query'] = {
     security: bearerSecurity,
     summary: 'Executa consulta assistida da NEXA',
     parameters: [{ $ref: '#/components/parameters/StoreId' }],
-    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/AssistantQueryRequest' } } } },
-    responses: { 200: { description: 'Consulta processada', content: { 'application/json': { schema: { $ref: '#/components/schemas/AssistantQueryResponse' } } } } },
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': { schema: { $ref: '#/components/schemas/AssistantQueryRequest' } },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Consulta processada',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/AssistantQueryResponse' } },
+        },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/integrations/ifood/merchants/{storeId}'] = {
   get: {
@@ -540,9 +746,18 @@ swaggerSpec.paths['/api/integrations/ifood/merchants/{storeId}'] = {
     security: bearerSecurity,
     summary: 'Lista merchants iFood da loja',
     parameters: [{ $ref: '#/components/parameters/StoreId' }],
-    responses: { 200: { description: 'Merchants encontrados', content: { 'application/json': { schema: { $ref: '#/components/schemas/IfoodMerchantListResponse' } } } } },
+    responses: {
+      200: {
+        description: 'Merchants encontrados',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/IfoodMerchantListResponse' },
+          },
+        },
+      },
+    },
   },
-};
+}
 
 swaggerSpec.paths['/api/integrations/ifood/polling/run'] = {
   post: {
@@ -551,34 +766,64 @@ swaggerSpec.paths['/api/integrations/ifood/polling/run'] = {
     summary: 'Executa polling manual do iFood',
     requestBody: {
       required: true,
-      content: { 'application/json': { schema: { $ref: '#/components/schemas/IfoodPollingRequest' }, examples: { default: { value: { storeId: 'store-demo-001', merchantId: 'ifood-merchant-001' } } } } },
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/IfoodPollingRequest' },
+          examples: {
+            default: { value: { storeId: 'store-demo-001', merchantId: 'ifood-merchant-001' } },
+          },
+        },
+      },
     },
     responses: {
-      200: { description: 'Polling processado', content: { 'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } } } },
-      404: { description: 'Merchant nao encontrado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+      200: {
+        description: 'Polling processado',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } },
+        },
+      },
+      404: {
+        description: 'Merchant nao encontrado',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
     },
   },
-};
+}
 
 swaggerSpec.paths['/api/integrations/ifood/orders/{storeId}/{merchantId}/{orderId}/sync'] = {
   post: {
     tags: ['iFood'],
     security: bearerSecurity,
     summary: 'Sincroniza um pedido especifico do iFood',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }, { $ref: '#/components/parameters/MerchantId' }, { $ref: '#/components/parameters/OrderId' }],
+    parameters: [
+      { $ref: '#/components/parameters/StoreId' },
+      { $ref: '#/components/parameters/MerchantId' },
+      { $ref: '#/components/parameters/OrderId' },
+    ],
     responses: {
       200: {
         description: 'Pedido sincronizado',
         content: {
           'application/json': {
             schema: { $ref: '#/components/schemas/IfoodProcessResponse' },
-            examples: { default: { value: { ok: true, data: { id: 'ifood-order-001', status: 'PLACED', merchantId: 'ifood-merchant-001' } } } },
+            examples: {
+              default: {
+                value: {
+                  ok: true,
+                  data: {
+                    id: 'ifood-order-001',
+                    status: 'PLACED',
+                    merchantId: 'ifood-merchant-001',
+                  },
+                },
+              },
+            },
           },
         },
       },
     },
   },
-};
+}
 
 swaggerSpec.paths['/webhooks/ifood/{storeId}/{merchantId}'] = {
   post: {
@@ -587,7 +832,13 @@ swaggerSpec.paths['/webhooks/ifood/{storeId}/{merchantId}'] = {
     parameters: [
       { $ref: '#/components/parameters/StoreId' },
       { $ref: '#/components/parameters/MerchantId' },
-      { name: 'X-IFood-Signature', in: 'header', required: true, schema: { type: 'string' }, example: 'sha256=14b8b8b9af5f1c3...' },
+      {
+        name: 'X-IFood-Signature',
+        in: 'header',
+        required: true,
+        schema: { type: 'string' },
+        example: 'sha256=14b8b8b9af5f1c3...',
+      },
     ],
     requestBody: {
       required: true,
@@ -597,13 +848,21 @@ swaggerSpec.paths['/webhooks/ifood/{storeId}/{merchantId}'] = {
       },
     },
     responses: {
-      200: { description: 'Webhook processado', content: { 'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } } } },
-      401: { description: 'Assinatura invalida ou falha de processamento', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+      200: {
+        description: 'Webhook processado',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } },
+        },
+      },
+      401: {
+        description: 'Assinatura invalida ou falha de processamento',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
     },
   },
-};
+}
 
 export const swaggerUiOptions = {
   explorer: true,
   customSiteTitle: 'Nexus10 API Docs',
-};
+}

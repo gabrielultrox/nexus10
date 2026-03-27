@@ -15,14 +15,14 @@ export const courierStatusMap = {
     label: 'Offline',
     badgeClass: 'ui-badge--danger',
   },
-};
+}
 
 export const courierShiftMap = {
   morning: 'Manhã',
   afternoon: 'Tarde',
   night: 'Noite',
   full_day: 'Dia inteiro',
-};
+}
 
 export const courierStatusOptions = [
   { value: 'all', label: 'Todos os status' },
@@ -30,7 +30,7 @@ export const courierStatusOptions = [
   { value: 'on_route', label: 'Em rota' },
   { value: 'delayed', label: 'Atraso' },
   { value: 'offline', label: 'Offline' },
-];
+]
 
 export const courierShiftOptions = [
   { value: 'all', label: 'Todos os turnos' },
@@ -38,4 +38,4 @@ export const courierShiftOptions = [
   { value: 'afternoon', label: 'Tarde' },
   { value: 'night', label: 'Noite' },
   { value: 'full_day', label: 'Dia inteiro' },
-];
+]

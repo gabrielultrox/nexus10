@@ -23,10 +23,7 @@ function NativeModuleExportCanvases({
   paidAdvanceRecipientCount,
 }) {
   function getScheduleEntryTime(windowLabel = '') {
-    return String(windowLabel)
-      .replace(/\s+/g, '')
-      .split('-')[0]
-      .trim()
+    return String(windowLabel).replace(/\s+/g, '').split('-')[0].trim()
   }
 
   return (
@@ -36,7 +33,7 @@ function NativeModuleExportCanvases({
           <div ref={scheduleImageRef} className="schedule-export-image__canvas">
             <header className="schedule-export-image__header">
               <div>
-            <span className="schedule-export-image__eyebrow">NEXUS</span>
+                <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Escala do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -93,7 +90,7 @@ function NativeModuleExportCanvases({
           >
             <header className="schedule-export-image__header">
               <div>
-            <span className="schedule-export-image__eyebrow">NEXUS</span>
+                <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Maquininhas usadas no dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>
@@ -111,7 +108,12 @@ function NativeModuleExportCanvases({
               </article>
               <article className="schedule-export-image__metric">
                 <span>Entregadores com maquina</span>
-                <strong>{usedScheduleMachines.reduce((total, machine) => total + machine.couriers.length, 0)}</strong>
+                <strong>
+                  {usedScheduleMachines.reduce(
+                    (total, machine) => total + machine.couriers.length,
+                    0,
+                  )}
+                </strong>
                 <small>Registros da escala com maquininha do dia</small>
               </article>
               <article className="schedule-export-image__metric">
@@ -125,7 +127,9 @@ function NativeModuleExportCanvases({
               {usedScheduleMachines.map((machine) => (
                 <article key={machine.device} className="schedule-export-image__used-machine-card">
                   <div className="schedule-export-image__used-machine-top">
-                    <strong className="schedule-export-image__machine-number">{machine.device}</strong>
+                    <strong className="schedule-export-image__machine-number">
+                      {machine.device}
+                    </strong>
                     <span className="schedule-export-image__machine-badge schedule-export-image__machine-badge--present">
                       Em uso
                     </span>
@@ -135,7 +139,10 @@ function NativeModuleExportCanvases({
                     <span className="schedule-export-image__used-machine-label">Entregadores</span>
                     <div className="schedule-export-image__used-machine-list">
                       {machine.couriers.map((courier) => (
-                        <p key={`${machine.device}-${courier}`} className="schedule-export-image__used-machine-courier">
+                        <p
+                          key={`${machine.device}-${courier}`}
+                          className="schedule-export-image__used-machine-courier"
+                        >
                           {courier}
                         </p>
                       ))}
@@ -161,7 +168,7 @@ function NativeModuleExportCanvases({
           >
             <header className="schedule-export-image__header">
               <div>
-            <span className="schedule-export-image__eyebrow">NEXUS</span>
+                <span className="schedule-export-image__eyebrow">NEXUS</span>
                 <h2 className="schedule-export-image__title">Maquininhas presentes do dia</h2>
                 <p className="schedule-export-image__meta">{formatChecklistDate()}</p>
               </div>

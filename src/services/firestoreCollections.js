@@ -18,7 +18,7 @@ export const FIRESTORE_COLLECTIONS = {
   financialClosures: 'financial_closures',
   auditLogs: 'audit_logs',
   settings: 'settings',
-};
+}
 
 export const firestoreDataModel = {
   users: {
@@ -156,15 +156,48 @@ export const firestoreDataModel = {
   },
   products: {
     path: 'stores/{storeId}/products/{productId}',
-    fields: ['storeId', 'tenantId', 'status', 'name', 'category', 'price', 'cost', 'stock', 'minimumStock'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'status',
+      'name',
+      'category',
+      'price',
+      'cost',
+      'stock',
+      'minimumStock',
+    ],
   },
   inventory_items: {
     path: 'stores/{storeId}/inventory_items/{productId}',
-    fields: ['storeId', 'tenantId', 'productId', 'productName', 'category', 'sku', 'currentStock', 'minimumStock', 'updatedAt'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'productId',
+      'productName',
+      'category',
+      'sku',
+      'currentStock',
+      'minimumStock',
+      'updatedAt',
+    ],
   },
   inventory_movements: {
     path: 'stores/{storeId}/inventory_movements/{movementId}',
-    fields: ['storeId', 'tenantId', 'productId', 'productName', 'movementType', 'quantity', 'reason', 'source', 'relatedSaleId', 'previousStock', 'resultingStock', 'createdAt'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'productId',
+      'productName',
+      'movementType',
+      'quantity',
+      'reason',
+      'source',
+      'relatedSaleId',
+      'previousStock',
+      'resultingStock',
+      'createdAt',
+    ],
   },
   customers: {
     path: 'stores/{storeId}/customers/{customerId}',
@@ -172,18 +205,48 @@ export const firestoreDataModel = {
   },
   financial_entries: {
     path: 'stores/{storeId}/financial_entries/{entryId}',
-    fields: ['storeId', 'tenantId', 'type', 'source', 'relatedSaleId', 'description', 'amount', 'status', 'createdAt', 'updatedAt'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'type',
+      'source',
+      'relatedSaleId',
+      'description',
+      'amount',
+      'status',
+      'createdAt',
+      'updatedAt',
+    ],
   },
   financial_closures: {
     path: 'stores/{storeId}/financial_closures/{closureId}',
-    fields: ['storeId', 'tenantId', 'cashierName', 'startDate', 'endDate', 'totalIncome', 'totalExpense', 'balance', 'createdAt'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'cashierName',
+      'startDate',
+      'endDate',
+      'totalIncome',
+      'totalExpense',
+      'balance',
+      'createdAt',
+    ],
   },
   audit_logs: {
     path: 'stores/{storeId}/audit_logs/{auditId}',
-    fields: ['storeId', 'tenantId', 'actor', 'action', 'entityType', 'entityId', 'description', 'createdAt'],
+    fields: [
+      'storeId',
+      'tenantId',
+      'actor',
+      'action',
+      'entityType',
+      'entityId',
+      'description',
+      'createdAt',
+    ],
   },
   settings: {
     path: 'stores/{storeId}/settings/{settingId}',
     fields: ['storeId', 'tenantId', 'type', 'payload'],
   },
-};
+}

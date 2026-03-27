@@ -4,10 +4,10 @@ export const localOperatorProfiles = [
   { operatorName: 'Rafael', role: 'operador' },
   { operatorName: 'Ana Vitoria', role: 'atendente' },
   { operatorName: 'Rosa', role: 'operador' },
-];
+]
 
-const DEFAULT_TENANT_ID = 'hora-dez';
-const DEFAULT_STORE_ID = 'hora-dez';
+const DEFAULT_TENANT_ID = 'hora-dez'
+const DEFAULT_STORE_ID = 'hora-dez'
 
 function slugifyOperatorName(operatorName) {
   return operatorName
@@ -15,16 +15,16 @@ function slugifyOperatorName(operatorName) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+|-+$/g, '')
 }
 
 export function createLocalUserId(operatorName) {
-  return `local-${slugifyOperatorName(operatorName)}`;
+  return `local-${slugifyOperatorName(operatorName)}`
 }
 
 export function getLocalOperatorProfile(operatorName) {
-  const trimmedName = String(operatorName ?? '').trim();
-  const baseProfile = localOperatorProfiles.find((profile) => profile.operatorName === trimmedName);
+  const trimmedName = String(operatorName ?? '').trim()
+  const baseProfile = localOperatorProfiles.find((profile) => profile.operatorName === trimmedName)
 
   return {
     uid: createLocalUserId(trimmedName),
@@ -37,5 +37,5 @@ export function getLocalOperatorProfile(operatorName) {
     defaultStoreId: DEFAULT_STORE_ID,
     status: 'active',
     authMode: 'custom-token',
-  };
+  }
 }

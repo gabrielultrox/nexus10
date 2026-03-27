@@ -104,11 +104,17 @@ function shouldKeepExistingOperation(existingOperation, nextOperation) {
       return false
     }
 
-    if (existingOperation.type === 'save' && existingOperation.record?.id === nextOperation.record?.id) {
+    if (
+      existingOperation.type === 'save' &&
+      existingOperation.record?.id === nextOperation.record?.id
+    ) {
       return false
     }
 
-    if (existingOperation.type === 'delete' && existingOperation.recordId === nextOperation.record?.id) {
+    if (
+      existingOperation.type === 'delete' &&
+      existingOperation.recordId === nextOperation.record?.id
+    ) {
       return false
     }
   }
@@ -118,11 +124,17 @@ function shouldKeepExistingOperation(existingOperation, nextOperation) {
       return false
     }
 
-    if (existingOperation.type === 'save' && existingOperation.record?.id === nextOperation.recordId) {
+    if (
+      existingOperation.type === 'save' &&
+      existingOperation.record?.id === nextOperation.recordId
+    ) {
       return false
     }
 
-    if (existingOperation.type === 'delete' && existingOperation.recordId === nextOperation.recordId) {
+    if (
+      existingOperation.type === 'delete' &&
+      existingOperation.recordId === nextOperation.recordId
+    ) {
       return false
     }
   }
@@ -138,7 +150,9 @@ export function enqueueManualModuleSyncOperation(operation) {
     queuedAt: operation.queuedAt ?? new Date().toISOString(),
   }
   const nextQueue = [
-    ...queue.filter((existingOperation) => shouldKeepExistingOperation(existingOperation, nextOperation)),
+    ...queue.filter((existingOperation) =>
+      shouldKeepExistingOperation(existingOperation, nextOperation),
+    ),
     nextOperation,
   ]
 
@@ -161,9 +175,12 @@ export function getManualModuleSyncHistory(modulePaths = [], limit = 6) {
   const normalizedModulePaths = normalizeModulePaths(modulePaths)
   const history = loadHistory()
 
-  const filteredHistory = normalizedModulePaths.length === 0
-    ? history
-    : history.filter((entry) => entry.modulePaths?.some((modulePath) => normalizedModulePaths.includes(modulePath)))
+  const filteredHistory =
+    normalizedModulePaths.length === 0
+      ? history
+      : history.filter((entry) =>
+          entry.modulePaths?.some((modulePath) => normalizedModulePaths.includes(modulePath)),
+        )
 
   return filteredHistory.slice(0, limit)
 }
@@ -256,18 +273,26 @@ export async function flushManualModuleSyncQueue({ storeId, tenantId, modulePath
       id: createQueueId(),
       type: 'flush',
       flushedCount,
-      pendingCount: normalizedModulePaths.length > 0
-        ? remainingQueue.filter((operation) => normalizedModulePaths.includes(operation.modulePath)).length
-        : remainingQueue.length,
-      modulePaths: normalizedModulePaths.length > 0 ? normalizedModulePaths : Array.from(new Set(queue.map((operation) => operation.modulePath))),
+      pendingCount:
+        normalizedModulePaths.length > 0
+          ? remainingQueue.filter((operation) =>
+              normalizedModulePaths.includes(operation.modulePath),
+            ).length
+          : remainingQueue.length,
+      modulePaths:
+        normalizedModulePaths.length > 0
+          ? normalizedModulePaths
+          : Array.from(new Set(queue.map((operation) => operation.modulePath))),
       createdAt: new Date().toISOString(),
     })
   }
 
   return {
     flushedCount,
-    pendingCount: normalizedModulePaths.length > 0
-      ? remainingQueue.filter((operation) => normalizedModulePaths.includes(operation.modulePath)).length
-      : remainingQueue.length,
+    pendingCount:
+      normalizedModulePaths.length > 0
+        ? remainingQueue.filter((operation) => normalizedModulePaths.includes(operation.modulePath))
+            .length
+        : remainingQueue.length,
   }
 }

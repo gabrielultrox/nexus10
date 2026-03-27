@@ -40,13 +40,19 @@ function NativeModuleStatusBar({
         </article>
 
         <article className="native-module__status-item">
-          <span className={`native-module__status-dot ${isOnline ? 'native-module__status-dot--success' : 'native-module__status-dot--danger'}`} />
+          <span
+            className={`native-module__status-dot ${isOnline ? 'native-module__status-dot--success' : 'native-module__status-dot--danger'}`}
+          />
           <span className="native-module__status-item-label">Conexao</span>
-          <strong className="native-module__status-item-value">{isOnline ? 'Online' : 'Offline'}</strong>
+          <strong className="native-module__status-item-value">
+            {isOnline ? 'Online' : 'Offline'}
+          </strong>
         </article>
 
         <article className="native-module__status-item">
-          <span className={`native-module__status-dot ${pendingCount > 0 ? 'native-module__status-dot--warning' : 'native-module__status-dot--success'}`} />
+          <span
+            className={`native-module__status-dot ${pendingCount > 0 ? 'native-module__status-dot--warning' : 'native-module__status-dot--success'}`}
+          />
           <span className="native-module__status-item-label">Pendencias</span>
           <strong className="native-module__status-item-value">{pendingCount}</strong>
         </article>

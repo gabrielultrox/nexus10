@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 
-import MetricCard from '../../../components/common/MetricCard';
-import SurfaceCard from '../../../components/common/SurfaceCard';
-import { useConfirm } from '../../../hooks/useConfirm';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useStore } from '../../../contexts/StoreContext';
-import { buildAuditActor, recordAuditLog } from '../../../services/auditLog';
-import { seedBaseCustomers } from '../../../services/baseDataSeed';
-import { firebaseReady } from '../../../services/firebase';
+import MetricCard from '../../../components/common/MetricCard'
+import SurfaceCard from '../../../components/common/SurfaceCard'
+import { useConfirm } from '../../../hooks/useConfirm'
+import { useAuth } from '../../../contexts/AuthContext'
+import { useStore } from '../../../contexts/StoreContext'
+import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
+import { seedBaseCustomers } from '../../../services/baseDataSeed'
+import { firebaseReady } from '../../../services/firebase'
 import {
   createCustomer,
   deleteCustomer,
@@ -15,10 +15,10 @@ import {
   previewCustomersImport,
   subscribeToCustomers,
   updateCustomer,
-} from '../../../services/customerService';
-import { playError, playSuccess } from '../../../services/soundManager';
-import Select from '../../../components/ui/Select';
-import EmptyState from '../../../components/ui/EmptyState';
+} from '../../../services/customerService'
+import { playError, playSuccess } from '../../../services/soundManager'
+import Select from '../../../components/ui/Select'
+import EmptyState from '../../../components/ui/EmptyState'
 
 const initialFormState = {
   name: '',
@@ -28,7 +28,7 @@ const initialFormState = {
   reference: '',
   notes: '',
   status: 'active',
-};
+}
 
 function mapCustomerToForm(customer) {
   return {
@@ -39,66 +39,66 @@ function mapCustomerToForm(customer) {
     reference: customer.reference ?? '',
     notes: customer.notes ?? '',
     status: customer.status ?? 'active',
-  };
+  }
 }
 
 function CustomersModule() {
-  const { can, session } = useAuth();
-  const { currentStoreId, tenantId } = useStore();
-  const confirm = useConfirm();
-  const [customers, setCustomers] = useState([]);
-  const [formState, setFormState] = useState(initialFormState);
-  const [editingCustomerId, setEditingCustomerId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [seeding, setSeeding] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [csvFile, setCsvFile] = useState(null);
-  const [csvMode, setCsvMode] = useState('all');
-  const [csvPreview, setCsvPreview] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const { can, session } = useAuth()
+  const { currentStoreId, tenantId } = useStore()
+  const confirm = useConfirm()
+  const [customers, setCustomers] = useState([])
+  const [formState, setFormState] = useState(initialFormState)
+  const [editingCustomerId, setEditingCustomerId] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [seeding, setSeeding] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [csvFile, setCsvFile] = useState(null)
+  const [csvMode, setCsvMode] = useState('all')
+  const [csvPreview, setCsvPreview] = useState(null)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [feedbackMessage, setFeedbackMessage] = useState('')
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
-      setLoading(false);
-      return undefined;
+      setLoading(false)
+      return undefined
     }
 
-    setLoading(true);
-    setErrorMessage('');
+    setLoading(true)
+    setErrorMessage('')
 
     const unsubscribe = subscribeToCustomers(
       currentStoreId,
       (nextCustomers) => {
-        setCustomers(nextCustomers);
-        setLoading(false);
+        setCustomers(nextCustomers)
+        setLoading(false)
       },
       (error) => {
-        setErrorMessage(error.message);
-        setLoading(false);
+        setErrorMessage(error.message)
+        setLoading(false)
       },
-    );
+    )
 
-    return unsubscribe;
-  }, [currentStoreId]);
+    return unsubscribe
+  }, [currentStoreId])
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
 
     async function buildPreview() {
       if (!csvFile) {
-        setCsvPreview(null);
-        return;
+        setCsvPreview(null)
+        return
       }
 
       try {
-        const csvText = await csvFile.text();
+        const csvText = await csvFile.text()
 
         if (!isMounted) {
-          return;
+          return
         }
 
         setCsvPreview(
@@ -107,10 +107,10 @@ function CustomersModule() {
             customers,
             mode: csvMode,
           }),
-        );
+        )
       } catch (error) {
         if (!isMounted) {
-          return;
+          return
         }
 
         setCsvPreview({
@@ -119,41 +119,41 @@ function CustomersModule() {
           skippedCount: 0,
           importedCount: 0,
           errors: [{ rowNumber: '-', reason: error.message }],
-        });
+        })
       }
     }
 
-    buildPreview();
+    buildPreview()
 
     return () => {
-      isMounted = false;
-    };
-  }, [csvFile, csvMode, customers]);
+      isMounted = false
+    }
+  }, [csvFile, csvMode, customers])
 
   const visibleCustomers = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-    const phoneSearch = searchTerm.replace(/\D/g, '');
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+    const phoneSearch = searchTerm.replace(/\D/g, '')
 
     return customers.filter((customer) => {
-      const matchesSearch = normalizedSearch.length === 0 || [
-        customer.name,
-        customer.phoneDisplay,
-        customer.neighborhood,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedSearch)
-        || (phoneSearch.length > 0 && String(customer.phone ?? '').includes(phoneSearch));
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [customer.name, customer.phoneDisplay, customer.neighborhood]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        (phoneSearch.length > 0 && String(customer.phone ?? '').includes(phoneSearch))
 
-      const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [customers, searchTerm, statusFilter]);
+      const matchesStatus = statusFilter === 'all' || customer.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [customers, searchTerm, statusFilter])
 
   const metrics = useMemo(() => {
-    const activeCustomers = customers.filter((customer) => customer.status === 'active').length;
-    const withAddress = customers.filter((customer) => customer.addressLine).length;
-    const neighborhoods = new Set(customers.map((customer) => customer.neighborhood).filter(Boolean)).size;
+    const activeCustomers = customers.filter((customer) => customer.status === 'active').length
+    const withAddress = customers.filter((customer) => customer.addressLine).length
+    const neighborhoods = new Set(
+      customers.map((customer) => customer.neighborhood).filter(Boolean),
+    ).size
 
     return [
       {
@@ -184,39 +184,39 @@ function CustomersModule() {
         badgeText: 'mapa',
         badgeClass: 'ui-badge--warning',
       },
-    ];
-  }, [customers]);
+    ]
+  }, [customers])
 
   function updateField(field, value) {
     setFormState((current) => ({
       ...current,
       [field]: value,
-    }));
+    }))
   }
 
   function resetForm() {
-    setFormState(initialFormState);
-    setEditingCustomerId(null);
+    setFormState(initialFormState)
+    setEditingCustomerId(null)
   }
 
   async function handleSubmit(event) {
-    event.preventDefault();
+    event.preventDefault()
 
     if (!can('customers:write')) {
-      setErrorMessage('Seu perfil nao pode alterar clientes.');
-      playError();
-      return;
+      setErrorMessage('Seu perfil nao pode alterar clientes.')
+      playError()
+      return
     }
 
     if (!currentStoreId) {
-      setErrorMessage('Nenhuma store ativa disponivel para salvar clientes.');
-      playError();
-      return;
+      setErrorMessage('Nenhuma store ativa disponivel para salvar clientes.')
+      playError()
+      return
     }
 
-    setSaving(true);
-    setErrorMessage('');
-    setFeedbackMessage('');
+    setSaving(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
 
     try {
       if (editingCustomerId) {
@@ -224,7 +224,7 @@ function CustomersModule() {
           storeId: currentStoreId,
           customerId: editingCustomerId,
           values: formState,
-        });
+        })
         await recordAuditLog({
           storeId: currentStoreId,
           tenantId,
@@ -233,14 +233,14 @@ function CustomersModule() {
           entityType: 'customer',
           entityId: editingCustomerId,
           description: `Cliente ${formState.name} atualizado na base.`,
-        });
-        setFeedbackMessage('Cliente atualizado com sucesso.');
+        })
+        setFeedbackMessage('Cliente atualizado com sucesso.')
       } else {
         const customerId = await createCustomer({
           storeId: currentStoreId,
           tenantId,
           values: formState,
-        });
+        })
         await recordAuditLog({
           storeId: currentStoreId,
           tenantId,
@@ -249,17 +249,17 @@ function CustomersModule() {
           entityType: 'customer',
           entityId: customerId,
           description: `Cliente ${formState.name} criado na base.`,
-        });
-        setFeedbackMessage('Cliente cadastrado com sucesso.');
+        })
+        setFeedbackMessage('Cliente cadastrado com sucesso.')
       }
 
-      playSuccess();
-      resetForm();
+      playSuccess()
+      resetForm()
     } catch (error) {
-      setErrorMessage(error.message);
-      playError();
+      setErrorMessage(error.message)
+      playError()
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
@@ -313,30 +313,30 @@ function CustomersModule() {
 
   async function handleCsvImport() {
     if (!can('customers:write')) {
-      setErrorMessage('Seu perfil nao pode alterar clientes.');
-      playError();
-      return;
+      setErrorMessage('Seu perfil nao pode alterar clientes.')
+      playError()
+      return
     }
 
     if (!currentStoreId || !csvFile) {
-      setErrorMessage('Selecione um arquivo CSV para importar clientes.');
-      playError();
-      return;
+      setErrorMessage('Selecione um arquivo CSV para importar clientes.')
+      playError()
+      return
     }
 
-    setImporting(true);
-    setErrorMessage('');
-    setFeedbackMessage('');
+    setImporting(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
 
     try {
-      const csvText = await csvFile.text();
+      const csvText = await csvFile.text()
       const result = await importCustomersFromCsv({
         storeId: currentStoreId,
         tenantId,
         csvText,
         customers,
         mode: csvMode,
-      });
+      })
 
       await recordAuditLog({
         storeId: currentStoreId,
@@ -346,33 +346,33 @@ function CustomersModule() {
         entityType: 'customer',
         entityId: 'csv-import',
         description: `${result.importedCount} cliente(s) processados via CSV. ${result.createdCount} criado(s). ${result.updatedCount} atualizado(s). ${result.skippedCount} ignorado(s).`,
-      });
+      })
 
       setFeedbackMessage(
         `${result.importedCount} cliente(s) processados via CSV. ${result.createdCount} criado(s). ${result.updatedCount} atualizado(s). ${result.skippedCount} ignorado(s).`,
-      );
-      setCsvFile(null);
-      playSuccess();
+      )
+      setCsvFile(null)
+      playSuccess()
     } catch (error) {
-      setErrorMessage(error.message);
-      playError();
+      setErrorMessage(error.message)
+      playError()
     } finally {
-      setImporting(false);
+      setImporting(false)
     }
   }
 
   function handleEdit(customer) {
-    setEditingCustomerId(customer.id);
-    setFormState(mapCustomerToForm(customer));
-    setFeedbackMessage('');
-    setErrorMessage('');
+    setEditingCustomerId(customer.id)
+    setFormState(mapCustomerToForm(customer))
+    setFeedbackMessage('')
+    setErrorMessage('')
   }
 
   async function handleDelete(customerId) {
-    const customer = customers.find((item) => item.id === customerId);
+    const customer = customers.find((item) => item.id === customerId)
 
     if (!currentStoreId) {
-      return;
+      return
     }
 
     const confirmed = await confirm.ask({
@@ -380,26 +380,26 @@ function CustomersModule() {
       message: `Confirma a exclusao de ${customer?.name ?? 'este cliente'}?`,
       confirmLabel: 'Excluir cliente',
       tone: 'danger',
-    });
+    })
 
     if (!confirmed) {
-      return;
+      return
     }
 
     if (!can('customers:write')) {
-      setErrorMessage('Seu perfil nao pode alterar clientes.');
-      playError();
-      return;
+      setErrorMessage('Seu perfil nao pode alterar clientes.')
+      playError()
+      return
     }
 
-    setErrorMessage('');
-    setFeedbackMessage('');
+    setErrorMessage('')
+    setFeedbackMessage('')
 
     try {
       await deleteCustomer({
         storeId: currentStoreId,
         customerId,
-      });
+      })
       await recordAuditLog({
         storeId: currentStoreId,
         tenantId,
@@ -408,17 +408,17 @@ function CustomersModule() {
         entityType: 'customer',
         entityId: customerId,
         description: `Cliente ${customer?.name ?? customerId} removido da base.`,
-      });
+      })
 
       if (editingCustomerId === customerId) {
-        resetForm();
+        resetForm()
       }
 
-      setFeedbackMessage('Cliente excluido com sucesso.');
-      playSuccess();
+      setFeedbackMessage('Cliente excluido com sucesso.')
+      playSuccess()
     } catch (error) {
-      setErrorMessage(error.message);
-      playError();
+      setErrorMessage(error.message)
+      playError()
     }
   }
 
@@ -427,7 +427,7 @@ function CustomersModule() {
       <SurfaceCard title="Clientes">
         <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
-    );
+    )
   }
 
   if (!currentStoreId) {
@@ -435,7 +435,7 @@ function CustomersModule() {
       <SurfaceCard title="Clientes">
         <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
-    );
+    )
   }
 
   return (
@@ -459,10 +459,13 @@ function CustomersModule() {
             <div className="entity-form-hero">
               <span className="entity-form-hero__eyebrow">CRM local</span>
               <h4 className="entity-form-hero__title">
-                {editingCustomerId ? 'Ajuste o cadastro do cliente' : 'Cadastros mais simples para atendimento e entrega'}
+                {editingCustomerId
+                  ? 'Ajuste o cadastro do cliente'
+                  : 'Cadastros mais simples para atendimento e entrega'}
               </h4>
               <p className="entity-form-hero__description">
-                Centralize contato, endereco e observacoes em um fluxo mais amigavel para quem cadastra no balcao ou durante o pedido.
+                Centralize contato, endereco e observacoes em um fluxo mais amigavel para quem
+                cadastra no balcao ou durante o pedido.
               </p>
               <div className="entity-form-hero__chips">
                 <span className="ui-badge ui-badge--info">Telefone rapido</span>
@@ -475,7 +478,9 @@ function CustomersModule() {
               <div className="entity-form-aside__card">
                 <span className="entity-form-aside__label">Clientes ativos</span>
                 <strong>{String(metrics[1]?.value ?? '00')}</strong>
-                <p className="text-body">Base pronta para reaproveitar nos proximos pedidos do dia.</p>
+                <p className="text-body">
+                  Base pronta para reaproveitar nos proximos pedidos do dia.
+                </p>
               </div>
               <div className="entity-form-aside__card">
                 <span className="entity-form-aside__label">Com endereco</span>
@@ -521,9 +526,9 @@ function CustomersModule() {
             <div className="inventory-import">
               <div className="inventory-import__copy">
                 <p className="text-body">
-                  Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount} para criar,
-                  {' '}
-                  {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount} para ignorar.
+                  Previa: {csvPreview.importedCount} linha(s) prontas, {csvPreview.createdCount}{' '}
+                  para criar, {csvPreview.updatedCount} para atualizar e {csvPreview.skippedCount}{' '}
+                  para ignorar.
                 </p>
               </div>
               {csvPreview.errors?.length > 0 ? (
@@ -554,25 +559,53 @@ function CustomersModule() {
               <div className="entity-form-section__header">
                 <span className="entity-form-section__eyebrow">Contato</span>
                 <h4 className="entity-form-section__title">Identificacao rapida</h4>
-                <p className="entity-form-section__description">Nome e telefone para encontrar o cliente sem hesitacao.</p>
+                <p className="entity-form-section__description">
+                  Nome e telefone para encontrar o cliente sem hesitacao.
+                </p>
               </div>
 
               <div className="entity-stack">
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-name">Nome</label>
-                  <input id="customer-name" className="ui-input" value={formState.name} onChange={(event) => updateField('name', event.target.value)} />
-                  <span className="entity-field-hint">Prefira o nome como o cliente costuma se apresentar no pedido.</span>
+                  <label className="ui-label" htmlFor="customer-name">
+                    Nome
+                  </label>
+                  <input
+                    id="customer-name"
+                    className="ui-input"
+                    value={formState.name}
+                    onChange={(event) => updateField('name', event.target.value)}
+                  />
+                  <span className="entity-field-hint">
+                    Prefira o nome como o cliente costuma se apresentar no pedido.
+                  </span>
                 </div>
 
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-phone">Telefone</label>
-                  <input id="customer-phone" className="ui-input" value={formState.phone} onChange={(event) => updateField('phone', event.target.value)} placeholder="(37) 99999-0000" />
-                  <span className="entity-field-hint">Use o numero principal para confirmar pedido e acionar entregador.</span>
+                  <label className="ui-label" htmlFor="customer-phone">
+                    Telefone
+                  </label>
+                  <input
+                    id="customer-phone"
+                    className="ui-input"
+                    value={formState.phone}
+                    onChange={(event) => updateField('phone', event.target.value)}
+                    placeholder="(37) 99999-0000"
+                  />
+                  <span className="entity-field-hint">
+                    Use o numero principal para confirmar pedido e acionar entregador.
+                  </span>
                 </div>
 
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-status">Status</label>
-                  <Select id="customer-status" className="ui-select" value={formState.status} onChange={(event) => updateField('status', event.target.value)}>
+                  <label className="ui-label" htmlFor="customer-status">
+                    Status
+                  </label>
+                  <Select
+                    id="customer-status"
+                    className="ui-select"
+                    value={formState.status}
+                    onChange={(event) => updateField('status', event.target.value)}
+                  >
                     <option value="active">Ativo</option>
                     <option value="inactive">Inativo</option>
                   </Select>
@@ -584,24 +617,49 @@ function CustomersModule() {
               <div className="entity-form-section__header">
                 <span className="entity-form-section__eyebrow">Entrega</span>
                 <h4 className="entity-form-section__title">Endereco e referencia</h4>
-                <p className="entity-form-section__description">Bloco pensado para reduzir erro de rota e perguntas repetidas.</p>
+                <p className="entity-form-section__description">
+                  Bloco pensado para reduzir erro de rota e perguntas repetidas.
+                </p>
               </div>
 
               <div className="entity-stack">
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-neighborhood">Bairro</label>
-                  <input id="customer-neighborhood" className="ui-input" value={formState.neighborhood} onChange={(event) => updateField('neighborhood', event.target.value)} />
+                  <label className="ui-label" htmlFor="customer-neighborhood">
+                    Bairro
+                  </label>
+                  <input
+                    id="customer-neighborhood"
+                    className="ui-input"
+                    value={formState.neighborhood}
+                    onChange={(event) => updateField('neighborhood', event.target.value)}
+                  />
                 </div>
 
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-address">Endereco</label>
-                  <input id="customer-address" className="ui-input" value={formState.addressLine} onChange={(event) => updateField('addressLine', event.target.value)} />
+                  <label className="ui-label" htmlFor="customer-address">
+                    Endereco
+                  </label>
+                  <input
+                    id="customer-address"
+                    className="ui-input"
+                    value={formState.addressLine}
+                    onChange={(event) => updateField('addressLine', event.target.value)}
+                  />
                 </div>
 
                 <div className="ui-field">
-                  <label className="ui-label" htmlFor="customer-reference">Referencia</label>
-                  <input id="customer-reference" className="ui-input" value={formState.reference} onChange={(event) => updateField('reference', event.target.value)} />
-                  <span className="entity-field-hint">Exemplo: portao preto, esquina da farmacia, casa 2.</span>
+                  <label className="ui-label" htmlFor="customer-reference">
+                    Referencia
+                  </label>
+                  <input
+                    id="customer-reference"
+                    className="ui-input"
+                    value={formState.reference}
+                    onChange={(event) => updateField('reference', event.target.value)}
+                  />
+                  <span className="entity-field-hint">
+                    Exemplo: portao preto, esquina da farmacia, casa 2.
+                  </span>
                 </div>
               </div>
             </div>
@@ -610,12 +668,22 @@ function CustomersModule() {
               <div className="entity-form-section__header">
                 <span className="entity-form-section__eyebrow">Observacoes</span>
                 <h4 className="entity-form-section__title">Contexto de atendimento</h4>
-                <p className="entity-form-section__description">Notas que ajudam o time em recorrencia, preferencia ou cuidado especial.</p>
+                <p className="entity-form-section__description">
+                  Notas que ajudam o time em recorrencia, preferencia ou cuidado especial.
+                </p>
               </div>
 
               <div className="ui-field">
-                <label className="ui-label" htmlFor="customer-notes">Observacoes</label>
-                <textarea id="customer-notes" className="ui-textarea" rows={4} value={formState.notes} onChange={(event) => updateField('notes', event.target.value)} />
+                <label className="ui-label" htmlFor="customer-notes">
+                  Observacoes
+                </label>
+                <textarea
+                  id="customer-notes"
+                  className="ui-textarea"
+                  rows={4}
+                  value={formState.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                />
               </div>
             </div>
 
@@ -625,14 +693,24 @@ function CustomersModule() {
                   Cancelar edicao
                 </button>
               ) : null}
-              <button type="submit" className="ui-button ui-button--primary" disabled={saving || !can('customers:write')}>
-                {saving ? 'Salvando...' : editingCustomerId ? 'Salvar cliente' : 'Cadastrar cliente'}
+              <button
+                type="submit"
+                className="ui-button ui-button--primary"
+                disabled={saving || !can('customers:write')}
+              >
+                {saving
+                  ? 'Salvando...'
+                  : editingCustomerId
+                    ? 'Salvar cliente'
+                    : 'Cadastrar cliente'}
               </button>
             </div>
           </form>
         </div>
 
-        {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+        {feedbackMessage ? (
+          <div className="auth-error auth-error--success">{feedbackMessage}</div>
+        ) : null}
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
       </SurfaceCard>
 
@@ -640,18 +718,35 @@ function CustomersModule() {
         <div className="entity-toolbar-shell">
           <div className="entity-toolbar-copy">
             <p className="text-section-title">Busca mais clara</p>
-            <p className="text-body">Filtre por contato ou status para encontrar o cadastro certo sem varrer a tabela toda.</p>
+            <p className="text-body">
+              Filtre por contato ou status para encontrar o cadastro certo sem varrer a tabela toda.
+            </p>
           </div>
 
           <div className="entity-toolbar">
             <div className="ui-field">
-              <label className="ui-label" htmlFor="customers-search">Buscar</label>
-              <input id="customers-search" className="ui-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Nome ou telefone" />
+              <label className="ui-label" htmlFor="customers-search">
+                Buscar
+              </label>
+              <input
+                id="customers-search"
+                className="ui-input"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Nome ou telefone"
+              />
             </div>
 
             <div className="ui-field">
-              <label className="ui-label" htmlFor="customers-status-filter">Status</label>
-              <Select id="customers-status-filter" className="ui-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <label className="ui-label" htmlFor="customers-status-filter">
+                Status
+              </label>
+              <Select
+                id="customers-status-filter"
+                className="ui-select"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
@@ -686,10 +781,20 @@ function CustomersModule() {
                     <td>{customer.addressLine || '-'}</td>
                     <td>{customer.status === 'active' ? 'Ativo' : 'Inativo'}</td>
                     <td className="entity-table__actions">
-                      <button type="button" className="ui-button ui-button--ghost" onClick={() => handleEdit(customer)} disabled={!can('customers:write')}>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--ghost"
+                        onClick={() => handleEdit(customer)}
+                        disabled={!can('customers:write')}
+                      >
                         Editar
                       </button>
-                      <button type="button" className="ui-button ui-button--danger" onClick={() => handleDelete(customer.id)} disabled={!can('customers:write')}>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--danger"
+                        onClick={() => handleDelete(customer.id)}
+                        disabled={!can('customers:write')}
+                      >
                         Excluir
                       </button>
                     </td>
@@ -701,9 +806,7 @@ function CustomersModule() {
         )}
       </SurfaceCard>
     </section>
-  );
+  )
 }
 
-export default CustomersModule;
-
-
+export default CustomersModule

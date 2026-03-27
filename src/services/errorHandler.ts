@@ -168,13 +168,16 @@ export class ErrorHandler {
     const normalized = this.normalize(error)
 
     const map: Record<ErrorCode, string> = {
-      [ErrorCode.VALIDATION_ERROR]: 'Alguns dados informados sao invalidos. Revise os campos e tente novamente.',
+      [ErrorCode.VALIDATION_ERROR]:
+        'Alguns dados informados sao invalidos. Revise os campos e tente novamente.',
       [ErrorCode.UNAUTHORIZED]: 'Sua sessao expirou. Entre novamente para continuar.',
       [ErrorCode.FORBIDDEN]: 'Seu perfil nao tem permissao para executar esta acao.',
       [ErrorCode.NOT_FOUND]: 'O recurso solicitado nao foi encontrado.',
-      [ErrorCode.CONFLICT]: 'Nao foi possivel concluir a operacao porque os dados entraram em conflito.',
+      [ErrorCode.CONFLICT]:
+        'Nao foi possivel concluir a operacao porque os dados entraram em conflito.',
       [ErrorCode.INTERNAL_SERVER_ERROR]: 'Ocorreu um erro interno. Tente novamente em instantes.',
-      [ErrorCode.SERVICE_UNAVAILABLE]: 'O servico esta indisponivel no momento. Tente novamente em instantes.',
+      [ErrorCode.SERVICE_UNAVAILABLE]:
+        'O servico esta indisponivel no momento. Tente novamente em instantes.',
       [ErrorCode.NETWORK_ERROR]: 'Sem conexao com o servidor. Verifique a rede e tente novamente.',
       [ErrorCode.TIMEOUT_ERROR]: 'A operacao demorou demais para responder. Tente novamente.',
       [ErrorCode.OFFLINE_ERROR]: 'Voce esta offline. Assim que a conexao voltar, tente novamente.',

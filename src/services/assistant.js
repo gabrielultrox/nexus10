@@ -1,8 +1,8 @@
-import { requestBackend } from './backendApi';
+import { requestBackend } from './backendApi'
 
 export async function queryAssistant({ storeId, message, context = {} }) {
   if (!storeId) {
-    throw new Error('Selecione uma loja antes de usar a NEXA.');
+    throw new Error('Selecione uma loja antes de usar a NEXA.')
   }
 
   return requestBackend(`/stores/${storeId}/assistant/query`, {
@@ -11,5 +11,5 @@ export async function queryAssistant({ storeId, message, context = {} }) {
       message,
       context,
     },
-  });
+  })
 }

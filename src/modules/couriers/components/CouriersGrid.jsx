@@ -1,5 +1,5 @@
-import CourierCard from './CourierCard';
-import EmptyState from '../../../components/ui/EmptyState';
+import CourierCard from './CourierCard'
+import EmptyState from '../../../components/ui/EmptyState'
 
 function CouriersGroup({ group, onDelete, onToggleGroup }) {
   return (
@@ -7,7 +7,9 @@ function CouriersGroup({ group, onDelete, onToggleGroup }) {
       <header className="couriers-group__header">
         <div className="couriers-group__heading">
           <span className="couriers-group__title">{group.title}</span>
-          <span className={`couriers-group__count couriers-group__count--${group.tone}`}>{group.couriers.length}</span>
+          <span className={`couriers-group__count couriers-group__count--${group.tone}`}>
+            {group.couriers.length}
+          </span>
         </div>
         {group.collapsible ? (
           <button
@@ -34,16 +36,14 @@ function CouriersGroup({ group, onDelete, onToggleGroup }) {
         </div>
       ) : null}
     </section>
-  );
+  )
 }
 
 function CouriersGrid({ couriers, groups, onDelete, onToggleGroup }) {
-  const visibleGroups = groups?.filter((group) => group.couriers.length > 0) ?? [];
+  const visibleGroups = groups?.filter((group) => group.couriers.length > 0) ?? []
 
   if ((groups && visibleGroups.length === 0) || (!groups && couriers.length === 0)) {
-    return (
-      <EmptyState message="Nenhum entregador encontrado" />
-    );
+    return <EmptyState message="Nenhum entregador encontrado" />
   }
 
   if (visibleGroups.length > 0) {
@@ -58,7 +58,7 @@ function CouriersGrid({ couriers, groups, onDelete, onToggleGroup }) {
           />
         ))}
       </div>
-    );
+    )
   }
 
   return (
@@ -67,8 +67,7 @@ function CouriersGrid({ couriers, groups, onDelete, onToggleGroup }) {
         <CourierCard key={courier.id} courier={courier} onDelete={onDelete} />
       ))}
     </div>
-  );
+  )
 }
 
-export default CouriersGrid;
-
+export default CouriersGrid

@@ -6,7 +6,12 @@ import { createFinancialClosure, listFinancialClosuresPage } from '../../service
 import { queryKeys } from './queryKeys'
 import { useQueryErrorFeedback } from './useQueryErrorFeedback'
 
-export function useFinancialClosures({ storeId, pageSize = 50, cursor = null, enabled = true } = {}) {
+export function useFinancialClosures({
+  storeId,
+  pageSize = 50,
+  cursor = null,
+  enabled = true,
+} = {}) {
   const queryResult = useQuery({
     queryKey: queryKeys.finance.closures(storeId, { pageSize, cursorId: cursor?.id ?? null }),
     enabled: Boolean(storeId) && enabled,

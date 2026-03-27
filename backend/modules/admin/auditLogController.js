@@ -1,43 +1,43 @@
-import { createLoggerContext, serializeError } from '../../logging/logger.js';
-import { getAdminFirestore } from '../../firebaseAdmin.js';
-import { requireRole } from '../../middleware/requireAuth.js';
-import { validateRequest } from '../../middleware/validateRequest.js';
-import { adminAuditLogQuerySchema } from '../../validation/schemas.js';
+import { createLoggerContext, serializeError } from '../../logging/logger.js'
+import { getAdminFirestore } from '../../firebaseAdmin.js'
+import { requireRole } from '../../middleware/requireAuth.js'
+import { validateRequest } from '../../middleware/validateRequest.js'
+import { adminAuditLogQuerySchema } from '../../validation/schemas.js'
 
-const auditLogAdminLogger = createLoggerContext({ module: 'admin.audit_logs' });
+const auditLogAdminLogger = createLoggerContext({ module: 'admin.audit_logs' })
 
 function asDate(value) {
   if (!value) {
-    return null;
+    return null
   }
 
   if (typeof value?.toDate === 'function') {
-    return value.toDate();
+    return value.toDate()
   }
 
-  const dateValue = new Date(value);
-  return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+  const dateValue = new Date(value)
+  return Number.isNaN(dateValue.getTime()) ? null : dateValue
 }
 
 function normalizeText(value) {
-  return String(value ?? '').trim();
+  return String(value ?? '').trim()
 }
 
 function resolveStoreIdFromPath(refPath = '') {
-  const segments = String(refPath).split('/');
-  const storesIndex = segments.indexOf('stores');
+  const segments = String(refPath).split('/')
+  const storesIndex = segments.indexOf('stores')
 
   if (storesIndex === -1 || storesIndex + 1 >= segments.length) {
-    return '';
+    return ''
   }
 
-  return segments[storesIndex + 1] ?? '';
+  return segments[storesIndex + 1] ?? ''
 }
 
 function normalizeAuditLogDocument(documentSnapshot) {
-  const data = documentSnapshot.data() ?? {};
-  const createdAt = asDate(data.createdAt);
-  const storeId = normalizeText(data.storeId) || resolveStoreIdFromPath(documentSnapshot.ref.path);
+  const data = documentSnapshot.data() ?? {}
+  const createdAt = asDate(data.createdAt)
+  const storeId = normalizeText(data.storeId) || resolveStoreIdFromPath(documentSnapshot.ref.path)
 
   return {
     id: documentSnapshot.id,
@@ -51,84 +51,84 @@ function normalizeAuditLogDocument(documentSnapshot) {
     description: normalizeText(data.description),
     createdAt: createdAt ? createdAt.toISOString() : null,
     metadata: data.metadata ?? null,
-  };
+  }
 }
 
 function matchesFilter(logEntry, filters) {
-  const actorFilter = filters.actor.toLowerCase();
-  const actionFilter = filters.action.toLowerCase();
-  const resourceFilter = filters.resource.toLowerCase();
+  const actorFilter = filters.actor.toLowerCase()
+  const actionFilter = filters.action.toLowerCase()
+  const resourceFilter = filters.resource.toLowerCase()
 
   if (actorFilter) {
-    const actorText = [logEntry.actorName, logEntry.actorId, logEntry.actorRole].join(' ').toLowerCase();
+    const actorText = [logEntry.actorName, logEntry.actorId, logEntry.actorRole]
+      .join(' ')
+      .toLowerCase()
     if (!actorText.includes(actorFilter)) {
-      return false;
+      return false
     }
   }
 
   if (actionFilter && logEntry.action.toLowerCase() !== actionFilter) {
-    return false;
+    return false
   }
 
   if (resourceFilter) {
-    const resourceText = [logEntry.resource, logEntry.resourceId].join(' ').toLowerCase();
+    const resourceText = [logEntry.resource, logEntry.resourceId].join(' ').toLowerCase()
     if (!resourceText.includes(resourceFilter)) {
-      return false;
+      return false
     }
   }
 
   if (filters.date) {
-    const entryDate = logEntry.createdAt ? logEntry.createdAt.slice(0, 10) : '';
+    const entryDate = logEntry.createdAt ? logEntry.createdAt.slice(0, 10) : ''
     if (entryDate !== filters.date) {
-      return false;
+      return false
     }
   }
 
-  return true;
+  return true
 }
 
 function chunkArray(values, chunkSize = 10) {
-  const chunks = [];
+  const chunks = []
 
   for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
+    chunks.push(values.slice(index, index + chunkSize))
   }
 
-  return chunks;
+  return chunks
 }
 
 async function listAuditLogsForStores(storeIds, filters) {
-  const firestore = getAdminFirestore();
-  const fetchWindow = Math.min(Math.max(filters.page * filters.limit * 4, 200), 1000);
-  const storeChunks = chunkArray(storeIds, 10);
+  const firestore = getAdminFirestore()
+  const fetchWindow = Math.min(Math.max(filters.page * filters.limit * 4, 200), 1000)
+  const storeChunks = chunkArray(storeIds, 10)
   const snapshots = await Promise.all(
     storeChunks.map((storeChunk) => {
       let currentQuery = firestore
         .collectionGroup('auditLogs')
         .where('storeId', 'in', storeChunk)
         .orderBy('createdAt', 'desc')
-        .limit(fetchWindow);
+        .limit(fetchWindow)
 
       if (filters.date) {
-        const start = new Date(`${filters.date}T00:00:00.000Z`);
-        const end = new Date(`${filters.date}T23:59:59.999Z`);
-        currentQuery = currentQuery
-          .where('createdAt', '>=', start)
-          .where('createdAt', '<=', end);
+        const start = new Date(`${filters.date}T00:00:00.000Z`)
+        const end = new Date(`${filters.date}T23:59:59.999Z`)
+        currentQuery = currentQuery.where('createdAt', '>=', start).where('createdAt', '<=', end)
       }
 
-      return currentQuery.get();
+      return currentQuery.get()
     }),
-  );
+  )
 
   return snapshots
     .flatMap((snapshot) => snapshot.docs.map(normalizeAuditLogDocument))
     .filter((entry) => matchesFilter(entry, filters))
     .sort((left, right) => {
-      const leftTime = left.createdAt ? Date.parse(left.createdAt) : 0;
-      const rightTime = right.createdAt ? Date.parse(right.createdAt) : 0;
-      return rightTime - leftTime;
-    });
+      const leftTime = left.createdAt ? Date.parse(left.createdAt) : 0
+      const rightTime = right.createdAt ? Date.parse(right.createdAt) : 0
+      return rightTime - leftTime
+    })
 }
 
 export function registerAdminAuditLogRoutes(app) {
@@ -137,8 +137,10 @@ export function registerAdminAuditLogRoutes(app) {
     requireRole('admin'),
     validateRequest(adminAuditLogQuerySchema, { source: 'query' }),
     async (request, response) => {
-      const filters = request.validated?.query ?? {};
-      const accessibleStoreIds = Array.from(new Set(request.authUser?.storeIds ?? [])).filter(Boolean);
+      const filters = request.validated?.query ?? {}
+      const accessibleStoreIds = Array.from(new Set(request.authUser?.storeIds ?? [])).filter(
+        Boolean,
+      )
 
       if (!accessibleStoreIds.length) {
         response.json({
@@ -152,25 +154,28 @@ export function registerAdminAuditLogRoutes(app) {
             },
             filters,
           },
-        });
-        return;
+        })
+        return
       }
 
       try {
-        const items = await listAuditLogsForStores(accessibleStoreIds, filters);
-        const total = items.length;
-        const pages = total === 0 ? 0 : Math.ceil(total / filters.limit);
-        const startIndex = (filters.page - 1) * filters.limit;
-        const paginatedItems = items.slice(startIndex, startIndex + filters.limit);
+        const items = await listAuditLogsForStores(accessibleStoreIds, filters)
+        const total = items.length
+        const pages = total === 0 ? 0 : Math.ceil(total / filters.limit)
+        const startIndex = (filters.page - 1) * filters.limit
+        const paginatedItems = items.slice(startIndex, startIndex + filters.limit)
 
-        (request.log ?? auditLogAdminLogger).info({
-          context: 'admin.audit_logs.list',
-          actorId: request.authUser?.uid ?? null,
-          page: filters.page,
-          limit: filters.limit,
-          total,
-          filters,
-        }, 'Audit logs listed');
+        ;(request.log ?? auditLogAdminLogger).info(
+          {
+            context: 'admin.audit_logs.list',
+            actorId: request.authUser?.uid ?? null,
+            page: filters.page,
+            limit: filters.limit,
+            total,
+            filters,
+          },
+          'Audit logs listed',
+        )
 
         response.json({
           data: {
@@ -183,19 +188,22 @@ export function registerAdminAuditLogRoutes(app) {
             },
             filters,
           },
-        });
+        })
       } catch (error) {
-        (request.log ?? auditLogAdminLogger).error({
-          context: 'admin.audit_logs.list',
-          actorId: request.authUser?.uid ?? null,
-          filters,
-          error: serializeError(error),
-        }, 'Failed to list audit logs');
+        ;(request.log ?? auditLogAdminLogger).error(
+          {
+            context: 'admin.audit_logs.list',
+            actorId: request.authUser?.uid ?? null,
+            filters,
+            error: serializeError(error),
+          },
+          'Failed to list audit logs',
+        )
 
         response.status(500).json({
           error: 'Nao foi possivel carregar os logs de auditoria.',
-        });
+        })
       }
     },
-  );
+  )
 }

@@ -9,7 +9,12 @@ function Toggle({
 }) {
   return (
     <label
-      className={['ui-toggle', checked ? 'ui-toggle--checked' : '', disabled ? 'ui-toggle--disabled' : '', className]
+      className={[
+        'ui-toggle',
+        checked ? 'ui-toggle--checked' : '',
+        disabled ? 'ui-toggle--disabled' : '',
+        className,
+      ]
         .filter(Boolean)
         .join(' ')}
       htmlFor={id}
@@ -28,7 +33,7 @@ function Toggle({
       </span>
       {label ? <span className="ui-toggle__label">{label}</span> : null}
     </label>
-  );
+  )
 }
 
-export default Toggle;
+export default Toggle

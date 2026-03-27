@@ -1,28 +1,28 @@
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
-import '../styles/couriers.css';
+import '../styles/couriers.css'
 
-import PageIntro from '../components/common/PageIntro';
-import PageTabs from '../components/common/PageTabs';
-import CouriersModule from '../modules/couriers/components/CouriersModule';
+import PageIntro from '../components/common/PageIntro'
+import PageTabs from '../components/common/PageTabs'
+import CouriersModule from '../modules/couriers/components/CouriersModule'
 
 const COURIERS_TABS = [
   { id: 'consulta', label: 'Consulta' },
   { id: 'cadastro', label: 'Cadastro' },
-];
+]
 
 function CouriersPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const isRegisterMode = location.pathname.endsWith('/cadastro');
-  const editingCourierId = searchParams.get('edit');
-  const activeTab = isRegisterMode ? 'cadastro' : 'consulta';
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isRegisterMode = location.pathname.endsWith('/cadastro')
+  const editingCourierId = searchParams.get('edit')
+  const activeTab = isRegisterMode ? 'cadastro' : 'consulta'
 
   function clearEditingCourier() {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('edit');
-    setSearchParams(nextParams, { replace: true });
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('edit')
+    setSearchParams(nextParams, { replace: true })
   }
 
   return (
@@ -57,7 +57,7 @@ function CouriersPage() {
         onFinishEditing={clearEditingCourier}
       />
     </div>
-  );
+  )
 }
 
-export default CouriersPage;
+export default CouriersPage

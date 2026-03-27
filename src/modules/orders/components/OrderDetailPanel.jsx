@@ -5,7 +5,7 @@ import {
   getPaymentMethodLabel,
 } from '../../../services/commerce'
 import { printOrderTicket } from '../../../services/commercePrint'
-import EmptyState from '../../../components/ui/EmptyState';
+import EmptyState from '../../../components/ui/EmptyState'
 
 function OrderDetailPanel({
   selectedOrder,
@@ -19,9 +19,9 @@ function OrderDetailPanel({
   formatDateTime,
 }) {
   const orderSource = selectedOrder
-    ? selectedOrder.origin
-      || selectedOrder.sourceLabel
-      || getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)
+    ? selectedOrder.origin ||
+      selectedOrder.sourceLabel ||
+      getChannelLabel(selectedOrder.sourceChannel ?? selectedOrder.source)
     : '--'
   const paymentLabel = selectedOrder
     ? selectedOrder.paymentMethodLabel || getPaymentMethodLabel(selectedOrder.paymentMethod)
@@ -30,10 +30,7 @@ function OrderDetailPanel({
   const canEditOrder = Boolean(canWrite && !isSaleLaunched)
   const canDispatchOrder = Boolean(canWrite && !acting && selectedOrder?.domainStatus === 'OPEN')
   const canConvertOrder = Boolean(
-    canWrite
-    && !acting
-    && !isSaleLaunched
-    && selectedOrder?.domainStatus !== 'CANCELLED'
+    canWrite && !acting && !isSaleLaunched && selectedOrder?.domainStatus !== 'CANCELLED',
   )
   const hasPendingActions = canEditOrder || canDispatchOrder || canConvertOrder
   const statusDescription = isSaleLaunched
@@ -46,7 +43,13 @@ function OrderDetailPanel({
     <div className="orders-domain__detail-shell">
       {!selectedOrder ? (
         <EmptyState
-          message={isLoading ? 'Carregando...' : requestedOrderId ? 'Pedido nao encontrado' : 'Selecione um pedido'}
+          message={
+            isLoading
+              ? 'Carregando...'
+              : requestedOrderId
+                ? 'Pedido nao encontrado'
+                : 'Selecione um pedido'
+          }
         />
       ) : (
         <div className="orders-domain__detail">
@@ -61,8 +64,12 @@ function OrderDetailPanel({
 
               <div className="commerce-detail-band">
                 <span className="ui-badge ui-badge--info">{orderSource}</span>
-                <span className="ui-badge ui-badge--warning">{getOrderDomainStatusLabel(selectedOrder.domainStatus)}</span>
-                <span className={`ui-badge ${isSaleLaunched ? 'ui-badge--success' : 'ui-badge--special'}`}>
+                <span className="ui-badge ui-badge--warning">
+                  {getOrderDomainStatusLabel(selectedOrder.domainStatus)}
+                </span>
+                <span
+                  className={`ui-badge ${isSaleLaunched ? 'ui-badge--success' : 'ui-badge--special'}`}
+                >
                   {isSaleLaunched ? 'Venda lancada' : 'Venda nao lancada'}
                 </span>
                 <span className="ui-badge ui-badge--special">{paymentLabel}</span>
@@ -72,7 +79,8 @@ function OrderDetailPanel({
                 <div className="orders-domain__hero-kicker">Pedido em foco</div>
                 <strong className="orders-domain__hero-order">{selectedOrder.number}</strong>
                 <p className="orders-domain__hero-meta">
-                  {selectedOrder.customerName} · {formatCurrencyBRL(selectedOrder.totals?.total ?? 0)}
+                  {selectedOrder.customerName} ·{' '}
+                  {formatCurrencyBRL(selectedOrder.totals?.total ?? 0)}
                 </p>
                 <p className="orders-domain__hero-description">{statusDescription}</p>
               </div>
@@ -89,11 +97,7 @@ function OrderDetailPanel({
                   Imprimir pedido
                 </button>
                 {canEditOrder ? (
-                  <button
-                    type="button"
-                    className="ui-button ui-button--ghost"
-                    onClick={onEdit}
-                  >
+                  <button type="button" className="ui-button ui-button--ghost" onClick={onEdit}>
                     Editar pedido
                   </button>
                 ) : null}
@@ -187,7 +191,9 @@ function OrderDetailPanel({
           </div>
 
           <div className="orders-domain__detail-panels">
-            <div className={`orders-domain__timeline-card${isSaleLaunched ? ' orders-domain__timeline-card--launched' : ''}`}>
+            <div
+              className={`orders-domain__timeline-card${isSaleLaunched ? ' orders-domain__timeline-card--launched' : ''}`}
+            >
               <span className="orders-domain__notes-label">Conversao e auditoria</span>
               <div className="orders-domain__timeline-list">
                 <div className="orders-domain__timeline-step">
@@ -196,15 +202,27 @@ function OrderDetailPanel({
                 </div>
                 <div className="orders-domain__timeline-step">
                   <strong>Expedicao</strong>
-                  <p>{selectedOrder.domainStatus === 'DISPATCHED' ? 'Marcado como despachado' : 'Ainda em aberto'}</p>
+                  <p>
+                    {selectedOrder.domainStatus === 'DISPATCHED'
+                      ? 'Marcado como despachado'
+                      : 'Ainda em aberto'}
+                  </p>
                 </div>
                 <div className="orders-domain__timeline-step">
                   <strong>Geracao de venda</strong>
-                  <p>{isSaleLaunched ? `Venda vinculada: ${selectedOrder.saleId}` : 'Ainda sem venda vinculada'}</p>
+                  <p>
+                    {isSaleLaunched
+                      ? `Venda vinculada: ${selectedOrder.saleId}`
+                      : 'Ainda sem venda vinculada'}
+                  </p>
                 </div>
                 <div className="orders-domain__timeline-step">
                   <strong>Impacto definitivo</strong>
-                  <p>{isSaleLaunched ? 'Estoque e financeiro publicados pela venda' : 'Sem impacto em estoque ou financeiro'}</p>
+                  <p>
+                    {isSaleLaunched
+                      ? 'Estoque e financeiro publicados pela venda'
+                      : 'Sem impacto em estoque ou financeiro'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -212,20 +230,31 @@ function OrderDetailPanel({
             <div className="orders-domain__notes">
               <span className="orders-domain__notes-label">Observacoes</span>
               <p>{selectedOrder.notes || 'Nenhuma observacao registrada.'}</p>
-              <p>{selectedOrder.saleId ? `Venda vinculada: ${selectedOrder.saleId}` : 'Ainda sem venda vinculada.'}</p>
+              <p>
+                {selectedOrder.saleId
+                  ? `Venda vinculada: ${selectedOrder.saleId}`
+                  : 'Ainda sem venda vinculada.'}
+              </p>
             </div>
           </div>
 
           <div className="orders-domain__items-list">
             <div className="orders-domain__items-header">
               <p className="text-label">Itens do pedido</p>
-              <span className="ui-badge ui-badge--info">{selectedOrder.items?.length ?? 0} itens</span>
+              <span className="ui-badge ui-badge--info">
+                {selectedOrder.items?.length ?? 0} itens
+              </span>
             </div>
             {selectedOrder.items?.map((item, index) => (
-              <div key={`${item.productId || item.productSnapshot?.name}-${index}`} className="orders-domain__item-line">
+              <div
+                key={`${item.productId || item.productSnapshot?.name}-${index}`}
+                className="orders-domain__item-line"
+              >
                 <div>
                   <strong>{item.productSnapshot?.name ?? item.name ?? 'Item'}</strong>
-                  <p>{item.quantity} x {formatCurrencyBRL(item.unitPrice)}</p>
+                  <p>
+                    {item.quantity} x {formatCurrencyBRL(item.unitPrice)}
+                  </p>
                 </div>
                 <strong>{formatCurrencyBRL(item.totalPrice)}</strong>
               </div>
@@ -238,4 +267,3 @@ function OrderDetailPanel({
 }
 
 export default OrderDetailPanel
-

@@ -102,7 +102,9 @@
 }
 
 .ui-table tbody tr {
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .ui-table tbody tr:hover {
@@ -111,7 +113,11 @@
 
 .entity-table__row--selected {
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent-cyan) 8%, transparent), transparent 18%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-cyan) 8%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-highlight) 66%, transparent);
 }
 
@@ -122,7 +128,11 @@
   min-height: 40px;
   padding: 9px 14px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 94%, var(--color-bg-input));
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-field);
@@ -151,7 +161,11 @@
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-accent-cyan) 50%),
     linear-gradient(135deg, var(--color-accent-cyan) 50%, transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 12%, transparent), transparent 24%);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 12%, transparent),
+      transparent 24%
+    );
   background-position:
     calc(100% - 18px) calc(50% - 1px),
     calc(100% - 12px) calc(50% - 1px),
@@ -227,7 +241,11 @@
 
 .ui-button--primary {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 6%, transparent), transparent 36%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-static-white) 6%, transparent),
+      transparent 36%
+    ),
     linear-gradient(135deg, var(--color-accent-amber), var(--color-accent-amber-strong));
   color: var(--color-text-inverse);
   box-shadow:
@@ -237,7 +255,11 @@
 
 .ui-button--secondary {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-static-white) 6%, transparent), transparent 36%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-static-white) 6%, transparent),
+      transparent 36%
+    ),
     linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-cyan-strong));
   color: var(--color-text-inverse);
   box-shadow:
@@ -454,7 +476,11 @@
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-sm);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 16%, transparent), transparent 28%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 16%, transparent),
+      transparent 28%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   box-shadow: var(--shadow-lg);
 }
@@ -551,7 +577,11 @@
   border: var(--border-thin) solid var(--color-border-default);
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 24%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 24%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
   box-shadow: var(--shadow-md);
 }
@@ -590,7 +620,11 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 22%, transparent), transparent 26%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 22%, transparent),
+      transparent 26%
+    ),
     color-mix(in srgb, var(--surface-panel-strong) 97%, transparent);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
@@ -1113,14 +1147,28 @@
   animation-delay: var(--row-delay, 0ms);
 }
 
-.ui-table tbody tr:nth-child(1) { --row-delay: 0ms; }
-.ui-table tbody tr:nth-child(2) { --row-delay: 40ms; }
-.ui-table tbody tr:nth-child(3) { --row-delay: 80ms; }
-.ui-table tbody tr:nth-child(4) { --row-delay: 120ms; }
-.ui-table tbody tr:nth-child(5) { --row-delay: 160ms; }
-.ui-table tbody tr:nth-child(6) { --row-delay: 200ms; }
+.ui-table tbody tr:nth-child(1) {
+  --row-delay: 0ms;
+}
+.ui-table tbody tr:nth-child(2) {
+  --row-delay: 40ms;
+}
+.ui-table tbody tr:nth-child(3) {
+  --row-delay: 80ms;
+}
+.ui-table tbody tr:nth-child(4) {
+  --row-delay: 120ms;
+}
+.ui-table tbody tr:nth-child(5) {
+  --row-delay: 160ms;
+}
+.ui-table tbody tr:nth-child(6) {
+  --row-delay: 200ms;
+}
 .ui-table tbody tr:nth-child(7),
-.ui-table tbody tr:nth-child(n + 8) { --row-delay: 240ms; }
+.ui-table tbody tr:nth-child(n + 8) {
+  --row-delay: 240ms;
+}
 
 .ui-table__row-enter {
   animation: ui-row-enter 200ms ease both;

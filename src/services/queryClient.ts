@@ -9,7 +9,15 @@ function shouldRetry(error: unknown, failureCount: number) {
     return false
   }
 
-  if (normalized.code === ErrorCode.VALIDATION_ERROR || normalized.code === ErrorCode.FORBIDDEN || normalized.code === ErrorCode.UNAUTHORIZED || normalized.status === 400 || normalized.status === 401 || normalized.status === 403 || normalized.status === 404) {
+  if (
+    normalized.code === ErrorCode.VALIDATION_ERROR ||
+    normalized.code === ErrorCode.FORBIDDEN ||
+    normalized.code === ErrorCode.UNAUTHORIZED ||
+    normalized.status === 400 ||
+    normalized.status === 401 ||
+    normalized.status === 403 ||
+    normalized.status === 404
+  ) {
     return false
   }
 

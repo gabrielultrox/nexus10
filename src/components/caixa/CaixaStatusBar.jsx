@@ -1,20 +1,20 @@
-import { formatCurrencyBRL } from '../../services/commerce';
+import { formatCurrencyBRL } from '../../services/commerce'
 
 function formatStatusTime(value) {
   if (!value) {
-    return '--:--';
+    return '--:--'
   }
 
-  const date = new Date(value);
+  const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
-    return '--:--';
+    return '--:--'
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+  }).format(date)
 }
 
 function CaixaStatusBar({
@@ -24,8 +24,8 @@ function CaixaStatusBar({
   closingDisabled = false,
   closingTooltip = '',
 }) {
-  const isOpen = cashState.status === 'aberto';
-  const pendingCount = Number(cashState.pendingCount ?? 0) || 0;
+  const isOpen = cashState.status === 'aberto'
+  const pendingCount = Number(cashState.pendingCount ?? 0) || 0
 
   return (
     <div className="caixa-status-bar" role="status" aria-live="polite">
@@ -75,7 +75,7 @@ function CaixaStatusBar({
         )}
       </div>
     </div>
-  );
+  )
 }
 
-export default CaixaStatusBar;
+export default CaixaStatusBar

@@ -1,8 +1,10 @@
-import { getMonitoringSnapshot } from '../../monitoring/metrics.js';
-import { requireRole } from '../../middleware/requireAuth.js';
+import { getMonitoringSnapshot } from '../../monitoring/metrics.js'
+import { requireRole } from '../../middleware/requireAuth.js'
 
 function renderMonitoringDashboard(snapshot) {
-  const routeRows = snapshot.routes.map((route) => `
+  const routeRows = snapshot.routes
+    .map(
+      (route) => `
     <tr>
       <td>${route.route}</td>
       <td>${route.totalRequests}</td>
@@ -10,7 +12,9 @@ function renderMonitoringDashboard(snapshot) {
       <td>${route.p95}ms</td>
       <td>${route.max}ms</td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('')
 
   return `<!doctype html>
   <html lang="pt-BR">
@@ -53,17 +57,17 @@ function renderMonitoringDashboard(snapshot) {
         <tbody>${routeRows || '<tr><td colspan="5">Sem tráfego suficiente.</td></tr>'}</tbody>
       </table>
     </body>
-  </html>`;
+  </html>`
 }
 
 export function registerMonitoringRoutes(app) {
   app.get('/api/admin/monitoring/summary', requireRole('admin'), (_request, response) => {
     response.json({
       data: getMonitoringSnapshot(),
-    });
-  });
+    })
+  })
 
   app.get('/api/admin/monitoring/dashboard', requireRole('admin'), (_request, response) => {
-    response.type('html').send(renderMonitoringDashboard(getMonitoringSnapshot()));
-  });
+    response.type('html').send(renderMonitoringDashboard(getMonitoringSnapshot()))
+  })
 }

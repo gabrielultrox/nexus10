@@ -1,17 +1,17 @@
-import StatusBadge from './StatusBadge';
+import StatusBadge from './StatusBadge'
 
 function resolveDeltaVariant(delta = '') {
-  const normalized = String(delta).trim();
+  const normalized = String(delta).trim()
 
   if (normalized.startsWith('+')) {
-    return 'metric-card__delta--positive';
+    return 'metric-card__delta--positive'
   }
 
   if (normalized.startsWith('-')) {
-    return 'metric-card__delta--negative';
+    return 'metric-card__delta--negative'
   }
 
-  return 'metric-card__delta--neutral';
+  return 'metric-card__delta--neutral'
 }
 
 function MetricCard({
@@ -27,7 +27,7 @@ function MetricCard({
 }) {
   const composedClassName = ['metric-card', `metric-card--${variant}`, className]
     .filter(Boolean)
-    .join(' ');
+    .join(' ')
 
   return (
     <article className={composedClassName}>
@@ -39,14 +39,11 @@ function MetricCard({
         {value}
       </div>
       {delta ? (
-        <p className={['metric-card__delta', resolveDeltaVariant(delta)].join(' ')}>
-          {delta}
-        </p>
+        <p className={['metric-card__delta', resolveDeltaVariant(delta)].join(' ')}>{delta}</p>
       ) : null}
       {description ? <p className="metric-card__description">{description}</p> : null}
     </article>
-  );
+  )
 }
 
-export default MetricCard;
-
+export default MetricCard

@@ -47,7 +47,12 @@ function buildUrl(baseURL: string, path: string, query?: IRequestConfig['query']
 }
 
 function isJsonBody(body: unknown): body is Record<string, unknown> {
-  return Boolean(body) && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)
+  return (
+    Boolean(body) &&
+    typeof body === 'object' &&
+    !(body instanceof FormData) &&
+    !(body instanceof Blob)
+  )
 }
 
 function resolveErrorCode(status: number): ErrorCode {
@@ -110,14 +115,16 @@ export class HttpClient {
         const normalized = ErrorHandler.normalize(error)
         lastError = normalized
 
-        const shouldRetryByStatus = normalized.status > 0 && this.config.retryableStatuses.includes(normalized.status)
-        const shouldRetry = attempt < retries && (ErrorHandler.isRecoverable(normalized) || shouldRetryByStatus)
+        const shouldRetryByStatus =
+          normalized.status > 0 && this.config.retryableStatuses.includes(normalized.status)
+        const shouldRetry =
+          attempt < retries && (ErrorHandler.isRecoverable(normalized) || shouldRetryByStatus)
 
         if (!shouldRetry) {
           throw normalized
         }
 
-        const delay = this.config.retryDelay * (2 ** attempt)
+        const delay = this.config.retryDelay * 2 ** attempt
         await sleep(delay)
       }
     }
@@ -125,7 +132,11 @@ export class HttpClient {
     throw lastError ?? new AppError('Falha ao processar a requisicao.')
   }
 
-  private async executeRequest<T>(method: HttpMethod, url: string, config: IRequestConfig): Promise<T> {
+  private async executeRequest<T>(
+    method: HttpMethod,
+    url: string,
+    config: IRequestConfig,
+  ): Promise<T> {
     const controller = new AbortController()
     const timeout = config.timeout ?? this.config.timeout
     const timeoutId = window.setTimeout(() => controller.abort(), timeout)
@@ -157,9 +168,10 @@ export class HttpClient {
         : await response.text().catch(() => null)
 
       if (!response.ok) {
-        const message = (payload as { message?: string } | null)?.message
-          || response.statusText
-          || 'Falha na requisicao.'
+        const message =
+          (payload as { message?: string } | null)?.message ||
+          response.statusText ||
+          'Falha na requisicao.'
 
         throw new AppError(
           message,
@@ -178,7 +190,11 @@ export class HttpClient {
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new TimeoutError('A requisicao excedeu o tempo limite.', { path: url, method, timeout })
+        throw new TimeoutError('A requisicao excedeu o tempo limite.', {
+          path: url,
+          method,
+          timeout,
+        })
       }
 
       if (error instanceof Error && error.message.includes('Failed to fetch')) {

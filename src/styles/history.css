@@ -167,7 +167,10 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
 }
 
 .history-module__calendar-day--selected {

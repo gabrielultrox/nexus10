@@ -14,7 +14,7 @@
       180deg,
       color-mix(in srgb, var(--surface-card-gloss) 18%, transparent),
       transparent 42%
-  ),
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
   box-shadow: var(--shadow-sm);
 }
@@ -104,7 +104,11 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 18%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 18%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
@@ -137,7 +141,11 @@
   border-radius: var(--radius-section);
   border: 1px solid var(--color-border-default);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 16%, transparent), transparent 30%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 16%, transparent),
+      transparent 30%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, transparent);
   box-shadow: 0 10px 22px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
   transition:
@@ -282,7 +290,11 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 16%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 16%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 

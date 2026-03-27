@@ -9,7 +9,7 @@ function ConfirmDialog({
   onConfirm,
 }) {
   if (!open) {
-    return null;
+    return null
   }
 
   return (
@@ -45,7 +45,7 @@ function ConfirmDialog({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default ConfirmDialog;
+export default ConfirmDialog

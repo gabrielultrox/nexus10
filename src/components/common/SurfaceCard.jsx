@@ -4,7 +4,7 @@ function SurfaceCard({ title, children }) {
       {title ? <h3 className="surface-card__title">{title}</h3> : null}
       <div className="surface-card__content">{children}</div>
     </section>
-  );
+  )
 }
 
-export default SurfaceCard;
+export default SurfaceCard

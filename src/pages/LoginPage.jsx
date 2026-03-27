@@ -1,118 +1,118 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
-import ThemeToggle from '../components/theme/ThemeToggle';
-import { useAuth } from '../contexts/AuthContext';
-import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess';
-import { playError, playSuccess } from '../services/soundManager';
-import Select from '../components/ui/Select';
+import ThemeToggle from '../components/theme/ThemeToggle'
+import { useAuth } from '../contexts/AuthContext'
+import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess'
+import { playError, playSuccess } from '../services/soundManager'
+import Select from '../components/ui/Select'
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, authError, operatorOptions, getLastOperator } = useAuth();
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { signIn, authError, operatorOptions, getLastOperator } = useAuth()
   const [formState, setFormState] = useState({
     operatorName: '',
     password: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [stage, setStage] = useState('pin');
-  const [pinValue, setPinValue] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [pinUnlocked, setPinUnlocked] = useState(false);
-  const [customPinEnabled, setCustomPinEnabled] = useState(false);
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [stage, setStage] = useState('pin')
+  const [pinValue, setPinValue] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinUnlocked, setPinUnlocked] = useState(false)
+  const [customPinEnabled, setCustomPinEnabled] = useState(false)
 
-  const redirectPath = location.state?.from?.pathname ?? '/dashboard';
+  const redirectPath = location.state?.from?.pathname ?? '/dashboard'
 
   useEffect(() => {
     setFormState((current) => ({
       ...current,
       operatorName: getLastOperator(),
-    }));
-    setCustomPinEnabled(hasStoredPin());
-  }, [getLastOperator]);
+    }))
+    setCustomPinEnabled(hasStoredPin())
+  }, [getLastOperator])
 
   useEffect(() => {
     if (stage !== 'pin') {
-      return undefined;
+      return undefined
     }
 
     function handleKeyDown(event) {
       if (/^\d$/.test(event.key)) {
-        setPinError('');
-        setPinValue((current) => (current.length < 4 ? `${current}${event.key}` : current));
+        setPinError('')
+        setPinValue((current) => (current.length < 4 ? `${current}${event.key}` : current))
       }
 
       if (event.key === 'Backspace') {
-        setPinError('');
-        setPinValue((current) => current.slice(0, -1));
+        setPinError('')
+        setPinValue((current) => current.slice(0, -1))
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [stage]);
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [stage])
 
   useEffect(() => {
     if (stage !== 'pin' || pinValue.length !== 4) {
-      return undefined;
+      return undefined
     }
 
     const timeoutId = window.setTimeout(() => {
       if (verifyStoredPin(pinValue)) {
-        setPinUnlocked(true);
-        setPinError('');
-        playSuccess();
+        setPinUnlocked(true)
+        setPinError('')
+        playSuccess()
         window.setTimeout(() => {
-          setStage('login');
-        }, 520);
-        return;
+          setStage('login')
+        }, 520)
+        return
       }
 
-      setPinError('PIN invalido. Tente novamente.');
-      playError();
-      setPinValue('');
-    }, 220);
+      setPinError('PIN invalido. Tente novamente.')
+      playError()
+      setPinValue('')
+    }, 220)
 
     return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [pinValue, stage]);
+      window.clearTimeout(timeoutId)
+    }
+  }, [pinValue, stage])
 
   function handleChange(field, value) {
     setFormState((current) => ({
       ...current,
       [field]: value,
-    }));
+    }))
   }
 
   function handlePinDigit(digit) {
-    setPinError('');
-    setPinValue((current) => (current.length < 4 ? `${current}${digit}` : current));
+    setPinError('')
+    setPinValue((current) => (current.length < 4 ? `${current}${digit}` : current))
   }
 
   function handlePinBackspace() {
-    setPinError('');
-    setPinValue((current) => current.slice(0, -1));
+    setPinError('')
+    setPinValue((current) => current.slice(0, -1))
   }
 
   async function handleSubmit(event) {
-    event.preventDefault();
-    setSubmitting(true);
-    setErrorMessage('');
+    event.preventDefault()
+    setSubmitting(true)
+    setErrorMessage('')
 
     try {
-      await signIn(formState);
-      playSuccess();
-      navigate(redirectPath, { replace: true });
+      await signIn(formState)
+      playSuccess()
+      navigate(redirectPath, { replace: true })
     } catch (error) {
-      setErrorMessage(error.message);
-      playError();
+      setErrorMessage(error.message)
+      playError()
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
   }
 
@@ -180,7 +180,10 @@ function LoginPage() {
                 <strong>{pinUnlocked ? 'Acesso liberado' : 'Aguardando PIN'}</strong>
               </div>
 
-              <div className="auth-pin__dots" aria-label={`PIN com ${pinValue.length} digitos preenchidos`}>
+              <div
+                className="auth-pin__dots"
+                aria-label={`PIN com ${pinValue.length} digitos preenchidos`}
+              >
                 {[0, 1, 2, 3].map((index) => (
                   <span
                     key={index}
@@ -203,7 +206,11 @@ function LoginPage() {
                     {digit}
                   </button>
                 ))}
-                <button type="button" className="auth-pin__key auth-pin__key--wide" onClick={handlePinBackspace}>
+                <button
+                  type="button"
+                  className="auth-pin__key auth-pin__key--wide"
+                  onClick={handlePinBackspace}
+                >
                   Backspace
                 </button>
               </div>
@@ -277,9 +284,15 @@ function LoginPage() {
                 />
               </div>
 
-              {errorMessage || authError ? <div className="auth-error">{errorMessage || authError}</div> : null}
+              {errorMessage || authError ? (
+                <div className="auth-error">{errorMessage || authError}</div>
+              ) : null}
 
-              <button type="submit" className="ui-button ui-button--secondary auth-submit" disabled={submitting}>
+              <button
+                type="submit"
+                className="ui-button ui-button--secondary auth-submit"
+                disabled={submitting}
+              >
                 {submitting ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
@@ -287,9 +300,7 @@ function LoginPage() {
         </section>
       ) : null}
     </div>
-  );
+  )
 }
 
-export default LoginPage;
-
-
+export default LoginPage

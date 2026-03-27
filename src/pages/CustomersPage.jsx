@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import CustomersModule from '../modules/customers/components/CustomersModule';
+import PageIntro from '../components/common/PageIntro'
+import CustomersModule from '../modules/customers/components/CustomersModule'
 
 function CustomersPage() {
   return (
@@ -12,7 +12,7 @@ function CustomersPage() {
 
       <CustomersModule />
     </div>
-  );
+  )
 }
 
-export default CustomersPage;
+export default CustomersPage

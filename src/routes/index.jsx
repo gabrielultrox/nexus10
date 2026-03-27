@@ -1,32 +1,32 @@
-import { Suspense, lazy } from 'react';
-import { Navigate, useRoutes } from 'react-router-dom';
+import { Suspense, lazy } from 'react'
+import { Navigate, useRoutes } from 'react-router-dom'
 
-import ProtectedRoute from '../components/auth/ProtectedRoute';
-import PublicOnlyRoute from '../components/auth/PublicOnlyRoute';
-import { routeDefinitions } from '../utils/routeCatalog';
+import ProtectedRoute from '../components/auth/ProtectedRoute'
+import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
+import { routeDefinitions } from '../utils/routeCatalog'
 
-const MainLayout = lazy(() => import('../components/layout/MainLayout'));
-const AnalysisPage = lazy(() => import('../pages/AnalysisPage'));
-const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
-const CommerceWorkspaceLayout = lazy(() => import('../components/layout/CommerceWorkspaceLayout'));
-const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'));
-const CouriersPage = lazy(() => import('../pages/CouriersPage'));
-const CustomersPage = lazy(() => import('../pages/CustomersPage'));
-const DashboardPage = lazy(() => import('../pages/DashboardPage'));
-const CashPage = lazy(() => import('../pages/CashPage'));
-const HistoryPage = lazy(() => import('../pages/HistoryPage'));
-const InventoryPage = lazy(() => import('../pages/InventoryPage'));
-const LoginPage = lazy(() => import('../pages/LoginPage'));
-const NativeModulePage = lazy(() => import('../pages/NativeModulePage'));
-const OrdersPage = lazy(() => import('../pages/OrdersPage'));
-const PdvPage = lazy(() => import('../pages/PdvPage'));
-const PosReportsPage = lazy(() => import('../pages/PosReportsPage'));
-const ProductsPage = lazy(() => import('../pages/ProductsPage'));
-const ReportsPage = lazy(() => import('../pages/ReportsPage'));
-const SalesPage = lazy(() => import('../pages/SalesPage'));
-const SettingsPage = lazy(() => import('../pages/SettingsPage'));
-const ordersRoute = routeDefinitions.find((route) => route.path === 'orders');
-const salesRoute = routeDefinitions.find((route) => route.path === 'sales');
+const MainLayout = lazy(() => import('../components/layout/MainLayout'))
+const AnalysisPage = lazy(() => import('../pages/AnalysisPage'))
+const AuditLogPage = lazy(() => import('../pages/AuditLogPage'))
+const CommerceWorkspaceLayout = lazy(() => import('../components/layout/CommerceWorkspaceLayout'))
+const CourierProfilePage = lazy(() => import('../pages/CourierProfilePage'))
+const CouriersPage = lazy(() => import('../pages/CouriersPage'))
+const CustomersPage = lazy(() => import('../pages/CustomersPage'))
+const DashboardPage = lazy(() => import('../pages/DashboardPage'))
+const CashPage = lazy(() => import('../pages/CashPage'))
+const HistoryPage = lazy(() => import('../pages/HistoryPage'))
+const InventoryPage = lazy(() => import('../pages/InventoryPage'))
+const LoginPage = lazy(() => import('../pages/LoginPage'))
+const NativeModulePage = lazy(() => import('../pages/NativeModulePage'))
+const OrdersPage = lazy(() => import('../pages/OrdersPage'))
+const PdvPage = lazy(() => import('../pages/PdvPage'))
+const PosReportsPage = lazy(() => import('../pages/PosReportsPage'))
+const ProductsPage = lazy(() => import('../pages/ProductsPage'))
+const ReportsPage = lazy(() => import('../pages/ReportsPage'))
+const SalesPage = lazy(() => import('../pages/SalesPage'))
+const SettingsPage = lazy(() => import('../pages/SettingsPage'))
+const ordersRoute = routeDefinitions.find((route) => route.path === 'orders')
+const salesRoute = routeDefinitions.find((route) => route.path === 'sales')
 
 function RouteLoader() {
   return (
@@ -35,71 +35,65 @@ function RouteLoader() {
         <span className="empty-state__message">Carregando area</span>
       </div>
     </div>
-  );
+  )
 }
 
 function withRouteSuspense(element) {
-  return <Suspense fallback={<RouteLoader />}>{element}</Suspense>;
+  return <Suspense fallback={<RouteLoader />}>{element}</Suspense>
 }
 
 function getRouteElement(route) {
   const pageElement = (() => {
     switch (route.path) {
       case 'dashboard':
-        return withRouteSuspense(<DashboardPage />);
+        return withRouteSuspense(<DashboardPage />)
       case 'couriers':
-        return withRouteSuspense(<CouriersPage />);
+        return withRouteSuspense(<CouriersPage />)
       case 'analysis':
-        return withRouteSuspense(<AnalysisPage />);
+        return withRouteSuspense(<AnalysisPage />)
       case 'audit-log':
-        return withRouteSuspense(<AuditLogPage />);
+        return withRouteSuspense(<AuditLogPage />)
       case 'cash':
-        return withRouteSuspense(<CashPage />);
+        return withRouteSuspense(<CashPage />)
       case 'history':
-        return withRouteSuspense(<HistoryPage />);
+        return withRouteSuspense(<HistoryPage />)
       case 'inventory':
-        return withRouteSuspense(<InventoryPage />);
+        return withRouteSuspense(<InventoryPage />)
       case 'orders':
-        return withRouteSuspense(<OrdersPage />);
+        return withRouteSuspense(<OrdersPage />)
       case 'pdv':
-        return withRouteSuspense(<PdvPage />);
+        return withRouteSuspense(<PdvPage />)
       case 'pos-reports':
-        return withRouteSuspense(<PosReportsPage />);
+        return withRouteSuspense(<PosReportsPage />)
       case 'products':
-        return withRouteSuspense(<ProductsPage />);
+        return withRouteSuspense(<ProductsPage />)
       case 'sales':
-        return withRouteSuspense(<SalesPage />);
+        return withRouteSuspense(<SalesPage />)
       case 'customers':
-        return withRouteSuspense(<CustomersPage />);
+        return withRouteSuspense(<CustomersPage />)
       case 'reports':
-        return withRouteSuspense(<ReportsPage />);
+        return withRouteSuspense(<ReportsPage />)
       case 'settings':
-        return withRouteSuspense(<SettingsPage />);
+        return withRouteSuspense(<SettingsPage />)
       default:
-        return withRouteSuspense(<NativeModulePage route={route} />);
+        return withRouteSuspense(<NativeModulePage route={route} />)
     }
-  })();
+  })()
 
-  return <ProtectedRoute requiredRoles={route.requiredRoles}>{pageElement}</ProtectedRoute>;
+  return <ProtectedRoute requiredRoles={route.requiredRoles}>{pageElement}</ProtectedRoute>
 }
 
 const appChildren = routeDefinitions
   .filter(
     (route) =>
-      ![
-        'pos',
-        'orders',
-        'sales',
-        'reports',
-        'monthly-report',
-        'orders-hour',
-        'ratings',
-      ].includes(route.path),
+      !['pos', 'orders', 'sales', 'reports', 'monthly-report', 'orders-hour', 'ratings'].includes(
+        route.path,
+      ),
   )
   .map((route) => ({
     path: route.path,
     element: getRouteElement(route),
-  }));
+  }))
 
 const routes = [
   {
@@ -116,13 +110,22 @@ const routes = [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: 'pos', element: <Navigate to="/pdv" replace /> },
           { path: 'reports', element: <Navigate to="/analysis?screen=reports" replace /> },
-          { path: 'monthly-report', element: <Navigate to="/analysis?screen=monthly-report" replace /> },
+          {
+            path: 'monthly-report',
+            element: <Navigate to="/analysis?screen=monthly-report" replace />,
+          },
           { path: 'orders-hour', element: <Navigate to="/analysis?screen=orders-hour" replace /> },
           { path: 'ratings', element: <Navigate to="/analysis?screen=ratings" replace /> },
           { path: 'finance', element: <Navigate to="/cash" replace /> },
           { path: 'couriers', element: <Navigate to="/couriers/consulta" replace /> },
-          { path: 'couriers/consulta', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
-          { path: 'couriers/cadastro', element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')) },
+          {
+            path: 'couriers/consulta',
+            element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')),
+          },
+          {
+            path: 'couriers/cadastro',
+            element: getRouteElement(routeDefinitions.find((route) => route.path === 'couriers')),
+          },
           { path: 'couriers/:courierId', element: withRouteSuspense(<CourierProfilePage />) },
           ...appChildren,
         ],
@@ -146,10 +149,10 @@ const routes = [
     path: '*',
     element: <Navigate to="/dashboard" replace />,
   },
-];
+]
 
 function AppRoutes() {
-  return useRoutes(routes);
+  return useRoutes(routes)
 }
 
-export default AppRoutes;
+export default AppRoutes

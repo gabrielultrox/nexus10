@@ -87,7 +87,7 @@ Opcional, mas recomendado:
 
 Referência:
 
-- [.env.example](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\.env.example)
+- [.env.example](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036.env.example)
 
 ## Database Migrations (Firestore)
 

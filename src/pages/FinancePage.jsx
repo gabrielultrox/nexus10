@@ -1,7 +1,7 @@
-import '../styles/finance.css';
+import '../styles/finance.css'
 
-import PageIntro from '../components/common/PageIntro';
-import FinanceModule from '../modules/finance/components/FinanceModule';
+import PageIntro from '../components/common/PageIntro'
+import FinanceModule from '../modules/finance/components/FinanceModule'
 
 function FinancePage() {
   return (
@@ -14,7 +14,7 @@ function FinancePage() {
 
       <FinanceModule />
     </div>
-  );
+  )
 }
 
-export default FinancePage;
+export default FinancePage

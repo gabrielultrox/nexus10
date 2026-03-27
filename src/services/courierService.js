@@ -1,88 +1,107 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-} from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
 
-import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase';
-import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
-import { loadLocalRecords, saveLocalRecords } from './localAccess';
-import { courierSeedRecords } from './operationsSeedData';
+import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase'
+import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
+import { loadLocalRecords, saveLocalRecords } from './localAccess'
+import { courierSeedRecords } from './operationsSeedData'
 
-export const MANUAL_COURIER_STORAGE_KEY = 'nexus-manual-couriers';
+export const MANUAL_COURIER_STORAGE_KEY = 'nexus-manual-couriers'
 
 function sortCouriers(records) {
   return [...records].sort((left, right) => {
-    const leftTime = Date.parse(left?.createdAtClient ?? left?.updatedAtClient ?? '') || 0;
-    const rightTime = Date.parse(right?.createdAtClient ?? right?.updatedAtClient ?? '') || 0;
+    const leftTime = Date.parse(left?.createdAtClient ?? left?.updatedAtClient ?? '') || 0
+    const rightTime = Date.parse(right?.createdAtClient ?? right?.updatedAtClient ?? '') || 0
 
-    return rightTime - leftTime;
-  });
+    return rightTime - leftTime
+  })
 }
 
 export function subscribeToCouriers(storeId, onData, onError) {
   if (!firebaseReady || !firebaseDb || !storeId) {
-    onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
-    return () => {};
+    onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords))
+    return () => {}
   }
 
-  const collectionRef = collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.couriers);
+  const collectionRef = collection(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.couriers,
+  )
 
   return guardRemoteSubscription(
-    () => onSnapshot(
-      collectionRef,
-      (snapshot) => {
-        const records = sortCouriers(snapshot.docs.map((documentSnapshot) => ({
-          id: documentSnapshot.id,
-          ...documentSnapshot.data(),
-        })));
+    () =>
+      onSnapshot(
+        collectionRef,
+        (snapshot) => {
+          const records = sortCouriers(
+            snapshot.docs.map((documentSnapshot) => ({
+              id: documentSnapshot.id,
+              ...documentSnapshot.data(),
+            })),
+          )
 
-        saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, records);
-        onData(records);
-      },
-      (error) => {
-        onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
-        onError?.(error);
-      },
-    ),
+          saveLocalRecords(MANUAL_COURIER_STORAGE_KEY, records)
+          onData(records)
+        },
+        (error) => {
+          onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords))
+          onError?.(error)
+        },
+      ),
     {
       onFallback() {
-        onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords));
+        onData(loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords))
       },
       onError,
     },
-  );
+  )
 }
 
 export async function saveCourier({ storeId, tenantId, courier }) {
   if (!firebaseReady || !firebaseDb || !storeId) {
-    return false;
+    return false
   }
 
-  const documentRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.couriers, courier.id);
-  const timestamp = new Date().toISOString();
-
-  await setDoc(documentRef, {
-    ...courier,
+  const documentRef = doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
     storeId,
-    tenantId: tenantId ?? null,
-    createdAtClient: courier.createdAtClient ?? timestamp,
-    updatedAtClient: timestamp,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
+    FIRESTORE_COLLECTIONS.couriers,
+    courier.id,
+  )
+  const timestamp = new Date().toISOString()
 
-  return true;
+  await setDoc(
+    documentRef,
+    {
+      ...courier,
+      storeId,
+      tenantId: tenantId ?? null,
+      createdAtClient: courier.createdAtClient ?? timestamp,
+      updatedAtClient: timestamp,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+
+  return true
 }
 
 export async function deleteCourierRecord({ storeId, courierId }) {
   if (!firebaseReady || !firebaseDb || !storeId) {
-    return false;
+    return false
   }
 
-  await deleteDoc(doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.couriers, courierId));
-  return true;
+  await deleteDoc(
+    doc(
+      firebaseDb,
+      FIRESTORE_COLLECTIONS.stores,
+      storeId,
+      FIRESTORE_COLLECTIONS.couriers,
+      courierId,
+    ),
+  )
+  return true
 }

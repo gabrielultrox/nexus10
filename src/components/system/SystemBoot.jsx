@@ -1,22 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const BOOT_SEQUENCE = [
   { id: 'boot-1', label: 'INICIALIZANDO NEXUS', accent: 'danger' },
   { id: 'boot-2', label: 'CARREGANDO MODULOS OPERACIONAIS', accent: 'info' },
   { id: 'boot-3', label: 'SERVICO DE ACESSO PRONTO', accent: 'success' },
   { id: 'boot-4', label: 'PAINEL PRINCIPAL LIBERADO', accent: 'special' },
-];
+]
 
 const SUBSYSTEMS = [
   { id: 'sub-1', label: 'Entregas', value: 'Sincronizado', tone: 'success' },
   { id: 'sub-2', label: 'Financeiro', value: 'Ao vivo', tone: 'info' },
   { id: 'sub-3', label: 'Estabilidade', value: 'Alta', tone: 'special' },
   { id: 'sub-4', label: 'Acesso', value: 'Protegido', tone: 'danger' },
-];
+]
 
-const PARTICLE_COUNT = 18;
-const BOOT_DURATION_MS = 1800;
-const FADE_DURATION_MS = 280;
+const PARTICLE_COUNT = 18
+const BOOT_DURATION_MS = 1800
+const FADE_DURATION_MS = 280
 
 function createParticles() {
   return Array.from({ length: PARTICLE_COUNT }, (_, index) => ({
@@ -26,66 +26,71 @@ function createParticles() {
     top: `${8 + ((index * 17) % 76)}%`,
     delay: `${(index % 6) * 0.42}s`,
     duration: `${5.8 + (index % 5) * 0.7}s`,
-  }));
+  }))
 }
 
 function getCoreLabel(progress) {
   if (progress < 28) {
-    return 'Inicializacao';
+    return 'Inicializacao'
   }
 
   if (progress < 56) {
-    return 'Sincronizacao';
+    return 'Sincronizacao'
   }
 
   if (progress < 82) {
-    return 'Validacao';
+    return 'Validacao'
   }
 
-  return 'Liberacao final';
+  return 'Liberacao final'
 }
 
 function SystemBoot({ onComplete }) {
-  const [progress, setProgress] = useState(0);
-  const [visibleLineCount, setVisibleLineCount] = useState(1);
-  const [isClosing, setIsClosing] = useState(false);
-  const onCompleteRef = useRef(onComplete);
-  const particles = useMemo(createParticles, []);
+  const [progress, setProgress] = useState(0)
+  const [visibleLineCount, setVisibleLineCount] = useState(1)
+  const [isClosing, setIsClosing] = useState(false)
+  const onCompleteRef = useRef(onComplete)
+  const particles = useMemo(createParticles, [])
 
   useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
-    let progressValue = 0;
-    let closed = false;
+    let progressValue = 0
+    let closed = false
 
     const progressInterval = window.setInterval(() => {
-      progressValue += progressValue < 68 ? 4 : progressValue < 92 ? 2 : 1;
-      const nextValue = progressValue > 100 ? 100 : progressValue;
+      progressValue += progressValue < 68 ? 4 : progressValue < 92 ? 2 : 1
+      const nextValue = progressValue > 100 ? 100 : progressValue
 
-      setProgress(nextValue);
-      setVisibleLineCount(Math.min(BOOT_SEQUENCE.length, Math.max(1, Math.ceil((nextValue / 100) * BOOT_SEQUENCE.length))));
+      setProgress(nextValue)
+      setVisibleLineCount(
+        Math.min(
+          BOOT_SEQUENCE.length,
+          Math.max(1, Math.ceil((nextValue / 100) * BOOT_SEQUENCE.length)),
+        ),
+      )
 
       if (nextValue >= 100) {
-        window.clearInterval(progressInterval);
-        setIsClosing(true);
+        window.clearInterval(progressInterval)
+        setIsClosing(true)
         window.setTimeout(() => {
           if (!closed) {
-            onCompleteRef.current?.();
+            onCompleteRef.current?.()
           }
-        }, FADE_DURATION_MS);
+        }, FADE_DURATION_MS)
       }
-    }, BOOT_DURATION_MS / 40);
+    }, BOOT_DURATION_MS / 40)
 
     return () => {
-      closed = true;
-      window.clearInterval(progressInterval);
-    };
-  }, []);
+      closed = true
+      window.clearInterval(progressInterval)
+    }
+  }, [])
 
-  const visibleLines = BOOT_SEQUENCE.slice(0, visibleLineCount);
-  const coreLabel = getCoreLabel(progress);
+  const visibleLines = BOOT_SEQUENCE.slice(0, visibleLineCount)
+  const coreLabel = getCoreLabel(progress)
 
   return (
     <div className={`system-boot${isClosing ? ' system-boot--closing' : ''}`} aria-live="polite">
@@ -122,13 +127,18 @@ function SystemBoot({ onComplete }) {
 
           <div className="system-boot__header-rail">
             <span className="system-boot__status-chip">SEQUENCIA DE INICIALIZACAO</span>
-            <span className="system-boot__status-chip system-boot__status-chip--dim">ETAPA {coreLabel.toUpperCase()}</span>
+            <span className="system-boot__status-chip system-boot__status-chip--dim">
+              ETAPA {coreLabel.toUpperCase()}
+            </span>
           </div>
         </header>
 
         <div className="system-boot__subsystems">
           {SUBSYSTEMS.map((system) => (
-            <div key={system.id} className={`system-boot__subsystem system-boot__subsystem--${system.tone}`}>
+            <div
+              key={system.id}
+              className={`system-boot__subsystem system-boot__subsystem--${system.tone}`}
+            >
               <span>{system.label}</span>
               <strong>{system.value}</strong>
             </div>
@@ -160,7 +170,8 @@ function SystemBoot({ onComplete }) {
               <p className="system-boot__eyebrow">Inicializacao do sistema</p>
               <h1 className="system-boot__title">Preparando o ambiente operacional</h1>
               <p className="system-boot__description">
-                Carregando interface, acesso local e modulos principais antes de liberar o painel da operacao.
+                Carregando interface, acesso local e modulos principais antes de liberar o painel da
+                operacao.
               </p>
             </div>
 
@@ -210,7 +221,7 @@ function SystemBoot({ onComplete }) {
         </footer>
       </div>
     </div>
-  );
+  )
 }
 
-export default SystemBoot;
+export default SystemBoot

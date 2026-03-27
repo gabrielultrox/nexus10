@@ -1,11 +1,11 @@
-import { getNextOrderStatus } from '../../../services/orders';
-import { orderPriorityMap, orderStatusMap } from '../schemas/orderSchema';
+import { getNextOrderStatus } from '../../../services/orders'
+import { orderPriorityMap, orderStatusMap } from '../schemas/orderSchema'
 
 function OrderCard({ order, onAdvanceOrder, onOpenDetails, updating = false }) {
-  const priority = orderPriorityMap[order.priority] ?? orderPriorityMap.normal;
-  const status = orderStatusMap[order.status] ?? orderStatusMap.received;
-  const nextStatus = getNextOrderStatus(order.status);
-  const canAdvance = !order.isExternal && Boolean(nextStatus);
+  const priority = orderPriorityMap[order.priority] ?? orderPriorityMap.normal
+  const status = orderStatusMap[order.status] ?? orderStatusMap.received
+  const nextStatus = getNextOrderStatus(order.status)
+  const canAdvance = !order.isExternal && Boolean(nextStatus)
 
   return (
     <article className="ui-card ui-card--interactive order-card">
@@ -58,15 +58,25 @@ function OrderCard({ order, onAdvanceOrder, onOpenDetails, updating = false }) {
             onClick={() => onAdvanceOrder(order)}
             disabled={!canAdvance || updating}
           >
-            {updating ? 'Salvando...' : order.isExternal ? 'Sync iFood' : nextStatus ? 'Avancar' : 'Concluido'}
+            {updating
+              ? 'Salvando...'
+              : order.isExternal
+                ? 'Sync iFood'
+                : nextStatus
+                  ? 'Avancar'
+                  : 'Concluido'}
           </button>
-          <button type="button" className="ui-button ui-button--ghost" onClick={() => onOpenDetails(order)}>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost"
+            onClick={() => onOpenDetails(order)}
+          >
             Detalhes
           </button>
         </div>
       </div>
     </article>
-  );
+  )
 }
 
-export default OrderCard;
+export default OrderCard

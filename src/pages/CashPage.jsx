@@ -1,5 +1,5 @@
-import PageIntro from '../components/common/PageIntro';
-import CashModule from '../modules/cash/components/CashModule';
+import PageIntro from '../components/common/PageIntro'
+import CashModule from '../modules/cash/components/CashModule'
 
 function CashPage() {
   return (
@@ -12,7 +12,7 @@ function CashPage() {
 
       <CashModule />
     </div>
-  );
+  )
 }
 
-export default CashPage;
+export default CashPage

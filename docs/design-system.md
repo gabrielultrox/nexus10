@@ -17,9 +17,8 @@ Formalizar a biblioteca base de interface do Nexus10 em cima das classes ja usad
 Uso:
 
 ```jsx
-import { Button } from '../components/ui';
-
-<Button variant="primary">Salvar</Button>
+import { Button } from '../components/ui'
+;<Button variant="primary">Salvar</Button>
 ```
 
 ### Card

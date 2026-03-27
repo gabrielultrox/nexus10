@@ -4,4 +4,4 @@ export {
   mapIfoodStatus,
   resolveIfoodEventDescriptor,
   shouldCreateTrackingEntry,
-} from '../../../src/services/integrations/ifoodStatusMapper.js';
+} from '../../../src/services/integrations/ifoodStatusMapper.js'

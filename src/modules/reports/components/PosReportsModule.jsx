@@ -1,128 +1,136 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 
-import MetricCard from '../../../components/common/MetricCard';
-import SurfaceCard from '../../../components/common/SurfaceCard';
-import { useStore } from '../../../contexts/StoreContext';
-import { firebaseReady } from '../../../services/firebase';
-import { buildPdvReportCsv, buildPdvReportData, subscribeToReportSources } from '../../../services/reports';
-import { playError, playSuccess } from '../../../services/soundManager';
-import ReportBarChart from './ReportBarChart';
-import ReportStatList from './ReportStatList';
-import EmptyState from '../../../components/ui/EmptyState';
+import MetricCard from '../../../components/common/MetricCard'
+import SurfaceCard from '../../../components/common/SurfaceCard'
+import { useStore } from '../../../contexts/StoreContext'
+import { firebaseReady } from '../../../services/firebase'
+import {
+  buildPdvReportCsv,
+  buildPdvReportData,
+  subscribeToReportSources,
+} from '../../../services/reports'
+import { playError, playSuccess } from '../../../services/soundManager'
+import ReportBarChart from './ReportBarChart'
+import ReportStatList from './ReportStatList'
+import EmptyState from '../../../components/ui/EmptyState'
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(Number(value ?? 0));
+  }).format(Number(value ?? 0))
 }
 
 function formatInteger(value) {
-  return new Intl.NumberFormat('pt-BR').format(Number(value ?? 0));
+  return new Intl.NumberFormat('pt-BR').format(Number(value ?? 0))
 }
 
 function getDefaultStartDate() {
-  const date = new Date();
-  date.setDate(1);
-  return date.toISOString().slice(0, 10);
+  const date = new Date()
+  date.setDate(1)
+  return date.toISOString().slice(0, 10)
 }
 
 function getDefaultEndDate() {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10)
 }
 
 function downloadCsvFile(content, filename) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  window.URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
 }
 
 function PosReportsModule() {
-  const { currentStoreId } = useStore();
-  const [sales, setSales] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [financialEntries, setFinancialEntries] = useState([]);
+  const { currentStoreId } = useStore()
+  const [sales, setSales] = useState([])
+  const [orders, setOrders] = useState([])
+  const [products, setProducts] = useState([])
+  const [financialEntries, setFinancialEntries] = useState([])
   const [loadedSources, setLoadedSources] = useState({
     sales: false,
     orders: false,
     products: false,
     financialEntries: false,
-  });
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [startDate, setStartDate] = useState(getDefaultStartDate);
-  const [endDate, setEndDate] = useState(getDefaultEndDate);
+  })
+  const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [startDate, setStartDate] = useState(getDefaultStartDate)
+  const [endDate, setEndDate] = useState(getDefaultEndDate)
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
-      setLoading(false);
-      return undefined;
+      setLoading(false)
+      return undefined
     }
 
-    setLoading(true);
-    setErrorMessage('');
-    setFeedbackMessage('');
-    setSales([]);
-    setOrders([]);
-    setProducts([]);
-    setFinancialEntries([]);
+    setLoading(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
+    setSales([])
+    setOrders([])
+    setProducts([])
+    setFinancialEntries([])
     setLoadedSources({
       sales: false,
       orders: false,
       products: false,
       financialEntries: false,
-    });
+    })
 
     const unsubscribe = subscribeToReportSources(currentStoreId, {
       onSales: (nextSales) => {
-        setSales(nextSales);
-        setLoadedSources((current) => ({ ...current, sales: true }));
+        setSales(nextSales)
+        setLoadedSources((current) => ({ ...current, sales: true }))
       },
       onOrders: (nextOrders) => {
-        setOrders(nextOrders);
-        setLoadedSources((current) => ({ ...current, orders: true }));
+        setOrders(nextOrders)
+        setLoadedSources((current) => ({ ...current, orders: true }))
       },
       onProducts: (nextProducts) => {
-        setProducts(nextProducts);
-        setLoadedSources((current) => ({ ...current, products: true }));
+        setProducts(nextProducts)
+        setLoadedSources((current) => ({ ...current, products: true }))
       },
       onFinancialEntries: (nextEntries) => {
-        setFinancialEntries(nextEntries);
-        setLoadedSources((current) => ({ ...current, financialEntries: true }));
+        setFinancialEntries(nextEntries)
+        setLoadedSources((current) => ({ ...current, financialEntries: true }))
       },
       onError: (error) => {
-        setErrorMessage(error.message);
-        setLoading(false);
+        setErrorMessage(error.message)
+        setLoading(false)
       },
-    });
+    })
 
-    return unsubscribe;
-  }, [currentStoreId]);
+    return unsubscribe
+  }, [currentStoreId])
 
   useEffect(() => {
     if (Object.values(loadedSources).every(Boolean)) {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [loadedSources]);
+  }, [loadedSources])
 
-  const reportData = useMemo(() => buildPdvReportData({
-    sales,
-    orders,
-    products,
-    financialEntries,
-    startDate,
-    endDate,
-  }), [endDate, financialEntries, orders, products, sales, startDate]);
+  const reportData = useMemo(
+    () =>
+      buildPdvReportData({
+        sales,
+        orders,
+        products,
+        financialEntries,
+        startDate,
+        endDate,
+      }),
+    [endDate, financialEntries, orders, products, sales, startDate],
+  )
 
   const reconciliationDelta = Number(
     (reportData.totals.totalSold - reportData.totals.activeFinancialSales).toFixed(2),
-  );
+  )
 
   const metrics = [
     {
@@ -153,23 +161,23 @@ function PosReportsModule() {
       badgeText: 'margem',
       badgeClass: 'ui-badge--warning',
     },
-  ];
+  ]
 
   function handleExportCsv() {
     try {
       if (reportData.exportRows.length === 0) {
-        throw new Error('Nao ha vendas no periodo para exportar.');
+        throw new Error('Nao ha vendas no periodo para exportar.')
       }
 
-      const csv = buildPdvReportCsv(reportData);
-      downloadCsvFile(csv, `relatorio-pdv-${startDate || 'inicio'}-${endDate || 'fim'}.csv`);
-      setFeedbackMessage('Exportacao CSV preparada com os dados reais do periodo.');
-      setErrorMessage('');
-      playSuccess();
+      const csv = buildPdvReportCsv(reportData)
+      downloadCsvFile(csv, `relatorio-pdv-${startDate || 'inicio'}-${endDate || 'fim'}.csv`)
+      setFeedbackMessage('Exportacao CSV preparada com os dados reais do periodo.')
+      setErrorMessage('')
+      playSuccess()
     } catch (error) {
-      setFeedbackMessage('');
-      setErrorMessage(error.message);
-      playError();
+      setFeedbackMessage('')
+      setErrorMessage(error.message)
+      playError()
     }
   }
 
@@ -178,7 +186,7 @@ function PosReportsModule() {
       <SurfaceCard title="Relatorios do PDV">
         <EmptyState message="Firebase nao configurado" />
       </SurfaceCard>
-    );
+    )
   }
 
   if (!currentStoreId) {
@@ -186,7 +194,7 @@ function PosReportsModule() {
       <SurfaceCard title="Relatorios do PDV">
         <EmptyState message="Nenhuma store ativa" />
       </SurfaceCard>
-    );
+    )
   }
 
   return (
@@ -207,7 +215,9 @@ function PosReportsModule() {
       <SurfaceCard title="Filtro e exportacao">
         <div className="entity-toolbar pos-reports-toolbar">
           <div className="ui-field">
-            <label className="ui-label" htmlFor="pos-reports-start-date">Inicio</label>
+            <label className="ui-label" htmlFor="pos-reports-start-date">
+              Inicio
+            </label>
             <input
               id="pos-reports-start-date"
               className="ui-input"
@@ -218,7 +228,9 @@ function PosReportsModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="pos-reports-end-date">Fim</label>
+            <label className="ui-label" htmlFor="pos-reports-end-date">
+              Fim
+            </label>
             <input
               id="pos-reports-end-date"
               className="ui-input"
@@ -229,14 +241,20 @@ function PosReportsModule() {
           </div>
 
           <div className="pos-reports-toolbar__actions">
-            <button type="button" className="ui-button ui-button--secondary" onClick={handleExportCsv}>
+            <button
+              type="button"
+              className="ui-button ui-button--secondary"
+              onClick={handleExportCsv}
+            >
               Exportar CSV
             </button>
           </div>
         </div>
       </SurfaceCard>
 
-      {feedbackMessage ? <div className="auth-error auth-error--success">{feedbackMessage}</div> : null}
+      {feedbackMessage ? (
+        <div className="auth-error auth-error--success">{feedbackMessage}</div>
+      ) : null}
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
       {loading ? (
@@ -327,8 +345,7 @@ function PosReportsModule() {
         </>
       )}
     </section>
-  );
+  )
 }
 
-export default PosReportsModule;
-
+export default PosReportsModule

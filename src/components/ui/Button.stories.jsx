@@ -1,4 +1,4 @@
-import Button from './Button';
+import Button from './Button'
 
 const meta = {
   title: 'UI/Button',
@@ -27,27 +27,27 @@ const meta = {
       description: 'Conteudo textual do botao.',
     },
   },
-};
+}
 
-export default meta;
+export default meta
 
 export const Primary = {
   args: {
     children: 'Salvar alteracoes',
     variant: 'primary',
   },
-};
+}
 
 export const Secondary = {
   args: {
     children: 'Abrir detalhe',
     variant: 'secondary',
   },
-};
+}
 
 export const Danger = {
   args: {
     children: 'Excluir registro',
     variant: 'danger',
   },
-};
+}

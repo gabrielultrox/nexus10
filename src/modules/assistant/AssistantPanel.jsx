@@ -1,9 +1,9 @@
-import '../../styles/assistant.css';
+import '../../styles/assistant.css'
 
-import { useAssistant } from './AssistantContextProvider';
-import AssistantInput from './AssistantInput';
-import AssistantMessageList from './AssistantMessageList';
-import AssistantQuickActions from './AssistantQuickActions';
+import { useAssistant } from './AssistantContextProvider'
+import AssistantInput from './AssistantInput'
+import AssistantMessageList from './AssistantMessageList'
+import AssistantQuickActions from './AssistantQuickActions'
 
 function AssistantPanel() {
   const {
@@ -17,7 +17,7 @@ function AssistantPanel() {
     pageContext,
     quickActions,
     sendMessage,
-  } = useAssistant();
+  } = useAssistant()
 
   return (
     <>
@@ -26,7 +26,12 @@ function AssistantPanel() {
       </button>
 
       <div className={`assistant-shell ${isOpen ? 'assistant-shell--open' : ''}`}>
-        <button type="button" className="assistant-backdrop" aria-label="Fechar NEXA" onClick={closePanel} />
+        <button
+          type="button"
+          className="assistant-backdrop"
+          aria-label="Fechar NEXA"
+          onClick={closePanel}
+        />
 
         <aside className={`assistant-panel ${isOpen ? 'assistant-panel--open' : ''}`}>
           <header className="assistant-panel__header">
@@ -71,7 +76,7 @@ function AssistantPanel() {
         </aside>
       </div>
     </>
-  );
+  )
 }
 
-export default AssistantPanel;
+export default AssistantPanel

@@ -130,4 +130,4 @@ export const financeMock = {
       time: '19:20',
     },
   ],
-};
+}

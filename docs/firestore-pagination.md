@@ -26,7 +26,7 @@ const page = await getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLE
   pageSize: 50,
   cursor,
   cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders, 'page-by-createdAt'),
-});
+})
 ```
 
 Returned shape:

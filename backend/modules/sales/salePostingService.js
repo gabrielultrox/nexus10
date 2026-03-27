@@ -1,53 +1,53 @@
-import { recordAuditEvent } from '../audit/auditService.js';
-import { syncSaleToFinancialEntry } from '../finance/financeService.js';
-import { syncSaleStock } from '../stock/stockService.js';
-import { normalizeSaleDomainStatus } from './saleValidationService.js';
+import { recordAuditEvent } from '../audit/auditService.js'
+import { syncSaleToFinancialEntry } from '../finance/financeService.js'
+import { syncSaleStock } from '../stock/stockService.js'
+import { normalizeSaleDomainStatus } from './saleValidationService.js'
 
 function isPosted(status) {
-  return normalizeSaleDomainStatus(status, null) === 'POSTED';
+  return normalizeSaleDomainStatus(status, null) === 'POSTED'
 }
 
 function isReversed(status) {
-  const normalized = normalizeSaleDomainStatus(status, null);
-  return normalized === 'REVERSED' || normalized === 'CANCELLED';
+  const normalized = normalizeSaleDomainStatus(status, null)
+  return normalized === 'REVERSED' || normalized === 'CANCELLED'
 }
 
 function buildAuditDescription(sale, previousStatus) {
-  const currentStatus = normalizeSaleDomainStatus(sale.status, 'POSTED');
+  const currentStatus = normalizeSaleDomainStatus(sale.status, 'POSTED')
 
   if (isPosted(currentStatus) && !isPosted(previousStatus)) {
     return sale.orderId
       ? `Venda ${sale.code ?? sale.id} lancada a partir do pedido ${sale.orderId}.`
-      : `Venda ${sale.code ?? sale.id} lancada diretamente.`;
+      : `Venda ${sale.code ?? sale.id} lancada diretamente.`
   }
 
   if (currentStatus === 'REVERSED') {
-    return `Venda ${sale.code ?? sale.id} estornada.`;
+    return `Venda ${sale.code ?? sale.id} estornada.`
   }
 
   if (currentStatus === 'CANCELLED') {
-    return `Venda ${sale.code ?? sale.id} cancelada.`;
+    return `Venda ${sale.code ?? sale.id} cancelada.`
   }
 
-  return `Venda ${sale.code ?? sale.id} atualizada.`;
+  return `Venda ${sale.code ?? sale.id} atualizada.`
 }
 
 function buildAuditAction(status, previousStatus) {
-  const currentStatus = normalizeSaleDomainStatus(status, 'POSTED');
+  const currentStatus = normalizeSaleDomainStatus(status, 'POSTED')
 
   if (isPosted(currentStatus) && !isPosted(previousStatus)) {
-    return 'sale.posted';
+    return 'sale.posted'
   }
 
   if (currentStatus === 'REVERSED') {
-    return 'sale.reversed';
+    return 'sale.reversed'
   }
 
   if (currentStatus === 'CANCELLED') {
-    return 'sale.cancelled';
+    return 'sale.cancelled'
   }
 
-  return 'sale.updated';
+  return 'sale.updated'
 }
 
 export async function postSaleLifecycle({
@@ -69,7 +69,7 @@ export async function postSaleLifecycle({
       tenantId,
       sale,
     }),
-  ]);
+  ])
 
   void recordAuditEvent({
     storeId,
@@ -90,10 +90,10 @@ export async function postSaleLifecycle({
       financialEntryId: financialResult.entryId ?? null,
       reversed: isReversed(sale.status),
     },
-  }).catch(() => {});
+  }).catch(() => {})
 
   return {
     stockPosted: stockResult.applied,
     financialPosted: financialResult.applied,
-  };
+  }
 }

@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { visualizer } from 'rollup-plugin-visualizer';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
-  const shouldAnalyze = mode === 'analyze';
+  const shouldAnalyze = mode === 'analyze'
 
   return {
     plugins: [
@@ -82,12 +82,12 @@ export default defineConfig(({ mode }) => {
       }),
       shouldAnalyze
         ? visualizer({
-          filename: 'output/bundle-report.html',
-          template: 'treemap',
-          gzipSize: true,
-          brotliSize: true,
-          open: false,
-        })
+            filename: 'output/bundle-report.html',
+            template: 'treemap',
+            gzipSize: true,
+            brotliSize: true,
+            open: false,
+          })
         : null,
     ].filter(Boolean),
     server: {
@@ -106,42 +106,45 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('/src/components/dashboard/') || id.includes('/src/modules/reports/components/')) {
-              return 'charts-and-reports';
+            if (
+              id.includes('/src/components/dashboard/') ||
+              id.includes('/src/modules/reports/components/')
+            ) {
+              return 'charts-and-reports'
             }
 
             if (id.includes('/src/modules/operations/components/')) {
-              return 'operations-workspace';
+              return 'operations-workspace'
             }
 
             if (!id.includes('node_modules')) {
-              return undefined;
+              return undefined
             }
 
             if (id.includes('firebase/auth')) {
-              return 'firebase-auth';
+              return 'firebase-auth'
             }
 
             if (id.includes('firebase/firestore') || id.includes('firebase/app')) {
-              return 'firebase-data';
+              return 'firebase-data'
             }
 
             if (id.includes('html-to-image')) {
-              return 'export-utils';
+              return 'export-utils'
             }
 
             if (id.includes('react-router-dom')) {
-              return 'router';
+              return 'router'
             }
 
             if (id.includes('react-dom') || id.includes('react')) {
-              return 'react-vendor';
+              return 'react-vendor'
             }
 
-            return 'vendor';
+            return 'vendor'
           },
         },
       },
     },
-  };
-});
+  }
+})

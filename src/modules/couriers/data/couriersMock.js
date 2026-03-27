@@ -125,4 +125,4 @@ export const couriersMock = [
       { id: 't3', time: '20:18', label: 'Segunda saída em apoio ao pico' },
     ],
   },
-];
+]

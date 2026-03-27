@@ -1,23 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'
 
 function TrendAreaChart({ data }) {
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(null)
 
-  const max = Math.max(...data.map((item) => item.value), 1);
-  const gradientId = useMemo(
-    () => `trend-fill-${Math.random().toString(36).slice(2, 10)}`,
-    [],
-  );
+  const max = Math.max(...data.map((item) => item.value), 1)
+  const gradientId = useMemo(() => `trend-fill-${Math.random().toString(36).slice(2, 10)}`, [])
 
   const coordinates = data.map((item, index) => ({
     ...item,
     x: (index / (data.length - 1 || 1)) * 100,
     y: 100 - (item.value / max) * 100,
-  }));
+  }))
 
-  const points = coordinates.map((item) => `${item.x},${item.y}`).join(' ');
-  const areaPoints = `0,100 ${points} 100,100`;
-  const activeItem = activeIndex == null ? null : coordinates[activeIndex];
+  const points = coordinates.map((item) => `${item.x},${item.y}`).join(' ')
+  const areaPoints = `0,100 ${points} 100,100`
+  const activeItem = activeIndex == null ? null : coordinates[activeIndex]
 
   return (
     <div className="trend-chart">
@@ -62,16 +59,13 @@ function TrendAreaChart({ data }) {
         ) : null}
       </div>
 
-      <div
-        className="trend-chart__axis"
-        style={{ '--chart-columns': data.length }}
-      >
+      <div className="trend-chart__axis" style={{ '--chart-columns': data.length }}>
         {data.map((item) => (
           <span key={item.label}>{item.label}</span>
         ))}
       </div>
     </div>
-  );
+  )
 }
 
-export default TrendAreaChart;
+export default TrendAreaChart

@@ -19,7 +19,11 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--color-accent-cyan) 10%, transparent), transparent 35%),
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--color-accent-cyan) 10%, transparent),
+      transparent 35%
+    ),
     color-mix(in srgb, var(--color-shadow-rgb) 38%, transparent);
   backdrop-filter: blur(10px);
 }
@@ -35,8 +39,16 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 34%, var(--color-border-default));
   border-radius: 18px;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--color-accent-cyan) 18%, transparent), transparent 45%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 94%, transparent), color-mix(in srgb, var(--surface-panel) 96%, transparent));
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-accent-cyan) 18%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 94%, transparent),
+      color-mix(in srgb, var(--surface-panel) 96%, transparent)
+    );
   box-shadow:
     0 18px 48px color-mix(in srgb, var(--color-shadow-rgb) 20%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
@@ -63,8 +75,16 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 18%, var(--color-border-subtle));
   border-radius: 30px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-card-gloss) 26%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-panel-strong) 99%, transparent), color-mix(in srgb, var(--surface-panel) 100%, transparent));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 26%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 99%, transparent),
+      color-mix(in srgb, var(--surface-panel) 100%, transparent)
+    );
   box-shadow: 0 28px 90px color-mix(in srgb, var(--color-shadow-rgb) 28%, transparent);
   backdrop-filter: blur(22px);
   transform: translateY(20px) scale(0.985);
@@ -144,7 +164,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
   border-radius: 22px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 18%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-cyan) 4%, transparent),
+      transparent 18%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
 
@@ -157,7 +181,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, var(--color-border-subtle));
   border-radius: 22px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 4%, transparent), transparent 22%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-cyan) 4%, transparent),
+      transparent 22%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 96%, var(--surface-panel));
 }
 
@@ -181,7 +209,8 @@
 
 .assistant-section-heading--conversation {
   padding-bottom: 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-accent-cyan) 8%, var(--color-border-subtle));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-accent-cyan) 8%, var(--color-border-subtle));
 }
 
 .assistant-quick-actions {
@@ -202,7 +231,11 @@
   border: 1px solid color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-border-subtle));
   border-radius: 18px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 8%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-primary) 8%, transparent),
+      transparent 24%
+    ),
     color-mix(in srgb, var(--surface-panel-soft-alt) 98%, var(--surface-panel));
   text-align: left;
   align-content: start;

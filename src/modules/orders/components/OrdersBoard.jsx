@@ -1,5 +1,5 @@
-import { orderColumns } from '../schemas/orderSchema';
-import OrdersColumn from './OrdersColumn';
+import { orderColumns } from '../schemas/orderSchema'
+import OrdersColumn from './OrdersColumn'
 
 function OrdersBoard({ groupedOrders, onAdvanceOrder, onOpenDetails, updatingOrderId }) {
   return (
@@ -15,7 +15,7 @@ function OrdersBoard({ groupedOrders, onAdvanceOrder, onOpenDetails, updatingOrd
         />
       ))}
     </section>
-  );
+  )
 }
 
-export default OrdersBoard;
+export default OrdersBoard

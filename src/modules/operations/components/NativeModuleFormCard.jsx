@@ -35,7 +35,9 @@ function NativeModuleField({ field, routePath, value, updateField }) {
         <span className="native-module__checkbox-box" aria-hidden="true" />
         <span className="native-module__checkbox-copy">
           <strong>{field.label}</strong>
-          <small>{field.description ?? 'Marque esta opcao quando ela se aplicar ao registro.'}</small>
+          <small>
+            {field.description ?? 'Marque esta opcao quando ela se aplicar ao registro.'}
+          </small>
         </span>
       </label>
     )
@@ -148,7 +150,9 @@ function NativeModuleFormCard({
       return
     }
 
-    const firstField = formRef.current.querySelector('input:not([type="checkbox"]), select, textarea')
+    const firstField = formRef.current.querySelector(
+      'input:not([type="checkbox"]), select, textarea',
+    )
     firstField?.focus()
   }, [focusFieldKey, routePath])
 
@@ -191,7 +195,11 @@ function NativeModuleFormCard({
                 return
               }
 
-              if (event.key === 'Enter' && event.target instanceof HTMLElement && event.target.tagName !== 'BUTTON') {
+              if (
+                event.key === 'Enter' &&
+                event.target instanceof HTMLElement &&
+                event.target.tagName !== 'BUTTON'
+              ) {
                 event.preventDefault()
                 event.currentTarget.requestSubmit()
               }
@@ -248,7 +256,9 @@ function NativeModuleFormCard({
               <button
                 type="submit"
                 className="ui-button ui-button--primary native-module__delivery-submit"
-                disabled={isSubmitting || codeValue.trim().length === 0 || Boolean(submitDisabledReason)}
+                disabled={
+                  isSubmitting || codeValue.trim().length === 0 || Boolean(submitDisabledReason)
+                }
                 title={submitDisabledReason || undefined}
               >
                 {isSubmitting ? (
@@ -299,7 +309,9 @@ function NativeModuleFormCard({
             </div>
           ))}
 
-          <div className={`native-module__form-actions${routePath === 'delivery-reading' ? ' native-module__form-actions--inline' : ''}`}>
+          <div
+            className={`native-module__form-actions${routePath === 'delivery-reading' ? ' native-module__form-actions--inline' : ''}`}
+          >
             {routePath === 'advances' ? (
               <button type="button" className="ui-button ui-button--ghost" onClick={onReset}>
                 Cancelar
@@ -321,5 +333,3 @@ function NativeModuleFormCard({
 }
 
 export default NativeModuleFormCard
-
-

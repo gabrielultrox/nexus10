@@ -1,1 +1,1 @@
-export { syncSaleToFinancialEntry } from './financialEntryService.js';
+export { syncSaleToFinancialEntry } from './financialEntryService.js'

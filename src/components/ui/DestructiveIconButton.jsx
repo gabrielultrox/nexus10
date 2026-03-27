@@ -1,11 +1,6 @@
-import TrashIcon from './TrashIcon';
+import TrashIcon from './TrashIcon'
 
-function DestructiveIconButton({
-  className = '',
-  label = 'Excluir',
-  title,
-  ...props
-}) {
+function DestructiveIconButton({ className = '', label = 'Excluir', title, ...props }) {
   return (
     <button
       type="button"
@@ -16,7 +11,7 @@ function DestructiveIconButton({
     >
       <TrashIcon className="ui-destructive-button__icon" title={title ?? label} />
     </button>
-  );
+  )
 }
 
-export default DestructiveIconButton;
+export default DestructiveIconButton
