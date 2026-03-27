@@ -30,20 +30,74 @@ function isDevelopmentEnvironment() {
   return backendEnv.nodeEnv !== 'production';
 }
 
-function isAllowedOrigin(origin) {
+function normalizeOrigin(origin) {
+  if (!origin) {
+    return '';
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+
+    if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
+      return '';
+    }
+
+    if (parsedOrigin.username || parsedOrigin.password) {
+      return '';
+    }
+
+    return parsedOrigin.origin;
+  } catch {
+    return '';
+  }
+}
+
+export function isAllowedOrigin(origin) {
   if (!origin) {
     return true;
   }
 
-  if (backendEnv.frontendOrigin.includes(origin)) {
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  if (!normalizedOrigin) {
+    return false;
+  }
+
+  if (backendEnv.frontendOrigin.map(normalizeOrigin).includes(normalizedOrigin)) {
     return true;
   }
 
   if (isDevelopmentEnvironment()) {
-    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizedOrigin);
   }
 
   return false;
+}
+
+export function buildContentSecurityPolicyDirectives() {
+  const allowedConnectSources = [
+    "'self'",
+    ...backendEnv.frontendOrigin
+      .map(normalizeOrigin)
+      .filter(Boolean),
+  ];
+
+  if (isDevelopmentEnvironment()) {
+    allowedConnectSources.push('http://localhost:*', 'http://127.0.0.1:*');
+  }
+
+  return {
+    defaultSrc: ["'none'"],
+    baseUri: ["'none'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'none'"],
+    objectSrc: ["'none'"],
+    imgSrc: ["'self'", 'data:'],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    connectSrc: Array.from(new Set(allowedConnectSources)),
+    upgradeInsecureRequests: [],
+  };
 }
 
 function createApiRateLimiter(max) {
@@ -70,25 +124,42 @@ export function createApp() {
   app.disable('x-powered-by');
   app.use(requestLogger);
   app.use(helmet({
+    contentSecurityPolicy: {
+      directives: buildContentSecurityPolicyDirectives(),
+    },
     crossOriginResourcePolicy: false,
+    frameguard: {
+      action: 'deny',
+    },
+    hsts: backendEnv.nodeEnv === 'production'
+      ? {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      }
+      : false,
+    referrerPolicy: {
+      policy: 'no-referrer',
+    },
   }));
 
   app.use((request, response, next) => {
     const origin = request.headers.origin;
+    const normalizedOrigin = normalizeOrigin(origin);
 
     if (!origin) {
       next();
       return;
     }
 
-    if (!isAllowedOrigin(origin)) {
+    if (!normalizedOrigin || !isAllowedOrigin(normalizedOrigin)) {
       response.status(403).json({
         error: 'Origem nao autorizada para esta API.',
       });
       return;
     }
 
-    response.header('Access-Control-Allow-Origin', origin);
+    response.header('Access-Control-Allow-Origin', normalizedOrigin);
     response.header('Vary', 'Origin');
     response.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     response.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
