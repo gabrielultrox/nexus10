@@ -19,7 +19,6 @@ jobs:
   deploy-preview:
     name: Vercel preview deploy
     runs-on: ubuntu-latest
-    if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
 
     steps:
       - name: Checkout repository
@@ -28,25 +27,47 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
+      - name: Check Vercel secrets
+        id: vercel_secrets
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [[ -n "$VERCEL_TOKEN" && -n "$VERCEL_ORG_ID" && -n "$VERCEL_PROJECT_ID" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip preview deploy when secrets are missing
+        if: steps.vercel_secrets.outputs.available != 'true'
+        run: echo "Skipping preview deploy because Vercel secrets are not configured."
+
       - name: Install dependencies
+        if: steps.vercel_secrets.outputs.available == 'true'
         run: npm ci
 
       - name: Pull Vercel environment
+        if: steps.vercel_secrets.outputs.available == 'true'
         run: npx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build preview output
+        if: steps.vercel_secrets.outputs.available == 'true'
         run: npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy preview output
+        if: steps.vercel_secrets.outputs.available == 'true'
         id: deploy
         shell: bash
         run: |
@@ -57,6 +78,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Comment preview URL
+        if: steps.vercel_secrets.outputs.available == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

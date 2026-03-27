@@ -7,6 +7,30 @@ import { afterEach, vi } from 'vitest'
 
 expect.extend(axeMatchers)
 
+const frontendEnvDefaults = {
+  VITE_APP_ENV: 'test',
+  VITE_FIREBASE_PROJECT_ID: 'nexus10-test',
+  VITE_FIREBASE_APP_ID: '1:1234567890:web:test',
+  VITE_FIREBASE_AUTH_DOMAIN: 'nexus10-test.firebaseapp.com',
+  VITE_FIREBASE_API_KEY: 'test-api-key',
+  VITE_API_BASE_URL: 'http://127.0.0.1:8787/api',
+  VITE_LOG_LEVEL: 'info',
+  VITE_SENTRY_DSN: '',
+  VITE_SENTRY_RELEASE: '',
+  VITE_SENTRY_TRACES_SAMPLE_RATE: '0',
+  VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE: '0',
+  VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: '0',
+  VITE_FIREBASE_STORAGE_BUCKET: '',
+  VITE_FIREBASE_MESSAGING_SENDER_ID: '',
+  VITE_FIREBASE_USE_EMULATORS: 'false',
+  VITE_FIREBASE_FIRESTORE_EMULATOR_HOST: '',
+  VITE_FIREBASE_AUTH_EMULATOR_HOST: '',
+} as const
+
+Object.entries(frontendEnvDefaults).forEach(([key, value]) => {
+  vi.stubEnv(key, value)
+})
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
