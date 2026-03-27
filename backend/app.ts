@@ -165,7 +165,7 @@ export function createApp(): Express {
           return
         }
 
-        const authToken = (await runtime.adapter.getAccessToken({
+        const authToken = (await (runtime.adapter as any).getAccessToken({
           clientId: merchant.clientId,
           clientSecret: merchant.clientSecret,
         })) as IfoodAccessToken
@@ -254,11 +254,11 @@ export function createApp(): Express {
           return
         }
 
-        const authToken = (await runtime.adapter.getAccessToken({
+        const authToken = (await (runtime.adapter as any).getAccessToken({
           clientId: merchant.clientId,
           clientSecret: merchant.clientSecret,
         })) as IfoodAccessToken
-        const rawOrder = await runtime.adapter.getOrderDetails({
+        const rawOrder = await (runtime.adapter as any).getOrderDetails({
           accessToken: authToken.accessToken ?? authToken.access_token,
           orderId,
         })
@@ -317,7 +317,9 @@ export function createApp(): Express {
     }),
     async (request, response) => {
       const { storeId, merchantId } = request.params
-      const validatedWebhook = (request.validated?.webhook ?? {}) as {
+      const validatedWebhook = (((request.validated as Record<string, unknown> | undefined) ?? {})[
+        'webhook'
+      ] ?? {}) as {
         signature: string
         body: string
       }
@@ -338,7 +340,7 @@ export function createApp(): Express {
           return
         }
 
-        const authToken = (await runtime.adapter.getAccessToken({
+        const authToken = (await (runtime.adapter as any).getAccessToken({
           clientId: merchant.clientId,
           clientSecret: merchant.clientSecret,
         })) as IfoodAccessToken

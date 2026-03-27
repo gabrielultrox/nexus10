@@ -19,12 +19,6 @@ import type {
 
 const authLogger = createLoggerContext({ module: 'auth' })
 
-type AuthSessionRequest = Request & {
-  validated?: {
-    body?: AuthSessionRequestBody | AuthTokenSessionRequestBody
-  }
-}
-
 function isValidPassword(password: string): boolean {
   return (
     Boolean(backendEnv.localOperatorPassword) &&
@@ -96,7 +90,7 @@ async function resolveTokenSession(token: string) {
 }
 
 async function handleCreateLoginSession(
-  request: AuthSessionRequest,
+  request: Request,
   response: Response<AuthSessionResponseBody | ErrorResponseBody>,
 ) {
   const payload = request.validated?.body as AuthSessionRequestBody
@@ -187,7 +181,7 @@ async function handleCreateLoginSession(
 }
 
 async function handleResolveTokenSession(
-  request: AuthSessionRequest,
+  request: Request,
   response: Response<AuthTokenSessionResponseBody | ErrorResponseBody>,
 ) {
   const payload = request.validated?.body as AuthTokenSessionRequestBody
@@ -201,7 +195,16 @@ async function handleResolveTokenSession(
         getStartPayload: () => ({
           mode: 'token',
         }),
-        getSuccessPayload: (result: { uid: string; role: string }) => ({
+        getSuccessPayload: (result: {
+          uid: string
+          role: string
+          tenantId: string | null
+          storeIds: string[]
+          defaultStoreId: string | null
+          operatorName: string | null
+          displayName: string | null
+          email: string | null
+        }) => ({
           user_id: result.uid,
           role: result.role,
         }),
@@ -273,8 +276,11 @@ export function registerAuthRoutes(app: Express): void {
   app.post(
     '/api/auth/session',
     validateRequest(authSessionRouteSchema),
-    async (request: AuthSessionRequest, response: Response) => {
-      const payload = request.validated?.body
+    async (request: Request, response: Response) => {
+      const payload = request.validated?.body as
+        | AuthSessionRequestBody
+        | AuthTokenSessionRequestBody
+        | undefined
 
       if (!payload) {
         response.status(400).json({ error: 'Dados de sessao invalidos.' })

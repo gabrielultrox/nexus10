@@ -1,4 +1,10 @@
-import type { AuthenticatedUserContext, RequestLoggerLike } from './auth.js'
+import type {
+  ApiErrorResponseBody,
+  ApiSuccessResponseBody,
+  AuthenticatedUserContext,
+  RequestLoggerLike,
+  RequestValidationPayload,
+} from './index.js'
 
 declare global {
   namespace Express {
@@ -6,7 +12,12 @@ declare global {
       id?: string
       authUser?: AuthenticatedUserContext
       log?: RequestLoggerLike
-      validated?: Record<string, unknown>
+      validated?: RequestValidationPayload & Record<string, unknown>
+    }
+
+    interface Response {
+      success?<TData>(payload: ApiSuccessResponseBody<TData>): this
+      fail?(payload: ApiErrorResponseBody): this
     }
   }
 }

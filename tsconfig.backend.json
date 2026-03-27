@@ -12,6 +12,8 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
+    "sourceMap": true,
+    "inlineSources": true,
     "rootDir": ".",
     "outDir": "dist-backend",
     "types": ["node"]
@@ -20,6 +22,8 @@
   "exclude": [
     "backend/**/*.test.js",
     "backend/**/*.test.ts",
+    "backend/config/env.js",
+    "backend/config/logger.js",
     "dist",
     "dist-backend",
     "node_modules"
