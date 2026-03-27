@@ -92,6 +92,16 @@
   gap: var(--space-3);
 }
 
+.cash-module__pending-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cash-module__pending-form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .cash-module__form--opening {
   max-width: 420px;
 }
@@ -228,6 +238,63 @@
   font-size: 12px;
 }
 
+.cash-module__pending-table th:nth-child(1),
+.cash-module__pending-table td:nth-child(1) {
+  min-width: 220px;
+}
+
+.cash-module__pending-table th:nth-child(5),
+.cash-module__pending-table td:nth-child(5) {
+  min-width: 260px;
+}
+
+.cash-module__pending-identity,
+.cash-module__pending-status,
+.cash-module__pending-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.cash-module__pending-identity small,
+.cash-module__pending-status small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cash-module__pending-meta {
+  justify-items: start;
+}
+
+.cash-module__pending-checklist {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.cash-module__pending-check,
+.cash-module__pending-resolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cash-module__pending-check input,
+.cash-module__pending-resolve input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.cash-module__pending-check.is-checked span,
+.cash-module__pending-resolve.is-resolved span {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cash-module__pending-search {
+  width: min(280px, 100%);
+}
+
 .cash-module__history-toolbar-actions {
   display: flex;
   align-items: center;
@@ -237,7 +304,8 @@
 
 @media (max-width: 900px) {
   .cash-module__metrics,
-  .cash-module__form-row {
+  .cash-module__form-row,
+  .cash-module__pending-form-grid {
     grid-template-columns: 1fr;
   }
 }

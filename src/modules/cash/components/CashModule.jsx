@@ -34,6 +34,7 @@ import EmptyState from '../../../components/ui/EmptyState';
 
 const CASH_STORAGE_KEY = 'nexus-module-cash';
 const CASH_STATE_STORAGE_KEY = 'nexus-module-cash-state';
+const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending';
 const CASH_RESET_HOUR = 3;
 
 const CASH_TABS = [
@@ -77,10 +78,50 @@ const CASH_TABS = [
     receiptLabel: 'Fechamento de caixa',
     codePrefix: 'FEC',
   },
+  {
+    id: 'financial-pending',
+    label: 'Pendencias financeiras',
+    title: 'Registrar pendencia financeira',
+    submitLabel: 'Registrar pendencia',
+    receiptLabel: 'Pendencia financeira',
+    codePrefix: 'PEN',
+  },
 ];
+
+const FINANCIAL_PENDING_TYPES = [
+  { value: 'change-pending', label: 'Troco pendente' },
+  { value: 'refund', label: 'Estorno' },
+  { value: 'wrong-charge', label: 'Cobranca incorreta' },
+  { value: 'other', label: 'Outro ajuste' },
+];
+
+const FINANCIAL_PENDING_PRIORITIES = [
+  { value: 'high', label: 'Alta' },
+  { value: 'medium', label: 'Media' },
+  { value: 'low', label: 'Baixa' },
+];
+
+const FINANCIAL_PENDING_CHECKLIST = [
+  { key: 'customerContacted', label: 'Cliente contatado' },
+  { key: 'amountReviewed', label: 'Valor conferido' },
+  { key: 'actionCompleted', label: 'Acao executada' },
+];
+
+const initialFinancialPendingForm = {
+  customerName: '',
+  customerPhone: '',
+  type: FINANCIAL_PENDING_TYPES[0].value,
+  priority: 'medium',
+  amount: '',
+  description: '',
+};
 
 function createCashId() {
   return `cash-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function createFinancialPendingId() {
+  return `financial-pending-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
 function buildReceiptCode(prefix) {
@@ -162,12 +203,183 @@ function buildCashRecord(tab, amount, note, operatorName, courierName = '') {
   };
 }
 
+function getFinancialPendingTypeLabel(type) {
+  return FINANCIAL_PENDING_TYPES.find((entry) => entry.value === type)?.label ?? 'Pendencia financeira';
+}
+
+function getFinancialPendingPriorityLabel(priority) {
+  return FINANCIAL_PENDING_PRIORITIES.find((entry) => entry.value === priority)?.label ?? 'Media';
+}
+
+function getFinancialPendingPriorityBadge(priority) {
+  switch (priority) {
+    case 'high':
+      return 'ui-badge--danger';
+    case 'low':
+      return 'ui-badge--info';
+    default:
+      return 'ui-badge--warning';
+  }
+}
+
+function sortFinancialPendingRecords(records) {
+  return [...records].sort((left, right) => {
+    const leftResolved = Boolean(left?.resolvedAtClient);
+    const rightResolved = Boolean(right?.resolvedAtClient);
+
+    if (leftResolved !== rightResolved) {
+      return leftResolved ? 1 : -1;
+    }
+
+    const leftTime = Date.parse(left?.updatedAtClient ?? left?.createdAtClient ?? '') || 0;
+    const rightTime = Date.parse(right?.updatedAtClient ?? right?.createdAtClient ?? '') || 0;
+    return rightTime - leftTime;
+  });
+}
+
+function createDefaultFinancialPendingChecklist() {
+  return FINANCIAL_PENDING_CHECKLIST.reduce((accumulator, item) => {
+    accumulator[item.key] = false;
+    return accumulator;
+  }, {});
+}
+
+function isFinancialPendingResolved(record) {
+  return Boolean(record?.resolvedAtClient);
+}
+
+function isFinancialPendingChecklistComplete(record) {
+  return FINANCIAL_PENDING_CHECKLIST.every((item) => Boolean(record?.checklist?.[item.key]));
+}
+
+function buildFinancialPendingRecord(formValues, operatorName) {
+  const amount = parseCurrencyInput(formValues.amount);
+
+  return {
+    id: createFinancialPendingId(),
+    customerName: formValues.customerName.trim(),
+    customerPhone: formValues.customerPhone.trim(),
+    type: formValues.type,
+    typeLabel: getFinancialPendingTypeLabel(formValues.type),
+    priority: formValues.priority,
+    priorityLabel: getFinancialPendingPriorityLabel(formValues.priority),
+    amount,
+    amountLabel: formatCurrencyBRL(amount),
+    description: formValues.description.trim(),
+    operatorName,
+    checklist: createDefaultFinancialPendingChecklist(),
+    resolutionNote: '',
+    createdAtClient: new Date().toISOString(),
+    updatedAtClient: new Date().toISOString(),
+    resolvedAtClient: '',
+    resolvedBy: '',
+  };
+}
+
 function CashMetricCard({ label, value, meta }) {
   return (
     <div className="ui-kpi-card cash-module__metric-card">
       <span className="ui-kpi-card__label">{label}</span>
       <strong className="ui-kpi-card__value">{value}</strong>
       <span className="ui-kpi-card__meta">{meta}</span>
+    </div>
+  );
+}
+
+function FinancialPendingTable({
+  records,
+  onChecklistToggle,
+  onResolvedToggle,
+  onDelete,
+}) {
+  if (records.length === 0) {
+    return <EmptyState message="Nenhuma pendencia financeira encontrada" />;
+  }
+
+  return (
+    <div className="cash-module__history-wrap">
+      <table className="ui-table cash-module__pending-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Numero</th>
+            <th>Tipo</th>
+            <th>Valor</th>
+            <th>Checklist</th>
+            <th>Status</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record, rowIndex) => {
+            const isResolved = isFinancialPendingResolved(record);
+            const checklistComplete = isFinancialPendingChecklistComplete(record);
+
+            return (
+              <tr key={record.id} className="ui-table__row-enter" style={{ '--row-delay': `${Math.min(rowIndex * 40, 240)}ms` }}>
+                <td className="ui-table__cell--strong">
+                  <div className="cash-module__pending-identity">
+                    <span>{record.customerName}</span>
+                    <small>{record.description}</small>
+                    <small>{record.operatorName}</small>
+                  </div>
+                </td>
+                <td className="ui-table__cell--muted">{record.customerPhone}</td>
+                <td>
+                  <div className="cash-module__pending-meta">
+                    <span className="ui-badge ui-badge--info">{record.typeLabel}</span>
+                    <span className={`ui-badge ${getFinancialPendingPriorityBadge(record.priority)}`}>{record.priorityLabel}</span>
+                  </div>
+                </td>
+                <td className="ui-table__cell--numeric">{record.amountLabel}</td>
+                <td>
+                  <div className="cash-module__pending-checklist">
+                    {FINANCIAL_PENDING_CHECKLIST.map((item) => (
+                      <label key={item.key} className={`cash-module__pending-check${record.checklist?.[item.key] ? ' is-checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(record.checklist?.[item.key])}
+                          onChange={() => onChecklistToggle(record.id, item.key)}
+                        />
+                        <span>{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <div className="cash-module__pending-status">
+                    <label className={`cash-module__pending-resolve${isResolved ? ' is-resolved' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={isResolved}
+                        disabled={!isResolved && !checklistComplete}
+                        onChange={() => onResolvedToggle(record.id)}
+                      />
+                      <span>{isResolved ? 'Resolvido' : 'Em aberto'}</span>
+                    </label>
+                    {!isResolved && !checklistComplete ? (
+                      <small>Conclua os 3 checks para encerrar.</small>
+                    ) : null}
+                    {isResolved ? <small>{`Fechado em ${formatDateTime(record.resolvedAtClient)}`}</small> : null}
+                  </div>
+                </td>
+                <td>
+                  <div className="cash-module__history-actions">
+                    <Button variant="secondary" onClick={() => onResolvedToggle(record.id)} disabled={!isResolved && !checklistComplete}>
+                      {isResolved ? 'Reabrir' : 'Concluir'}
+                    </Button>
+                    <DestructiveIconButton
+                      className="native-module__delete-action"
+                      onClick={() => onDelete(record.id)}
+                      label="Excluir pendencia"
+                    />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -234,14 +446,19 @@ function CashModule() {
   const activeTabId = searchParams.get('tab') ?? CASH_TABS[0].id;
   const activeTab = CASH_TABS.find((tab) => tab.id === activeTabId) ?? CASH_TABS[0];
   const [records, setRecords] = useState(() => loadResettableLocalRecords(CASH_STORAGE_KEY, [], CASH_RESET_HOUR));
+  const [financialPendingRecords, setFinancialPendingRecords] = useState(() => loadResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [], CASH_RESET_HOUR));
   const [cashState, setCashState] = useState(() => loadCashState(CASH_STATE_STORAGE_KEY, CASH_RESET_HOUR));
   const [couriers, setCouriers] = useState([]);
   const [selectedCourier, setSelectedCourier] = useState('');
   const [valueInput, setValueInput] = useState('');
   const [note, setNote] = useState('');
+  const [financialPendingForm, setFinancialPendingForm] = useState(initialFinancialPendingForm);
+  const [financialPendingSearch, setFinancialPendingSearch] = useState('');
+  const [financialPendingFilter, setFinancialPendingFilter] = useState('open');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [syncMessage, setSyncMessage] = useState('');
+  const [financialPendingSyncMessage, setFinancialPendingSyncMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
   const { session } = useAuth();
   const { currentStoreId, tenantId } = useStore();
@@ -290,6 +507,24 @@ function CashModule() {
     },
   ), [currentStoreId]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeToManualModuleRecords({
+      storeId: currentStoreId,
+      modulePath: 'cash-financial-pending',
+      storageKey: FINANCIAL_PENDING_STORAGE_KEY,
+      initialRecords: [],
+      dailyResetHour: CASH_RESET_HOUR,
+      onData(nextRecords) {
+        setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords));
+      },
+      onError() {
+        setFinancialPendingSyncMessage('Pendencias financeiras em modo local');
+      },
+    });
+
+    return unsubscribe;
+  }, [currentStoreId]);
+
   const totalAmountByTab = useMemo(() => {
     return CASH_TABS.reduce((accumulator, tab) => {
       const total = records
@@ -329,9 +564,43 @@ function CashModule() {
       .sort((left, right) => left.localeCompare(right, 'pt-BR')),
     [couriers],
   );
+  const openFinancialPendingRecords = useMemo(
+    () => financialPendingRecords.filter((record) => !isFinancialPendingResolved(record)),
+    [financialPendingRecords],
+  );
+  const resolvedFinancialPendingRecords = useMemo(
+    () => financialPendingRecords.filter((record) => isFinancialPendingResolved(record)),
+    [financialPendingRecords],
+  );
+  const filteredFinancialPendingRecords = useMemo(() => {
+    const normalizedSearch = financialPendingSearch.trim().toLowerCase();
+
+    return financialPendingRecords.filter((record) => {
+      const matchesStatus = financialPendingFilter === 'all'
+        || (financialPendingFilter === 'open' && !isFinancialPendingResolved(record))
+        || (financialPendingFilter === 'resolved' && isFinancialPendingResolved(record));
+      const matchesSearch = normalizedSearch.length === 0 || [
+        record.customerName,
+        record.customerPhone,
+        record.description,
+        record.typeLabel,
+        record.operatorName,
+      ].join(' ').toLowerCase().includes(normalizedSearch);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [financialPendingFilter, financialPendingRecords, financialPendingSearch]);
+  const financialPendingAmount = useMemo(
+    () => openFinancialPendingRecords.reduce((total, record) => total + Number(record.amount ?? 0), 0),
+    [openFinancialPendingRecords],
+  );
+  const financialPendingTabLabel = useMemo(
+    () => `Pendencias financeiras${openFinancialPendingRecords.length > 0 ? ` (${openFinancialPendingRecords.length})` : ''}`,
+    [openFinancialPendingRecords.length],
+  );
   const requiresCourier = activeTab.id === 'courier-withdrawal';
   const isCashOpen = cashState.status === 'aberto';
-  const pendingCount = Number(cashState.pendingCount ?? 0) || 0;
+  const pendingCount = openFinancialPendingRecords.length;
   const closingDisabled = !isCashOpen || pendingCount > 0;
   const openingBlockedMessage = activeTab.id === 'opening' && isCashOpen
     ? `O caixa ja foi aberto as ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cashState.openedAt))}. Use as outras operacoes ou siga para o fechamento.`
@@ -339,6 +608,10 @@ function CashModule() {
   const activeTabGuardrailMessage = useMemo(() => {
     if (!isCashOpen && activeTab.id === 'opening') {
       return 'Abra o caixa com um valor inicial para liberar sangria, suprimento, retirada e fechamento.';
+    }
+
+    if (activeTab.id === 'financial-pending' && openFinancialPendingRecords.length > 0) {
+      return `Existem ${openFinancialPendingRecords.length} pendencia(s) abertas. O fechamento do caixa fica bloqueado ate a resolucao.`;
     }
 
     if (activeTab.id === 'closing' && pendingCount > 0) {
@@ -350,10 +623,10 @@ function CashModule() {
     }
 
     return '';
-  }, [activeTab.id, courierOptions.length, isCashOpen, pendingCount]);
+  }, [activeTab.id, courierOptions.length, isCashOpen, openFinancialPendingRecords.length, pendingCount]);
 
   useEffect(() => {
-    if (!isCashOpen && activeTab.id !== 'opening') {
+    if (!isCashOpen && !['opening', 'financial-pending'].includes(activeTab.id)) {
       setSearchParams((currentParams) => {
         const nextParams = new URLSearchParams(currentParams);
         nextParams.set('tab', 'opening');
@@ -392,13 +665,93 @@ function CashModule() {
     });
   }, [balanceDelta, cashState, currentStoreId, isCashOpen, tenantId]);
 
+  useEffect(() => {
+    if (Number(cashState.pendingCount ?? 0) === pendingCount) {
+      return;
+    }
+
+    const nextState = {
+      ...cashState,
+      pendingCount,
+    };
+
+    setCashState(nextState);
+    saveCashState({
+      storeId: currentStoreId,
+      tenantId,
+      storageKey: CASH_STATE_STORAGE_KEY,
+      state: nextState,
+      resetHour: CASH_RESET_HOUR,
+    }).catch(() => {
+      setSyncMessage('Estado do caixa salvo localmente');
+    });
+  }, [cashState, currentStoreId, pendingCount, tenantId]);
+
+  const cashTabs = useMemo(
+    () => CASH_TABS.map((tab) => (
+      tab.id === 'financial-pending'
+        ? { ...tab, label: financialPendingTabLabel }
+        : tab
+    )),
+    [financialPendingTabLabel],
+  );
+
+  const topMetrics = useMemo(() => {
+    if (activeTab.id === 'financial-pending') {
+      return [
+        {
+          label: 'Pendencias abertas',
+          value: String(openFinancialPendingRecords.length).padStart(2, '0'),
+          meta: 'itens bloqueando o fechamento',
+        },
+        {
+          label: 'Resolvidas no dia',
+          value: String(resolvedFinancialPendingRecords.length).padStart(2, '0'),
+          meta: 'itens ja tratados',
+        },
+        {
+          label: 'Valor em risco',
+          value: formatCurrencyBRL(financialPendingAmount),
+          meta: 'soma das abertas',
+        },
+      ];
+    }
+
+    return [
+      {
+        label: 'Movimentos do dia',
+        value: String(records.length).padStart(2, '0'),
+        meta: 'historico de caixa',
+      },
+      {
+        label: activeTab.label,
+        value: formatCurrencyBRL(totalAmountByTab[activeTab.id] ?? 0),
+        meta: 'subtotal da aba',
+      },
+      {
+        label: 'Total do dia',
+        value: formatCurrencyBRL(totalDayAmount),
+        meta: 'somatorio operacional',
+      },
+    ];
+  }, [
+    activeTab.id,
+    activeTab.label,
+    financialPendingAmount,
+    openFinancialPendingRecords.length,
+    records.length,
+    resolvedFinancialPendingRecords.length,
+    totalAmountByTab,
+    totalDayAmount,
+  ]);
+
   function handleTabChange(tabId) {
     if (tabId === 'opening' && isCashOpen) {
       toast.warning('O caixa ja foi aberto');
       playWarning();
     }
 
-    if (tabId !== 'opening' && !isCashOpen) {
+    if (!['opening', 'financial-pending'].includes(tabId) && !isCashOpen) {
       toast.warning('Abra o caixa primeiro');
       playWarning();
       setSearchParams((currentParams) => {
@@ -442,6 +795,30 @@ function CashModule() {
     }
   }
 
+  async function persistFinancialPendingRecords(nextRecords, nextRecord = null) {
+    const sortedRecords = sortFinancialPendingRecords(nextRecords);
+    setFinancialPendingRecords(sortedRecords);
+    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, sortedRecords, CASH_RESET_HOUR);
+
+    if (!nextRecord) {
+      return;
+    }
+
+    try {
+      const wasSavedRemotely = await saveManualModuleRecord({
+        storeId: currentStoreId,
+        tenantId,
+        modulePath: 'cash-financial-pending',
+        dailyResetHour: CASH_RESET_HOUR,
+        record: nextRecord,
+      });
+      setFinancialPendingSyncMessage(wasSavedRemotely ? '' : 'Pendencias financeiras em modo local');
+    } catch (error) {
+      console.error('Nao foi possivel sincronizar a pendencia financeira.', error);
+      setFinancialPendingSyncMessage('Pendencia salva localmente');
+    }
+  }
+
   async function persistCashState(nextState) {
     setCashState(nextState);
 
@@ -466,6 +843,11 @@ function CashModule() {
     setNote('');
     setErrorMessage('');
     setConfirmAction(null);
+  }
+
+  function clearFinancialPendingForm() {
+    setFinancialPendingForm(initialFinancialPendingForm);
+    setErrorMessage('');
   }
 
   async function handleSubmit(event) {
@@ -553,6 +935,60 @@ function CashModule() {
       });
       clearForm();
       toast.success(`${activeTab.receiptLabel} registrado`);
+      playCashSuccess();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleFinancialPendingSubmit(event) {
+    event.preventDefault();
+
+    const amount = parseCurrencyInput(financialPendingForm.amount);
+    const operatorName = session?.operatorName ?? session?.displayName ?? 'Operador local';
+
+    if (!financialPendingForm.customerName.trim()) {
+      setErrorMessage('Informe o nome do cliente.');
+      return;
+    }
+
+    if (!financialPendingForm.customerPhone.trim()) {
+      setErrorMessage('Informe o numero do cliente.');
+      return;
+    }
+
+    if (amount <= 0) {
+      setErrorMessage('Informe um valor maior que zero.');
+      return;
+    }
+
+    if (!financialPendingForm.description.trim()) {
+      setErrorMessage('Descreva a pendencia financeira.');
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage('');
+
+    const nextRecord = buildFinancialPendingRecord(financialPendingForm, operatorName);
+
+    try {
+      await persistFinancialPendingRecords([nextRecord, ...financialPendingRecords], nextRecord);
+      appendAuditEvent({
+        module: 'Caixa',
+        modulePath: 'cash',
+        actor: operatorName,
+        action: 'Registrou pendencia financeira',
+        target: nextRecord.customerName,
+        details: [
+          nextRecord.typeLabel,
+          nextRecord.amountLabel,
+          `Numero: ${nextRecord.customerPhone}`,
+          nextRecord.description,
+        ].join(' | '),
+      });
+      clearFinancialPendingForm();
+      toast.success('Pendencia financeira registrada');
       playCashSuccess();
     } finally {
       setIsSaving(false);
@@ -667,6 +1103,153 @@ function CashModule() {
     playCashSuccess();
   }
 
+  async function handleDeleteFinancialPending(recordId) {
+    const targetRecord = financialPendingRecords.find((record) => record.id === recordId);
+    const confirmed = await confirm.ask({
+      title: 'Excluir pendencia',
+      message: `Confirma a exclusao da pendencia de ${targetRecord?.customerName ?? 'cliente'}?`,
+      confirmLabel: 'Excluir pendencia',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const nextRecords = financialPendingRecords.filter((record) => record.id !== recordId);
+    setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords));
+    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, nextRecords, CASH_RESET_HOUR);
+
+    try {
+      const wasDeletedRemotely = await deleteManualModuleRecord({
+        storeId: currentStoreId,
+        modulePath: 'cash-financial-pending',
+        recordId,
+      });
+      setFinancialPendingSyncMessage(wasDeletedRemotely ? '' : 'Pendencia removida no modo local');
+    } catch (error) {
+      console.error('Nao foi possivel remover a pendencia financeira remotamente.', error);
+      setFinancialPendingSyncMessage('Pendencia removida no modo local');
+    }
+
+    appendAuditEvent({
+      module: 'Caixa',
+      modulePath: 'cash',
+      actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+      action: 'Excluiu pendencia financeira',
+      target: targetRecord?.customerName ?? 'Pendencia financeira',
+      details: targetRecord?.amountLabel ?? '',
+    });
+    toast.success('Pendencia excluida');
+    playCashSuccess();
+  }
+
+  async function handleFinancialPendingChecklistToggle(recordId, checklistKey) {
+    const targetRecord = financialPendingRecords.find((record) => record.id === recordId);
+
+    if (!targetRecord) {
+      return;
+    }
+
+    const nextRecord = {
+      ...targetRecord,
+      checklist: {
+        ...createDefaultFinancialPendingChecklist(),
+        ...targetRecord.checklist,
+        [checklistKey]: !targetRecord.checklist?.[checklistKey],
+      },
+      updatedAtClient: new Date().toISOString(),
+    };
+    const nextRecords = financialPendingRecords.map((record) => (record.id === recordId ? nextRecord : record));
+
+    await persistFinancialPendingRecords(nextRecords, nextRecord);
+  }
+
+  async function handleFinancialPendingResolvedToggle(recordId) {
+    const targetRecord = financialPendingRecords.find((record) => record.id === recordId);
+
+    if (!targetRecord) {
+      return;
+    }
+
+    const isResolved = isFinancialPendingResolved(targetRecord);
+
+    if (!isResolved && !isFinancialPendingChecklistComplete(targetRecord)) {
+      toast.warning('Conclua os checks antes de encerrar');
+      playWarning();
+      return;
+    }
+
+    const operatorName = session?.operatorName ?? session?.displayName ?? 'Operador local';
+    const nextRecord = {
+      ...targetRecord,
+      resolvedAtClient: isResolved ? '' : new Date().toISOString(),
+      resolvedBy: isResolved ? '' : operatorName,
+      updatedAtClient: new Date().toISOString(),
+    };
+    const nextRecords = financialPendingRecords.map((record) => (record.id === recordId ? nextRecord : record));
+
+    await persistFinancialPendingRecords(nextRecords, nextRecord);
+    appendAuditEvent({
+      module: 'Caixa',
+      modulePath: 'cash',
+      actor: operatorName,
+      action: isResolved ? 'Reabriu pendencia financeira' : 'Concluiu pendencia financeira',
+      target: targetRecord.customerName,
+      details: [targetRecord.typeLabel, targetRecord.amountLabel].join(' | '),
+    });
+    toast.success(isResolved ? 'Pendencia reaberta' : 'Pendencia concluida');
+    playCashSuccess();
+  }
+
+  async function handleClearResolvedFinancialPendings() {
+    const resolvedIds = resolvedFinancialPendingRecords.map((record) => record.id);
+
+    if (resolvedIds.length === 0) {
+      return;
+    }
+
+    const confirmed = await confirm.ask({
+      title: 'Limpar resolvidas',
+      message: `Confirma remover ${resolvedIds.length} pendencia(s) ja resolvida(s)?`,
+      confirmLabel: 'Limpar resolvidas',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const nextRecords = financialPendingRecords.filter((record) => !resolvedIds.includes(record.id));
+    setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords));
+    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, nextRecords, CASH_RESET_HOUR);
+
+    try {
+      await Promise.all(
+        resolvedIds.map((recordId) => deleteManualModuleRecord({
+          storeId: currentStoreId,
+          modulePath: 'cash-financial-pending',
+          recordId,
+        })),
+      );
+      setFinancialPendingSyncMessage('');
+    } catch (error) {
+      console.error('Nao foi possivel limpar pendencias resolvidas remotamente.', error);
+      setFinancialPendingSyncMessage('Limpeza mantida no modo local');
+    }
+
+    appendAuditEvent({
+      module: 'Caixa',
+      modulePath: 'cash',
+      actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+      action: 'Limpou pendencias financeiras resolvidas',
+      target: 'Pendencias financeiras',
+      details: `${resolvedIds.length} registro(s) removido(s)`,
+    });
+    toast.success('Pendencias resolvidas removidas');
+    playCashSuccess();
+  }
+
   async function handleClearHistory() {
     const confirmed = await confirm.ask({
       title: 'Limpar historico',
@@ -719,25 +1302,18 @@ function CashModule() {
       />
 
       <div className="card-grid cash-module__metrics">
-        <CashMetricCard
-          label="Movimentos do dia"
-          value={String(records.length).padStart(2, '0')}
-          meta="historico de caixa"
-        />
-        <CashMetricCard
-          label={activeTab.label}
-          value={formatCurrencyBRL(totalAmountByTab[activeTab.id] ?? 0)}
-          meta="subtotal da aba"
-        />
-        <CashMetricCard
-          label="Total do dia"
-          value={formatCurrencyBRL(totalDayAmount)}
-          meta="somatorio operacional"
-        />
+        {topMetrics.map((metric) => (
+          <CashMetricCard
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            meta={metric.meta}
+          />
+        ))}
       </div>
 
       <PageTabs
-        tabs={CASH_TABS}
+        tabs={cashTabs}
         activeTab={activeTab.id}
         onTabChange={handleTabChange}
       />
@@ -746,8 +1322,117 @@ function CashModule() {
         {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
         {openingBlockedMessage ? <div className="cash-module__inline-warning">{openingBlockedMessage}</div> : null}
         {activeTabGuardrailMessage ? <div className="cash-module__inline-state">{activeTabGuardrailMessage}</div> : null}
-        {syncMessage ? <div className="cash-module__sync-note">{syncMessage}</div> : null}
+        {activeTab.id === 'financial-pending'
+          ? (financialPendingSyncMessage ? <div className="cash-module__sync-note">{financialPendingSyncMessage}</div> : null)
+          : (syncMessage ? <div className="cash-module__sync-note">{syncMessage}</div> : null)}
 
+        {activeTab.id === 'financial-pending' ? (
+          <form className="cash-module__pending-form" onSubmit={handleFinancialPendingSubmit}>
+            <FormRow className="cash-module__form-row cash-module__pending-form-grid">
+              <div className="ui-field cash-module__row-field">
+                <label className="ui-label" htmlFor="financial-pending-customer">
+                  Cliente
+                </label>
+                <input
+                  id="financial-pending-customer"
+                  className="ui-input"
+                  placeholder="Nome do cliente"
+                  value={financialPendingForm.customerName}
+                  onChange={(event) => setFinancialPendingForm((current) => ({ ...current, customerName: event.target.value }))}
+                />
+              </div>
+
+              <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                <label className="ui-label" htmlFor="financial-pending-phone">
+                  Numero
+                </label>
+                <input
+                  id="financial-pending-phone"
+                  className="ui-input"
+                  placeholder="Telefone / WhatsApp"
+                  value={financialPendingForm.customerPhone}
+                  onChange={(event) => setFinancialPendingForm((current) => ({ ...current, customerPhone: event.target.value }))}
+                />
+              </div>
+
+              <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                <label className="ui-label" htmlFor="financial-pending-type">
+                  Tipo
+                </label>
+                <Select
+                  id="financial-pending-type"
+                  value={financialPendingForm.type}
+                  onChange={(event) => setFinancialPendingForm((current) => ({ ...current, type: event.target.value }))}
+                >
+                  {FINANCIAL_PENDING_TYPES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                <label className="ui-label" htmlFor="financial-pending-priority">
+                  Prioridade
+                </label>
+                <Select
+                  id="financial-pending-priority"
+                  value={financialPendingForm.priority}
+                  onChange={(event) => setFinancialPendingForm((current) => ({ ...current, priority: event.target.value }))}
+                >
+                  {FINANCIAL_PENDING_PRIORITIES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                <label className="ui-label" htmlFor="financial-pending-value">
+                  Valor
+                </label>
+                <input
+                  id="financial-pending-value"
+                  className="ui-input"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={financialPendingForm.amount}
+                  onChange={(event) => setFinancialPendingForm((current) => ({ ...current, amount: formatCurrencyInput(event.target.value) }))}
+                />
+              </div>
+            </FormRow>
+
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="financial-pending-description">
+                Descricao
+              </label>
+              <textarea
+                id="financial-pending-description"
+                className="ui-textarea"
+                placeholder="Explique o problema: troco nao entregue, estorno em aberto, cobranca divergente..."
+                value={financialPendingForm.description}
+                onChange={(event) => setFinancialPendingForm((current) => ({ ...current, description: event.target.value }))}
+              />
+            </div>
+
+            <div className="cash-module__confirm">
+              <div className="cash-module__confirm-copy">
+                <strong>Checklist operacional para encerrar</strong>
+                <span>Quando a pendencia for registrada, ela so podera ser concluida depois dos 3 checks: cliente contatado, valor conferido e acao executada.</span>
+              </div>
+              <div className="cash-module__form-actions">
+                <Button variant="secondary" onClick={clearFinancialPendingForm}>
+                  Limpar
+                </Button>
+                <Button type="submit" variant="primary" disabled={isSaving}>
+                  Registrar pendencia
+                </Button>
+              </div>
+            </div>
+          </form>
+        ) : (
         <form className={`cash-module__form cash-module__form--${activeTab.id}`} onSubmit={handleSubmit}>
           {activeTab.id === 'closing' ? (
             <div className="cash-module__closing-summary">
@@ -864,32 +1549,72 @@ function CashModule() {
             </div>
           ) : null}
         </form>
+        )}
       </SurfaceCard>
 
-      <SurfaceCard title="Historico de caixa">
-        <div className="cash-module__history-toolbar">
-          <span className="cash-module__history-counter">
-            {`${records.length} visiveis - ${records.length} no dia`}
-          </span>
+      {activeTab.id === 'financial-pending' ? (
+        <SurfaceCard title="Fila de pendencias financeiras">
+          <div className="cash-module__history-toolbar">
+            <span className="cash-module__history-counter">
+              {`${filteredFinancialPendingRecords.length} visiveis - ${financialPendingRecords.length} no dia`}
+            </span>
 
-          <div className="cash-module__history-toolbar-actions">
-            <Link to="/history?modulo=cash&data=hoje" className="native-module__history-link">
-              Ver historico do caixa
-            </Link>
-            {records.length > 0 ? (
-              <Button variant="secondary" onClick={handleClearHistory}>
-                Limpar historico
-              </Button>
-            ) : null}
+            <div className="cash-module__history-toolbar-actions">
+              <input
+                className="ui-input cash-module__pending-search"
+                placeholder="Buscar cliente, numero ou descricao"
+                value={financialPendingSearch}
+                onChange={(event) => setFinancialPendingSearch(event.target.value)}
+              />
+              <Select
+                value={financialPendingFilter}
+                onChange={(event) => setFinancialPendingFilter(event.target.value)}
+              >
+                <option value="open">Abertas</option>
+                <option value="resolved">Resolvidas</option>
+                <option value="all">Todas</option>
+              </Select>
+              {resolvedFinancialPendingRecords.length > 0 ? (
+                <Button variant="secondary" onClick={handleClearResolvedFinancialPendings}>
+                  Limpar resolvidas
+                </Button>
+              ) : null}
+            </div>
           </div>
-        </div>
 
-        <CashHistoryTable
-          records={records}
-          onPrint={printCashReceipt}
-          onDelete={handleDelete}
-        />
-      </SurfaceCard>
+          <FinancialPendingTable
+            records={filteredFinancialPendingRecords}
+            onChecklistToggle={handleFinancialPendingChecklistToggle}
+            onResolvedToggle={handleFinancialPendingResolvedToggle}
+            onDelete={handleDeleteFinancialPending}
+          />
+        </SurfaceCard>
+      ) : (
+        <SurfaceCard title="Historico de caixa">
+          <div className="cash-module__history-toolbar">
+            <span className="cash-module__history-counter">
+              {`${records.length} visiveis - ${records.length} no dia`}
+            </span>
+
+            <div className="cash-module__history-toolbar-actions">
+              <Link to="/history?modulo=cash&data=hoje" className="native-module__history-link">
+                Ver historico do caixa
+              </Link>
+              {records.length > 0 ? (
+                <Button variant="secondary" onClick={handleClearHistory}>
+                  Limpar historico
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          <CashHistoryTable
+            records={records}
+            onPrint={printCashReceipt}
+            onDelete={handleDelete}
+          />
+        </SurfaceCard>
+      )}
     </div>
   );
 }
