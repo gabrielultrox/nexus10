@@ -14,6 +14,7 @@ import {
 import { useAuth, useConfirm, useStore, useToast } from './hooks'
 import AppRoutes from './routes'
 import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
+import { recordComponentRenderMetric, recordPageLoadMetric } from './services/frontendMetrics'
 import { loadResettableLocalRecords } from './services/localAccess'
 import {
   bindGlobalSoundEffects,
@@ -59,7 +60,9 @@ function App() {
     typeof navigator !== 'undefined' ? !navigator.onLine : false,
   )
   const [offlineQueueCount, setOfflineQueueCount] = useState(0)
+  const renderStartedAtRef = useRef(performance.now())
   const lastPathRef = useRef(location.pathname)
+  const routeStartedAtRef = useRef(performance.now())
   const bootVisible = !bootSequenceComplete || loading
 
   useEffect(() => {
@@ -69,6 +72,20 @@ function App() {
   useEffect(() => {
     setFrontendSentryStore(currentStoreId ?? null)
   }, [currentStoreId])
+
+  useEffect(() => {
+    recordComponentRenderMetric('App', performance.now() - renderStartedAtRef.current)
+  }, [])
+
+  useEffect(() => {
+    routeStartedAtRef.current = performance.now()
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!bootVisible) {
+      recordPageLoadMetric(location.pathname, routeStartedAtRef.current)
+    }
+  }, [bootVisible, location.pathname])
 
   useEffect(() => {
     const rootElement = document.documentElement

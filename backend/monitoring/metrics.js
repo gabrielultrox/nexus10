@@ -1,7 +1,20 @@
-import { backendEnv } from '../config/env.js'
+import admin from 'firebase-admin'
+
+import { backendEnv, hasFirebaseAdminConfig } from '../config/env.js'
+import { isRedisConfigured, getRedisClient } from '../cache/redisClient.js'
 
 const routeMetrics = new Map()
 const webhookEvents = []
+const orderCreatedEvents = []
+const saleCreatedEvents = []
+
+const cacheCounters = {
+  hits: 0,
+  misses: 0,
+  sets: 0,
+  invalidations: 0,
+  errors: 0,
+}
 
 function nowMs() {
   return Date.now()
@@ -36,20 +49,32 @@ function percentile(values, target) {
   return sorted[index]
 }
 
+function buildStatusDistribution(events) {
+  return events.reduce((distribution, event) => {
+    const key = String(event.statusCode)
+    distribution[key] = (distribution[key] ?? 0) + 1
+    return distribution
+  }, {})
+}
+
 function summarizeEvents(events) {
   const totalRequests = events.length
   const errorCount = events.filter((event) => event.statusCode >= 500).length
   const warningCount = events.filter((event) => event.statusCode >= 400).length
+  const successCount = events.filter((event) => event.statusCode < 400).length
   const durations = events.map((event) => event.durationMs)
 
   return {
     totalRequests,
+    successCount,
     errorCount,
     warningCount,
     errorRate: totalRequests ? Number(((errorCount / totalRequests) * 100).toFixed(2)) : 0,
     p50: Number(percentile(durations, 50).toFixed(2)),
     p95: Number(percentile(durations, 95).toFixed(2)),
+    p99: Number(percentile(durations, 99).toFixed(2)),
     max: Number(Math.max(...durations, 0).toFixed(2)),
+    statusCodes: buildStatusDistribution(events),
   }
 }
 
@@ -57,14 +82,26 @@ function getWindowMs() {
   return backendEnv.monitoringWindowMs
 }
 
+function getWindowedEvents(events) {
+  prune(events, getWindowMs())
+  return events
+}
+
+function collectAllRouteEvents() {
+  const aggregated = []
+
+  for (const events of routeMetrics.values()) {
+    aggregated.push(...getWindowedEvents(events))
+  }
+
+  return aggregated
+}
+
 function collectWindowedRouteEvents() {
-  const windowMs = getWindowMs()
-  const minTimestamp = nowMs() - windowMs
   const routeEntries = []
 
   for (const [routeKey, events] of routeMetrics.entries()) {
-    prune(events, windowMs)
-    const filteredEvents = events.filter((event) => event.timestamp >= minTimestamp)
+    const filteredEvents = getWindowedEvents(events)
 
     if (!filteredEvents.length) {
       continue
@@ -79,12 +116,52 @@ function collectWindowedRouteEvents() {
   return routeEntries.sort((left, right) => right.totalRequests - left.totalRequests)
 }
 
+function roundMegabytes(valueInBytes) {
+  return Number((valueInBytes / 1024 / 1024).toFixed(2))
+}
+
+function getSystemSnapshot() {
+  const memory = process.memoryUsage()
+
+  return {
+    processUptimeSeconds: Number(process.uptime().toFixed(2)),
+    memory: {
+      rssMb: roundMegabytes(memory.rss),
+      heapTotalMb: roundMegabytes(memory.heapTotal),
+      heapUsedMb: roundMegabytes(memory.heapUsed),
+      externalMb: roundMegabytes(memory.external),
+    },
+    database: {
+      provider: 'firestore-admin-sdk',
+      configured: hasFirebaseAdminConfig(),
+      initialized: admin.apps.length > 0,
+      pool: 'not_applicable',
+    },
+    cache: {
+      provider: isRedisConfigured() ? 'redis' : 'memory_fallback',
+      configured: isRedisConfigured(),
+      hits: cacheCounters.hits,
+      misses: cacheCounters.misses,
+      sets: cacheCounters.sets,
+      invalidations: cacheCounters.invalidations,
+      errors: cacheCounters.errors,
+      hitRate:
+        cacheCounters.hits + cacheCounters.misses > 0
+          ? Number(
+              ((cacheCounters.hits / (cacheCounters.hits + cacheCounters.misses)) * 100).toFixed(2),
+            )
+          : 0,
+    },
+  }
+}
+
 export function recordRequestMetric(metric) {
   const routeKey = `${metric.method} ${metric.route}`
   const bucket = getRouteBucket(routeKey)
+  const timestamp = nowMs()
 
   bucket.push({
-    timestamp: nowMs(),
+    timestamp,
     method: metric.method,
     route: metric.route,
     path: metric.path,
@@ -96,7 +173,7 @@ export function recordRequestMetric(metric) {
 
   if (metric.isIfoodWebhook) {
     webhookEvents.push({
-      timestamp: nowMs(),
+      timestamp,
       merchantId: metric.merchantId ?? null,
       storeId: metric.storeId ?? null,
       success: metric.statusCode < 400,
@@ -107,22 +184,46 @@ export function recordRequestMetric(metric) {
   }
 }
 
+export function recordOrderCreatedMetric({ storeId }) {
+  orderCreatedEvents.push({
+    timestamp: nowMs(),
+    storeId: storeId ?? null,
+  })
+  prune(orderCreatedEvents, getWindowMs())
+}
+
+export function recordSaleCreatedMetric({ storeId, amount = 0 }) {
+  saleCreatedEvents.push({
+    timestamp: nowMs(),
+    storeId: storeId ?? null,
+    amount: Number(amount) || 0,
+  })
+  prune(saleCreatedEvents, getWindowMs())
+}
+
+export function recordCacheMetric(type) {
+  if (!(type in cacheCounters)) {
+    return
+  }
+
+  cacheCounters[type] += 1
+}
+
 export function getMonitoringSnapshot() {
   const routeEntries = collectWindowedRouteEvents()
-  const flattenedEvents = routeEntries.flatMap((entry) => {
-    const events = routeMetrics.get(entry.route) ?? []
-    return events
-  })
-
-  const summary = summarizeEvents(flattenedEvents)
-  const webhookSummary = summarizeEvents(
-    webhookEvents.map((event) => ({
-      timestamp: event.timestamp,
-      durationMs: event.durationMs,
-      statusCode: event.success ? 200 : event.statusCode,
-    })),
+  const allEvents = collectAllRouteEvents()
+  const summary = summarizeEvents(allEvents)
+  const webhookMetricEvents = getWindowedEvents(webhookEvents).map((event) => ({
+    timestamp: event.timestamp,
+    durationMs: event.durationMs,
+    statusCode: event.success ? 200 : event.statusCode,
+  }))
+  const webhookSummary = summarizeEvents(webhookMetricEvents)
+  const ordersLastHour = getWindowedEvents(orderCreatedEvents).length
+  const salesWindow = getWindowedEvents(saleCreatedEvents)
+  const totalSalesAmount = Number(
+    salesWindow.reduce((accumulator, sale) => accumulator + (sale.amount || 0), 0).toFixed(2),
   )
-  const webhookFailures = webhookEvents.filter((event) => !event.success).length
 
   return {
     generatedAt: new Date().toISOString(),
@@ -135,15 +236,53 @@ export function getMonitoringSnapshot() {
     summary,
     webhooks: {
       totalRequests: webhookEvents.length,
-      failureCount: webhookFailures,
+      successRate: webhookSummary.totalRequests
+        ? Number(((webhookSummary.successCount / webhookSummary.totalRequests) * 100).toFixed(2))
+        : 0,
+      failureCount: webhookEvents.filter((event) => !event.success).length,
       errorRate: webhookSummary.errorRate,
       p95: webhookSummary.p95,
+      p99: webhookSummary.p99,
     },
+    business: {
+      ordersCreatedLastHour: ordersLastHour,
+      salesTotalAmount: totalSalesAmount,
+      salesCount: salesWindow.length,
+    },
+    system: getSystemSnapshot(),
     routes: routeEntries.slice(0, 20),
+  }
+}
+
+export async function getObservabilitySnapshot() {
+  const monitoring = getMonitoringSnapshot()
+  let redisStatus = 'disabled'
+
+  if (isRedisConfigured()) {
+    const client = await getRedisClient().catch(() => null)
+    redisStatus = client?.isOpen ? 'connected' : 'disconnected'
+  }
+
+  return {
+    ...monitoring,
+    system: {
+      ...monitoring.system,
+      cache: {
+        ...monitoring.system.cache,
+        status: redisStatus,
+      },
+    },
   }
 }
 
 export function resetMonitoringMetrics() {
   routeMetrics.clear()
   webhookEvents.length = 0
+  orderCreatedEvents.length = 0
+  saleCreatedEvents.length = 0
+  cacheCounters.hits = 0
+  cacheCounters.misses = 0
+  cacheCounters.sets = 0
+  cacheCounters.invalidations = 0
+  cacheCounters.errors = 0
 }

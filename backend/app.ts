@@ -31,6 +31,7 @@ import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.
 import { registerFinanceRoutes } from './modules/finance/financeController.js'
 import { registerOrderRoutes } from './modules/orders/orderController.js'
 import { registerSaleRoutes } from './modules/sales/saleController.js'
+import { buildPrometheusMetrics } from './metrics/prometheus.js'
 import {
   buildMonitoredErrorPayload,
   captureError,
@@ -100,6 +101,11 @@ export function createApp(): Express {
       })
     },
   )
+
+  app.get('/api/metrics', publicRateLimiter, async (_request: Request, response: Response) => {
+    const metricsText = await buildPrometheusMetrics()
+    response.type('text/plain; version=0.0.4; charset=utf-8').send(metricsText)
+  })
 
   if (backendEnv.appEnv !== 'production') {
     app.get('/api/debug/sentry-test', publicRateLimiter, (request: Request, response: Response) => {

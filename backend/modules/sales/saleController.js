@@ -7,6 +7,7 @@ import {
 import { createLoggerContext, serializeError } from '../../logging/logger.js'
 import { requirePermission } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
+import { recordSaleCreatedMetric } from '../../monitoring/metrics.js'
 import { createSaleSchema, updateSaleStatusSchema } from '../../validation/schemas.js'
 
 const salesLogger = createLoggerContext({ module: 'sales' })
@@ -41,6 +42,23 @@ function logSaleError(request, action, error, extra = {}) {
   )
 }
 
+function resolveSaleAmount(data) {
+  const candidates = [
+    data?.amount,
+    data?.total,
+    data?.totalAmount,
+    data?.netAmount,
+    data?.summary?.total,
+    data?.summary?.amount,
+    data?.totals?.total,
+    data?.totals?.grandTotal,
+    data?.totals?.finalAmount,
+  ]
+
+  const match = candidates.find((value) => Number.isFinite(Number(value)))
+  return match == null ? 0 : Number(match)
+}
+
 export function registerSaleRoutes(app) {
   app.post(
     '/api/stores/:storeId/sales',
@@ -66,6 +84,10 @@ export function registerSaleRoutes(app) {
           },
           'Direct sale created',
         )
+        recordSaleCreatedMetric({
+          storeId: request.params.storeId,
+          amount: resolveSaleAmount(data),
+        })
 
         response.status(201).json({ data })
       } catch (error) {
@@ -104,6 +126,10 @@ export function registerSaleRoutes(app) {
           },
           'Sale created from order',
         )
+        recordSaleCreatedMetric({
+          storeId: request.params.storeId,
+          amount: resolveSaleAmount(data),
+        })
 
         response.status(201).json({ data })
       } catch (error) {

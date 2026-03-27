@@ -8,6 +8,7 @@ import {
 import { createLoggerContext, serializeError } from '../../logging/logger.js'
 import { requirePermission } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
+import { recordOrderCreatedMetric } from '../../monitoring/metrics.js'
 import { createOrderSchema, updateOrderSchema } from '../../validation/schemas.js'
 
 const ordersLogger = createLoggerContext({ module: 'orders' })
@@ -67,6 +68,9 @@ export function registerOrderRoutes(app) {
           },
           'Order created',
         )
+        recordOrderCreatedMetric({
+          storeId: request.params.storeId,
+        })
 
         response.status(201).json({ data })
       } catch (error) {

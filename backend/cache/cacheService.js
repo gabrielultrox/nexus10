@@ -1,6 +1,7 @@
 import { backendEnv } from '../config/env.js'
 import { createLoggerContext, serializeError } from '../logging/logger.js'
 import { getRedisClient } from './redisClient.js'
+import { recordCacheMetric } from '../monitoring/metrics.js'
 
 const cacheLogger = createLoggerContext({ module: 'cache.service' })
 
@@ -20,12 +21,15 @@ export async function cacheGet(key) {
     const client = await getRedisClient()
 
     if (!client) {
+      recordCacheMetric('misses')
       return null
     }
 
     const rawValue = await client.get(key)
+    recordCacheMetric(rawValue ? 'hits' : 'misses')
     return rawValue ? JSON.parse(rawValue) : null
   } catch (error) {
+    recordCacheMetric('errors')
     cacheLogger.warn(
       {
         context: 'cache.get',
@@ -43,6 +47,7 @@ export async function cacheSet(key, value, ttlSeconds) {
     const client = await getRedisClient()
 
     if (!client) {
+      recordCacheMetric('errors')
       return false
     }
 
@@ -54,8 +59,10 @@ export async function cacheSet(key, value, ttlSeconds) {
       await client.set(key, serializedValue)
     }
 
+    recordCacheMetric('sets')
     return true
   } catch (error) {
+    recordCacheMetric('errors')
     cacheLogger.warn(
       {
         context: 'cache.set',
@@ -80,11 +87,15 @@ export async function cacheInvalidate(keys) {
     const client = await getRedisClient()
 
     if (!client) {
+      recordCacheMetric('errors')
       return 0
     }
 
-    return client.del(normalizedKeys)
+    const deleted = await client.del(normalizedKeys)
+    recordCacheMetric('invalidations')
+    return deleted
   } catch (error) {
+    recordCacheMetric('errors')
     cacheLogger.warn(
       {
         context: 'cache.invalidate',

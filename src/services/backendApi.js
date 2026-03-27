@@ -10,6 +10,7 @@ import {
   retryWithBackoff,
 } from './apiErrorHandler'
 import { ensureRemoteSession, firebaseReady } from './firebase'
+import { recordApiLatencyMetric } from './frontendMetrics'
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '')
 
@@ -43,6 +44,7 @@ async function parseResponse(response, path, method) {
 
 async function dispatchBackendRequest(path, options = {}) {
   const method = (options.method ?? 'GET').toUpperCase()
+  const startedAt = performance.now()
   const controller = new AbortController()
   const timeout = options.timeout ?? 15_000
   const timeoutId = window.setTimeout(() => controller.abort(), timeout)
@@ -64,8 +66,10 @@ async function dispatchBackendRequest(path, options = {}) {
       signal: controller.signal,
     })
 
+    recordApiLatencyMetric(path, method, performance.now() - startedAt)
     return await parseResponse(response, path, method)
   } catch (error) {
+    recordApiLatencyMetric(path, method, performance.now() - startedAt)
     if (error?.name === 'AbortError') {
       throw buildTimeoutError({ path, method, timeout })
     }

@@ -1,4 +1,4 @@
-import { getMonitoringSnapshot } from '../../monitoring/metrics.js'
+import { getObservabilitySnapshot } from '../../monitoring/metrics.js'
 import { requireRole } from '../../middleware/requireAuth.js'
 
 function renderMonitoringDashboard(snapshot) {
@@ -61,13 +61,13 @@ function renderMonitoringDashboard(snapshot) {
 }
 
 export function registerMonitoringRoutes(app) {
-  app.get('/api/admin/monitoring/summary', requireRole('admin'), (_request, response) => {
+  app.get('/api/admin/monitoring/summary', requireRole('admin'), async (_request, response) => {
     response.json({
-      data: getMonitoringSnapshot(),
+      data: await getObservabilitySnapshot(),
     })
   })
 
-  app.get('/api/admin/monitoring/dashboard', requireRole('admin'), (_request, response) => {
-    response.type('html').send(renderMonitoringDashboard(getMonitoringSnapshot()))
+  app.get('/api/admin/monitoring/dashboard', requireRole('admin'), async (_request, response) => {
+    response.type('html').send(renderMonitoringDashboard(await getObservabilitySnapshot()))
   })
 }

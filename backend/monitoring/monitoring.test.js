@@ -13,6 +13,7 @@ vi.mock('../config/env.js', () => ({
     sentryTracesSampleRate: 0.2,
     nodeEnv: 'test',
   },
+  hasFirebaseAdminConfig: () => true,
 }))
 
 vi.mock('../logging/logger.js', () => ({
@@ -21,6 +22,11 @@ vi.mock('../logging/logger.js', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+  createLoggerContext: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
   serializeError: (error) => ({ message: error?.message ?? 'unknown' }),
 }))
 
