@@ -12,10 +12,12 @@ import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegra
 import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { validateRequest } from './middleware/validateRequest.js';
+import { registerMonitoringRoutes } from './modules/admin/monitoringController.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
 import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
+import { buildMonitoredErrorPayload, captureError, initializeSentry } from './monitoring/sentry.js';
 import { swaggerSpec, swaggerUiOptions } from './swagger.js';
 import {
   getIntegrationMerchant,
@@ -134,6 +136,8 @@ export function createApp(): Express {
     repositories: repository,
   });
 
+  initializeSentry();
+
   app.disable('x-powered-by');
   app.use(requestLogger);
   app.use(helmet({
@@ -207,6 +211,7 @@ export function createApp(): Express {
   registerAuthRoutes(app);
   app.use('/api', requireApiAuth);
   registerAdminAuditLogRoutes(app);
+  registerMonitoringRoutes(app);
   app.use('/api/stores/:storeId', requireStoreAccess);
 
   registerOrderRoutes(app);
@@ -282,6 +287,11 @@ export function createApp(): Express {
         data: pollingResult,
       });
     } catch (error) {
+      captureError(error, buildMonitoredErrorPayload(error, {
+        context: 'ifood.polling.run',
+        storeId,
+        merchantId,
+      }));
       request.log?.error({
         context: 'ifood.polling.run',
         storeId,
@@ -349,6 +359,12 @@ export function createApp(): Express {
         data: normalizedOrder,
       });
     } catch (error) {
+      captureError(error, buildMonitoredErrorPayload(error, {
+        context: 'ifood.order.sync',
+        storeId,
+        merchantId,
+        orderId,
+      }));
       request.log?.error({
         context: 'ifood.order.sync',
         storeId,
@@ -420,6 +436,11 @@ export function createApp(): Express {
         data: result,
       });
     } catch (error) {
+      captureError(error, buildMonitoredErrorPayload(error, {
+        context: 'ifood.webhook',
+        storeId,
+        merchantId,
+      }));
       request.log?.error({
         context: 'ifood.webhook',
         storeId,
@@ -470,6 +491,12 @@ export function createApp(): Express {
       method: request.method,
       error: serializeError(error),
     }, 'Unhandled backend error');
+
+    captureError(error, buildMonitoredErrorPayload(error, {
+      context: 'express.unhandled',
+      route: request.originalUrl,
+      method: request.method,
+    }));
 
     if (response.headersSent) {
       return;

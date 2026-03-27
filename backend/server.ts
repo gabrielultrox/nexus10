@@ -1,6 +1,9 @@
 import app from './app.js';
 import { backendEnv } from './config/env.js';
 import { logger, serializeError } from './logging/logger.js';
+import { buildMonitoredErrorPayload, captureError, flushSentry, initializeSentry } from './monitoring/sentry.js';
+
+initializeSentry();
 
 const server = app.listen(backendEnv.port, () => {
   logger.info({
@@ -15,4 +18,34 @@ server.on('error', (error: Error) => {
     context: 'server.start',
     error: serializeError(error),
   }, 'Backend server failed to start');
+  captureError(error, buildMonitoredErrorPayload(error, {
+    context: 'server.start',
+    port: backendEnv.port,
+  }));
+});
+
+process.on('unhandledRejection', async (reason) => {
+  logger.error({
+    context: 'process.unhandledRejection',
+    error: serializeError(reason),
+  }, 'Unhandled promise rejection');
+
+  captureError(reason, buildMonitoredErrorPayload(reason, {
+    context: 'process.unhandledRejection',
+  }));
+
+  await flushSentry();
+});
+
+process.on('uncaughtException', async (error: Error) => {
+  logger.error({
+    context: 'process.uncaughtException',
+    error: serializeError(error),
+  }, 'Uncaught exception');
+
+  captureError(error, buildMonitoredErrorPayload(error, {
+    context: 'process.uncaughtException',
+  }));
+
+  await flushSentry();
 });

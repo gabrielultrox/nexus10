@@ -83,6 +83,10 @@ vi.mock('./modules/admin/auditLogController.js', () => ({
   registerAdminAuditLogRoutes: () => {},
 }));
 
+vi.mock('./modules/admin/monitoringController.js', () => ({
+  registerMonitoringRoutes: () => {},
+}));
+
 vi.mock('./integrations/ifood/ifoodFirestoreRepository.js', () => ({
   createIfoodFirestoreRepository: () => ({}),
 }));
@@ -101,6 +105,12 @@ vi.mock('./integrations/ifood/ifoodIntegrationRuntime.js', () => ({
       upsertOrderFromDetails: vi.fn(),
     },
   }),
+}));
+
+vi.mock('./monitoring/sentry.js', () => ({
+  initializeSentry: vi.fn(),
+  captureError: vi.fn(),
+  buildMonitoredErrorPayload: (_error, context) => context,
 }));
 
 vi.mock('./repositories/integrationMerchantRepository.js', () => ({
