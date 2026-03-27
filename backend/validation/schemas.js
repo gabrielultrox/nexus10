@@ -87,6 +87,29 @@ export const createFinancialTransactionSchema = z.object({
   date: z.string().trim().datetime('date deve estar em formato ISO valido.'),
 });
 
+export const createSaleSchema = z.object({
+  items: z.array(orderItemSchema).min(1, 'A venda deve ter ao menos um item.'),
+  paymentMethod: z.enum(['CASH', 'CARD', 'PIX']).optional(),
+  payment: z.object({
+    method: z.enum(['CASH', 'CARD', 'PIX']).optional(),
+  }).partial().optional(),
+}).passthrough();
+
+export const updateSaleStatusSchema = z.object({
+  status: z.enum(['POSTED', 'CANCELLED', 'REVERSED'], 'status de venda invalido.'),
+});
+
+export const ifoodPollingSchema = z.object({
+  storeId: z.string().trim().min(1, 'storeId e obrigatorio.'),
+  merchantId: z.string().trim().min(1, 'merchantId e obrigatorio.'),
+});
+
+export const ifoodOrderSyncParamsSchema = z.object({
+  storeId: z.string().trim().min(1, 'storeId e obrigatorio.'),
+  merchantId: z.string().trim().min(1, 'merchantId e obrigatorio.'),
+  orderId: z.string().trim().min(1, 'orderId e obrigatorio.'),
+});
+
 export const ifoodWebhookSchema = z.object({
   signature: z.string().trim().min(1, 'signature e obrigatoria.'),
   body: z.string().min(1, 'body do webhook e obrigatorio.'),

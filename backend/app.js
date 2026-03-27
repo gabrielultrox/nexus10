@@ -19,7 +19,11 @@ import {
   listIntegrationMerchants,
   touchIntegrationMerchant,
 } from './repositories/integrationMerchantRepository.js';
-import { ifoodWebhookSchema } from './validation/schemas.js';
+import {
+  ifoodOrderSyncParamsSchema,
+  ifoodPollingSchema,
+  ifoodWebhookSchema,
+} from './validation/schemas.js';
 
 function isDevelopmentEnvironment() {
   return backendEnv.nodeEnv !== 'production';
@@ -140,15 +144,8 @@ export function createApp() {
     }
   });
 
-  app.post('/api/integrations/ifood/polling/run', async (request, response) => {
-    const { storeId, merchantId } = request.body ?? {};
-
-    if (!storeId || !merchantId) {
-      response.status(400).json({
-        error: 'storeId e merchantId sao obrigatorios.',
-      });
-      return;
-    }
+  app.post('/api/integrations/ifood/polling/run', validateRequest(ifoodPollingSchema), async (request, response) => {
+    const { storeId, merchantId } = request.validated?.body ?? request.body ?? {};
 
     try {
       const merchant = await getIntegrationMerchant({
@@ -211,8 +208,11 @@ export function createApp() {
     }
   });
 
-  app.post('/api/integrations/ifood/orders/:storeId/:merchantId/:orderId/sync', async (request, response) => {
-    const { storeId, merchantId, orderId } = request.params;
+  app.post('/api/integrations/ifood/orders/:storeId/:merchantId/:orderId/sync', validateRequest(ifoodOrderSyncParamsSchema, {
+    source: 'params',
+    mapRequest: (request) => request.params,
+  }), async (request, response) => {
+    const { storeId, merchantId, orderId } = request.validated?.params ?? request.params;
 
     try {
       const merchant = await getIntegrationMerchant({

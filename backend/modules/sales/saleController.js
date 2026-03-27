@@ -6,11 +6,17 @@ import {
 } from './saleService.js';
 import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { requirePermission } from '../../middleware/requireAuth.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { createSaleSchema, updateSaleStatusSchema } from '../../validation/schemas.js';
 
 const salesLogger = createLoggerContext({ module: 'sales' });
 
 function getPayload(body) {
   return body?.values ?? body ?? {};
+}
+
+function getValidatedPayload(request) {
+  return request.validated?.body ?? getPayload(request.body);
 }
 
 function sendError(response, error, fallbackMessage) {
@@ -33,12 +39,18 @@ function logSaleError(request, action, error, extra = {}) {
 }
 
 export function registerSaleRoutes(app) {
-  app.post('/api/stores/:storeId/sales', requirePermission('sales:write'), async (request, response) => {
+  app.post(
+    '/api/stores/:storeId/sales',
+    requirePermission('sales:write'),
+    validateRequest(createSaleSchema, {
+      mapRequest: (request) => getPayload(request.body),
+    }),
+    async (request, response) => {
     try {
       const data = await createDirectSale({
         storeId: request.params.storeId,
         tenantId: request.body?.tenantId ?? null,
-        values: getPayload(request.body),
+        values: getValidatedPayload(request),
         createdBy: getActorFromRequest(request),
       });
 
@@ -57,15 +69,22 @@ export function registerSaleRoutes(app) {
       });
       sendError(response, error, 'Nao foi possivel criar a venda.');
     }
-  });
+    },
+  );
 
-  app.post('/api/stores/:storeId/orders/:orderId/sales', requirePermission('sales:write'), async (request, response) => {
+  app.post(
+    '/api/stores/:storeId/orders/:orderId/sales',
+    requirePermission('sales:write'),
+    validateRequest(createSaleSchema, {
+      mapRequest: (request) => getPayload(request.body),
+    }),
+    async (request, response) => {
     try {
       const data = await createSaleFromOrder({
         storeId: request.params.storeId,
         tenantId: request.body?.tenantId ?? null,
         orderId: request.params.orderId,
-        values: getPayload(request.body),
+        values: getValidatedPayload(request),
         createdBy: getActorFromRequest(request),
       });
 
@@ -86,14 +105,19 @@ export function registerSaleRoutes(app) {
       });
       sendError(response, error, 'Nao foi possivel gerar a venda a partir do pedido.');
     }
-  });
+    },
+  );
 
-  app.patch('/api/stores/:storeId/sales/:saleId/status', requirePermission('sales:write'), async (request, response) => {
+  app.patch(
+    '/api/stores/:storeId/sales/:saleId/status',
+    requirePermission('sales:write'),
+    validateRequest(updateSaleStatusSchema),
+    async (request, response) => {
     try {
       const data = await updateSaleStatus({
         storeId: request.params.storeId,
         saleId: request.params.saleId,
-        status: request.body?.status,
+        status: request.validated?.body?.status ?? request.body?.status,
         actor: getActorFromRequest(request),
       });
 
@@ -101,7 +125,7 @@ export function registerSaleRoutes(app) {
         context: 'sales.update_status',
         storeId: request.params.storeId,
         saleId: request.params.saleId,
-        status: request.body?.status ?? null,
+        status: request.validated?.body?.status ?? request.body?.status ?? null,
         actorId: request.authUser?.uid ?? null,
       }, 'Sale status updated');
 
@@ -114,7 +138,8 @@ export function registerSaleRoutes(app) {
       });
       sendError(response, error, 'Nao foi possivel atualizar o status da venda.');
     }
-  });
+    },
+  );
 
   app.delete('/api/stores/:storeId/sales/:saleId', requirePermission('sales:write'), async (request, response) => {
     try {
