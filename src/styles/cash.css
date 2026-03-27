@@ -294,8 +294,8 @@
   min-width: 220px;
 }
 
-.cash-module__pending-table th:nth-child(5),
-.cash-module__pending-table td:nth-child(5) {
+.cash-module__pending-table th:nth-child(6),
+.cash-module__pending-table td:nth-child(6) {
   min-width: 260px;
 }
 
@@ -376,6 +376,13 @@
 .cash-module__pending-resolve.is-resolved span {
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.cash-module__pending-delivery-tools {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .cash-module__pending-search {

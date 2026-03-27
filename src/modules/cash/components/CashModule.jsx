@@ -100,6 +100,11 @@ const FINANCIAL_PENDING_TYPES = [
   { value: 'other', label: 'Outro ajuste' },
 ]
 
+const FINANCIAL_PENDING_CHANNELS = [
+  { value: 'matrix', label: 'Matriz' },
+  { value: 'delivery', label: 'Delivery' },
+]
+
 const FINANCIAL_PENDING_PRIORITIES = [
   { value: 'high', label: 'Alta' },
   { value: 'medium', label: 'Media' },
@@ -115,10 +120,13 @@ const FINANCIAL_PENDING_CHECKLIST = [
 const initialFinancialPendingForm = {
   customerName: '',
   customerPhone: '',
+  channel: 'matrix',
   type: FINANCIAL_PENDING_TYPES[0].value,
   priority: 'medium',
   amount: '',
   description: '',
+  courierRelated: false,
+  courierName: '',
 }
 
 function createCashId() {
@@ -214,6 +222,10 @@ function getFinancialPendingTypeLabel(type) {
   )
 }
 
+function getFinancialPendingChannelLabel(channel) {
+  return FINANCIAL_PENDING_CHANNELS.find((entry) => entry.value === channel)?.label ?? 'Matriz'
+}
+
 function getFinancialPendingPriorityLabel(priority) {
   return FINANCIAL_PENDING_PRIORITIES.find((entry) => entry.value === priority)?.label ?? 'Media'
 }
@@ -266,6 +278,8 @@ function buildFinancialPendingRecord(formValues, operatorName) {
     id: createFinancialPendingId(),
     customerName: formValues.customerName.trim(),
     customerPhone: formValues.customerPhone.trim(),
+    channel: formValues.channel,
+    channelLabel: getFinancialPendingChannelLabel(formValues.channel),
     type: formValues.type,
     typeLabel: getFinancialPendingTypeLabel(formValues.type),
     priority: formValues.priority,
@@ -273,6 +287,8 @@ function buildFinancialPendingRecord(formValues, operatorName) {
     amount,
     amountLabel: formatCurrencyBRL(amount),
     description: formValues.description.trim(),
+    courierRelated: Boolean(formValues.courierRelated),
+    courierName: formValues.courierRelated ? formValues.courierName.trim() : '',
     operatorName,
     checklist: createDefaultFinancialPendingChecklist(),
     resolutionNote: '',
@@ -305,6 +321,7 @@ function FinancialPendingTable({ records, onChecklistToggle, onResolvedToggle, o
           <tr>
             <th>Cliente</th>
             <th>Numero</th>
+            <th>Origem</th>
             <th>Tipo</th>
             <th>Valor</th>
             <th>Checklist</th>
@@ -331,6 +348,16 @@ function FinancialPendingTable({ records, onChecklistToggle, onResolvedToggle, o
                   </div>
                 </td>
                 <td className="ui-table__cell--muted">{record.customerPhone}</td>
+                <td>
+                  <div className="cash-module__pending-meta">
+                    <span className="ui-badge ui-badge--neutral">
+                      {record.channelLabel ?? getFinancialPendingChannelLabel(record.channel)}
+                    </span>
+                    {record.channel === 'delivery' && record.courierRelated ? (
+                      <small>{`Entregador: ${record.courierName || 'Nao informado'}`}</small>
+                    ) : null}
+                  </div>
+                </td>
                 <td>
                   <div className="cash-module__pending-meta">
                     <span className="ui-badge ui-badge--info">{record.typeLabel}</span>
@@ -512,6 +539,12 @@ function FinancialPendingExportCanvas({ records, totalOpenAmount, session }) {
                 <strong>{record.customerPhone || 'Nao informado'}</strong>
               </p>
               <p>
+                <span>Origem</span>
+                <strong>
+                  {record.channelLabel ?? getFinancialPendingChannelLabel(record.channel)}
+                </strong>
+              </p>
+              <p>
                 <span>Tipo</span>
                 <strong>{record.typeLabel}</strong>
               </p>
@@ -523,6 +556,12 @@ function FinancialPendingExportCanvas({ records, totalOpenAmount, session }) {
                 <span>Prioridade</span>
                 <strong>{record.priorityLabel}</strong>
               </p>
+              {record.channel === 'delivery' && record.courierRelated ? (
+                <p>
+                  <span>Entregador</span>
+                  <strong>{record.courierName || 'Nao informado'}</strong>
+                </p>
+              ) : null}
               <p>
                 <span>Descricao</span>
                 <strong>{record.description}</strong>
@@ -563,6 +602,7 @@ function CashModule({ mode = 'cash' }) {
   const [financialPendingForm, setFinancialPendingForm] = useState(initialFinancialPendingForm)
   const [financialPendingSearch, setFinancialPendingSearch] = useState('')
   const [financialPendingFilter, setFinancialPendingFilter] = useState('open')
+  const [financialPendingChannelFilter, setFinancialPendingChannelFilter] = useState('all')
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [syncMessage, setSyncMessage] = useState('')
@@ -693,6 +733,9 @@ function CashModule({ mode = 'cash' }) {
         financialPendingFilter === 'all' ||
         (financialPendingFilter === 'open' && !isFinancialPendingResolved(record)) ||
         (financialPendingFilter === 'resolved' && isFinancialPendingResolved(record))
+      const matchesChannel =
+        financialPendingChannelFilter === 'all' ||
+        (record.channel ?? 'matrix') === financialPendingChannelFilter
       const matchesSearch =
         normalizedSearch.length === 0 ||
         [
@@ -700,15 +743,22 @@ function CashModule({ mode = 'cash' }) {
           record.customerPhone,
           record.description,
           record.typeLabel,
+          record.channelLabel,
+          record.courierName,
           record.operatorName,
         ]
           .join(' ')
           .toLowerCase()
           .includes(normalizedSearch)
 
-      return matchesStatus && matchesSearch
+      return matchesStatus && matchesChannel && matchesSearch
     })
-  }, [financialPendingFilter, financialPendingRecords, financialPendingSearch])
+  }, [
+    financialPendingChannelFilter,
+    financialPendingFilter,
+    financialPendingRecords,
+    financialPendingSearch,
+  ])
   const financialPendingAmount = useMemo(
     () =>
       openFinancialPendingRecords.reduce((total, record) => total + Number(record.amount ?? 0), 0),
@@ -880,25 +930,33 @@ function CashModule({ mode = 'cash' }) {
       },
       { high: 0, medium: 0, low: 0 },
     )
+    const byChannel = openFinancialPendingRecords.reduce(
+      (accumulator, record) => {
+        const channel = record?.channel ?? 'matrix'
+        accumulator[channel] = (accumulator[channel] ?? 0) + 1
+        return accumulator
+      },
+      { matrix: 0, delivery: 0 },
+    )
 
     return [
+      {
+        label: 'Matriz',
+        value: String(byChannel.matrix).padStart(2, '0'),
+        meta: 'pendencias internas ou de balcao',
+        tone: 'neutral',
+      },
+      {
+        label: 'Delivery',
+        value: String(byChannel.delivery).padStart(2, '0'),
+        meta: 'pendencias do canal de entrega',
+        tone: 'warning',
+      },
       {
         label: 'Alta prioridade',
         value: String(byPriority.high).padStart(2, '0'),
         meta: 'pedem retorno mais rapido',
         tone: 'danger',
-      },
-      {
-        label: 'Media prioridade',
-        value: String(byPriority.medium).padStart(2, '0'),
-        meta: 'acompanhar no fluxo do dia',
-        tone: 'warning',
-      },
-      {
-        label: 'Baixa prioridade',
-        value: String(byPriority.low).padStart(2, '0'),
-        meta: 'pendencias sem urgencia imediata',
-        tone: 'neutral',
       },
       {
         label: 'Valor em aberto',
@@ -1131,6 +1189,18 @@ function CashModule({ mode = 'cash' }) {
       return
     }
 
+    if (financialPendingForm.channel === 'delivery' && financialPendingForm.courierRelated) {
+      if (courierOptions.length === 0) {
+        setErrorMessage('Cadastre entregadores antes de vincular a pendencia ao delivery.')
+        return
+      }
+
+      if (!financialPendingForm.courierName.trim()) {
+        setErrorMessage('Selecione o entregador relacionado a pendencia.')
+        return
+      }
+    }
+
     setIsSaving(true)
     setErrorMessage('')
 
@@ -1145,11 +1215,15 @@ function CashModule({ mode = 'cash' }) {
         action: 'Registrou pendencia financeira',
         target: nextRecord.customerName,
         details: [
+          nextRecord.channelLabel,
           nextRecord.typeLabel,
           nextRecord.amountLabel,
           `Numero: ${nextRecord.customerPhone}`,
+          nextRecord.courierRelated ? `Entregador: ${nextRecord.courierName}` : '',
           nextRecord.description,
-        ].join(' | '),
+        ]
+          .filter(Boolean)
+          .join(' | '),
       })
       clearFinancialPendingForm()
       toast.success('Pendencia financeira registrada')
@@ -1587,6 +1661,31 @@ function CashModule({ mode = 'cash' }) {
               </div>
 
               <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                <label className="ui-label" htmlFor="financial-pending-channel">
+                  Origem
+                </label>
+                <Select
+                  id="financial-pending-channel"
+                  value={financialPendingForm.channel}
+                  onChange={(event) =>
+                    setFinancialPendingForm((current) => ({
+                      ...current,
+                      channel: event.target.value,
+                      courierRelated:
+                        event.target.value === 'delivery' ? current.courierRelated : false,
+                      courierName: event.target.value === 'delivery' ? current.courierName : '',
+                    }))
+                  }
+                >
+                  {FINANCIAL_PENDING_CHANNELS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="ui-field cash-module__row-field cash-module__row-field--value">
                 <label className="ui-label" htmlFor="financial-pending-type">
                   Tipo
                 </label>
@@ -1646,6 +1745,51 @@ function CashModule({ mode = 'cash' }) {
                 />
               </div>
             </FormRow>
+
+            {financialPendingForm.channel === 'delivery' ? (
+              <div className="cash-module__pending-delivery-tools">
+                <label className="cash-module__pending-check">
+                  <input
+                    type="checkbox"
+                    checked={financialPendingForm.courierRelated}
+                    onChange={(event) =>
+                      setFinancialPendingForm((current) => ({
+                        ...current,
+                        courierRelated: event.target.checked,
+                        courierName: event.target.checked ? current.courierName : '',
+                      }))
+                    }
+                  />
+                  <span>Pendencia relacionada a entregador</span>
+                </label>
+
+                {financialPendingForm.courierRelated ? (
+                  <div className="ui-field cash-module__row-field cash-module__row-field--value">
+                    <label className="ui-label" htmlFor="financial-pending-courier">
+                      Entregador
+                    </label>
+                    <Select
+                      id="financial-pending-courier"
+                      value={financialPendingForm.courierName}
+                      disabled={courierOptions.length === 0}
+                      onChange={(event) =>
+                        setFinancialPendingForm((current) => ({
+                          ...current,
+                          courierName: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Selecione o entregador</option>
+                      {courierOptions.map((courierName) => (
+                        <option key={courierName} value={courierName}>
+                          {courierName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="ui-field">
               <label className="ui-label" htmlFor="financial-pending-description">
@@ -1846,6 +1990,14 @@ function CashModule({ mode = 'cash' }) {
                 value={financialPendingSearch}
                 onChange={(event) => setFinancialPendingSearch(event.target.value)}
               />
+              <Select
+                value={financialPendingChannelFilter}
+                onChange={(event) => setFinancialPendingChannelFilter(event.target.value)}
+              >
+                <option value="all">Matriz + Delivery</option>
+                <option value="matrix">So matriz</option>
+                <option value="delivery">So delivery</option>
+              </Select>
               <Select
                 value={financialPendingFilter}
                 onChange={(event) => setFinancialPendingFilter(event.target.value)}
