@@ -10,6 +10,8 @@
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "vite build",
     "build:backend": "tsc -p tsconfig.backend.json",
+    "tokens:build": "node scripts/generate-design-tokens.mjs",
+    "tokens:check": "node scripts/generate-design-tokens.mjs --check",
     "analyze:bundle": "vite build --mode analyze",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

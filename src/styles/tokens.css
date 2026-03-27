@@ -1,34 +1,38 @@
-:root {
-  --font-display: 'DM Sans', 'Segoe UI', sans-serif;
-  --font-title: 'Syne', 'Segoe UI', sans-serif;
-  --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
-  --font-mono: 'Share Tech Mono', 'Consolas', monospace;
-  --font-body: var(--font-sans);
+@import '../design/tokens.css';
 
-  --space-1: 4px;
+:root {
+  --font-display: var(--token-typography-fontFamily-display);
+  --font-title: var(--token-typography-fontFamily-display);
+  --font-sans: var(--token-typography-fontFamily-sans);
+  --font-mono: var(--token-typography-fontFamily-mono);
+  --font-body: var(--token-typography-fontFamily-sans);
+
+  --space-0: var(--token-spacing-scale-0);
+  --space-1: var(--token-spacing-scale-1);
   --space-1-5: 6px;
-  --space-2: 8px;
+  --space-2: var(--token-spacing-scale-2);
   --space-2-5: 10px;
-  --space-3: 12px;
+  --space-3: var(--token-spacing-scale-3);
   --space-3-5: 14px;
-  --space-4: 16px;
+  --space-4: var(--token-spacing-scale-4);
   --space-4-5: 18px;
   --space-5: 20px;
   --space-5-5: 22px;
-  --space-6: 24px;
+  --space-6: var(--token-spacing-scale-5);
   --space-6-5: 28px;
   --space-6-75: 30px;
-  --space-7: 32px;
+  --space-7: var(--token-spacing-scale-6);
   --space-7-25: 34px;
   --space-8: 40px;
   --space-8-5: 44px;
   --space-9: 56px;
 
-  --radius-2xs: 4px;
+  --radius-none: var(--token-radius-none);
+  --radius-2xs: var(--token-radius-sm);
   --radius-3xs: 5px;
   --radius-checkbox: 6px;
   --radius-checkbox-soft: 7px;
-  --radius-xs: 8px;
+  --radius-xs: var(--token-radius-sm);
   --radius-base: 10px;
   --radius-sm: 14px;
   --radius-field: 16px;
@@ -39,18 +43,19 @@
   --radius-shell: 28px;
   --radius-lg: 30px;
   --radius-shell-lg: 32px;
-  --radius-pill: 999px;
+  --radius-pill: var(--token-radius-full);
 
   --border-thin: 1px;
   --border-strong: 1px;
 
-  --shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 18px 46px rgba(0, 0, 0, 0.34);
-  --shadow-lg: 0 28px 84px rgba(0, 0, 0, 0.48);
+  --shadow-sm: var(--token-shadow-sm);
+  --shadow-md: var(--token-shadow-md);
+  --shadow-lg: var(--token-shadow-lg);
+  --shadow-xl: var(--token-shadow-xl);
   --shadow-focus:
     0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 28%, transparent),
     0 0 0 5px color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
-  --shadow-card-hover: 0 20px 52px rgba(0, 0, 0, 0.28);
+  --shadow-card-hover: 0 20px 52px color-mix(in srgb, var(--color-shadow-rgb) 28%, transparent);
 
   --transition-fast: 160ms ease;
   --transition-base: 240ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -59,8 +64,6 @@
   --duration-slow: 380ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --surface-elevated: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--color-bg-card-alt));
-  --color-success-strong: var(--color-semantic-success);
   --color-static-white: #ffffff;
   --color-export-dark-text: #f4f7fb;
   --color-export-dark-text-muted: rgba(226, 236, 248, 0.8);
@@ -105,216 +108,362 @@
   --color-export-light-tag-text: #0f75b6;
   --color-export-light-problem-bg: rgba(255, 145, 0, 0.12);
   --color-export-light-problem-text: #b67207;
+
+  --bg-base: var(--token-theme-dark-background-page);
+  --bg-surface: var(--token-theme-dark-background-surface);
+  --bg-elevated: var(--token-theme-dark-background-elevated);
+  --border: var(--token-theme-dark-border-medium);
+  --border-subtle: var(--token-theme-dark-border-light);
+  --text-primary: var(--token-theme-dark-text-primary);
+  --text-secondary: var(--token-theme-dark-text-secondary);
+  --text-muted: var(--token-theme-dark-text-muted);
+  --accent: var(--token-color-palette-blue-500);
+  --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
+  --success: var(--token-color-semantic-success);
+  --warning: var(--token-color-semantic-warning);
+  --danger: var(--token-color-semantic-error);
+  --info: var(--token-color-semantic-info);
 }
 
+:root,
 :root[data-theme='dark'] {
-  --color-bg-canvas: #040507;
-  --color-bg-page: #070911;
-  --color-bg-panel: rgba(7, 9, 17, 0.92);
-  --color-bg-card: rgba(9, 10, 17, 0.88);
-  --color-bg-card-alt: rgba(12, 14, 25, 0.96);
-  --color-bg-muted: rgba(16, 17, 30, 0.96);
-  --color-bg-input: rgba(8, 10, 18, 0.92);
-  --color-bg-overlay: rgba(2, 3, 8, 0.82);
+  --color-bg-canvas: color-mix(in srgb, var(--bg-base) 94%, #000000);
+  --color-bg-page: var(--bg-base);
+  --color-bg-panel: color-mix(in srgb, var(--bg-base) 92%, transparent);
+  --color-bg-card: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  --color-bg-card-alt: color-mix(in srgb, var(--bg-elevated) 96%, transparent);
+  --color-bg-muted: color-mix(in srgb, var(--bg-elevated) 96%, transparent);
+  --color-bg-input: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  --color-bg-overlay: color-mix(in srgb, var(--bg-base) 82%, transparent);
 
-  --color-text-primary: #eceef5;
-  --color-text-secondary: #c4cde0;
-  --color-text-muted: #7a869e;
-  --color-text-disabled: #515d72;
-  --color-text-inverse: #05070d;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--token-theme-dark-text-disabled);
+  --color-text-inverse: var(--color-static-white);
 
-  --color-border-subtle: rgba(0, 220, 255, 0.08);
-  --color-border-default: rgba(0, 220, 255, 0.16);
-  --color-border-strong: rgba(0, 220, 255, 0.4);
+  --color-border-subtle: color-mix(in srgb, var(--border-subtle) 55%, transparent);
+  --color-border-default: color-mix(in srgb, var(--border) 72%, transparent);
+  --color-border-strong: color-mix(in srgb, var(--accent) 40%, var(--border));
 
-  --color-accent-cyan: #00dcff;
-  --color-accent-cyan-strong: #6af3ff;
-  --color-accent-amber: #f5a623;
-  --color-accent-amber-strong: #ffcc71;
-  --color-accent-green: #1de99b;
-  --color-accent-red: #ff5b6e;
-  --color-accent-blue: #56a0f8;
-  --color-accent-purple: #c084fc;
+  --color-accent-cyan: var(--token-color-palette-blue-500);
+  --color-accent-cyan-strong: var(--token-color-palette-blue-300);
+  --color-accent-amber: var(--token-color-palette-orange-500);
+  --color-accent-amber-strong: var(--token-color-palette-yellow-300);
+  --color-accent-green: var(--token-color-palette-green-500);
+  --color-accent-red: var(--token-color-palette-red-500);
+  --color-accent-blue: var(--token-color-palette-blue-500);
+  --color-accent-purple: var(--token-color-palette-purple-500);
   --color-accent-primary: var(--color-accent-cyan);
   --color-accent-secondary: var(--color-accent-amber);
-  --color-warning-strong: var(--color-accent-amber-strong);
-  --color-semantic-success: #1de99b;
-  --color-semantic-danger: #ff5b6e;
-  --color-semantic-warning: #f5a623;
-  --color-semantic-info: #56a0f8;
-  --color-semantic-special: #c084fc;
-  --color-semantic-brand: #00dcff;
+  --color-warning-strong: var(--token-color-palette-yellow-300);
+  --color-semantic-success: var(--success);
+  --color-semantic-danger: var(--danger);
+  --color-semantic-warning: var(--warning);
+  --color-semantic-info: var(--info);
+  --color-semantic-special: var(--color-accent-purple);
+  --color-semantic-brand: var(--accent);
+  --color-success-strong: var(--color-semantic-success);
 
-  --color-status-info-bg: rgba(0, 220, 255, 0.12);
-  --color-status-success-bg: rgba(29, 233, 155, 0.12);
-  --color-status-warning-bg: rgba(245, 166, 35, 0.12);
-  --color-status-danger-bg: rgba(255, 91, 110, 0.14);
-  --color-status-special-bg: rgba(192, 132, 252, 0.14);
+  --color-status-info-bg: color-mix(in srgb, var(--color-semantic-info) 12%, transparent);
+  --color-status-success-bg: color-mix(in srgb, var(--color-semantic-success) 12%, transparent);
+  --color-status-warning-bg: color-mix(in srgb, var(--color-semantic-warning) 14%, transparent);
+  --color-status-danger-bg: color-mix(in srgb, var(--color-semantic-danger) 14%, transparent);
+  --color-status-special-bg: color-mix(in srgb, var(--color-semantic-special) 14%, transparent);
 
-  --surface-panel: rgba(8, 10, 18, 0.68);
-  --surface-panel-strong: rgba(8, 10, 18, 0.9);
-  --surface-panel-soft: rgba(255, 255, 255, 0.03);
-  --surface-panel-soft-alt: rgba(255, 255, 255, 0.025);
-  --surface-panel-highlight: rgba(0, 220, 255, 0.06);
-  --surface-grid-line: rgba(255, 255, 255, 0.025);
-  --surface-scanline: rgba(255, 255, 255, 0.018);
-  --surface-grid-line-strong: rgba(255, 255, 255, 0.03);
-  --surface-logo-border: rgba(0, 220, 255, 0.18);
-  --surface-logo-inner-border: rgba(245, 166, 35, 0.2);
-  --surface-brand-chip: rgba(9, 10, 17, 0.96);
-  --surface-brand-mix-start: rgba(245, 166, 35, 0.22);
-  --surface-brand-mix-end: rgba(0, 220, 255, 0.2);
-  --surface-shell-edge: rgba(255, 255, 255, 0.03);
-  --surface-ring-accent: rgba(29, 233, 155, 0.14);
-  --surface-card-gloss: rgba(255, 255, 255, 0.04);
-  --surface-loader-bg: linear-gradient(180deg, rgba(7, 9, 17, 0.82), rgba(4, 5, 7, 0.92));
+  --surface-panel: color-mix(in srgb, var(--bg-base) 86%, transparent);
+  --surface-panel-strong: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  --surface-panel-soft: color-mix(in srgb, var(--text-primary) 3%, var(--bg-surface));
+  --surface-panel-soft-alt: color-mix(in srgb, var(--text-primary) 2%, var(--bg-surface));
+  --surface-panel-highlight: color-mix(in srgb, var(--accent) 10%, transparent);
+  --surface-grid-line: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  --surface-scanline: color-mix(in srgb, var(--text-primary) 1.5%, transparent);
+  --surface-grid-line-strong: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  --surface-logo-border: color-mix(in srgb, var(--accent) 20%, transparent);
+  --surface-logo-inner-border: color-mix(in srgb, var(--warning) 18%, transparent);
+  --surface-brand-chip: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --surface-brand-mix-start: color-mix(in srgb, var(--warning) 18%, transparent);
+  --surface-brand-mix-end: color-mix(in srgb, var(--accent) 16%, transparent);
+  --surface-shell-edge: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  --surface-ring-accent: color-mix(in srgb, var(--success) 16%, transparent);
+  --surface-card-gloss: color-mix(in srgb, var(--color-static-white) 4%, transparent);
+  --surface-loader-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-base) 86%, transparent),
+    color-mix(in srgb, var(--color-bg-canvas) 96%, transparent)
+  );
+  --surface-elevated: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--color-bg-card-alt));
   --color-shadow-rgb: #020812;
 
   --gradient-app:
-    radial-gradient(circle at top left, rgba(0, 220, 255, 0.14), transparent 34%),
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.12), transparent 28%),
-    linear-gradient(180deg, rgba(7, 9, 17, 0.96), rgba(4, 5, 7, 1));
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--warning) 12%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-base) 96%, transparent),
+      var(--color-bg-canvas)
+    );
   --gradient-card:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
-    linear-gradient(145deg, rgba(16, 17, 30, 0.96), rgba(8, 10, 18, 0.98));
-  --gradient-sidebar: linear-gradient(180deg, rgba(7, 9, 17, 0.98), rgba(4, 5, 7, 0.98));
-  --gradient-shell-panel: linear-gradient(145deg, rgba(12, 14, 25, 0.95), rgba(9, 10, 17, 0.9));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-static-white) 4%, transparent),
+      transparent 18%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-elevated) 96%, transparent),
+      color-mix(in srgb, var(--bg-base) 98%, transparent)
+    );
+  --gradient-sidebar: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-base) 98%, transparent),
+    color-mix(in srgb, var(--color-bg-canvas) 98%, transparent)
+  );
+  --gradient-shell-panel: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--bg-elevated) 95%, transparent),
+    color-mix(in srgb, var(--bg-surface) 90%, transparent)
+  );
   --gradient-brand-surface:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.22), rgba(0, 220, 255, 0.2)), rgba(9, 10, 17, 0.96);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warning) 18%, transparent),
+      color-mix(in srgb, var(--accent) 16%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 96%, transparent);
   --gradient-auth:
-    radial-gradient(circle at top, rgba(0, 220, 255, 0.12), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(245, 166, 35, 0.1), transparent 28%),
-    linear-gradient(180deg, rgba(5, 7, 13, 0.96), rgba(4, 5, 7, 1));
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--warning) 10%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-base) 96%, transparent),
+      var(--color-bg-canvas)
+    );
   --gradient-link-active:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.08), rgba(0, 220, 255, 0.12)),
-    rgba(9, 10, 17, 0.82);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warning) 10%, transparent),
+      color-mix(in srgb, var(--accent) 12%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 82%, transparent);
   --gradient-frame:
-    radial-gradient(circle at top, rgba(0, 220, 255, 0.08), transparent 25%),
-    linear-gradient(180deg, rgba(7, 9, 17, 0.96), rgba(4, 5, 7, 1));
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 25%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-base) 96%, transparent),
+      var(--color-bg-canvas)
+    );
 
-  --glow-cyan: 0 0 0 1px rgba(0, 220, 255, 0.18), 0 0 18px rgba(0, 220, 255, 0.12);
-  --glow-amber: 0 0 0 1px rgba(245, 166, 35, 0.16), 0 0 18px rgba(245, 166, 35, 0.12);
-  --glow-green: 0 0 0 1px rgba(29, 233, 155, 0.18), 0 0 16px rgba(29, 233, 155, 0.12);
+  --glow-cyan:
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 12%, transparent);
+  --glow-amber:
+    0 0 0 1px color-mix(in srgb, var(--warning) 16%, transparent),
+    0 0 18px color-mix(in srgb, var(--warning) 12%, transparent);
+  --glow-green:
+    0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent),
+    0 0 16px color-mix(in srgb, var(--success) 12%, transparent);
 }
 
 :root[data-theme='light'] {
-  --color-bg-canvas: #edf1f7;
-  --color-bg-page: #f4f7fb;
-  --color-bg-panel: rgba(252, 253, 255, 0.94);
-  --color-bg-card: rgba(255, 255, 255, 0.94);
-  --color-bg-card-alt: rgba(247, 250, 255, 0.98);
-  --color-bg-muted: rgba(240, 245, 252, 0.98);
-  --color-bg-input: rgba(247, 250, 255, 0.98);
-  --color-bg-overlay: rgba(229, 236, 247, 0.82);
+  --bg-base: var(--token-theme-light-background-page);
+  --bg-surface: var(--token-theme-light-background-surface);
+  --bg-elevated: var(--token-theme-light-background-elevated);
+  --border: var(--token-theme-light-border-medium);
+  --border-subtle: var(--token-theme-light-border-light);
+  --text-primary: var(--token-theme-light-text-primary);
+  --text-secondary: var(--token-theme-light-text-secondary);
+  --text-muted: var(--token-theme-light-text-muted);
+  --accent: var(--token-color-palette-blue-500);
+  --accent-dim: color-mix(in srgb, var(--accent) 10%, transparent);
+  --success: var(--token-color-semantic-success);
+  --warning: var(--token-color-palette-orange-500);
+  --danger: var(--token-color-semantic-error);
+  --info: var(--token-color-semantic-info);
 
-  --color-text-primary: #111827;
-  --color-text-secondary: #435066;
-  --color-text-muted: #6d7890;
-  --color-text-disabled: #9aa4ba;
+  --color-bg-canvas: color-mix(in srgb, var(--bg-base) 94%, #ffffff);
+  --color-bg-page: var(--bg-base);
+  --color-bg-panel: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  --color-bg-card: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --color-bg-card-alt: color-mix(in srgb, var(--bg-elevated) 98%, transparent);
+  --color-bg-muted: color-mix(in srgb, var(--bg-elevated) 98%, transparent);
+  --color-bg-input: color-mix(in srgb, var(--bg-surface) 98%, transparent);
+  --color-bg-overlay: color-mix(in srgb, var(--bg-base) 82%, transparent);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--token-theme-light-text-disabled);
   --color-text-inverse: #f4f8ff;
 
-  --color-border-subtle: rgba(0, 125, 191, 0.1);
-  --color-border-default: rgba(0, 125, 191, 0.18);
-  --color-border-strong: rgba(0, 125, 191, 0.32);
+  --color-border-subtle: color-mix(in srgb, var(--accent) 10%, var(--border-subtle));
+  --color-border-default: color-mix(in srgb, var(--accent) 18%, var(--border));
+  --color-border-strong: color-mix(in srgb, var(--accent) 32%, var(--border));
 
-  --color-accent-cyan: #007dbf;
-  --color-accent-cyan-strong: #00a5d8;
-  --color-accent-amber: #c97a00;
-  --color-accent-amber-strong: #f5a623;
-  --color-accent-green: #008f5d;
-  --color-accent-red: #d74257;
-  --color-accent-blue: #2563eb;
-  --color-accent-purple: #9a6cff;
-  --color-accent-primary: var(--color-accent-cyan);
-  --color-accent-secondary: var(--color-accent-amber);
-  --color-warning-strong: var(--color-accent-amber-strong);
-  --color-semantic-success: #008f5d;
-  --color-semantic-danger: #d74257;
-  --color-semantic-warning: #c97a00;
-  --color-semantic-info: #2563eb;
-  --color-semantic-special: #9a6cff;
-  --color-semantic-brand: #007dbf;
-
-  --color-status-info-bg: rgba(0, 125, 191, 0.08);
-  --color-status-success-bg: rgba(0, 143, 93, 0.1);
-  --color-status-warning-bg: rgba(201, 122, 0, 0.12);
-  --color-status-danger-bg: rgba(215, 66, 87, 0.12);
-  --color-status-special-bg: rgba(154, 108, 255, 0.12);
-
-  --surface-panel: rgba(255, 255, 255, 0.82);
-  --surface-panel-strong: rgba(255, 255, 255, 0.96);
-  --surface-panel-soft: rgba(8, 34, 59, 0.045);
-  --surface-panel-soft-alt: rgba(8, 34, 59, 0.03);
-  --surface-panel-highlight: rgba(0, 125, 191, 0.08);
-  --surface-grid-line: rgba(17, 24, 39, 0.055);
-  --surface-scanline: rgba(17, 24, 39, 0.028);
-  --surface-grid-line-strong: rgba(17, 24, 39, 0.06);
-  --surface-logo-border: rgba(0, 125, 191, 0.16);
-  --surface-logo-inner-border: rgba(201, 122, 0, 0.16);
-  --surface-brand-chip: rgba(255, 255, 255, 0.94);
-  --surface-brand-mix-start: rgba(245, 166, 35, 0.12);
-  --surface-brand-mix-end: rgba(0, 125, 191, 0.12);
-  --surface-shell-edge: rgba(17, 24, 39, 0.06);
-  --surface-ring-accent: rgba(0, 143, 93, 0.16);
-  --surface-card-gloss: rgba(255, 255, 255, 0.6);
+  --surface-panel: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  --surface-panel-strong: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  --surface-panel-soft: color-mix(in srgb, var(--accent) 4.5%, var(--bg-surface));
+  --surface-panel-soft-alt: color-mix(in srgb, var(--accent) 3%, var(--bg-surface));
+  --surface-panel-highlight: color-mix(in srgb, var(--accent) 8%, transparent);
+  --surface-grid-line: color-mix(in srgb, var(--text-primary) 5.5%, transparent);
+  --surface-scanline: color-mix(in srgb, var(--text-primary) 2.8%, transparent);
+  --surface-grid-line-strong: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --surface-logo-border: color-mix(in srgb, var(--accent) 16%, transparent);
+  --surface-logo-inner-border: color-mix(in srgb, var(--warning) 16%, transparent);
+  --surface-brand-chip: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --surface-brand-mix-start: color-mix(in srgb, var(--warning) 12%, transparent);
+  --surface-brand-mix-end: color-mix(in srgb, var(--accent) 12%, transparent);
+  --surface-shell-edge: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --surface-ring-accent: color-mix(in srgb, var(--success) 16%, transparent);
+  --surface-card-gloss: color-mix(in srgb, var(--color-static-white) 60%, transparent);
   --surface-loader-bg: linear-gradient(
     180deg,
-    rgba(244, 247, 251, 0.92),
-    rgba(233, 239, 247, 0.96)
+    color-mix(in srgb, var(--bg-base) 92%, transparent),
+    color-mix(in srgb, var(--color-bg-canvas) 96%, transparent)
   );
+  --surface-elevated: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--color-bg-card-alt));
   --color-shadow-rgb: #0f172a;
 
   --gradient-app:
-    radial-gradient(circle at top left, rgba(0, 125, 191, 0.12), transparent 34%),
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.08), transparent 28%),
-    linear-gradient(180deg, #f7f9fc, #edf1f7);
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--warning) 8%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 98%, transparent),
+      var(--color-bg-canvas)
+    );
   --gradient-card:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
-    linear-gradient(145deg, #ffffff, #f6f9fd);
-  --gradient-sidebar: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.98));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-static-white) 70%, transparent),
+      color-mix(in srgb, var(--color-static-white) 70%, transparent)
+    ),
+    linear-gradient(145deg, var(--bg-surface), color-mix(in srgb, var(--bg-base) 88%, #ffffff));
+  --gradient-sidebar: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-surface) 98%, transparent),
+    color-mix(in srgb, var(--bg-base) 98%, transparent)
+  );
   --gradient-shell-panel: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.96),
-    rgba(241, 246, 252, 0.96)
+    color-mix(in srgb, var(--bg-surface) 96%, transparent),
+    color-mix(in srgb, var(--bg-base) 96%, transparent)
   );
   --gradient-brand-surface:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(0, 125, 191, 0.12)),
-    rgba(255, 255, 255, 0.94);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warning) 12%, transparent),
+      color-mix(in srgb, var(--accent) 12%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 94%, transparent);
   --gradient-auth:
-    radial-gradient(circle at top, rgba(0, 125, 191, 0.12), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(245, 166, 35, 0.08), transparent 28%),
-    linear-gradient(180deg, rgba(247, 249, 252, 0.98), rgba(237, 241, 247, 1));
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, var(--warning) 8%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 98%, transparent),
+      var(--color-bg-canvas)
+    );
   --gradient-link-active:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(0, 125, 191, 0.1)),
-    rgba(255, 255, 255, 0.96);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warning) 12%, transparent),
+      color-mix(in srgb, var(--accent) 10%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 96%, transparent);
   --gradient-frame:
-    radial-gradient(circle at top, rgba(0, 125, 191, 0.08), transparent 25%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 245, 252, 1));
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 25%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 98%, transparent),
+      color-mix(in srgb, var(--bg-base) 96%, transparent)
+    );
 
-  --glow-cyan: 0 0 0 1px rgba(0, 125, 191, 0.16), 0 0 18px rgba(0, 125, 191, 0.1);
-  --glow-amber: 0 0 0 1px rgba(201, 122, 0, 0.12), 0 0 18px rgba(201, 122, 0, 0.08);
-  --glow-green: 0 0 0 1px rgba(0, 143, 93, 0.14), 0 0 16px rgba(0, 143, 93, 0.1);
+  --glow-cyan:
+    0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 10%, transparent);
+  --glow-amber:
+    0 0 0 1px color-mix(in srgb, var(--warning) 12%, transparent),
+    0 0 18px color-mix(in srgb, var(--warning) 8%, transparent);
+  --glow-green:
+    0 0 0 1px color-mix(in srgb, var(--success) 14%, transparent),
+    0 0 16px color-mix(in srgb, var(--success) 10%, transparent);
 }
 
 :root[data-theme='amber'] {
-  --color-bg-canvas: #d9ccb4;
-  --color-bg-page: #e7dbc6;
-  --color-bg-panel: rgba(249, 240, 220, 0.94);
-  --color-bg-card: rgba(252, 244, 227, 0.95);
-  --color-bg-card-alt: rgba(242, 229, 206, 0.98);
-  --color-bg-muted: rgba(233, 220, 193, 0.96);
-  --color-bg-input: rgba(252, 244, 229, 0.98);
+  --bg-base: var(--token-theme-amber-background-page);
+  --bg-surface: var(--token-theme-amber-background-surface);
+  --bg-elevated: var(--token-theme-amber-background-elevated);
+  --border: var(--token-theme-amber-border-medium);
+  --border-subtle: var(--token-theme-amber-border-light);
+  --text-primary: var(--token-theme-amber-text-primary);
+  --text-secondary: var(--token-theme-amber-text-secondary);
+  --text-muted: var(--token-theme-amber-text-muted);
+  --accent: var(--token-color-palette-orange-500);
+  --accent-dim: color-mix(in srgb, var(--accent) 10%, transparent);
+  --success: #537342;
+  --warning: #a86c14;
+  --danger: #b6533f;
+  --info: #4f6fa8;
+
+  --color-bg-canvas: color-mix(in srgb, var(--bg-base) 92%, #d9ccb4);
+  --color-bg-page: var(--bg-base);
+  --color-bg-panel: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --color-bg-card: color-mix(in srgb, var(--bg-surface) 95%, transparent);
+  --color-bg-card-alt: color-mix(in srgb, var(--bg-elevated) 98%, transparent);
+  --color-bg-muted: color-mix(in srgb, var(--bg-elevated) 96%, transparent);
+  --color-bg-input: color-mix(in srgb, var(--bg-surface) 98%, transparent);
   --color-bg-overlay: rgba(91, 66, 32, 0.2);
 
-  --color-text-primary: #302114;
-  --color-text-secondary: #5f4730;
-  --color-text-muted: #89684a;
-  --color-text-disabled: #af9477;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--token-theme-amber-text-disabled);
   --color-text-inverse: #fff7ea;
 
-  --color-border-subtle: rgba(143, 101, 34, 0.14);
-  --color-border-default: rgba(161, 113, 31, 0.24);
-  --color-border-strong: rgba(181, 129, 39, 0.44);
+  --color-border-subtle: color-mix(in srgb, var(--warning) 14%, var(--border-subtle));
+  --color-border-default: color-mix(in srgb, var(--warning) 24%, var(--border));
+  --color-border-strong: color-mix(in srgb, var(--warning) 44%, var(--border));
 
   --color-accent-cyan: #3b7280;
   --color-accent-cyan-strong: #4f8d9d;
@@ -327,398 +476,121 @@
   --color-accent-primary: var(--color-accent-cyan);
   --color-accent-secondary: var(--color-accent-amber);
   --color-warning-strong: var(--color-accent-amber-strong);
-  --color-semantic-success: #537342;
-  --color-semantic-danger: #b6533f;
-  --color-semantic-warning: #a86c14;
-  --color-semantic-info: #4f6fa8;
-  --color-semantic-special: #8d6b9f;
-  --color-semantic-brand: #a86c14;
+  --color-semantic-success: var(--success);
+  --color-semantic-danger: var(--danger);
+  --color-semantic-warning: var(--warning);
+  --color-semantic-info: var(--info);
+  --color-semantic-special: var(--color-accent-purple);
+  --color-semantic-brand: var(--warning);
 
-  --color-status-info-bg: rgba(79, 111, 168, 0.12);
-  --color-status-success-bg: rgba(83, 115, 66, 0.12);
-  --color-status-warning-bg: rgba(168, 108, 20, 0.16);
-  --color-status-danger-bg: rgba(182, 83, 63, 0.14);
-  --color-status-special-bg: rgba(141, 107, 159, 0.14);
+  --color-status-info-bg: color-mix(in srgb, var(--info) 12%, transparent);
+  --color-status-success-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --color-status-warning-bg: color-mix(in srgb, var(--warning) 16%, transparent);
+  --color-status-danger-bg: color-mix(in srgb, var(--danger) 14%, transparent);
+  --color-status-special-bg: color-mix(in srgb, var(--color-accent-purple) 14%, transparent);
 
-  --surface-panel: rgba(255, 247, 231, 0.78);
-  --surface-panel-strong: rgba(252, 241, 218, 0.94);
-  --surface-panel-soft: rgba(106, 76, 31, 0.06);
-  --surface-panel-soft-alt: rgba(106, 76, 31, 0.04);
-  --surface-panel-highlight: rgba(211, 154, 51, 0.1);
-  --surface-grid-line: rgba(86, 61, 28, 0.08);
-  --surface-scanline: rgba(122, 91, 48, 0.03);
-  --surface-grid-line-strong: rgba(86, 61, 28, 0.1);
-  --surface-logo-border: rgba(168, 108, 20, 0.2);
-  --surface-logo-inner-border: rgba(211, 154, 51, 0.18);
-  --surface-brand-chip: rgba(247, 236, 213, 0.94);
-  --surface-brand-mix-start: rgba(211, 154, 51, 0.18);
-  --surface-brand-mix-end: rgba(79, 111, 168, 0.08);
-  --surface-shell-edge: rgba(101, 73, 35, 0.1);
-  --surface-ring-accent: rgba(168, 108, 20, 0.18);
-  --surface-card-gloss: rgba(255, 249, 236, 0.52);
+  --surface-panel: color-mix(in srgb, var(--bg-surface) 78%, transparent);
+  --surface-panel-strong: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --surface-panel-soft: color-mix(in srgb, var(--warning) 6%, var(--bg-surface));
+  --surface-panel-soft-alt: color-mix(in srgb, var(--warning) 4%, var(--bg-surface));
+  --surface-panel-highlight: color-mix(in srgb, var(--accent) 10%, transparent);
+  --surface-grid-line: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --surface-scanline: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  --surface-grid-line-strong: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --surface-logo-border: color-mix(in srgb, var(--warning) 20%, transparent);
+  --surface-logo-inner-border: color-mix(in srgb, #d39a33 18%, transparent);
+  --surface-brand-chip: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  --surface-brand-mix-start: color-mix(in srgb, #d39a33 18%, transparent);
+  --surface-brand-mix-end: color-mix(in srgb, var(--info) 8%, transparent);
+  --surface-shell-edge: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --surface-ring-accent: color-mix(in srgb, var(--warning) 18%, transparent);
+  --surface-card-gloss: color-mix(in srgb, #fff9ec 52%, transparent);
   --surface-loader-bg: linear-gradient(
     180deg,
-    rgba(247, 236, 213, 0.94),
-    rgba(231, 219, 198, 0.98)
+    color-mix(in srgb, var(--bg-surface) 94%, transparent),
+    color-mix(in srgb, var(--bg-base) 98%, transparent)
   );
+  --surface-elevated: color-mix(in srgb, var(--surface-panel-strong) 94%, var(--color-bg-card-alt));
   --color-shadow-rgb: #5d4326;
 
   --gradient-app:
-    radial-gradient(circle at top left, rgba(211, 154, 51, 0.18), transparent 34%),
-    radial-gradient(circle at top right, rgba(138, 104, 56, 0.12), transparent 28%),
-    linear-gradient(180deg, #f0e4cd, #dcccae);
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, #d39a33 18%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, #8a6838 12%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 94%, transparent),
+      color-mix(in srgb, var(--color-bg-canvas) 96%, transparent)
+    );
   --gradient-card:
-    linear-gradient(180deg, rgba(255, 250, 239, 0.62), rgba(250, 239, 218, 0.62)),
-    linear-gradient(145deg, #fbf1da, #eeddbd);
-  --gradient-sidebar: linear-gradient(180deg, rgba(248, 236, 211, 0.98), rgba(231, 216, 191, 0.98));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #fffaf0 62%, transparent),
+      color-mix(in srgb, #faefda 62%, transparent)
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-surface) 96%, transparent),
+      color-mix(in srgb, var(--bg-elevated) 92%, transparent)
+    );
+  --gradient-sidebar: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-surface) 98%, transparent),
+    color-mix(in srgb, var(--bg-elevated) 98%, transparent)
+  );
   --gradient-shell-panel: linear-gradient(
     145deg,
-    rgba(251, 241, 219, 0.96),
-    rgba(236, 221, 192, 0.96)
+    color-mix(in srgb, var(--bg-surface) 96%, transparent),
+    color-mix(in srgb, var(--bg-elevated) 96%, transparent)
   );
   --gradient-brand-surface:
-    linear-gradient(135deg, rgba(211, 154, 51, 0.18), rgba(120, 89, 41, 0.12)),
-    rgba(249, 239, 218, 0.96);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, #d39a33 18%, transparent),
+      color-mix(in srgb, #785929 12%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 96%, transparent);
   --gradient-auth:
-    radial-gradient(circle at top, rgba(211, 154, 51, 0.16), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(122, 91, 48, 0.1), transparent 28%),
-    linear-gradient(180deg, rgba(248, 238, 216, 0.98), rgba(228, 214, 188, 1));
+    radial-gradient(circle at top, color-mix(in srgb, #d39a33 16%, transparent), transparent 30%),
+    radial-gradient(
+      circle at bottom right,
+      color-mix(in srgb, #7a5b30 10%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 98%, transparent),
+      color-mix(in srgb, var(--bg-base) 98%, transparent)
+    );
   --gradient-link-active:
-    linear-gradient(135deg, rgba(211, 154, 51, 0.18), rgba(130, 97, 46, 0.1)),
-    rgba(250, 240, 218, 0.98);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, #d39a33 18%, transparent),
+      color-mix(in srgb, #82612e 10%, transparent)
+    ),
+    color-mix(in srgb, var(--bg-surface) 98%, transparent);
   --gradient-frame:
-    radial-gradient(circle at top, rgba(211, 154, 51, 0.12), transparent 25%),
-    linear-gradient(180deg, rgba(249, 239, 218, 0.98), rgba(231, 219, 198, 1));
+    radial-gradient(circle at top, color-mix(in srgb, #d39a33 12%, transparent), transparent 25%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-surface) 98%, transparent),
+      color-mix(in srgb, var(--bg-elevated) 98%, transparent)
+    );
 
-  --glow-cyan: 0 0 0 1px rgba(79, 111, 168, 0.14), 0 0 18px rgba(79, 111, 168, 0.08);
-  --glow-amber: 0 0 0 1px rgba(168, 108, 20, 0.18), 0 0 18px rgba(211, 154, 51, 0.14);
-  --glow-green: 0 0 0 1px rgba(83, 115, 66, 0.14), 0 0 16px rgba(83, 115, 66, 0.1);
-}
-
-:root {
-  --bg-base: #0e0e10;
-  --bg-surface: #18181b;
-  --bg-elevated: #1f1f23;
-  --border: #2e2e33;
-  --border-subtle: #222226;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59, 130, 246, 0.12);
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #06b6d4;
-
-  --font-display: 'Inter', 'Geist', 'Segoe UI', sans-serif;
-  --font-title: var(--font-display);
-  --font-sans: var(--font-display);
-  --font-mono: var(--font-display);
-  --font-body: var(--font-display);
-
-  --radius-xs: 4px;
-  --radius-base: 6px;
-  --radius-sm: 8px;
-  --radius-field: 6px;
-  --radius-section: 8px;
-  --radius-card: 8px;
-  --radius-md: 8px;
-  --radius-panel: 8px;
-  --radius-shell: 8px;
-  --radius-lg: 8px;
-  --radius-shell-lg: 8px;
-  --radius-pill: 999px;
-
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-card-hover: none;
-  --shadow-focus: 0 0 0 1px var(--accent);
-
-  --transition-fast: 140ms ease;
-  --transition-base: 180ms ease;
-  --transition-slow: 220ms ease;
-  --duration-normal: 180ms;
-  --duration-slow: 220ms;
-  --ease-standard: ease;
-}
-
-:root[data-theme='dark'] {
-  --bg-base: #0e0e10;
-  --bg-surface: #18181b;
-  --bg-elevated: #1f1f23;
-  --border: #2e2e33;
-  --border-subtle: #222226;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59, 130, 246, 0.12);
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #06b6d4;
-
-  --color-bg-canvas: var(--bg-base);
-  --color-bg-page: var(--bg-base);
-  --color-bg-panel: var(--bg-base);
-  --color-bg-card: var(--bg-surface);
-  --color-bg-card-alt: var(--bg-elevated);
-  --color-bg-muted: var(--bg-elevated);
-  --color-bg-input: var(--bg-elevated);
-  --color-bg-overlay: rgba(14, 14, 16, 0.82);
-
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-disabled: var(--text-muted);
-  --color-text-inverse: #ffffff;
-
-  --color-border-subtle: var(--border-subtle);
-  --color-border-default: var(--border);
-  --color-border-strong: var(--accent);
-
-  --color-accent-cyan: var(--accent);
-  --color-accent-cyan-strong: var(--accent);
-  --color-accent-amber: var(--warning);
-  --color-accent-amber-strong: var(--warning);
-  --color-accent-green: var(--success);
-  --color-accent-red: var(--danger);
-  --color-accent-blue: var(--accent);
-  --color-accent-purple: var(--info);
-  --color-accent-primary: var(--accent);
-  --color-accent-secondary: var(--warning);
-  --color-warning-strong: var(--warning);
-  --color-semantic-success: var(--success);
-  --color-semantic-danger: var(--danger);
-  --color-semantic-warning: var(--warning);
-  --color-semantic-info: var(--info);
-  --color-semantic-special: var(--accent);
-  --color-semantic-brand: var(--accent);
-
-  --color-status-info-bg: rgba(59, 130, 246, 0.12);
-  --color-status-success-bg: rgba(34, 197, 94, 0.12);
-  --color-status-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-status-danger-bg: rgba(239, 68, 68, 0.12);
-  --color-status-special-bg: rgba(6, 182, 212, 0.12);
-
-  --surface-panel: var(--bg-base);
-  --surface-panel-strong: var(--bg-surface);
-  --surface-panel-soft: var(--bg-surface);
-  --surface-panel-soft-alt: var(--bg-surface);
-  --surface-panel-highlight: var(--accent-dim);
-  --surface-grid-line: rgba(255, 255, 255, 0.03);
-  --surface-scanline: rgba(255, 255, 255, 0.015);
-  --surface-grid-line-strong: rgba(255, 255, 255, 0.04);
-  --surface-logo-border: var(--border);
-  --surface-logo-inner-border: var(--border-subtle);
-  --surface-brand-chip: var(--bg-surface);
-  --surface-brand-mix-start: transparent;
-  --surface-brand-mix-end: transparent;
-  --surface-shell-edge: var(--border-subtle);
-  --surface-ring-accent: rgba(59, 130, 246, 0.16);
-  --surface-card-gloss: transparent;
-  --surface-loader-bg: var(--bg-base);
-  --surface-elevated: var(--bg-elevated);
-  --color-shadow-rgb: #000000;
-
-  --gradient-app: var(--bg-base);
-  --gradient-card: var(--bg-surface);
-  --gradient-sidebar: var(--bg-surface);
-  --gradient-shell-panel: var(--bg-surface);
-  --gradient-brand-surface: var(--bg-surface);
-  --gradient-auth: var(--bg-base);
-  --gradient-link-active: var(--accent-dim);
-  --gradient-frame: var(--bg-base);
-
-  --glow-cyan: none;
-  --glow-amber: none;
-  --glow-green: none;
-}
-
-:root[data-theme='light'] {
-  --bg-base: #fafafa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f4f4f5;
-  --border: #e4e4e7;
-  --border-subtle: #f1f1f3;
-  --text-primary: #111113;
-  --text-secondary: #52525b;
-  --text-muted: #71717a;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59, 130, 246, 0.1);
-  --success: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --info: #0891b2;
-
-  --color-bg-canvas: var(--bg-base);
-  --color-bg-page: var(--bg-base);
-  --color-bg-panel: var(--bg-base);
-  --color-bg-card: var(--bg-surface);
-  --color-bg-card-alt: var(--bg-elevated);
-  --color-bg-muted: var(--bg-elevated);
-  --color-bg-input: var(--bg-surface);
-  --color-bg-overlay: rgba(244, 244, 245, 0.82);
-
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-disabled: var(--text-muted);
-  --color-text-inverse: #ffffff;
-
-  --color-border-subtle: var(--border-subtle);
-  --color-border-default: var(--border);
-  --color-border-strong: var(--accent);
-
-  --color-accent-cyan: var(--accent);
-  --color-accent-cyan-strong: var(--accent);
-  --color-accent-amber: var(--warning);
-  --color-accent-amber-strong: var(--warning);
-  --color-accent-green: var(--success);
-  --color-accent-red: var(--danger);
-  --color-accent-blue: var(--accent);
-  --color-accent-purple: var(--info);
-  --color-accent-primary: var(--accent);
-  --color-accent-secondary: var(--warning);
-  --color-warning-strong: var(--warning);
-  --color-semantic-success: var(--success);
-  --color-semantic-danger: var(--danger);
-  --color-semantic-warning: var(--warning);
-  --color-semantic-info: var(--info);
-  --color-semantic-special: var(--accent);
-  --color-semantic-brand: var(--accent);
-
-  --color-status-info-bg: rgba(59, 130, 246, 0.1);
-  --color-status-success-bg: rgba(34, 197, 94, 0.1);
-  --color-status-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-status-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-status-special-bg: rgba(6, 182, 212, 0.1);
-
-  --surface-panel: var(--bg-base);
-  --surface-panel-strong: var(--bg-surface);
-  --surface-panel-soft: var(--bg-elevated);
-  --surface-panel-soft-alt: var(--bg-elevated);
-  --surface-panel-highlight: var(--accent-dim);
-  --surface-grid-line: rgba(17, 17, 19, 0.03);
-  --surface-scanline: rgba(17, 17, 19, 0.015);
-  --surface-grid-line-strong: rgba(17, 17, 19, 0.04);
-  --surface-logo-border: var(--border);
-  --surface-logo-inner-border: var(--border-subtle);
-  --surface-brand-chip: var(--bg-surface);
-  --surface-brand-mix-start: transparent;
-  --surface-brand-mix-end: transparent;
-  --surface-shell-edge: var(--border-subtle);
-  --surface-ring-accent: rgba(59, 130, 246, 0.14);
-  --surface-card-gloss: transparent;
-  --surface-loader-bg: var(--bg-base);
-  --surface-elevated: var(--bg-elevated);
-  --color-shadow-rgb: #000000;
-
-  --gradient-app: var(--bg-base);
-  --gradient-card: var(--bg-surface);
-  --gradient-sidebar: var(--bg-surface);
-  --gradient-shell-panel: var(--bg-surface);
-  --gradient-brand-surface: var(--bg-surface);
-  --gradient-auth: var(--bg-base);
-  --gradient-link-active: var(--accent-dim);
-  --gradient-frame: var(--bg-base);
-
-  --glow-cyan: none;
-  --glow-amber: none;
-  --glow-green: none;
-}
-
-:root[data-theme='amber'] {
-  --bg-base: #f5efe6;
-  --bg-surface: #fffaf2;
-  --bg-elevated: #efe3d1;
-  --border: #d7c5ad;
-  --border-subtle: #e8dccb;
-  --text-primary: #2a2118;
-  --text-secondary: #625444;
-  --text-muted: #8a7966;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59, 130, 246, 0.08);
-  --success: #3f8f5c;
-  --warning: #c17a1f;
-  --danger: #c45a4f;
-  --info: #0f8da8;
-
-  --color-bg-canvas: var(--bg-base);
-  --color-bg-page: var(--bg-base);
-  --color-bg-panel: var(--bg-base);
-  --color-bg-card: var(--bg-surface);
-  --color-bg-card-alt: var(--bg-elevated);
-  --color-bg-muted: var(--bg-elevated);
-  --color-bg-input: var(--bg-surface);
-  --color-bg-overlay: rgba(245, 239, 230, 0.82);
-
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-disabled: var(--text-muted);
-  --color-text-inverse: #ffffff;
-
-  --color-border-subtle: var(--border-subtle);
-  --color-border-default: var(--border);
-  --color-border-strong: var(--accent);
-
-  --color-accent-cyan: var(--accent);
-  --color-accent-cyan-strong: var(--accent);
-  --color-accent-amber: var(--warning);
-  --color-accent-amber-strong: var(--warning);
-  --color-accent-green: var(--success);
-  --color-accent-red: var(--danger);
-  --color-accent-blue: var(--accent);
-  --color-accent-purple: var(--info);
-  --color-accent-primary: var(--accent);
-  --color-accent-secondary: var(--warning);
-  --color-warning-strong: var(--warning);
-  --color-semantic-success: var(--success);
-  --color-semantic-danger: var(--danger);
-  --color-semantic-warning: var(--warning);
-  --color-semantic-info: var(--info);
-  --color-semantic-special: var(--accent);
-  --color-semantic-brand: var(--accent);
-
-  --color-status-info-bg: rgba(59, 130, 246, 0.08);
-  --color-status-success-bg: rgba(63, 143, 92, 0.1);
-  --color-status-warning-bg: rgba(193, 122, 31, 0.1);
-  --color-status-danger-bg: rgba(196, 90, 79, 0.1);
-  --color-status-special-bg: rgba(15, 141, 168, 0.1);
-
-  --surface-panel: var(--bg-base);
-  --surface-panel-strong: var(--bg-surface);
-  --surface-panel-soft: var(--bg-elevated);
-  --surface-panel-soft-alt: var(--bg-elevated);
-  --surface-panel-highlight: var(--accent-dim);
-  --surface-grid-line: rgba(42, 33, 24, 0.04);
-  --surface-scanline: rgba(42, 33, 24, 0.015);
-  --surface-grid-line-strong: rgba(42, 33, 24, 0.05);
-  --surface-logo-border: var(--border);
-  --surface-logo-inner-border: var(--border-subtle);
-  --surface-brand-chip: var(--bg-surface);
-  --surface-brand-mix-start: transparent;
-  --surface-brand-mix-end: transparent;
-  --surface-shell-edge: var(--border-subtle);
-  --surface-ring-accent: rgba(59, 130, 246, 0.14);
-  --surface-card-gloss: transparent;
-  --surface-loader-bg: var(--bg-base);
-  --surface-elevated: var(--bg-elevated);
-  --color-shadow-rgb: #000000;
-
-  --gradient-app: var(--bg-base);
-  --gradient-card: var(--bg-surface);
-  --gradient-sidebar: var(--bg-surface);
-  --gradient-shell-panel: var(--bg-surface);
-  --gradient-brand-surface: var(--bg-surface);
-  --gradient-auth: var(--bg-base);
-  --gradient-link-active: var(--accent-dim);
-  --gradient-frame: var(--bg-base);
-
-  --glow-cyan: none;
-  --glow-amber: none;
-  --glow-green: none;
+  --glow-cyan:
+    0 0 0 1px color-mix(in srgb, var(--info) 14%, transparent),
+    0 0 18px color-mix(in srgb, var(--info) 8%, transparent);
+  --glow-amber:
+    0 0 0 1px color-mix(in srgb, var(--warning) 18%, transparent),
+    0 0 18px color-mix(in srgb, #d39a33 14%, transparent);
+  --glow-green:
+    0 0 0 1px color-mix(in srgb, var(--success) 14%, transparent),
+    0 0 16px color-mix(in srgb, var(--success) 10%, transparent);
 }
