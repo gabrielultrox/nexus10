@@ -12,6 +12,12 @@ import {
 } from 'firebase/firestore';
 
 import { assertFirebaseReady, canUseRemoteSync, firebaseDb, guardRemoteSubscription } from './firebase';
+import {
+  buildStoreQueryCacheKey,
+  getPaginatedStoreCollectionDocuments,
+  getStoreDocumentsByIds,
+  invalidateQueryCache,
+} from './firestore';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import { deleteInventoryItemForProduct, ensureInventoryItemForProduct } from './inventory';
 
@@ -130,6 +136,36 @@ export function subscribeToProducts(storeId, onData, onError) {
   );
 }
 
+export async function listProductsPage({
+  storeId,
+  pageSize = 50,
+  cursor = null,
+} = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.products, {
+    orderField: 'name',
+    orderDirection: 'asc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products, 'page-by-name'),
+  });
+}
+
+export async function getProductsByIds({ storeId, productIds = [] } = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return [];
+  }
+
+  return getStoreDocumentsByIds(storeId, FIRESTORE_COLLECTIONS.products, productIds);
+}
+
 export async function createProduct({ storeId, tenantId, values }) {
   const payload = validateProductInput(values);
   const productsRef = getProductsCollectionRef(storeId);
@@ -149,6 +185,10 @@ export async function createProduct({ storeId, tenantId, values }) {
     product: payload,
   });
 
+  invalidateQueryCache([
+    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
+  ]);
+
   return productRef.id;
 }
 
@@ -166,6 +206,10 @@ export async function updateProduct({ storeId, productId, values }) {
     productId,
     product: payload,
   });
+
+  invalidateQueryCache([
+    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
+  ]);
 }
 
 export async function deleteProduct({ storeId, productId }) {
@@ -173,6 +217,9 @@ export async function deleteProduct({ storeId, productId }) {
   const productRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.products, productId);
   await deleteDoc(productRef);
   await deleteInventoryItemForProduct({ storeId, productId });
+  invalidateQueryCache([
+    buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products),
+  ]);
 }
 
 export async function applyMinimumStockDefaults({ storeId, tenantId, products, minimumStock = 1 }) {
@@ -225,6 +272,7 @@ export async function applyMinimumStockDefaults({ storeId, tenantId, products, m
     await batch.commit();
   }
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products));
   return { updatedCount: eligibleProducts.length };
 }
 
@@ -305,6 +353,7 @@ export async function bulkUpdateProducts({
     await batch.commit()
   }
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products))
   return { updatedCount: selectedProducts.length }
 }
 
@@ -357,5 +406,6 @@ export async function normalizeProductCategories({ storeId, tenantId, products }
     await batch.commit()
   }
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.products))
   return { updatedCount: normalizedProducts.length }
 }

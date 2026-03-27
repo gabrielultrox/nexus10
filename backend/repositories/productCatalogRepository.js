@@ -17,6 +17,7 @@ async function fetchProducts({ storeId, limit = 40 }) {
     .collection('stores')
     .doc(storeId)
     .collection('products')
+    .orderBy('updatedAt', 'desc')
     .limit(limit)
     .get();
 

@@ -49,6 +49,8 @@ export async function listIntegrationMerchants({ storeId, source = 'ifood', enab
     loader: async () => {
       const snapshot = await getMerchantCollection(storeId)
         .where('source', '==', source)
+        .orderBy('updatedAt', 'desc')
+        .limit(enabledOnly ? 100 : 200)
         .get();
 
       return snapshot.docs

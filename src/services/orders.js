@@ -12,6 +12,7 @@ import {
 import { requestBackend } from './backendApi';
 import { assertFirebaseReady, canUseRemoteSync, createRemoteSyncError, firebaseDb, guardRemoteSubscription } from './firebase';
 import { subscribeToExternalOrders } from './externalOrders';
+import { buildStoreQueryCacheKey, getPaginatedStoreCollectionDocuments, invalidateQueryCache } from './firestore';
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections';
 import {
   formatCurrencyBRL,
@@ -427,6 +428,7 @@ export async function createOrder({ storeId, tenantId, values, createdBy = null 
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
   return data.id;
 }
 
@@ -438,6 +440,7 @@ export async function updateOrder({ storeId, orderId, values }) {
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
   return data.id;
 }
 
@@ -445,6 +448,8 @@ export async function markOrderAsDispatched({ storeId, orderId }) {
   await requestBackend(`/stores/${storeId}/orders/${orderId}/dispatch`, {
     method: 'POST',
   });
+
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
 }
 
 export async function convertOrderToSale({
@@ -463,7 +468,30 @@ export async function convertOrderToSale({
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
   return data.saleId;
+}
+
+export async function listOrdersPage({
+  storeId,
+  pageSize = 50,
+  cursor = null,
+} = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.orders, {
+    orderField: 'createdAt',
+    orderDirection: 'desc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders, 'page-by-createdAt'),
+  });
 }
 
 export async function deleteOrder({ storeId, orderId }) {
@@ -471,6 +499,7 @@ export async function deleteOrder({ storeId, orderId }) {
     method: 'DELETE',
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
   return data.id;
 }
 
@@ -492,6 +521,8 @@ export async function updateOrderStatus({ storeId, orderId, status }) {
     status,
     updatedAt: serverTimestamp(),
   });
+
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.orders));
 }
 
 export function validateOrderInput(values) {

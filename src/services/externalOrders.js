@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -16,20 +17,6 @@ import {
   buildExternalOrderDocumentId,
   normalizeExternalOrderRecord,
 } from './integrations/externalOrderModel';
-
-function sortByDateDesc(items, fieldName) {
-  return [...items].sort((left, right) => {
-    const leftRawValue = left?.[fieldName];
-    const rightRawValue = right?.[fieldName];
-    const leftValue = typeof leftRawValue?.toDate === 'function'
-      ? leftRawValue.toDate().getTime()
-      : Date.parse(leftRawValue ?? '') || 0;
-    const rightValue = typeof rightRawValue?.toDate === 'function'
-      ? rightRawValue.toDate().getTime()
-      : Date.parse(rightRawValue ?? '') || 0;
-    return rightValue - leftValue;
-  });
-}
 
 function mapSnapshot(documentSnapshot) {
   return {
@@ -58,7 +45,11 @@ export function subscribeToExternalOrders(storeId, onData, onError) {
     return () => {};
   }
 
-  const ordersQuery = query(getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrders), orderBy('updatedAt', 'desc'));
+  const ordersQuery = query(
+    getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrders),
+    orderBy('updatedAt', 'desc'),
+    limit(100),
+  );
 
   return guardRemoteSubscription(
     () => onSnapshot(
@@ -89,13 +80,15 @@ export function subscribeToExternalOrderEvents(storeId, externalOrderId, onData,
   const eventsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrderEvents),
     where('externalOrderId', '==', externalOrderId),
+    orderBy('createdAt', 'desc'),
+    limit(100),
   );
 
   return guardRemoteSubscription(
     () => onSnapshot(
       eventsQuery,
       (snapshot) => {
-        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+        onData(snapshot.docs.map(mapSnapshot));
       },
       onError,
     ),
@@ -117,13 +110,15 @@ export function subscribeToExternalOrderTracking(storeId, externalOrderId, onDat
   const trackingQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.externalOrderTracking),
     where('externalOrderId', '==', externalOrderId),
+    orderBy('happenedAt', 'desc'),
+    limit(100),
   );
 
   return guardRemoteSubscription(
     () => onSnapshot(
       trackingQuery,
       (snapshot) => {
-        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'happenedAt'));
+        onData(snapshot.docs.map(mapSnapshot));
       },
       onError,
     ),
@@ -145,13 +140,15 @@ export function subscribeToIntegrationLogs(storeId, source, onData, onError) {
   const logsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.integrationLogs),
     where('source', '==', source),
+    orderBy('createdAt', 'desc'),
+    limit(100),
   );
 
   return guardRemoteSubscription(
     () => onSnapshot(
       logsQuery,
       (snapshot) => {
-        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'createdAt'));
+        onData(snapshot.docs.map(mapSnapshot));
       },
       onError,
     ),
@@ -173,13 +170,15 @@ export function subscribeToIntegrationMerchants(storeId, source, onData, onError
   const merchantsQuery = query(
     getScopedCollectionRef(storeId, FIRESTORE_COLLECTIONS.integrationMerchants),
     where('source', '==', source),
+    orderBy('updatedAt', 'desc'),
+    limit(100),
   );
 
   return guardRemoteSubscription(
     () => onSnapshot(
       merchantsQuery,
       (snapshot) => {
-        onData(sortByDateDesc(snapshot.docs.map(mapSnapshot), 'updatedAt'));
+        onData(snapshot.docs.map(mapSnapshot));
       },
       onError,
     ),

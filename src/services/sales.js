@@ -9,6 +9,7 @@ import {
 
 import { requestBackend } from './backendApi';
 import { assertFirebaseReady, canUseRemoteSync, createRemoteSyncError, firebaseDb, guardRemoteSubscription } from './firebase';
+import { buildStoreQueryCacheKey, getPaginatedStoreCollectionDocuments, invalidateQueryCache } from './firestore';
 import {
   buildRecordCode,
   getChannelLabel,
@@ -336,6 +337,7 @@ export async function createSale({ storeId, tenantId, values, createdBy = null }
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.sales));
   return data.id;
 }
 
@@ -361,7 +363,30 @@ export async function createSaleFromOrder({ storeId, tenantId, orderId, values =
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.sales));
   return data.saleId;
+}
+
+export async function listSalesPage({
+  storeId,
+  pageSize = 50,
+  cursor = null,
+} = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.sales, {
+    orderField: 'createdAt',
+    orderDirection: 'desc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.sales, 'page-by-createdAt'),
+  });
 }
 
 export async function deleteSale({ storeId, saleId }) {
@@ -369,6 +394,7 @@ export async function deleteSale({ storeId, saleId }) {
     method: 'DELETE',
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.sales));
   return data.id;
 }
 
@@ -382,5 +408,6 @@ export async function updateSaleStatus({ storeId, saleId, status, actor = null }
     },
   });
 
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.sales));
   return data.id;
 }

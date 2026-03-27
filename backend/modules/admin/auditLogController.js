@@ -87,20 +87,38 @@ function matchesFilter(logEntry, filters) {
   return true;
 }
 
+function chunkArray(values, chunkSize = 10) {
+  const chunks = [];
+
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+
+  return chunks;
+}
+
 async function listAuditLogsForStores(storeIds, filters) {
   const firestore = getAdminFirestore();
   const fetchWindow = Math.min(Math.max(filters.page * filters.limit * 4, 200), 1000);
-
+  const storeChunks = chunkArray(storeIds, 10);
   const snapshots = await Promise.all(
-    storeIds.map((storeId) => (
-      firestore
-        .collection('stores')
-        .doc(storeId)
-        .collection('auditLogs')
+    storeChunks.map((storeChunk) => {
+      let currentQuery = firestore
+        .collectionGroup('auditLogs')
+        .where('storeId', 'in', storeChunk)
         .orderBy('createdAt', 'desc')
-        .limit(fetchWindow)
-        .get()
-    )),
+        .limit(fetchWindow);
+
+      if (filters.date) {
+        const start = new Date(`${filters.date}T00:00:00.000Z`);
+        const end = new Date(`${filters.date}T23:59:59.999Z`);
+        currentQuery = currentQuery
+          .where('createdAt', '>=', start)
+          .where('createdAt', '<=', end);
+      }
+
+      return currentQuery.get();
+    }),
   );
 
   return snapshots
