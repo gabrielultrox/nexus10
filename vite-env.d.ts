@@ -11,6 +11,11 @@ interface ImportMetaEnv {
   readonly VITE_API_URL?: string
   readonly VITE_APP_ENV?: 'dev' | 'development' | 'staging' | 'prod' | 'production' | 'test'
   readonly VITE_LOG_LEVEL?: 'trace' | 'debug' | 'info' | 'warn' | 'error'
+  readonly VITE_SENTRY_DSN?: string
+  readonly VITE_SENTRY_RELEASE?: string
+  readonly VITE_SENTRY_TRACES_SAMPLE_RATE?: string
+  readonly VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE?: string
+  readonly VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE?: string
   readonly VITE_FIREBASE_USE_EMULATORS?: string
   readonly VITE_FIREBASE_FIRESTORE_EMULATOR_HOST?: string
   readonly VITE_FIREBASE_AUTH_EMULATOR_HOST?: string

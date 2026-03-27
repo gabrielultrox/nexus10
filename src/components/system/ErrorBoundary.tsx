@@ -1,11 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 import ErrorDisplay from '../ui/ErrorDisplay'
-import {
-  captureErrorForMonitoring,
-  getApiErrorDisplayModel,
-  toApiError,
-} from '../../services/apiErrorHandler'
+import { captureFrontendError } from '../../config/sentry'
+import { getApiErrorDisplayModel, toApiError } from '../../services/apiErrorHandler'
 
 interface IErrorBoundaryProps {
   children: ReactNode
@@ -36,7 +33,7 @@ class ErrorBoundary extends Component<IErrorBoundaryProps, IErrorBoundaryState> 
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    captureErrorForMonitoring(error, {
+    captureFrontendError(error, {
       feature: 'render',
       action: 'boundary-catch',
       componentStack: errorInfo.componentStack,

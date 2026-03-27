@@ -130,6 +130,8 @@ vi.mock('../integrations/ifood/ifoodIntegrationRuntime.js', () => ({
 
 vi.mock('../monitoring/sentry.js', () => ({
   initializeSentry: vi.fn(),
+  sentryRequestContextMiddleware: (_request, _response, next) => next(),
+  setupExpressSentry: vi.fn(),
   captureError: vi.fn(),
   buildMonitoredErrorPayload: (_error, context) => context,
 }))

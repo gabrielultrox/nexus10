@@ -23,6 +23,15 @@ const booleanStringSchema = z.preprocess((value) => {
   return String(value).toLowerCase() === 'true'
 }, z.boolean())
 
+const numberSchema = z.preprocess((value) => {
+  if (value == null || value === '') {
+    return undefined
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : value
+}, z.number().min(0))
+
 function normalizeFrontendEnvironment(value: unknown) {
   if (value == null || value === '') {
     return 'development'
@@ -57,6 +66,11 @@ function normalizeRawClientEnv(rawEnv: ImportMetaEnv) {
     VITE_APP_ENV: normalizeFrontendEnvironment(rawEnv.VITE_APP_ENV),
     VITE_API_BASE_URL: rawEnv.VITE_API_BASE_URL ?? rawEnv.VITE_API_URL ?? '',
     VITE_LOG_LEVEL: rawEnv.VITE_LOG_LEVEL ?? 'info',
+    VITE_SENTRY_DSN: rawEnv.VITE_SENTRY_DSN ?? '',
+    VITE_SENTRY_RELEASE: rawEnv.VITE_SENTRY_RELEASE ?? '',
+    VITE_SENTRY_TRACES_SAMPLE_RATE: rawEnv.VITE_SENTRY_TRACES_SAMPLE_RATE ?? '0.1',
+    VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE: rawEnv.VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE ?? '0',
+    VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: rawEnv.VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE ?? '1',
     VITE_FIREBASE_USE_EMULATORS: rawEnv.VITE_FIREBASE_USE_EMULATORS ?? 'false',
     VITE_FIREBASE_FIRESTORE_EMULATOR_HOST: rawEnv.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST ?? '',
     VITE_FIREBASE_AUTH_EMULATOR_HOST: rawEnv.VITE_FIREBASE_AUTH_EMULATOR_HOST ?? '',
@@ -84,6 +98,11 @@ export const clientEnvSchema = z.object({
     (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
     frontendLogLevelSchema,
   ),
+  VITE_SENTRY_DSN: z.string().trim().default(''),
+  VITE_SENTRY_RELEASE: z.string().trim().default(''),
+  VITE_SENTRY_TRACES_SAMPLE_RATE: numberSchema.default(0.1),
+  VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE: numberSchema.default(0),
+  VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: numberSchema.default(1),
   VITE_FIREBASE_STORAGE_BUCKET: z.string().trim().default(''),
   VITE_FIREBASE_MESSAGING_SENDER_ID: z.string().trim().default(''),
   VITE_FIREBASE_USE_EMULATORS: booleanStringSchema.default(false),

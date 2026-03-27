@@ -31,7 +31,13 @@ import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.
 import { registerFinanceRoutes } from './modules/finance/financeController.js'
 import { registerOrderRoutes } from './modules/orders/orderController.js'
 import { registerSaleRoutes } from './modules/sales/saleController.js'
-import { buildMonitoredErrorPayload, captureError, initializeSentry } from './monitoring/sentry.js'
+import {
+  buildMonitoredErrorPayload,
+  captureError,
+  initializeSentry,
+  sentryRequestContextMiddleware,
+  setupExpressSentry,
+} from './monitoring/sentry.js'
 import { swaggerSpec, swaggerUiOptions } from './swagger.js'
 import {
   getIntegrationMerchant,
@@ -71,6 +77,7 @@ export function createApp(): Express {
   app.set('trust proxy', true)
   app.disable('x-powered-by')
   app.use(requestLogger)
+  app.use(sentryRequestContextMiddleware)
   app.use(createUserAgentGuard())
   app.use(createSecurityHeadersMiddleware())
   app.use(createHttpsEnforcementMiddleware())
@@ -94,6 +101,24 @@ export function createApp(): Express {
     },
   )
 
+  if (backendEnv.appEnv !== 'production') {
+    app.get('/api/debug/sentry-test', publicRateLimiter, (request: Request, response: Response) => {
+      const error = new Error('Nexus10 backend Sentry smoke test')
+
+      captureError(
+        error,
+        buildMonitoredErrorPayload(error, {
+          context: 'debug.sentry-test',
+          request,
+        }),
+      )
+
+      response.status(500).json({
+        error: 'Evento de teste enviado para o Sentry.',
+      })
+    })
+  }
+
   app.get('/api-docs.json', publicRateLimiter, (_request: Request, response: Response) => {
     response.json(swaggerSpec)
   })
@@ -106,11 +131,12 @@ export function createApp(): Express {
 
   registerAuthRoutes(app)
   app.use('/api', requireApiAuth)
+  app.use('/api', sentryRequestContextMiddleware)
   app.use('/api', authenticatedApiRateLimiter)
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
   registerFinanceRoutes(app)
-  app.use('/api/stores/:storeId', requireStoreAccess)
+  app.use('/api/stores/:storeId', requireStoreAccess, sentryRequestContextMiddleware)
 
   registerOrderRoutes(app)
   registerSaleRoutes(app)
@@ -198,6 +224,7 @@ export function createApp(): Express {
             context: 'ifood.polling.run',
             storeId,
             merchantId,
+            request,
           }),
         )
         request.log?.error(
@@ -284,6 +311,7 @@ export function createApp(): Express {
             storeId,
             merchantId,
             orderId,
+            request,
           }),
         )
         request.log?.error(
@@ -308,6 +336,7 @@ export function createApp(): Express {
 
   app.post(
     '/webhooks/ifood/:storeId/:merchantId',
+    sentryRequestContextMiddleware,
     validateRequest(ifoodWebhookSchema, {
       source: 'webhook',
       mapRequest: (request: Request) => ({
@@ -375,6 +404,7 @@ export function createApp(): Express {
             context: 'ifood.webhook',
             storeId,
             merchantId,
+            request,
           }),
         )
         request.log?.error(
@@ -403,6 +433,8 @@ export function createApp(): Express {
       }
     },
   )
+
+  setupExpressSentry(app)
 
   app.use((error: unknown, request: Request, response: Response, _next: NextFunction) => {
     const requestLoggerInstance = request.log ?? appLogger
@@ -447,6 +479,7 @@ export function createApp(): Express {
         context: 'express.unhandled',
         route: request.originalUrl,
         method: request.method,
+        request,
       }),
     )
 

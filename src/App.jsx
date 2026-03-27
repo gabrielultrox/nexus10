@@ -6,6 +6,11 @@ import AppErrorBoundary from './components/system/AppErrorBoundary'
 import ErrorDisplay from './components/ui/ErrorDisplay'
 import SystemBoot from './components/system/SystemBoot'
 import { ensureFrontendEnvLoaded } from './config/env'
+import {
+  initializeFrontendSentry,
+  setFrontendSentryStore,
+  setFrontendSentryUser,
+} from './config/sentry'
 import { useAuth, useConfirm, useStore, useToast } from './hooks'
 import AppRoutes from './routes'
 import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
@@ -19,6 +24,7 @@ import {
 import { queryClient } from './services/queryClient'
 
 ensureFrontendEnvLoaded()
+initializeFrontendSentry()
 
 const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending'
 const CASH_RESET_HOUR = 3
@@ -42,7 +48,7 @@ function getOperationalDay(resetHour = 3) {
 function App() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, session } = useAuth()
   const { currentStoreId } = useStore()
   const confirm = useConfirm()
   const toast = useToast()
@@ -55,6 +61,14 @@ function App() {
   const [offlineQueueCount, setOfflineQueueCount] = useState(0)
   const lastPathRef = useRef(location.pathname)
   const bootVisible = !bootSequenceComplete || loading
+
+  useEffect(() => {
+    setFrontendSentryUser(session ?? null)
+  }, [session])
+
+  useEffect(() => {
+    setFrontendSentryStore(currentStoreId ?? null)
+  }, [currentStoreId])
 
   useEffect(() => {
     const rootElement = document.documentElement

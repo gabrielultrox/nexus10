@@ -9,6 +9,7 @@
     "dev:backend": "node --watch --loader ts-node/esm backend/server.ts",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "vite build",
+    "build:sentry": "vite build --mode production",
     "build:backend": "tsc -p tsconfig.backend.json",
     "optimize:images": "node scripts/optimize-images.mjs",
     "tokens:build": "node scripts/generate-design-tokens.mjs",
@@ -34,6 +35,7 @@
     "redis:logs": "docker logs -f nexus10-redis",
     "deploy:preview": "vercel -y",
     "deploy:prod:manual": "vercel --prod -y",
+    "sentry:upload-sourcemaps": "vite build --mode production",
     "release:auto": "node scripts/release-auto.mjs",
     "test": "vitest run",
     "test:backend": "vitest run backend",
@@ -71,6 +73,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
+    "@sentry/vite-plugin": "^5.1.1",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-interactions": "^8.6.14",
     "@storybook/blocks": "^8.6.14",

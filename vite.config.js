@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
 import { optimizeImageAssets } from './scripts/optimize-images.mjs'
@@ -16,6 +17,12 @@ function imageOptimizationPlugin() {
 
 export default defineConfig(({ mode }) => {
   const shouldAnalyze = mode === 'analyze'
+  const shouldUploadSourcemaps = Boolean(
+    process.env.SENTRY_AUTH_TOKEN &&
+      process.env.SENTRY_ORG &&
+      process.env.SENTRY_PROJECT &&
+      process.env.SENTRY_RELEASE,
+  )
   const featureChunkMatchers = [
     'charts-and-reports',
     'operations-workspace',
@@ -107,6 +114,20 @@ export default defineConfig(({ mode }) => {
             open: false,
           })
         : null,
+      shouldUploadSourcemaps
+        ? sentryVitePlugin({
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            release: {
+              name: process.env.SENTRY_RELEASE,
+            },
+            sourcemaps: {
+              assets: './dist/**',
+            },
+            telemetry: false,
+          })
+        : null,
     ].filter(Boolean),
     server: {
       port: 5173,
@@ -120,7 +141,7 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       reportCompressedSize: true,
       assetsInlineLimit: 2048,
-      sourcemap: shouldAnalyze,
+      sourcemap: shouldAnalyze || shouldUploadSourcemaps,
       modulePreload: {
         resolveDependencies(_filename, dependencies, context) {
           if (context.hostType !== 'html') {
