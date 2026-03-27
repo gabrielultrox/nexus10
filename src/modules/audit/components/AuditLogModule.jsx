@@ -2,182 +2,164 @@ import { useEffect, useMemo, useState } from 'react';
 
 import MetricCard from '../../../components/common/MetricCard';
 import SurfaceCard from '../../../components/common/SurfaceCard';
-import { useStore } from '../../../contexts/StoreContext';
-import { subscribeToAuditLogs } from '../../../services/auditLog';
-import { firebaseReady } from '../../../services/firebase';
-import Select from '../../../components/ui/Select';
 import EmptyState from '../../../components/ui/EmptyState';
+import {
+  buildAuditLogsCsv,
+  listAdminAuditLogs,
+  listAllAdminAuditLogs,
+} from '../../../services/adminAuditLogs';
 
-function asDate(value) {
-  if (!value) {
-    return null;
-  }
-
-  return typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
-}
+const INITIAL_FILTERS = {
+  date: '',
+  actor: '',
+  action: '',
+  resource: '',
+};
 
 function formatDateTime(value) {
-  const dateValue = asDate(value);
-
-  if (!dateValue) {
+  if (!value) {
     return '--';
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(dateValue);
+  }).format(new Date(value));
 }
 
-function isWithinPeriod(value, startDate, endDate) {
-  const dateValue = asDate(value);
+function downloadCsvFile(content) {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
 
-  if (!dateValue) {
-    return false;
-  }
-
-  if (startDate) {
-    const start = new Date(`${startDate}T00:00:00`);
-    if (dateValue < start) {
-      return false;
-    }
-  }
-
-  if (endDate) {
-    const end = new Date(`${endDate}T23:59:59`);
-    if (dateValue > end) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-function isCriticalAction(action) {
-  const normalized = String(action ?? '').toLowerCase();
-  return [
-    'deleted',
-    'cancel',
-    'refund',
-    'stock',
-    'financial',
-    'closure',
-    'status',
-  ].some((token) => normalized.includes(token));
+  anchor.href = url;
+  anchor.download = `audit-logs-${stamp}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 function AuditLogModule() {
-  const { currentStoreId } = useStore();
-  const [events, setEvents] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [entityFilter, setEntityFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [page, setPage] = useState(1);
+  const [logs, setLogs] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (!firebaseReady || !currentStoreId) {
-      setLoading(false);
-      setEvents([]);
-      return undefined;
+    let isMounted = true;
+
+    async function loadAuditLogs() {
+      setLoading(true);
+      setErrorMessage('');
+
+      try {
+        const response = await listAdminAuditLogs({
+          ...filters,
+          page,
+          limit: pagination.limit,
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setLogs(response.items ?? []);
+        setPagination(response.pagination ?? {
+          page,
+          limit: pagination.limit,
+          total: 0,
+          pages: 0,
+        });
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setLogs([]);
+        setErrorMessage(error.message ?? 'Nao foi possivel carregar os logs de auditoria.');
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
 
-    setLoading(true);
-    setErrorMessage('');
+    loadAuditLogs();
 
-    return subscribeToAuditLogs(
-      currentStoreId,
-      (nextEvents) => {
-        setEvents(nextEvents);
-        setLoading(false);
-      },
-      (error) => {
-        setErrorMessage(error.message ?? 'Nao foi possivel carregar o audit log.');
-        setLoading(false);
-      },
-    );
-  }, [currentStoreId]);
-
-  const entityTypes = useMemo(
-    () => Array.from(new Set(events.map((event) => event.entityType).filter(Boolean))).sort(),
-    [events],
-  );
-
-  const visibleEvents = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    return events.filter((event) => {
-      const matchesEntity = entityFilter === 'all' || event.entityType === entityFilter;
-      const matchesPeriod = isWithinPeriod(event.createdAt, startDate, endDate);
-      const matchesSearch = normalizedSearch.length === 0 || [
-        event.actor?.name,
-        event.action,
-        event.entityType,
-        event.entityId,
-        event.description,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedSearch);
-
-      return matchesEntity && matchesPeriod && matchesSearch;
-    });
-  }, [endDate, entityFilter, events, searchTerm, startDate]);
+    return () => {
+      isMounted = false;
+    };
+  }, [filters, page, pagination.limit]);
 
   const metrics = useMemo(() => {
-    const actors = new Set(visibleEvents.map((event) => event.actor?.name).filter(Boolean));
-    const criticalCount = visibleEvents.filter((event) => isCriticalAction(event.action)).length;
-    const entities = new Set(visibleEvents.map((event) => event.entityType).filter(Boolean));
+    const uniqueActors = new Set(logs.map((log) => log.actorName).filter(Boolean));
+    const uniqueResources = new Set(logs.map((log) => log.resource).filter(Boolean));
 
     return [
       {
-        label: 'Eventos',
-        value: String(visibleEvents.length).padStart(2, '0'),
-        meta: 'rastros carregados no filtro atual',
-        badgeText: 'audit',
+        label: 'Total filtrado',
+        value: String(pagination.total).padStart(2, '0'),
+        meta: 'registros encontrados com os filtros atuais',
+        badgeText: 'logs',
         badgeClass: 'ui-badge--info',
       },
       {
+        label: 'Pagina atual',
+        value: `${pagination.page}`,
+        meta: `${logs.length} itens carregados nesta pagina`,
+        badgeText: 'pagina',
+        badgeClass: 'ui-badge--special',
+      },
+      {
         label: 'Atores',
-        value: String(actors.size).padStart(2, '0'),
-        meta: 'usuarios ou sistema com eventos registrados',
+        value: String(uniqueActors.size).padStart(2, '0'),
+        meta: 'atores visiveis na pagina atual',
         badgeText: 'atores',
         badgeClass: 'ui-badge--success',
       },
       {
-        label: 'Entidades',
-        value: String(entities.size).padStart(2, '0'),
-        meta: 'tipos de entidade tocados no periodo',
+        label: 'Recursos',
+        value: String(uniqueResources.size).padStart(2, '0'),
+        meta: 'tipos de recurso visiveis na pagina atual',
         badgeText: 'escopo',
-        badgeClass: 'ui-badge--special',
-      },
-      {
-        label: 'Criticos',
-        value: String(criticalCount).padStart(2, '0'),
-        meta: 'exclusoes, cancelamentos e ajustes sensiveis',
-        badgeText: 'alerta',
         badgeClass: 'ui-badge--warning',
       },
     ];
-  }, [visibleEvents]);
+  }, [logs, pagination.page, pagination.total]);
 
-  if (!firebaseReady) {
-    return (
-      <SurfaceCard title="Audit log">
-        <EmptyState message="Firebase nao configurado" />
-      </SurfaceCard>
-    );
+  function updateFilter(key, value) {
+    setPage(1);
+    setFilters((current) => ({
+      ...current,
+      [key]: value,
+    }));
   }
 
-  if (!currentStoreId) {
-    return (
-      <SurfaceCard title="Audit log">
-        <EmptyState message="Nenhuma store ativa" />
-      </SurfaceCard>
-    );
+  async function handleExportCsv() {
+    setExporting(true);
+
+    try {
+      const exportItems = await listAllAdminAuditLogs(filters);
+      const csvContent = buildAuditLogsCsv(exportItems);
+      downloadCsvFile(csvContent);
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -195,92 +177,135 @@ function AuditLogModule() {
         ))}
       </div>
 
-      <SurfaceCard title="Filtro do audit log">
-        <div className="entity-toolbar audit-log-toolbar">
+      <SurfaceCard title="Filtros de auditoria">
+        <div className="entity-toolbar audit-log-toolbar audit-log-toolbar--filters">
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-search">Buscar</label>
+            <label className="ui-label" htmlFor="audit-log-date">Data</label>
             <input
-              id="audit-log-search"
-              className="ui-input"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Actor, acao, entidade ou descricao"
-            />
-          </div>
-
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-entity">Entidade</label>
-            <Select
-              id="audit-log-entity"
-              className="ui-select"
-              value={entityFilter}
-              onChange={(event) => setEntityFilter(event.target.value)}
-            >
-              <option value="all">Todas</option>
-              {entityTypes.map((entityType) => (
-                <option key={entityType} value={entityType}>{entityType}</option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-start">Inicio</label>
-            <input
-              id="audit-log-start"
+              id="audit-log-date"
               className="ui-input"
               type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+              value={filters.date}
+              onChange={(event) => updateFilter('date', event.target.value)}
             />
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-end">Fim</label>
+            <label className="ui-label" htmlFor="audit-log-actor">Ator</label>
             <input
-              id="audit-log-end"
+              id="audit-log-actor"
               className="ui-input"
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
+              value={filters.actor}
+              onChange={(event) => updateFilter('actor', event.target.value)}
+              placeholder="Gabriel, local-gabriel..."
             />
           </div>
+
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="audit-log-action">Acao</label>
+            <input
+              id="audit-log-action"
+              className="ui-input"
+              value={filters.action}
+              onChange={(event) => updateFilter('action', event.target.value)}
+              placeholder="CREATE, UPDATE, DELETE..."
+            />
+          </div>
+
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="audit-log-resource">Recurso</label>
+            <input
+              id="audit-log-resource"
+              className="ui-input"
+              value={filters.resource}
+              onChange={(event) => updateFilter('resource', event.target.value)}
+              placeholder="orders, sales, trocos..."
+            />
+          </div>
+        </div>
+
+        <div className="audit-log-toolbar-actions">
+          <button type="button" className="ui-button ui-button--ghost" onClick={() => {
+            setFilters({ ...INITIAL_FILTERS });
+            setPage(1);
+          }}>
+            Limpar filtros
+          </button>
+
+          <button
+            type="button"
+            className="ui-button ui-button--secondary"
+            onClick={handleExportCsv}
+            disabled={exporting || loading}
+          >
+            {exporting ? 'Exportando CSV...' : 'Exportar CSV'}
+          </button>
         </div>
       </SurfaceCard>
 
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
-      <SurfaceCard title="Eventos auditados">
+      <SurfaceCard title="Tabela de auditoria">
         {loading ? (
-          <EmptyState message="Carregando audit log..." />
-        ) : visibleEvents.length === 0 ? (
-          <EmptyState message="Nenhum evento encontrado" />
+          <EmptyState message="Carregando logs de auditoria..." />
+        ) : logs.length === 0 ? (
+          <EmptyState message="Nenhum log encontrado com os filtros atuais" />
         ) : (
-          <div className="entity-table-wrap">
-            <table className="ui-table">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Actor</th>
-                  <th>Acao</th>
-                  <th>Entidade</th>
-                  <th>Registro</th>
-                  <th>Descricao</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleEvents.map((event) => (
-                  <tr key={event.id}>
-                    <td>{formatDateTime(event.createdAt)}</td>
-                    <td className="ui-table__cell--strong">{event.actor?.name ?? 'Sistema'}</td>
-                    <td>{event.action}</td>
-                    <td>{event.entityType}</td>
-                    <td>{event.entityId}</td>
-                    <td>{event.description}</td>
+          <>
+            <div className="entity-table-wrap entity-table-wrap--dense">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Ator</th>
+                    <th>Acao</th>
+                    <th>Recurso</th>
+                    <th>Registro</th>
+                    <th>Loja</th>
+                    <th>Descricao</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="ui-table__cell--mono">{formatDateTime(log.createdAt)}</td>
+                      <td className="ui-table__cell--strong">{log.actorName || 'Sistema'}</td>
+                      <td>{log.action || '--'}</td>
+                      <td>{log.resource || '--'}</td>
+                      <td className="ui-table__cell--mono">{log.resourceId || '--'}</td>
+                      <td className="ui-table__cell--mono">{log.storeId || '--'}</td>
+                      <td className="audit-log-table__description">{log.description || '--'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="audit-log-pagination">
+              <p className="audit-log-pagination__summary">
+                Pagina {pagination.page} de {Math.max(pagination.pages, 1)} · {pagination.total} registros
+              </p>
+
+              <div className="audit-log-pagination__actions">
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost"
+                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                  disabled={pagination.page <= 1}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost"
+                  onClick={() => setPage((current) => current + 1)}
+                  disabled={pagination.pages === 0 || pagination.page >= pagination.pages}
+                >
+                  Proxima
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </SurfaceCard>
     </section>

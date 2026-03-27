@@ -12,6 +12,7 @@ import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js'
 import { requestLogger } from './middleware/requestLogger.js';
 import { validateRequest } from './middleware/validateRequest.js';
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js';
+import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
 import {
@@ -116,6 +117,7 @@ export function createApp() {
 
   registerAuthRoutes(app);
   app.use('/api', requireApiAuth);
+  registerAdminAuditLogRoutes(app);
   app.use('/api/stores/:storeId', requireStoreAccess);
 
   registerOrderRoutes(app);

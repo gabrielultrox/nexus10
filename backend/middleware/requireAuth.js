@@ -97,3 +97,18 @@ export function requirePermission(permission) {
     });
   };
 }
+
+export function requireRole(requiredRole) {
+  return function roleGuard(request, response, next) {
+    const role = request.authUser?.role ?? 'operador';
+
+    if (role === requiredRole) {
+      next();
+      return;
+    }
+
+    response.status(403).json({
+      error: 'Seu perfil nao tem permissao para acessar este recurso.',
+    });
+  };
+}

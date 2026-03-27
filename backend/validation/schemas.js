@@ -114,3 +114,12 @@ export const ifoodWebhookSchema = z.object({
   signature: z.string().trim().min(1, 'signature e obrigatoria.'),
   body: z.string().min(1, 'body do webhook e obrigatorio.'),
 });
+
+export const adminAuditLogQuerySchema = z.object({
+  page: z.coerce.number().int().min(1, 'page deve ser maior que zero.').default(1),
+  limit: z.coerce.number().int().min(1, 'limit deve ser maior que zero.').max(200, 'limit deve ser no maximo 200.').default(50),
+  actor: z.string().trim().max(120, 'actor deve ter no maximo 120 caracteres.').optional().default(''),
+  action: z.string().trim().max(80, 'action deve ter no maximo 80 caracteres.').optional().default(''),
+  resource: z.string().trim().max(120, 'resource deve ter no maximo 120 caracteres.').optional().default(''),
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'date deve estar no formato YYYY-MM-DD.').optional().default(''),
+});
