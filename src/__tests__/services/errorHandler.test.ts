@@ -5,7 +5,11 @@ import {
   ErrorCode,
   ErrorHandler,
   ErrorSeverity,
+  ForbiddenError,
   NetworkError,
+  SyncError,
+  TimeoutError,
+  UnauthorizedError,
   ValidationError,
 } from '../../services/errorHandler'
 
@@ -64,12 +68,39 @@ describe('Error Handler', () => {
     expect(error.severity).toBe(ErrorSeverity.HIGH)
   })
 
+  it('creates auth and sync related errors with expected defaults', () => {
+    const unauthorized = new UnauthorizedError()
+    const forbidden = new ForbiddenError()
+    const timeout = new TimeoutError()
+    const sync = new SyncError()
+
+    expect(unauthorized.code).toBe(ErrorCode.UNAUTHORIZED)
+    expect(forbidden.code).toBe(ErrorCode.FORBIDDEN)
+    expect(timeout.code).toBe(ErrorCode.TIMEOUT_ERROR)
+    expect(sync.code).toBe(ErrorCode.SYNC_ERROR)
+  })
+
   it('normalizes unknown errors', () => {
     const normalized = ErrorHandler.normalize(new Error('Erro bruto'))
 
     expect(normalized).toBeInstanceOf(AppError)
     expect(normalized.message).toBe('Erro bruto')
     expect(normalized.code).toBe(ErrorCode.INTERNAL_SERVER_ERROR)
+  })
+
+  it('normalizes abort errors as timeout errors', () => {
+    const normalized = ErrorHandler.normalize(new DOMException('Abortado', 'AbortError'))
+
+    expect(normalized).toBeInstanceOf(TimeoutError)
+    expect(normalized.message).toContain('tempo limite')
+  })
+
+  it('normalizes non-error values into a generic app error', () => {
+    const normalized = ErrorHandler.normalize({ failed: true })
+
+    expect(normalized).toBeInstanceOf(AppError)
+    expect(normalized.code).toBe(ErrorCode.INTERNAL_SERVER_ERROR)
+    expect(normalized.details).toEqual({ failed: true })
   })
 
   it('identifies recoverable errors', () => {
@@ -94,5 +125,11 @@ describe('Error Handler', () => {
     expect(consoleErrorSpy).toHaveBeenCalledTimes(1)
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
     expect(consoleInfoSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('formats AppError as string', () => {
+    const error = new AppError('Falha textual', ErrorCode.CONFLICT)
+
+    expect(error.toString()).toBe('[CONFLICT] Falha textual')
   })
 })
