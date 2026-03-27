@@ -1,12 +1,14 @@
 import { forwardRef } from 'react'
 
+import type { ISelectProps } from './types'
+
 const CHEVRON_ICON = (
   <svg viewBox="0 0 16 16" aria-hidden="true">
     <path d="M4 6.5L8 10L12 6.5" />
   </svg>
 )
 
-const Select = forwardRef(function Select(
+const Select = forwardRef<HTMLSelectElement, ISelectProps>(function Select(
   { className = '', children, disabled = false, ...props },
   ref,
 ) {

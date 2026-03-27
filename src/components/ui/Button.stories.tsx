@@ -1,3 +1,5 @@
+import type { Meta, StoryObj } from '@storybook/react'
+
 import Button from './Button'
 
 const meta = {
@@ -15,7 +17,7 @@ const meta = {
   argTypes: {
     variant: {
       control: 'radio',
-      options: ['primary', 'secondary', 'danger'],
+      options: ['primary', 'secondary', 'danger', 'ghost', 'warning'],
       description: 'Define a hierarquia visual do botao.',
     },
     disabled: {
@@ -27,25 +29,27 @@ const meta = {
       description: 'Conteudo textual do botao.',
     },
   },
-}
+} satisfies Meta<typeof Button>
 
 export default meta
 
-export const Primary = {
+type Story = StoryObj<typeof meta>
+
+export const Primary: Story = {
   args: {
     children: 'Salvar alteracoes',
     variant: 'primary',
   },
 }
 
-export const Secondary = {
+export const Secondary: Story = {
   args: {
     children: 'Abrir detalhe',
     variant: 'secondary',
   },
 }
 
-export const Danger = {
+export const Danger: Story = {
   args: {
     children: 'Excluir registro',
     variant: 'danger',

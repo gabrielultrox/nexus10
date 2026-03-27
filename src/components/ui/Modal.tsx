@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
+import { useId } from 'react'
 
 import Button from './Button'
+import type { IModalProps } from './types'
 
 function Modal({
   open,
@@ -11,7 +13,10 @@ function Modal({
   closeLabel = 'Fechar',
   showCloseButton = true,
   onClose,
-}) {
+}: IModalProps) {
+  const titleId = useId()
+  const descriptionId = useId()
+
   if (!open) {
     return null
   }
@@ -23,16 +28,16 @@ function Modal({
         className="ui-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="ui-modal-title"
-        aria-describedby={description ? 'ui-modal-description' : undefined}
+        aria-labelledby={String(titleId)}
+        aria-describedby={description ? String(descriptionId) : undefined}
       >
         <header className="ui-modal__header">
           <div className="ui-modal__header-copy">
-            <h2 id="ui-modal-title" className="ui-modal__title">
+            <h2 id={String(titleId)} className="ui-modal__title">
               {title}
             </h2>
             {description ? (
-              <p id="ui-modal-description" className="ui-modal__description">
+              <p id={String(descriptionId)} className="ui-modal__description">
                 {description}
               </p>
             ) : null}

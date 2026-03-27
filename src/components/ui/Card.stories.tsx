@@ -1,3 +1,5 @@
+import type { Meta, StoryObj } from '@storybook/react'
+
 import Button from './Button'
 import Card from './Card'
 
@@ -19,11 +21,13 @@ const meta = {
       description: 'Liga estados de hover para cards clicaveis.',
     },
   },
-}
+} satisfies Meta<typeof Card>
 
 export default meta
 
-export const Basic = {
+type Story = StoryObj<typeof meta>
+
+export const Basic: Story = {
   render: (args) => (
     <Card {...args} style={{ maxWidth: 520 }}>
       <Card.Header>
@@ -44,6 +48,7 @@ export const Basic = {
     </Card>
   ),
   args: {
+    children: null,
     interactive: false,
   },
 }

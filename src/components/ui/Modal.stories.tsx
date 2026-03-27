@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import type { Meta, StoryObj } from '@storybook/react'
 
 import Button from './Button'
 import Modal from './Modal'
 
-function ModalStoryDemo(args) {
+function ModalStoryDemo(args: React.ComponentProps<typeof Modal>) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -61,15 +62,20 @@ const meta = {
       description: 'Exibe o botao de fechar no canto superior direito.',
     },
   },
-}
+} satisfies Meta<typeof Modal>
 
 export default meta
 
-export const Default = {
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
   render: (args) => <ModalStoryDemo {...args} />,
   args: {
+    open: false,
     title: 'Editar pedido',
     description: 'Atualize os dados antes de salvar.',
+    children: null,
+    onClose: () => {},
     showCloseButton: true,
   },
 }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 
 import Button from './Button'
+import type { ITableColumn, ITableProps, ITableSortState } from './types'
 
-function compareValues(a, b) {
+function compareValues(a: unknown, b: unknown) {
   if (typeof a === 'number' && typeof b === 'number') {
     return a - b
   }
@@ -13,14 +14,15 @@ function compareValues(a, b) {
   })
 }
 
-function Table({
+function Table<TData extends Record<string, unknown>>({
   columns,
   data,
   pageSize = 10,
   emptyMessage = 'Nenhum registro encontrado.',
   defaultSort = null,
-}) {
-  const [sortState, setSortState] = useState(defaultSort)
+  getRowKey,
+}: ITableProps<TData>) {
+  const [sortState, setSortState] = useState<ITableSortState<TData> | null>(defaultSort)
   const [page, setPage] = useState(1)
 
   const sortedData = useMemo(() => {
@@ -43,7 +45,7 @@ function Table({
     return sortedData.slice(start, start + pageSize)
   }, [pageSize, safePage, sortedData])
 
-  function toggleSort(column) {
+  function toggleSort(column: ITableColumn<TData>) {
     if (!column.sortable) {
       return
     }
@@ -105,10 +107,12 @@ function Table({
           <tbody>
             {pagedData.length ? (
               pagedData.map((row, rowIndex) => (
-                <tr key={row.id ?? rowIndex}>
+                <tr key={getRowKey ? getRowKey(row, rowIndex) : String(row.id ?? rowIndex)}>
                   {columns.map((column) => (
                     <td key={column.key}>
-                      {typeof column.render === 'function' ? column.render(row) : row?.[column.key]}
+                      {typeof column.render === 'function'
+                        ? column.render(row)
+                        : String(row?.[column.key] ?? '')}
                     </td>
                   ))}
                 </tr>

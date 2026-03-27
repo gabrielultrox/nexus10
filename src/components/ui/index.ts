@@ -12,3 +12,18 @@ export { default as Table } from './Table'
 export { default as Toast } from './Toast'
 export { default as Toggle } from './Toggle'
 export { default as TrashIcon } from './TrashIcon'
+
+export type {
+  IButtonProps,
+  ICardProps,
+  ICardSectionProps,
+  IFormRowProps,
+  IModalProps,
+  ISelectProps,
+  ITableColumn,
+  ITableProps,
+  ITableSortState,
+  UIButtonType,
+  UIButtonVariant,
+  UITableSortDirection,
+} from './types'

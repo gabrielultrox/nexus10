@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
-import Button from '../../../components/ui/Button'
+import { Button } from '../../../components/ui'
 import EmptyState from '../../../components/ui/EmptyState'
 import {
   buildAuditLogsCsv,
