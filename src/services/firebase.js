@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import {
+  connectAuthEmulator,
+  getAuth,
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
+} from 'firebase/auth'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -25,8 +30,55 @@ const firebaseApp = firebaseReady
   : null
 const firebaseAuth = firebaseApp ? getAuth(firebaseApp) : null
 const firebaseDb = firebaseApp ? getFirestore(firebaseApp) : null
+const useFirebaseEmulators =
+  String(import.meta.env.VITE_FIREBASE_USE_EMULATORS ?? 'false') === 'true'
+const firestoreEmulatorHost = String(
+  import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST ?? '',
+).trim()
+const authEmulatorHost = String(import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST ?? '').trim()
 
 let authReadyPromise = null
+let emulatorsConnected = false
+
+function parseHostPort(value) {
+  const [host, portText] = String(value ?? '').split(':')
+  const port = Number(portText)
+
+  if (!host || !Number.isFinite(port)) {
+    return null
+  }
+
+  return { host, port }
+}
+
+function connectFirebaseEmulators() {
+  if (
+    !firebaseReady ||
+    !firebaseAuth ||
+    !firebaseDb ||
+    emulatorsConnected ||
+    !useFirebaseEmulators
+  ) {
+    return
+  }
+
+  const firestoreTarget = parseHostPort(firestoreEmulatorHost)
+  const authTarget = parseHostPort(authEmulatorHost)
+
+  if (firestoreTarget) {
+    connectFirestoreEmulator(firebaseDb, firestoreTarget.host, firestoreTarget.port)
+  }
+
+  if (authTarget) {
+    connectAuthEmulator(firebaseAuth, `http://${authTarget.host}:${authTarget.port}`, {
+      disableWarnings: true,
+    })
+  }
+
+  emulatorsConnected = true
+}
+
+connectFirebaseEmulators()
 
 function assertFirebaseReady() {
   if (!firebaseReady || !firebaseApp || !firebaseAuth || !firebaseDb) {

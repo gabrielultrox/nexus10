@@ -1,0 +1,31 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM base AS development
+COPY . .
+EXPOSE 8787
+CMD ["npm", "run", "dev:backend"]
+
+FROM base AS build
+COPY . .
+RUN npm run build:backend
+
+FROM node:20-alpine AS production
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist-backend ./dist-backend
+COPY --from=build /app/backend ./backend
+COPY --from=build /app/api ./api
+COPY --from=build /app/firestore.rules ./firestore.rules
+COPY --from=build /app/firestore.indexes.json ./firestore.indexes.json
+COPY --from=build /app/firebase.json ./firebase.json
+COPY --from=build /app/.env.example ./.env.example
+
+EXPOSE 8787
+CMD ["npm", "run", "start:backend"]
