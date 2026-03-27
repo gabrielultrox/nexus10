@@ -3,7 +3,6 @@ import { Navigate, useRoutes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute';
-import EmptyState from '../components/ui/EmptyState';
 import { routeDefinitions } from '../utils/routeCatalog';
 
 const MainLayout = lazy(() => import('../components/layout/MainLayout'));
@@ -32,7 +31,9 @@ const salesRoute = routeDefinitions.find((route) => route.path === 'sales');
 function RouteLoader() {
   return (
     <div className="page-stack page-stack--loading">
-      <EmptyState message="Carregando area" />
+      <div className="empty-state">
+        <span className="empty-state__message">Carregando area</span>
+      </div>
     </div>
   );
 }

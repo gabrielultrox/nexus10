@@ -1,5 +1,9 @@
+import { Suspense, lazy } from 'react';
+
 import PageIntro from '../components/common/PageIntro';
-import PosReportsModule from '../modules/reports/components/PosReportsModule';
+import EmptyState from '../components/ui/EmptyState';
+
+const PosReportsModule = lazy(() => import('../modules/reports/components/PosReportsModule'));
 
 function PosReportsPage() {
   return (
@@ -10,7 +14,9 @@ function PosReportsPage() {
         description="Leitura real da operacao comercial com vendas, pedidos, financeiro e estrutura pronta para exportacao CSV."
       />
 
-      <PosReportsModule />
+      <Suspense fallback={<EmptyState message="Carregando relatorios..." />}>
+        <PosReportsModule />
+      </Suspense>
     </div>
   );
 }

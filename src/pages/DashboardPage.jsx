@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import '../styles/dashboard.css';
 
 import PageIntro from '../components/common/PageIntro';
-import DashboardCharts from '../components/dashboard/DashboardCharts';
 import DashboardFilters from '../components/dashboard/DashboardFilters';
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary';
+import EmptyState from '../components/ui/EmptyState';
 import { useStore } from '../contexts/StoreContext';
 import {
   buildDashboardData,
@@ -16,6 +16,8 @@ import {
   subscribeToDashboardSources,
 } from '../services/dashboard';
 import { firebaseReady } from '../services/firebase';
+
+const DashboardCharts = lazy(() => import('../components/dashboard/DashboardCharts'));
 
 function formatDateInputValue(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -156,7 +158,9 @@ function DashboardPage() {
         ))}
 
         <DashboardKpiGrid items={kpis} />
-        <DashboardCharts charts={charts} />
+        <Suspense fallback={<EmptyState message="Carregando graficos..." />}>
+          <DashboardCharts charts={charts} />
+        </Suspense>
         <DashboardOperationalSummary operations={operations} />
       </section>
     </div>
