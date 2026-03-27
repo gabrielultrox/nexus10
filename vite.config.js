@@ -2,6 +2,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
+import { optimizeImageAssets } from './scripts/optimize-images.mjs'
+
+function imageOptimizationPlugin() {
+  return {
+    name: 'nexus10-image-optimization',
+    apply: 'build',
+    async buildStart() {
+      await optimizeImageAssets({ silent: true })
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const shouldAnalyze = mode === 'analyze'
@@ -15,6 +26,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      imageOptimizationPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: [
@@ -62,7 +74,7 @@ export default defineConfig(({ mode }) => {
           clientsClaim: true,
           skipWaiting: true,
           navigateFallback: '/index.html',
-          globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,webp,avif,ico}'],
           runtimeCaching: [
             {
               urlPattern: ({ request }) => request.destination === 'document',

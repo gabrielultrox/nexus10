@@ -2068,6 +2068,35 @@
   border-radius: var(--radius-xs);
 }
 
+.ui-responsive-image {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background:
+    var(--ui-image-placeholder), color-mix(in srgb, var(--surface-panel-soft-alt) 92%, transparent);
+  background-position: center;
+  background-size: cover;
+}
+
+.ui-responsive-image__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scale(1.02);
+  filter: blur(12px);
+  opacity: 0.72;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.ui-responsive-image.is-loaded .ui-responsive-image__img {
+  transform: scale(1);
+  filter: blur(0);
+  opacity: 1;
+}
+
 .ui-file-input__preview-name {
   word-break: break-word;
   color: var(--color-text-primary);

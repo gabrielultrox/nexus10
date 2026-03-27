@@ -19,3 +19,5 @@ output/
 tmp/
 .vscode/*
 !.vscode/settings.json
+public/optimized/
+src/generated/image-manifest.json

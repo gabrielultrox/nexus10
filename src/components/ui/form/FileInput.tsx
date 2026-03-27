@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import Button from '../Button'
+import ResponsiveImage from '../ResponsiveImage'
 
 import type { IFileInputProps } from './types'
 
@@ -141,7 +142,12 @@ function FileInput({
               className="ui-file-input__preview-card"
             >
               {url ? (
-                <img src={url} alt={file.name} className="ui-file-input__preview-image" />
+                <ResponsiveImage
+                  src={url}
+                  alt={file.name}
+                  className="ui-file-input__preview-image"
+                  loading="lazy"
+                />
               ) : null}
               <div className="ui-file-input__preview-copy">
                 <span className="ui-file-input__preview-name">{file.name}</span>
