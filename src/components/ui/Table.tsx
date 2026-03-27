@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Button from './Button'
+import Skeleton from './Skeleton'
 import type { ITableColumn, ITableProps, ITableSortState } from './types'
 
 function compareValues(a: unknown, b: unknown) {
@@ -22,6 +23,8 @@ function Table<TData extends Record<string, unknown>>({
   caption,
   defaultSort = null,
   getRowKey,
+  isLoading = false,
+  loadingRowCount = 5,
 }: ITableProps<TData>) {
   const [sortState, setSortState] = useState<ITableSortState<TData> | null>(defaultSort)
   const [page, setPage] = useState(1)
@@ -134,7 +137,21 @@ function Table<TData extends Record<string, unknown>>({
               .filter(Boolean)
               .join(' ')}
           >
-            {pagedData.length ? (
+            {isLoading ? (
+              Array.from({ length: loadingRowCount }).map((_, rowIndex) => (
+                <tr key={`loading-row-${rowIndex}`}>
+                  {columns.map((column, columnIndex) => (
+                    <td key={`${String(column.key)}-${columnIndex}`}>
+                      <Skeleton
+                        variant="line"
+                        width={columnIndex === 0 ? '70%' : '100%'}
+                        height="14px"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : pagedData.length ? (
               pagedData.map((row, rowIndex) => (
                 <tr key={getRowKey ? getRowKey(row, rowIndex) : String(row.id ?? rowIndex)}>
                   {columns.map((column) => (

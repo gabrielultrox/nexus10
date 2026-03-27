@@ -1,24 +1,49 @@
 import type { CSSProperties } from 'react'
 
-interface ISkeletonProps {
+export type UISkeletonVariant = 'line' | 'rect' | 'circle'
+
+export interface ISkeletonProps {
   className?: string
   width?: CSSProperties['width']
   height?: CSSProperties['height']
   lines?: number
-  circle?: boolean
+  variant?: UISkeletonVariant
+  pulse?: boolean
 }
 
-function Skeleton({ className = '', width, height, lines = 1, circle = false }: ISkeletonProps) {
+/**
+ * Placeholder de loading reutilizavel para tabelas, cards e formularios.
+ */
+function Skeleton({
+  className = '',
+  width,
+  height,
+  lines = 1,
+  variant = 'line',
+  pulse = true,
+}: ISkeletonProps) {
+  const baseClassName = [
+    'ui-skeleton',
+    `ui-skeleton--${variant}`,
+    pulse ? 'motion-pulse' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const resolvedHeight =
+    height ?? (variant === 'line' ? '12px' : variant === 'circle' ? '40px' : '72px')
+
   if (lines > 1) {
     return (
-      <div className={['ui-skeleton-stack', className].filter(Boolean).join(' ')}>
+      <div className="ui-skeleton-stack" aria-hidden="true">
         {Array.from({ length: lines }).map((_, index) => (
           <span
             key={index}
-            className={`ui-skeleton${circle ? ' ui-skeleton--circle' : ''}`}
+            className={baseClassName}
             style={{
               width: width ?? '100%',
-              height: height ?? '12px',
+              height: resolvedHeight,
             }}
           />
         ))}
@@ -28,12 +53,10 @@ function Skeleton({ className = '', width, height, lines = 1, circle = false }: 
 
   return (
     <span
-      className={['ui-skeleton', circle ? 'ui-skeleton--circle' : '', className]
-        .filter(Boolean)
-        .join(' ')}
+      className={baseClassName}
       style={{
         width: width ?? '100%',
-        height: height ?? '12px',
+        height: resolvedHeight,
       }}
       aria-hidden="true"
     />

@@ -3,15 +3,22 @@ import '../styles/orders.css'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import PageTabs from '../components/common/PageTabs'
+import { Card, LoadingOverlay, Skeleton } from '../components/ui'
+import { useDashboardOrders, useStore } from '../hooks'
 import OrdersModule from '../modules/orders/components/OrdersModule'
 
 function OrdersPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { orderId } = useParams()
+  const { currentStoreId } = useStore()
   const isNew = location.pathname === '/orders/new'
   const isEdit = location.pathname.endsWith('/edit')
   const viewMode = isNew ? 'create' : isEdit ? 'edit' : orderId ? 'detail' : 'list'
+  const ordersQuery = useDashboardOrders({
+    storeId: currentStoreId,
+    enabled: viewMode === 'list',
+  })
   const orderTabs = [
     { id: 'list', label: 'Lista de pedidos' },
     { id: 'form', label: viewMode === 'edit' ? 'Editar pedido' : 'Novo pedido' },
@@ -65,15 +72,58 @@ function OrdersPage() {
         </div>
       </section>
 
-      <OrdersModule
-        orderId={orderId ?? null}
-        viewMode={viewMode}
-        formResetToken={location.state?.resetNonce ?? null}
-        onOpenCreate={() => navigate('/orders/new', { state: { resetNonce: Date.now() } })}
-        onOpenDetail={(nextOrderId) => navigate(`/orders/${nextOrderId}`)}
-        onOpenEdit={(nextOrderId) => navigate(`/orders/${nextOrderId}/edit`)}
-        onOpenList={() => navigate('/orders')}
-      />
+      {viewMode === 'list' ? (
+        <Card className="workspace-loading-card">
+          <Card.Body>
+            <div className="workspace-loading-card__header">
+              <div>
+                <p className="story-title">Resumo da fila</p>
+                <p className="story-copy">Leitura rapida antes de abrir a operacao completa.</p>
+              </div>
+            </div>
+
+            {ordersQuery.isLoading ? (
+              <div className="workspace-loading-grid">
+                <Skeleton height="18px" width="18%" />
+                <Skeleton lines={3} height="14px" />
+              </div>
+            ) : ordersQuery.error ? (
+              <div className="auth-error" role="alert">
+                Nao foi possivel carregar o resumo dos pedidos.
+              </div>
+            ) : (
+              <div className="workspace-loading-grid">
+                <strong className="workspace-loading-card__value">
+                  {ordersQuery.summary.count} pedido(s) na pagina inicial
+                </strong>
+                <div className="workspace-loading-card__list">
+                  {ordersQuery.summary.items.slice(0, 3).map((item) => (
+                    <span key={item.id} className="workspace-loading-card__item">
+                      {item.customerName ?? 'Cliente sem nome'} · {item.status ?? 'Sem status'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      ) : null}
+
+      <div className="workspace-loading-shell">
+        <LoadingOverlay
+          active={viewMode === 'list' && ordersQuery.isLoading}
+          label="Carregando fila inicial de pedidos"
+        />
+        <OrdersModule
+          orderId={orderId ?? null}
+          viewMode={viewMode}
+          formResetToken={location.state?.resetNonce ?? null}
+          onOpenCreate={() => navigate('/orders/new', { state: { resetNonce: Date.now() } })}
+          onOpenDetail={(nextOrderId) => navigate(`/orders/${nextOrderId}`)}
+          onOpenEdit={(nextOrderId) => navigate(`/orders/${nextOrderId}/edit`)}
+          onOpenList={() => navigate('/orders')}
+        />
+      </div>
     </div>
   )
 }

@@ -16,6 +16,8 @@ export interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string
   variant?: UIButtonVariant
   type?: UIButtonType
+  loading?: boolean
+  loadingLabel?: string
 }
 
 export interface ICardSectionProps extends HTMLAttributes<HTMLElement> {
@@ -65,6 +67,8 @@ export interface ITableProps<TData extends Record<string, unknown>> {
   caption?: ReactNode
   defaultSort?: ITableSortState<TData> | null
   getRowKey?: (row: TData, rowIndex: number) => string | number
+  isLoading?: boolean
+  loadingRowCount?: number
 }
 
 export interface ISelectProps extends SelectHTMLAttributes<HTMLSelectElement> {

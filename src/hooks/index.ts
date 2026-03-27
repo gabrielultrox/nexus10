@@ -49,3 +49,6 @@ export type {
   IFinancialClosureRecord,
   IUseFinancialClosuresOptions,
 } from './queries/useFinancialClosures'
+
+export { useDashboardOrders } from './queries/useDashboardOrders'
+export { useDashboardSales } from './queries/useDashboardSales'

@@ -7,7 +7,7 @@ import PageIntro from '../components/common/PageIntro'
 import DashboardFilters from '../components/dashboard/DashboardFilters'
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid'
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary'
-import EmptyState from '../components/ui/EmptyState'
+import { LoadingOverlay, Skeleton } from '../components/ui'
 import { useStore } from '../contexts/StoreContext'
 import {
   buildDashboardData,
@@ -35,6 +35,7 @@ function DashboardPage() {
     loadDashboardOperationalSources(),
   )
   const [errorMessage, setErrorMessage] = useState('')
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true)
 
   useEffect(() => {
     function refreshOperationalSources() {
@@ -57,18 +58,51 @@ function DashboardPage() {
       setOrders([])
       setInventoryItems([])
       setFinancialEntries([])
+      setIsDashboardLoading(false)
       return undefined
     }
 
     setErrorMessage('')
+    setIsDashboardLoading(true)
+    const sourceLoadState = {
+      sales: false,
+      orders: false,
+      inventory: false,
+      financial: false,
+    }
+
+    function markLoaded(sourceKey) {
+      if (sourceLoadState[sourceKey]) {
+        return
+      }
+
+      sourceLoadState[sourceKey] = true
+
+      if (Object.values(sourceLoadState).every(Boolean)) {
+        setIsDashboardLoading(false)
+      }
+    }
 
     return subscribeToDashboardSources(currentStoreId, {
-      onSales: setSales,
-      onOrders: setOrders,
-      onInventoryItems: setInventoryItems,
-      onFinancialEntries: setFinancialEntries,
+      onSales(nextSales) {
+        setSales(nextSales)
+        markLoaded('sales')
+      },
+      onOrders(nextOrders) {
+        setOrders(nextOrders)
+        markLoaded('orders')
+      },
+      onInventoryItems(nextInventoryItems) {
+        setInventoryItems(nextInventoryItems)
+        markLoaded('inventory')
+      },
+      onFinancialEntries(nextFinancialEntries) {
+        setFinancialEntries(nextFinancialEntries)
+        markLoaded('financial')
+      },
       onError(error) {
         setErrorMessage(error.message ?? 'Nao foi possivel carregar o dashboard operacional.')
+        setIsDashboardLoading(false)
       },
     })
   }, [currentStoreId])
@@ -148,6 +182,14 @@ function DashboardPage() {
       />
 
       <section className="dashboard-shell">
+        <LoadingOverlay
+          active={isDashboardLoading}
+          label="Carregando indicadores operacionais"
+          backdrop
+        >
+          Sincronizando indicadores e operacao do dia
+        </LoadingOverlay>
+
         <DashboardFilters
           startDate={period.startDate}
           endDate={period.endDate}
@@ -181,8 +223,22 @@ function DashboardPage() {
           </section>
         ) : null}
 
-        <DashboardKpiGrid items={kpis} />
-        <Suspense fallback={<EmptyState message="Carregando graficos..." />}>
+        {isDashboardLoading ? (
+          <section className="workspace-loading-grid" aria-label="Carregando indicadores">
+            <Skeleton variant="rect" height="112px" />
+            <Skeleton variant="rect" height="112px" />
+            <Skeleton variant="rect" height="112px" />
+          </section>
+        ) : (
+          <DashboardKpiGrid items={kpis} />
+        )}
+        <Suspense
+          fallback={
+            <div className="workspace-loading-grid">
+              <Skeleton variant="rect" height="240px" />
+            </div>
+          }
+        >
           <DashboardCharts charts={charts} />
         </Suspense>
         <DashboardOperationalSummary operations={operations} />
