@@ -6,6 +6,10 @@ export interface AuthSessionRequestBody {
   storeId: string | null
 }
 
+export interface AuthTokenSessionRequestBody {
+  token: string
+}
+
 export interface AuthSessionClaims {
   role: UserRole
   tenantId: string | null
@@ -55,6 +59,21 @@ export interface AuthSessionResponseBody {
   data: {
     customToken: string
     profile: LocalOperatorProfile
+  }
+}
+
+export interface AuthTokenSessionResponseBody {
+  data: {
+    session: {
+      uid: string
+      role: string
+      tenantId: string | null
+      storeIds: string[]
+      defaultStoreId: string | null
+      operatorName: string | null
+      displayName: string | null
+      email: string | null
+    }
   }
 }
 

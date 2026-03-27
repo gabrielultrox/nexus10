@@ -8,7 +8,7 @@ import {
 import { createLoggerContext, serializeError } from '../../logging/logger.js'
 import { requirePermission } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
-import { createOrderSchema } from '../../validation/schemas.js'
+import { createOrderSchema, updateOrderSchema } from '../../validation/schemas.js'
 
 const ordersLogger = createLoggerContext({ module: 'orders' })
 
@@ -82,12 +82,15 @@ export function registerOrderRoutes(app) {
   app.patch(
     '/api/stores/:storeId/orders/:orderId',
     requirePermission('orders:write'),
+    validateRequest(updateOrderSchema, {
+      mapRequest: (request) => getPayload(request.body),
+    }),
     async (request, response) => {
       try {
         const data = await updateOrder({
           storeId: request.params.storeId,
           orderId: request.params.orderId,
-          values: getPayload(request.body),
+          values: request.validated?.body ?? getPayload(request.body),
         })
 
         ;(request.log ?? ordersLogger).info(

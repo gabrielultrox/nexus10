@@ -27,12 +27,28 @@ function createResponseMock() {
   }
 }
 
-async function runRegisteredRoute(app, request) {
-  const [, ...handlers] = app.post.mock.calls[0]
+function isValidationError(error) {
+  return (
+    error instanceof RequestValidationError ||
+    (error &&
+      typeof error === 'object' &&
+      error.code === 'VALIDATION_ERROR' &&
+      typeof error.statusCode === 'number')
+  )
+}
+
+async function runRegisteredRoute(app, path, request) {
+  const routeCall = app.post.mock.calls.find(([registeredPath]) => registeredPath === path)
+
+  if (!routeCall) {
+    throw new Error(`Route not registered: ${path}`)
+  }
+
+  const [, ...handlers] = routeCall
   const response = createResponseMock()
 
   async function dispatch(index, error) {
-    if (error instanceof RequestValidationError) {
+    if (isValidationError(error)) {
       response.status(error.statusCode).json({
         error: error.message,
         code: error.code,
@@ -158,8 +174,11 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    expect(app.post).toHaveBeenCalledTimes(1)
-    expect(app.post.mock.calls[0][0]).toBe('/api/auth/session')
+    expect(app.post).toHaveBeenCalledTimes(2)
+    expect(app.post.mock.calls.map(([path]) => path)).toEqual([
+      '/api/auth/login',
+      '/api/auth/session',
+    ])
     expect(app.get).toHaveBeenCalledTimes(1)
     expect(app.get.mock.calls[0][0]).toBe('/api/auth/operators')
   })
@@ -170,11 +189,16 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, { body: { pin: '4321' } })
+    const response = await runRegisteredRoute(app, '/api/auth/session', { body: { pin: '4321' } })
 
     expect(response.statusCode).toBe(400)
     expect(response.payload).toEqual({
-      error: 'Selecione um operador.',
+      error: 'Falha de validacao em body.',
+      code: 'VALIDATION_ERROR',
+      source: 'body',
+      details: {
+        operator: ['operator e obrigatorio.'],
+      },
     })
   })
 
@@ -184,7 +208,7 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, {
+    const response = await runRegisteredRoute(app, '/api/auth/session', {
       body: { operator: 'Gabriel', pin: '9999' },
       log: authLoggerMock,
     })
@@ -202,7 +226,7 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, {
+    const response = await runRegisteredRoute(app, '/api/auth/session', {
       body: { operator: 'Gabriel', pin: '4321' },
       log: authLoggerMock,
     })
@@ -233,7 +257,7 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, {
+    const response = await runRegisteredRoute(app, '/api/auth/session', {
       body: { operator: 'Gabriel', pin: '4321' },
       log: authLoggerMock,
     })
@@ -280,7 +304,7 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, {
+    const response = await runRegisteredRoute(app, '/api/auth/session', {
       body: { operator: 'Gabriel', pin: '4321' },
       log: authLoggerMock,
     })
@@ -290,5 +314,20 @@ describe('backend auth session route', () => {
       error: 'Falha ao assinar token',
     })
     expect(authLoggerMock.error).toHaveBeenCalled()
+  })
+
+  it('aceita POST /api/auth/login com o mesmo fluxo de autenticacao', async () => {
+    const { registerAuthRoutes } = await loadAuthController()
+    const app = { get: vi.fn(), post: vi.fn() }
+
+    registerAuthRoutes(app)
+
+    const response = await runRegisteredRoute(app, '/api/auth/login', {
+      body: { operator: 'Gabriel', pin: '4321' },
+      log: authLoggerMock,
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.payload.data.customToken).toBe('custom-token-123')
   })
 })

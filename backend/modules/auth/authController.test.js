@@ -71,7 +71,8 @@ function createResponseMock() {
 }
 
 async function runRegisteredRoute(app, request) {
-  const [, ...handlers] = app.post.mock.calls[0]
+  const routeCall = app.post.mock.calls.find(([path]) => path === '/api/auth/session')
+  const [, ...handlers] = routeCall
   const response = createResponseMock()
 
   async function dispatch(index, error) {
@@ -125,7 +126,7 @@ describe('registerAuthRoutes', () => {
 
     expect(response.statusCode).toBe(400)
     expect(response.payload).toEqual({
-      error: 'Dados de entrada invalidos.',
+      error: 'Falha de validacao em body.',
       code: 'VALIDATION_ERROR',
       source: 'body',
       details: {

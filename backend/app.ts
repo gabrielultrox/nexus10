@@ -15,6 +15,7 @@ import { validateRequest } from './middleware/validateRequest.js'
 import { registerMonitoringRoutes } from './modules/admin/monitoringController.js'
 import { registerAssistantRoutes } from './modules/assistant/assistantController.js'
 import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.js'
+import { registerFinanceRoutes } from './modules/finance/financeController.js'
 import { registerOrderRoutes } from './modules/orders/orderController.js'
 import { registerSaleRoutes } from './modules/sales/saleController.js'
 import { buildMonitoredErrorPayload, captureError, initializeSentry } from './monitoring/sentry.js'
@@ -215,6 +216,7 @@ export function createApp(): Express {
   app.use('/api', requireApiAuth)
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
+  registerFinanceRoutes(app)
   app.use('/api/stores/:storeId', requireStoreAccess)
 
   registerOrderRoutes(app)

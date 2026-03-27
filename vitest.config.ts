@@ -36,6 +36,7 @@ export default defineConfig({
         'backend/integrations/ifood/ifoodAdapter.js',
         'backend/middleware/validateRequest.js',
         'backend/errors/RequestValidationError.js',
+        'backend/schemas/validation.js',
         'backend/validation/schemas.js',
       ],
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
