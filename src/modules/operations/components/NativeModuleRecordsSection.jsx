@@ -885,6 +885,11 @@ function NativeModuleTable({
                 const nextEditableFieldValue = String(
                   editableRecordDrafts?.[record.id] ?? editableFieldValue,
                 ).trim()
+                const actionCellClass = `native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible native-module__actions-cell--editable-record' : ''}${routePath === 'advances' ? ' native-module__actions-cell--editable-record' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`
+                const actionContentClass = actionCellClass.replaceAll(
+                  'native-module__actions-cell',
+                  'native-module__actions-content',
+                )
 
                 return (
                   <tr
@@ -904,102 +909,104 @@ function NativeModuleTable({
                         {renderNativeModuleCell(routePath, tableColumns[index], cell, index)}
                       </td>
                     ))}
-                    <td
-                      className={`native-module__actions-cell${routePath === 'schedule' ? ' native-module__actions-cell--schedule' : ''}${routePath === 'change' ? ' native-module__actions-cell--return-visible native-module__actions-cell--editable-record' : ''}${routePath === 'advances' ? ' native-module__actions-cell--editable-record' : ''}${routePath === 'delivery-reading' ? ' native-module__actions-cell--delivery-reading' : ''}`}
-                    >
-                      {routePath === 'schedule' ? (
-                        <div className="native-module__inline-editor">
-                          <Select
-                            className="ui-select native-module__inline-select"
-                            value={
-                              scheduleMachineDrafts[record.id] ?? record.machine ?? 'Sem maquininha'
-                            }
-                            onChange={(event) => onDraftChange(record.id, event.target.value)}
-                          >
-                            {scheduleMachineOptions.map((option) => (
-                              <option key={`${record.id}-${option}`} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </Select>
-                          <button
-                            type="button"
-                            className="ui-button ui-button--secondary native-module__table-action"
-                            onClick={() => onScheduleUpdate(record.id)}
-                            disabled={
-                              exitingIds.has(record.id) ||
-                              (scheduleMachineDrafts[record.id] ??
+                    <td className={actionCellClass}>
+                      <div className={actionContentClass}>
+                        {routePath === 'schedule' ? (
+                          <div className="native-module__inline-editor">
+                            <Select
+                              className="ui-select native-module__inline-select"
+                              value={
+                                scheduleMachineDrafts[record.id] ??
                                 record.machine ??
-                                'Sem maquininha') === (record.machine ?? 'Sem maquininha')
-                            }
-                          >
-                            Salvar
-                          </button>
+                                'Sem maquininha'
+                              }
+                              onChange={(event) => onDraftChange(record.id, event.target.value)}
+                            >
+                              {scheduleMachineOptions.map((option) => (
+                                <option key={`${record.id}-${option}`} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </Select>
+                            <button
+                              type="button"
+                              className="ui-button ui-button--secondary native-module__table-action"
+                              onClick={() => onScheduleUpdate(record.id)}
+                              disabled={
+                                exitingIds.has(record.id) ||
+                                (scheduleMachineDrafts[record.id] ??
+                                  record.machine ??
+                                  'Sem maquininha') === (record.machine ?? 'Sem maquininha')
+                              }
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        ) : null}
+                        {isEditableRecord ? (
+                          <div className="native-module__inline-editor native-module__inline-editor--record-field">
+                            <Select
+                              className="ui-select native-module__inline-select"
+                              value={nextEditableFieldValue}
+                              onChange={(event) =>
+                                onEditableRecordDraftChange(record.id, event.target.value)
+                              }
+                            >
+                              {editableRecordOptions.map((option) => (
+                                <option key={`${record.id}-${option}`} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </Select>
+                            <button
+                              type="button"
+                              className="ui-button ui-button--secondary native-module__table-action"
+                              onClick={() => onEditableRecordUpdate(record.id)}
+                              disabled={
+                                exitingIds.has(record.id) ||
+                                !nextEditableFieldValue ||
+                                nextEditableFieldValue === String(editableFieldValue).trim()
+                              }
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        ) : null}
+                        <div className="native-module__action-group">
+                          {manager.actionLabel ? (
+                            <button
+                              type="button"
+                              className="ui-button ui-button--secondary native-module__table-action"
+                              onClick={() => onApplyAction(record.id)}
+                              disabled={exitingIds.has(record.id)}
+                            >
+                              {manager.getActionLabel?.(record) ?? manager.actionLabel}
+                            </button>
+                          ) : null}
+                          {manager.returnActionLabel && canShowReturnAction(record) ? (
+                            <button
+                              type="button"
+                              className="native-module__return-action"
+                              disabled={exitingIds.has(record.id)}
+                              onClick={() => onMarkReturned(record.id)}
+                            >
+                              {manager.returnActionLabel}
+                            </button>
+                          ) : null}
+                          {manager.returnActionLabel && !canShowReturnAction(record) ? (
+                            <span className="native-module__action-state-label">
+                              {getReturnActionStateLabel(record)}
+                            </span>
+                          ) : null}
+                          {manager.allowDelete !== false ? (
+                            <DestructiveIconButton
+                              className="native-module__delete-action"
+                              disabled={exitingIds.has(record.id)}
+                              onClick={() => onDelete(record.id)}
+                              label="Excluir registro"
+                            />
+                          ) : null}
                         </div>
-                      ) : null}
-                      {isEditableRecord ? (
-                        <div className="native-module__inline-editor native-module__inline-editor--record-field">
-                          <Select
-                            className="ui-select native-module__inline-select"
-                            value={nextEditableFieldValue}
-                            onChange={(event) =>
-                              onEditableRecordDraftChange(record.id, event.target.value)
-                            }
-                          >
-                            {editableRecordOptions.map((option) => (
-                              <option key={`${record.id}-${option}`} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </Select>
-                          <button
-                            type="button"
-                            className="ui-button ui-button--secondary native-module__table-action"
-                            onClick={() => onEditableRecordUpdate(record.id)}
-                            disabled={
-                              exitingIds.has(record.id) ||
-                              !nextEditableFieldValue ||
-                              nextEditableFieldValue === String(editableFieldValue).trim()
-                            }
-                          >
-                            Salvar
-                          </button>
-                        </div>
-                      ) : null}
-                      <div className="native-module__action-group">
-                        {manager.actionLabel ? (
-                          <button
-                            type="button"
-                            className="ui-button ui-button--secondary native-module__table-action"
-                            onClick={() => onApplyAction(record.id)}
-                            disabled={exitingIds.has(record.id)}
-                          >
-                            {manager.getActionLabel?.(record) ?? manager.actionLabel}
-                          </button>
-                        ) : null}
-                        {manager.returnActionLabel && canShowReturnAction(record) ? (
-                          <button
-                            type="button"
-                            className="native-module__return-action"
-                            disabled={exitingIds.has(record.id)}
-                            onClick={() => onMarkReturned(record.id)}
-                          >
-                            {manager.returnActionLabel}
-                          </button>
-                        ) : null}
-                        {manager.returnActionLabel && !canShowReturnAction(record) ? (
-                          <span className="native-module__action-state-label">
-                            {getReturnActionStateLabel(record)}
-                          </span>
-                        ) : null}
-                        {manager.allowDelete !== false ? (
-                          <DestructiveIconButton
-                            className="native-module__delete-action"
-                            disabled={exitingIds.has(record.id)}
-                            onClick={() => onDelete(record.id)}
-                            label="Excluir registro"
-                          />
-                        ) : null}
                       </div>
                     </td>
                   </tr>
