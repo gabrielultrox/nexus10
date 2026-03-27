@@ -1,0 +1,233 @@
+import { randomUUID } from 'node:crypto'
+
+import { getZeDeliveryConfig } from '../../config/ze-delivery.js'
+import { createLoggerContext, serializeError } from '../../logging/logger.js'
+import { zeDeliveryOrderSchema } from '../../validation/schemas.js'
+import { createZeDeliveryOrderRepository } from '../../repositories/zeDeliveryOrderRepository.js'
+import { createZeDeliveryAdapter } from './zeDeliveryAdapter.js'
+
+function createHashPayload(delivery) {
+  const normalizedLocation = {}
+
+  if (delivery.location?.address) {
+    normalizedLocation.address = delivery.location.address
+  }
+
+  if (delivery.location?.lat != null) {
+    normalizedLocation.lat = delivery.location.lat
+  }
+
+  if (delivery.location?.lng != null) {
+    normalizedLocation.lng = delivery.location.lng
+  }
+
+  return JSON.stringify({
+    status: delivery.status,
+    timestamp: delivery.timestamp,
+    scannedBy: delivery.scannedBy ?? null,
+    courierName: delivery.courierName ?? null,
+    location: normalizedLocation,
+    code: delivery.code,
+  })
+}
+
+function buildStoreSummary(initial = {}) {
+  return {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    failed: 0,
+    dryRun: false,
+    ...initial,
+  }
+}
+
+export function createZeDeliveryService({
+  repository = createZeDeliveryOrderRepository(),
+  adapter = createZeDeliveryAdapter(),
+  config = getZeDeliveryConfig(),
+} = {}) {
+  const serviceLogger = createLoggerContext({
+    module: 'integrations.ze-delivery.service',
+  })
+
+  async function ingestScrapedOrders({ storeId, deliveries, dryRun = false, syncMetadata = {} }) {
+    const runId = syncMetadata.runId ?? `ze-delivery-${randomUUID()}`
+    const summary = buildStoreSummary({
+      dryRun,
+      runId,
+      storeId,
+      processed: deliveries.length,
+      startedAt: new Date().toISOString(),
+      trigger: syncMetadata.trigger ?? 'script',
+    })
+
+    for (const rawDelivery of deliveries) {
+      try {
+        const normalizedDelivery = zeDeliveryOrderSchema.parse(rawDelivery)
+        const payloadHash = createHashPayload(normalizedDelivery)
+        const existingOrder = await repository.getOrder({
+          storeId,
+          zeDeliveryId: normalizedDelivery.zeDeliveryId,
+        })
+
+        if (existingOrder?.payloadHash === payloadHash) {
+          summary.unchanged += 1
+          continue
+        }
+
+        if (!dryRun) {
+          await repository.upsertOrder({
+            storeId,
+            order: {
+              ...normalizedDelivery,
+              storeId,
+              payloadHash,
+              source: 'ze_delivery',
+              syncStatus: 'synced',
+              syncedAt: new Date().toISOString(),
+              lastRunId: runId,
+              errorMessage: null,
+            },
+          })
+        }
+
+        if (existingOrder) {
+          summary.updated += 1
+        } else {
+          summary.created += 1
+        }
+      } catch (error) {
+        summary.failed += 1
+        serviceLogger.error(
+          {
+            context: 'ze_delivery.ingest.delivery_failed',
+            storeId,
+            runId,
+            deliveryId: rawDelivery?.zeDeliveryId ?? null,
+            error: serializeError(error),
+          },
+          'Failed to ingest Zé Delivery entry',
+        )
+      }
+    }
+
+    summary.completedAt = new Date().toISOString()
+    summary.success = summary.failed === 0
+
+    if (!dryRun) {
+      await repository.appendSyncLog({
+        storeId,
+        log: {
+          runId,
+          source: 'ze_delivery',
+          createdAt: summary.completedAt,
+          trigger: summary.trigger,
+          summary,
+        },
+      })
+
+      await repository.setStoreStatus({
+        storeId,
+        status: {
+          enabled: config.enabled,
+          lastRunId: runId,
+          lastSyncAt: summary.completedAt,
+          lastSyncSuccess: summary.success,
+          lastSyncError:
+            summary.failed > 0 ? 'Uma ou mais entregas falharam ao sincronizar.' : null,
+          counters: {
+            created: summary.created,
+            updated: summary.updated,
+            unchanged: summary.unchanged,
+            failed: summary.failed,
+          },
+        },
+      })
+    }
+
+    return summary
+  }
+
+  async function runScrapeAndSync({ storeId, dryRun = config.sync.dryRun, maxOrders }) {
+    const scrapeResult = await adapter.scrapeDeliveries({
+      storeId,
+      maxOrders,
+    })
+
+    return ingestScrapedOrders({
+      storeId,
+      deliveries: scrapeResult.deliveries,
+      dryRun,
+      syncMetadata: {
+        runId: `manual-${randomUUID()}`,
+        trigger: 'backend',
+        scrapedAt: scrapeResult.scrapedAt,
+      },
+    })
+  }
+
+  async function retrySync({ storeId, zeDeliveryId, dryRun = false }) {
+    const scrapeResult = await adapter.scrapeDeliveries({
+      storeId,
+      maxOrders: config.sync.maxOrdersPerRun,
+    })
+    const matchingDelivery = scrapeResult.deliveries.find(
+      (delivery) => delivery.zeDeliveryId === zeDeliveryId || delivery.code === zeDeliveryId,
+    )
+
+    if (!matchingDelivery) {
+      throw new Error('Entrega do Zé Delivery nao encontrada no scrape atual.')
+    }
+
+    return ingestScrapedOrders({
+      storeId,
+      deliveries: [matchingDelivery],
+      dryRun,
+      syncMetadata: {
+        runId: `retry-${randomUUID()}`,
+        trigger: 'retry',
+        scrapedAt: scrapeResult.scrapedAt,
+      },
+    })
+  }
+
+  async function getStatus({ storeIds, storeId = '', limit = 20 }) {
+    const resolvedStoreIds = storeId ? [storeId] : storeIds
+    const statuses = await repository.listStoreStatuses({
+      storeIds: resolvedStoreIds,
+    })
+
+    return Promise.all(
+      statuses.map(async ({ storeId: currentStoreId, status }) => ({
+        storeId: currentStoreId,
+        status,
+        recentOrders: await repository.listOrders({
+          storeId: currentStoreId,
+          limit,
+        }),
+        recentLogs: await repository.listSyncLogs({
+          storeId: currentStoreId,
+          limit: Math.min(limit, 10),
+        }),
+      })),
+    )
+  }
+
+  async function getHealth() {
+    return {
+      enabled: config.enabled,
+      storesConfigured: config.stores.length,
+      sessionFilePath: config.browser.sessionFilePath,
+      lastCheckedAt: new Date().toISOString(),
+    }
+  }
+
+  return {
+    ingestScrapedOrders,
+    runScrapeAndSync,
+    retrySync,
+    getStatus,
+    getHealth,
+  }
+}

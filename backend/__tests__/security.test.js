@@ -65,6 +65,7 @@ vi.mock('../middleware/requestLogger.js', () => ({
 
 vi.mock('../middleware/requireAuth.js', () => ({
   requireApiAuth: (_request, _response, next) => next(),
+  requirePermission: () => (_request, _response, next) => next(),
   requireStoreAccess: (_request, _response, next) => next(),
 }))
 
@@ -74,6 +75,7 @@ vi.mock('../middleware/validateRequest.js', () => ({
 
 vi.mock('../middleware/rateLimiter.js', () => ({
   authenticatedApiRateLimiter: (_request, _response, next) => next(),
+  createRateLimitMiddleware: () => (_request, _response, next) => next(),
   fileUploadRateLimiter: (_request, _response, next) => next(),
   ifoodWebhookRateLimiter: (_request, _response, next) => next(),
   loginRateLimiter: (_request, _response, next) => next(),

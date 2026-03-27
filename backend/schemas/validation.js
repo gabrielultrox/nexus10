@@ -269,6 +269,63 @@ export const adminAuditLogQuerySchema = z.object({
     .default(''),
 })
 
+const zeDeliveryLocationSchema = z
+  .object({
+    address: z.string().trim().max(255, 'location.address deve ter no maximo 255 caracteres.'),
+    lat: z.coerce.number().min(-90).max(90).nullable().optional().default(null),
+    lng: z.coerce.number().min(-180).max(180).nullable().optional().default(null),
+  })
+  .partial()
+  .default({})
+
+export const zeDeliveryOrderSchema = z.object({
+  zeDeliveryId: nonEmptyString('zeDeliveryId'),
+  code: nonEmptyString('code'),
+  status: nonEmptyString('status'),
+  timestamp: isoDateTimeString('timestamp'),
+  location: zeDeliveryLocationSchema.optional().default({}),
+  scannedBy: z.string().trim().max(120, 'scannedBy deve ter no maximo 120 caracteres.').optional(),
+  courierName: z
+    .string()
+    .trim()
+    .max(120, 'courierName deve ter no maximo 120 caracteres.')
+    .optional(),
+  rawStatus: z.string().trim().max(120, 'rawStatus deve ter no maximo 120 caracteres.').optional(),
+  originalData: z.record(z.string(), z.unknown()).optional().default({}),
+})
+
+export const zeDeliveryIngestSchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  dryRun: z.coerce.boolean().optional().default(false),
+  deliveries: z.array(zeDeliveryOrderSchema).min(1, 'Informe ao menos uma entrega.').max(200),
+  syncMetadata: z
+    .object({
+      runId: z.string().trim().max(120).optional(),
+      trigger: z.string().trim().max(40).optional(),
+      scrapedAt: isoDateTimeString('syncMetadata.scrapedAt').optional(),
+      source: z.string().trim().max(40).optional(),
+    })
+    .partial()
+    .optional()
+    .default({}),
+})
+
+export const zeDeliveryManualSyncSchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  dryRun: z.coerce.boolean().optional().default(false),
+  maxOrders: z.coerce.number().int().min(1).max(200).optional().default(50),
+})
+
+export const zeDeliveryStatusQuerySchema = z.object({
+  storeId: z.string().trim().min(1).optional().default(''),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+})
+
+export const zeDeliveryRetryParamsSchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  zeDeliveryId: nonEmptyString('zeDeliveryId'),
+})
+
 export {
   financeEntryRefSchema,
   isoDateTimeString,
