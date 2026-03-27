@@ -3055,6 +3055,32 @@
   transition: opacity 150ms ease;
 }
 
+.native-module__actions-cell--editable-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  justify-content: stretch;
+  gap: var(--space-2);
+  min-width: 248px;
+}
+
+.native-module__actions-cell--editable-record .native-module__inline-editor {
+  width: 100%;
+}
+
+.native-module__actions-cell--editable-record .native-module__action-group {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.native-module__actions-cell--editable-record .native-module__table-action {
+  width: 100%;
+}
+
+.native-module__actions-cell--editable-record .native-module__delete-action {
+  justify-self: end;
+}
+
 .native-module__actions-cell--return-visible {
   opacity: 1;
 }
