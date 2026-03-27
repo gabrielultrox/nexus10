@@ -1,5 +1,5 @@
-import { backendEnv } from './config/env.js';
 import app from './app.js';
+import { backendEnv } from './config/env.js';
 import { logger, serializeError } from './logging/logger.js';
 
 const server = app.listen(backendEnv.port, () => {
@@ -10,7 +10,7 @@ const server = app.listen(backendEnv.port, () => {
   }, `nexus-ifood backend ativo em http://127.0.0.1:${backendEnv.port} (${backendEnv.nodeEnv})`);
 });
 
-server.on('error', (error) => {
+server.on('error', (error: Error) => {
   logger.error({
     context: 'server.start',
     error: serializeError(error),

@@ -33,6 +33,11 @@ vi.mock('./logging/logger.js', () => ({
       error: vi.fn(),
     }),
   },
+  createLoggerContext: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
   serializeError: (error) => ({
     message: error?.message ?? 'unknown',
   }),
@@ -111,7 +116,7 @@ let server;
 let baseUrl;
 
 beforeAll(async () => {
-  ({ createApp, isAllowedOrigin, buildContentSecurityPolicyDirectives } = await import('./app.js'));
+  ({ createApp, isAllowedOrigin, buildContentSecurityPolicyDirectives } = await import('./app.ts'));
   server = createApp().listen(0);
 
   await new Promise((resolve) => {

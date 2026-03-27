@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "rootDir": ".",
+    "outDir": "dist-backend",
+    "types": ["node"]
+  },
+  "include": [
+    "backend/**/*.ts",
+    "backend/**/*.d.ts",
+    "backend/**/*.js",
+    "api/**/*.ts"
+  ],
+  "exclude": [
+    "backend/**/*.test.js",
+    "backend/**/*.test.ts",
+    "dist",
+    "dist-backend",
+    "node_modules"
+  ]
+}

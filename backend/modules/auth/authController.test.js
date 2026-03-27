@@ -90,7 +90,7 @@ describe('registerAuthRoutes', () => {
   })
 
   it('retorna 400 quando o operador nao e informado', async () => {
-    const { registerAuthRoutes } = await import('./authController.js')
+    const { registerAuthRoutes } = await import('./authController.ts')
     const app = { post: vi.fn() }
 
     registerAuthRoutes(app)
@@ -109,7 +109,7 @@ describe('registerAuthRoutes', () => {
   })
 
   it('retorna 401 quando a senha estiver incorreta', async () => {
-    const { registerAuthRoutes } = await import('./authController.js')
+    const { registerAuthRoutes } = await import('./authController.ts')
     const app = { post: vi.fn() }
 
     registerAuthRoutes(app)
@@ -134,7 +134,7 @@ describe('registerAuthRoutes', () => {
     getLocalOperatorProfileMock.mockReturnValue(profile)
     createCustomTokenMock.mockResolvedValue('custom-token-123')
 
-    const { registerAuthRoutes } = await import('./authController.js')
+    const { registerAuthRoutes } = await import('./authController.ts')
     const app = { post: vi.fn() }
 
     registerAuthRoutes(app)
@@ -166,7 +166,7 @@ describe('registerAuthRoutes', () => {
       throw new Error('Falha ao carregar perfil')
     })
 
-    const { registerAuthRoutes } = await import('./authController.js')
+    const { registerAuthRoutes } = await import('./authController.ts')
     const app = { post: vi.fn() }
 
     registerAuthRoutes(app)

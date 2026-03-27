@@ -27,7 +27,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: [
-        'backend/modules/auth/authController.js',
+        'backend/modules/auth/authController.ts',
         'src/services/errorHandler.ts',
         'src/schemas/order.ts',
       ],

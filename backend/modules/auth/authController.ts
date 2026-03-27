@@ -1,3 +1,5 @@
+import type { Express, Request, Response } from 'express';
+
 import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js';
 import { backendEnv } from '../../config/env.js';
 import { getLocalOperatorProfile } from '../../config/localOperators.js';
@@ -5,17 +7,33 @@ import { buildCacheKey, cacheSet } from '../../cache/cacheService.js';
 import { createLoggerContext, serializeError } from '../../logging/logger.js';
 import { validateRequest } from '../../middleware/validateRequest.js';
 import { loginSchema } from '../../validation/schemas.js';
+import type {
+  AuthSessionClaims,
+  AuthSessionRequestBody,
+  AuthSessionResponseBody,
+  ErrorResponseBody,
+  LocalOperatorProfile,
+} from '../../types/auth.js';
 
 const authLogger = createLoggerContext({ module: 'auth' });
 
-function isValidPassword(password) {
+type AuthSessionRequest = Request & {
+  validated?: {
+    body?: AuthSessionRequestBody;
+  };
+};
+
+function isValidPassword(password: string): boolean {
   return Boolean(backendEnv.localOperatorPassword)
     && String(password ?? '') === String(backendEnv.localOperatorPassword);
 }
 
-export function registerAuthRoutes(app) {
-  app.post('/api/auth/session', validateRequest(loginSchema), async (request, response) => {
-    const payload = request.validated?.body ?? {};
+export function registerAuthRoutes(app: Express): void {
+  app.post('/api/auth/session', validateRequest(loginSchema), async (
+    request: AuthSessionRequest,
+    response: Response<AuthSessionResponseBody | ErrorResponseBody>,
+  ) => {
+    const payload = request.validated?.body ?? { pin: '', operator: '', storeId: null };
     const operatorName = String(payload.operator ?? '').trim();
     const password = String(payload.pin ?? '');
     const log = request.log ?? authLogger;
@@ -50,7 +68,7 @@ export function registerAuthRoutes(app) {
     }
 
     try {
-      const profile = getLocalOperatorProfile(operatorName);
+      const profile = getLocalOperatorProfile(operatorName) as LocalOperatorProfile;
       const firestore = getAdminFirestore();
 
       await firestore.collection('users').doc(profile.uid).set({
@@ -58,7 +76,7 @@ export function registerAuthRoutes(app) {
         updatedAt: new Date().toISOString(),
       }, { merge: true });
 
-      const customClaims = {
+      const customClaims: AuthSessionClaims = {
         role: profile.role,
         tenantId: profile.tenantId,
         storeIds: profile.storeIds,
@@ -99,7 +117,7 @@ export function registerAuthRoutes(app) {
         error: serializeError(error),
       }, 'Failed to create auth session');
       response.status(500).json({
-        error: error.message ?? 'Nao foi possivel abrir a sessao autenticada.',
+        error: error instanceof Error ? error.message : 'Nao foi possivel abrir a sessao autenticada.',
       });
     }
   });

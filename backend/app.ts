@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
@@ -26,11 +26,22 @@ import {
   ifoodWebhookSchema,
 } from './validation/schemas.js';
 
-function isDevelopmentEnvironment() {
+interface HealthResponseBody {
+  status: 'ok';
+  service: string;
+  timestamp: string;
+}
+
+interface IfoodAccessToken {
+  accessToken?: string;
+  access_token?: string;
+}
+
+function isDevelopmentEnvironment(): boolean {
   return backendEnv.nodeEnv !== 'production';
 }
 
-function normalizeOrigin(origin) {
+function normalizeOrigin(origin?: string | null): string {
   if (!origin) {
     return '';
   }
@@ -52,7 +63,7 @@ function normalizeOrigin(origin) {
   }
 }
 
-export function isAllowedOrigin(origin) {
+export function isAllowedOrigin(origin?: string | null): boolean {
   if (!origin) {
     return true;
   }
@@ -74,7 +85,7 @@ export function isAllowedOrigin(origin) {
   return false;
 }
 
-export function buildContentSecurityPolicyDirectives() {
+export function buildContentSecurityPolicyDirectives(): Record<string, string[]> {
   const allowedConnectSources = [
     "'self'",
     ...backendEnv.frontendOrigin
@@ -100,7 +111,7 @@ export function buildContentSecurityPolicyDirectives() {
   };
 }
 
-function createApiRateLimiter(max) {
+function createApiRateLimiter(max: number) {
   return rateLimit({
     windowMs: backendEnv.apiRateLimitWindowMs,
     max,
@@ -112,7 +123,7 @@ function createApiRateLimiter(max) {
   });
 }
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
   const repository = createIfoodFirestoreRepository();
   const appLogger = logger.child({ context: 'app' });
@@ -143,7 +154,7 @@ export function createApp() {
     },
   }));
 
-  app.use((request, response, next) => {
+  app.use((request: Request, response: Response, next: NextFunction) => {
     const origin = request.headers.origin;
     const normalizedOrigin = normalizeOrigin(origin);
 
@@ -178,7 +189,7 @@ export function createApp() {
   app.use('/api/auth/session', createApiRateLimiter(backendEnv.authRateLimitMax));
   app.use('/webhooks/ifood', express.text({ type: '*/*' }));
 
-  app.get('/api/health', (_request, response) => {
+  app.get('/api/health', (_request: Request, response: Response<HealthResponseBody>) => {
     response.json({
       status: 'ok',
       service: 'nexus-ifood-integration',
@@ -212,13 +223,16 @@ export function createApp() {
         error: serializeError(error),
       }, 'Failed to list iFood merchants');
       response.status(500).json({
-        error: error.message ?? 'Nao foi possivel listar os merchants do iFood.',
+        error: error instanceof Error ? error.message : 'Nao foi possivel listar os merchants do iFood.',
       });
     }
   });
 
   app.post('/api/integrations/ifood/polling/run', validateRequest(ifoodPollingSchema), async (request, response) => {
-    const { storeId, merchantId } = request.validated?.body ?? request.body ?? {};
+    const { storeId, merchantId } = (request.validated?.body ?? request.body ?? {}) as {
+      storeId: string;
+      merchantId: string;
+    };
 
     try {
       const merchant = await getIntegrationMerchant({
@@ -237,7 +251,7 @@ export function createApp() {
       const authToken = await runtime.adapter.getAccessToken({
         clientId: merchant.clientId,
         clientSecret: merchant.clientSecret,
-      });
+      }) as IfoodAccessToken;
 
       const pollingResult = await runtime.eventService.processPolling({
         storeId,
@@ -271,21 +285,25 @@ export function createApp() {
         storeId,
         merchantId,
         updates: {
-          lastSyncError: error.message ?? 'Falha no polling do iFood.',
+          lastSyncError: error instanceof Error ? error.message : 'Falha no polling do iFood.',
         },
       }).catch(() => {});
 
       response.status(500).json({
-        error: error.message ?? 'Nao foi possivel executar o polling do iFood.',
+        error: error instanceof Error ? error.message : 'Nao foi possivel executar o polling do iFood.',
       });
     }
   });
 
   app.post('/api/integrations/ifood/orders/:storeId/:merchantId/:orderId/sync', validateRequest(ifoodOrderSyncParamsSchema, {
     source: 'params',
-    mapRequest: (request) => request.params,
+    mapRequest: (request: Request) => request.params,
   }), async (request, response) => {
-    const { storeId, merchantId, orderId } = request.validated?.params ?? request.params;
+    const { storeId, merchantId, orderId } = (request.validated?.params ?? request.params) as {
+      storeId: string;
+      merchantId: string;
+      orderId: string;
+    };
 
     try {
       const merchant = await getIntegrationMerchant({
@@ -304,7 +322,7 @@ export function createApp() {
       const authToken = await runtime.adapter.getAccessToken({
         clientId: merchant.clientId,
         clientSecret: merchant.clientSecret,
-      });
+      }) as IfoodAccessToken;
       const rawOrder = await runtime.adapter.getOrderDetails({
         accessToken: authToken.accessToken ?? authToken.access_token,
         orderId,
@@ -332,20 +350,23 @@ export function createApp() {
         error: serializeError(error),
       }, 'Failed to sync iFood order');
       response.status(500).json({
-        error: error.message ?? 'Nao foi possivel sincronizar o pedido do iFood.',
+        error: error instanceof Error ? error.message : 'Nao foi possivel sincronizar o pedido do iFood.',
       });
     }
   });
 
   app.post('/webhooks/ifood/:storeId/:merchantId', validateRequest(ifoodWebhookSchema, {
     source: 'webhook',
-    mapRequest: (request) => ({
+    mapRequest: (request: Request) => ({
       signature: request.header('X-IFood-Signature'),
       body: String(request.body ?? ''),
     }),
   }), async (request, response) => {
     const { storeId, merchantId } = request.params;
-    const validatedWebhook = request.validated?.webhook ?? {};
+    const validatedWebhook = (request.validated?.webhook ?? {}) as {
+      signature: string;
+      body: string;
+    };
     const signature = validatedWebhook.signature;
     const rawBody = validatedWebhook.body;
 
@@ -366,7 +387,7 @@ export function createApp() {
       const authToken = await runtime.adapter.getAccessToken({
         clientId: merchant.clientId,
         clientSecret: merchant.clientSecret,
-      });
+      }) as IfoodAccessToken;
 
       const result = await runtime.eventService.processWebhook({
         storeId,
@@ -402,17 +423,17 @@ export function createApp() {
         storeId,
         merchantId,
         updates: {
-          lastSyncError: error.message ?? 'Falha no webhook do iFood.',
+          lastSyncError: error instanceof Error ? error.message : 'Falha no webhook do iFood.',
         },
       }).catch(() => {});
 
       response.status(401).json({
-        error: error.message ?? 'Nao foi possivel processar o webhook do iFood.',
+        error: error instanceof Error ? error.message : 'Nao foi possivel processar o webhook do iFood.',
       });
     }
   });
 
-  app.use((error, request, response, _next) => {
+  app.use((error: unknown, request: Request, response: Response, _next: NextFunction) => {
     const requestLoggerInstance = request.log ?? appLogger;
 
     if (error instanceof RequestValidationError) {
