@@ -1,6 +1,7 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 
 import { backendEnv } from './config/env.js';
 import { RequestValidationError } from './errors/RequestValidationError.js';
@@ -15,6 +16,7 @@ import { registerAssistantRoutes } from './modules/assistant/assistantController
 import { registerAdminAuditLogRoutes } from './modules/admin/auditLogController.js';
 import { registerOrderRoutes } from './modules/orders/orderController.js';
 import { registerSaleRoutes } from './modules/sales/saleController.js';
+import { swaggerSpec, swaggerUiOptions } from './swagger.js';
 import {
   getIntegrationMerchant,
   listIntegrationMerchants,
@@ -196,6 +198,11 @@ export function createApp(): Express {
       timestamp: new Date().toISOString(),
     });
   });
+
+  app.get('/api-docs.json', (_request: Request, response: Response) => {
+    response.json(swaggerSpec);
+  });
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
   registerAuthRoutes(app);
   app.use('/api', requireApiAuth);
