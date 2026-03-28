@@ -21,6 +21,7 @@ const mockPlaySuccess = vi.fn()
 const mockSubscribeToDashboardSources = vi.fn()
 const mockLoadDashboardOperationalSources = vi.fn()
 const mockBuildDashboardData = vi.fn()
+const mockUseZeDeliverySyncStatus = vi.fn()
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -62,6 +63,7 @@ vi.mock('../components/theme/ThemeToggle', () => ({
 
 vi.mock('../services/firebase', () => ({
   firebaseReady: true,
+  canUseRemoteSync: () => false,
 }))
 
 vi.mock('../services/dashboard', () => ({
@@ -69,6 +71,10 @@ vi.mock('../services/dashboard', () => ({
   loadDashboardOperationalSources: () => mockLoadDashboardOperationalSources(),
   subscribeToDashboardSources: (...args) => mockSubscribeToDashboardSources(...args),
   buildDashboardData: (...args) => mockBuildDashboardData(...args),
+}))
+
+vi.mock('../hooks/queries/useZeDeliverySyncStatus', () => ({
+  useZeDeliverySyncStatus: () => mockUseZeDeliverySyncStatus(),
 }))
 
 vi.mock('../components/dashboard/DashboardCharts', () => ({
@@ -94,6 +100,14 @@ describe('Accessibility audit', () => {
     mockUseStore.mockReturnValue({
       currentStoreId: 'store-1',
     })
+    mockUseZeDeliverySyncStatus.mockReturnValue({
+      data: {
+        summary: null,
+        stores: [],
+      },
+      error: null,
+      isFetching: false,
+    })
     mockLoadDashboardOperationalSources.mockReturnValue({
       scheduleRecords: [],
       machineChecklist: [],
@@ -101,6 +115,14 @@ describe('Accessibility audit', () => {
       advanceRecords: [],
       occurrenceRecords: [],
       courierRecords: [],
+      deliveryReadingRecords: [],
+      financialPendingRecords: [],
+      cashState: {
+        status: 'fechado',
+        currentBalance: 0,
+        initialBalance: 0,
+        pendingCount: 0,
+      },
     })
     mockSubscribeToDashboardSources.mockImplementation(
       (_storeId, { onSales, onOrders, onInventoryItems, onFinancialEntries }) => {
@@ -127,6 +149,15 @@ describe('Accessibility audit', () => {
         secondary: { title: 'Pedidos por hora', description: 'Serie 2', kind: 'bar', data: [] },
       },
       operations: {
+        hero: {
+          eyebrow: 'Loja teste - Tarde',
+          title: 'Leitura executiva da operacao',
+          description: 'Resumo do turno',
+          statusLabel: 'Operacao sob controle',
+          statusTone: 'success',
+          signals: [],
+          actions: [],
+        },
         reminders: [
           {
             id: 'advances-open',
@@ -136,10 +167,14 @@ describe('Accessibility audit', () => {
             route: '/advances',
           },
         ],
+        commandCenter: [],
+        risks: [],
+        financialPulse: [],
+        deliveryPulse: [],
+        integrationWatch: [],
         activeShift: [],
         topProducts: [],
         lowStock: [],
-        closing: [],
       },
     })
   })
