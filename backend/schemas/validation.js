@@ -326,6 +326,31 @@ export const zeDeliveryRetryParamsSchema = z.object({
   zeDeliveryId: nonEmptyString('zeDeliveryId'),
 })
 
+const zeDeliveryIntervalSchema = z.union([
+  z.literal(5),
+  z.literal(10),
+  z.literal(15),
+  z.literal(30),
+])
+
+export const zeDeliverySettingsQuerySchema = z.object({
+  storeId: nonEmptyString('storeId'),
+})
+
+export const zeDeliverySettingsUpdateSchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  enabled: z.coerce.boolean(),
+  intervalMinutes: z.coerce.number().int().pipe(zeDeliveryIntervalSchema),
+  notificationsEnabled: z.coerce.boolean().optional().default(false),
+  notificationWebhookUrl: z
+    .union([
+      z.literal(''),
+      z.string().trim().url('notificationWebhookUrl deve ser uma URL valida.'),
+    ])
+    .optional()
+    .default(''),
+})
+
 export {
   financeEntryRefSchema,
   isoDateTimeString,

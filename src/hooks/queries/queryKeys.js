@@ -14,4 +14,9 @@ export const queryKeys = {
     entries: (storeId, options = {}) => ['finance', storeId, 'entries', options],
     closures: (storeId, options = {}) => ['finance', storeId, 'closures', options],
   },
+  zeDelivery: {
+    all: (storeId) => ['ze-delivery', storeId],
+    dashboard: (storeId) => ['ze-delivery', storeId, 'dashboard'],
+    settings: (storeId) => ['ze-delivery', storeId, 'settings'],
+  },
 }

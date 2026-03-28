@@ -17,5 +17,7 @@ export {
   zeDeliveryManualSyncSchema,
   zeDeliveryOrderSchema,
   zeDeliveryRetryParamsSchema,
+  zeDeliverySettingsQuerySchema,
+  zeDeliverySettingsUpdateSchema,
   zeDeliveryStatusQuerySchema,
 } from '../schemas/validation.js'

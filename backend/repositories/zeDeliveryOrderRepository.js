@@ -37,6 +37,11 @@ function mapSnapshot(snapshot) {
 
 export function createZeDeliveryOrderRepository() {
   return {
+    async getIntegrationRecord({ storeId }) {
+      const snapshot = await getIntegrationDocument(storeId).get()
+      return mapSnapshot(snapshot)
+    },
+
     async getOrder({ storeId, zeDeliveryId }) {
       const snapshot = await getOrdersCollection(storeId).doc(zeDeliveryId).get()
       return mapSnapshot(snapshot)
@@ -84,11 +89,17 @@ export function createZeDeliveryOrderRepository() {
         )
     },
 
-    async listSyncLogs({ storeId, limit = 20 }) {
-      const snapshot = await getLogsCollection(storeId)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .get()
+    async listSyncLogs({ storeId, limit = 20, since = '' }) {
+      let query = getLogsCollection(storeId).orderBy('createdAt', 'desc').limit(limit)
+
+      if (since) {
+        query = getLogsCollection(storeId)
+          .where('createdAt', '>=', since)
+          .orderBy('createdAt', 'desc')
+          .limit(limit)
+      }
+
+      const snapshot = await query.get()
 
       return snapshot.docs.map((documentSnapshot) => ({
         id: documentSnapshot.id,
@@ -109,6 +120,21 @@ export function createZeDeliveryOrderRepository() {
     async getStoreStatus({ storeId }) {
       const snapshot = await getIntegrationDocument(storeId).get()
       return mapSnapshot(snapshot)
+    },
+
+    async getStoreSettings({ storeId }) {
+      const integrationRecord = await this.getIntegrationRecord({ storeId })
+      return integrationRecord?.settings ?? null
+    },
+
+    async setStoreSettings({ storeId, settings }) {
+      await getIntegrationDocument(storeId).set(
+        {
+          settings,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true },
+      )
     },
 
     async listStoreStatuses({ storeIds }) {

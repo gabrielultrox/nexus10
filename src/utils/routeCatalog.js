@@ -205,6 +205,16 @@ export const routeDefinitions = [
     requiredRoles: ['admin'],
   },
   {
+    path: 'integrations/ze-delivery',
+    label: 'Ze Delivery',
+    icon: '17A',
+    section: 'Sistema',
+    eyebrow: 'Integracoes',
+    title: 'Ze Delivery',
+    description: 'Monitoramento e controle da sincronizacao automatica do Ze Delivery.',
+    requiredRoles: ['admin'],
+  },
+  {
     path: 'pdv',
     label: 'PDV',
     icon: '18',

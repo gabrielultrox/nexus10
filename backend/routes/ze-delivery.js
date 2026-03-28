@@ -6,6 +6,8 @@ import {
   zeDeliveryIngestSchema,
   zeDeliveryManualSyncSchema,
   zeDeliveryRetryParamsSchema,
+  zeDeliverySettingsQuerySchema,
+  zeDeliverySettingsUpdateSchema,
   zeDeliveryStatusQuerySchema,
 } from '../validation/schemas.js'
 import { createZeDeliveryService } from '../integrations/ze-delivery/zeDeliveryService.js'
@@ -195,9 +197,18 @@ export function registerZeDeliveryRoutes(app) {
     '/api/integrations/ze-delivery/dashboard',
     requireApiAuth,
     requirePermission('integrations:write'),
+    validateRequest(zeDeliveryStatusQuerySchema, {
+      source: 'query',
+      mapRequest: (request) => request.query,
+    }),
     async (request, response) => {
       try {
-        const storeIds = request.authUser?.storeIds?.length ? request.authUser.storeIds : undefined
+        const query = request.validated?.query ?? request.query
+        const storeIds = query.storeId
+          ? [query.storeId]
+          : request.authUser?.storeIds?.length
+            ? request.authUser.storeIds
+            : undefined
         const dashboard = await getZeDeliveryService().getDashboard({
           storeIds,
         })
@@ -211,6 +222,65 @@ export function registerZeDeliveryRoutes(app) {
           response,
           error,
           'Nao foi possivel consultar o dashboard do Ze Delivery.',
+        )
+      }
+    },
+  )
+
+  app.get(
+    '/api/integrations/ze-delivery/settings',
+    requireApiAuth,
+    requirePermission('integrations:write'),
+    validateRequest(zeDeliverySettingsQuerySchema, {
+      source: 'query',
+      mapRequest: (request) => request.query,
+    }),
+    async (request, response) => {
+      try {
+        const query = request.validated?.query ?? request.query
+        const settings = await getZeDeliveryService().getStoreSettings({
+          storeId: query.storeId,
+        })
+
+        response.json({
+          ok: true,
+          data: settings,
+        })
+      } catch (error) {
+        sendIntegrationError(
+          request,
+          response,
+          error,
+          'Nao foi possivel consultar as configuracoes do Ze Delivery.',
+        )
+      }
+    },
+  )
+
+  app.patch(
+    '/api/integrations/ze-delivery/settings',
+    requireApiAuth,
+    requirePermission('integrations:write'),
+    zeDeliveryManualSyncLimiter,
+    validateRequest(zeDeliverySettingsUpdateSchema),
+    async (request, response) => {
+      try {
+        const payload = request.validated?.body ?? request.body
+        const settings = await getZeDeliveryService().updateStoreSettings({
+          storeId: payload.storeId,
+          settings: payload,
+        })
+
+        response.json({
+          ok: true,
+          data: settings,
+        })
+      } catch (error) {
+        sendIntegrationError(
+          request,
+          response,
+          error,
+          'Nao foi possivel atualizar as configuracoes do Ze Delivery.',
         )
       }
     },

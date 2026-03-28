@@ -9,6 +9,7 @@ import DailyRotateFile from 'winston-daily-rotate-file'
 
 import { getZeDeliveryConfig, getZeDeliveryCronExpression } from '../backend/config/ze-delivery.js'
 import { createZeDeliveryAdapter } from '../backend/integrations/ze-delivery/zeDeliveryAdapter.js'
+import { createZeDeliveryOrderRepository } from '../backend/repositories/zeDeliveryOrderRepository.js'
 
 const LOG_DIRECTORY = path.resolve(process.cwd(), 'logs')
 const STATE_DIRECTORY = path.resolve(process.cwd(), 'tmp')
@@ -190,6 +191,7 @@ export function createZeDeliveryScheduler({
       },
     },
   })
+  const repository = createZeDeliveryOrderRepository()
   const cronExpression = getZeDeliveryCronExpression(config)
   const stateFilePath = buildStateFilePath(workerContext.instanceLabel)
 
@@ -225,6 +227,17 @@ export function createZeDeliveryScheduler({
       updatedAt: new Date().toISOString(),
     }
     writeState(stateFilePath, state)
+  }
+
+  const loadStoreSettings = async (storeId) => {
+    const settings = await repository.getStoreSettings({ storeId })
+
+    return {
+      enabled: settings?.enabled ?? config.enabled,
+      intervalMinutes: Number(settings?.intervalMinutes ?? config.sync.intervalMinutes),
+      notificationsEnabled: Boolean(settings?.notificationsEnabled ?? false),
+      notificationWebhookUrl: settings?.notificationWebhookUrl ?? '',
+    }
   }
 
   const runCycle = async ({ trigger = 'scheduler' } = {}) => {
@@ -263,33 +276,120 @@ export function createZeDeliveryScheduler({
 
         const results = []
         for (const storeId of workerContext.selectedStores) {
-          const scrapeResult = await adapter.scrapeDeliveries({
-            storeId,
-            maxOrders: config.sync.maxOrdersPerRun,
-          })
-          const syncPayload = await pushToNexus({
-            config,
-            storeId,
-            deliveries: scrapeResult.deliveries,
-            dryRun: args.dryRun || config.sync.dryRun,
-            logger,
-          })
+          const storeRunStartedAt = Date.now()
 
-          results.push({
-            storeId,
-            scraped: scrapeResult.deliveries.length,
-            syncPayload,
-          })
+          try {
+            const storeSettings = await loadStoreSettings(storeId)
+            const storeStatus = await repository.getStoreStatus({ storeId })
+            const lastSyncAt = storeStatus?.lastSyncAt
+              ? new Date(storeStatus.lastSyncAt).getTime()
+              : 0
+            const intervalMs = Math.max(5, Number(storeSettings.intervalMinutes) || 10) * 60 * 1000
+            const shouldSkipByInterval =
+              trigger === 'cron' && lastSyncAt > 0 && Date.now() - lastSyncAt < intervalMs
+
+            if (!storeSettings.enabled) {
+              results.push({
+                storeId,
+                skipped: true,
+                reason: 'disabled',
+              })
+              continue
+            }
+
+            if (shouldSkipByInterval) {
+              results.push({
+                storeId,
+                skipped: true,
+                reason: 'interval_not_reached',
+              })
+              continue
+            }
+
+            const scrapeResult = await adapter.scrapeDeliveries({
+              storeId,
+              maxOrders: config.sync.maxOrdersPerRun,
+            })
+            const syncPayload = await pushToNexus({
+              config,
+              storeId,
+              deliveries: scrapeResult.deliveries,
+              dryRun: args.dryRun || config.sync.dryRun,
+              logger,
+            })
+
+            results.push({
+              storeId,
+              scraped: scrapeResult.deliveries.length,
+              syncPayload,
+              settings: storeSettings,
+            })
+          } catch (error) {
+            const serializedError = serializeError(error)
+            const failureCreatedAt = new Date().toISOString()
+
+            await repository.appendSyncLog({
+              storeId,
+              log: {
+                source: 'ze_delivery',
+                trigger,
+                createdAt: failureCreatedAt,
+                summary: {
+                  runId: `scheduler-error-${Date.now()}-${storeId}`,
+                  processed: 0,
+                  created: 0,
+                  updated: 0,
+                  unchanged: 0,
+                  failed: 1,
+                  success: false,
+                  dryRun: args.dryRun || config.sync.dryRun,
+                  durationMs: Date.now() - storeRunStartedAt,
+                  startedAt: new Date(storeRunStartedAt).toISOString(),
+                  completedAt: failureCreatedAt,
+                  trigger,
+                  error: serializedError,
+                },
+              },
+            })
+
+            await repository.setStoreStatus({
+              storeId,
+              status: {
+                enabled: true,
+                lastSyncAt: failureCreatedAt,
+                lastSyncSuccess: false,
+                lastSyncError: serializedError.message,
+                counters: {
+                  created: 0,
+                  updated: 0,
+                  unchanged: 0,
+                  failed: 1,
+                },
+              },
+            })
+
+            results.push({
+              storeId,
+              error: serializedError,
+            })
+          }
         }
 
+        const hasStoreErrors = results.some((result) => Boolean(result.error))
+
         persistState({
-          status: 'idle',
-          successCount: Number(state.successCount ?? 0) + 1,
+          status: hasStoreErrors ? 'degraded' : 'idle',
+          successCount: Number(state.successCount ?? 0) + (hasStoreErrors ? 0 : 1),
+          failureCount: Number(state.failureCount ?? 0) + (hasStoreErrors ? 1 : 0),
+          errorCount: Number(state.errorCount ?? 0) + (hasStoreErrors ? 1 : 0),
           lastSyncAt: new Date().toISOString(),
-          lastSuccessAt: new Date().toISOString(),
+          lastSuccessAt: hasStoreErrors ? state.lastSuccessAt : new Date().toISOString(),
           nextSyncAt: computeNextSyncAt(),
           lastDurationMs: Date.now() - startedAt,
           lastResults: results,
+          lastError: hasStoreErrors
+            ? (results.find((result) => result.error)?.error ?? null)
+            : null,
         })
 
         logger.info('Ze Delivery scheduler cycle completed', {

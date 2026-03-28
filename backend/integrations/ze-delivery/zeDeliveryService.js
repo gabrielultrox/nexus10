@@ -46,6 +46,51 @@ function buildStoreSummary(initial = {}) {
   }
 }
 
+function buildDefaultStoreSettings(config) {
+  return {
+    enabled: config.enabled,
+    intervalMinutes: config.sync.intervalMinutes,
+    notificationsEnabled: false,
+    notificationWebhookUrl: '',
+  }
+}
+
+function mergeStoreSettings(config, storedSettings = {}) {
+  return {
+    ...buildDefaultStoreSettings(config),
+    ...(storedSettings ?? {}),
+  }
+}
+
+function sortByCreatedAtDesc(collection = []) {
+  return [...collection].sort((left, right) =>
+    String(right.createdAt ?? '').localeCompare(String(left.createdAt ?? '')),
+  )
+}
+
+function computeStatsFromLogs(logs = []) {
+  const totalRuns = logs.length
+  const failedRuns = logs.filter((log) => log.summary?.success === false).length
+  const syncedDeliveries = logs.reduce(
+    (total, log) => total + Number(log.summary?.processed ?? 0),
+    0,
+  )
+  const averageDurationMs =
+    totalRuns > 0
+      ? Math.round(
+          logs.reduce((total, log) => total + Number(log.summary?.durationMs ?? 0), 0) / totalRuns,
+        )
+      : 0
+
+  return {
+    deliveriesSynced: syncedDeliveries,
+    errors: failedRuns,
+    averageDurationMs,
+    failureRate: totalRuns > 0 ? failedRuns / totalRuns : 0,
+    totalRuns,
+  }
+}
+
 export function createZeDeliveryService({
   repository = createZeDeliveryOrderRepository(),
   adapter = createZeDeliveryAdapter(),
@@ -55,7 +100,23 @@ export function createZeDeliveryService({
     module: 'integrations.ze-delivery.service',
   })
 
+  async function getStoreSettings({ storeId }) {
+    const storedSettings = await repository.getStoreSettings({ storeId })
+    return mergeStoreSettings(config, storedSettings)
+  }
+
+  async function updateStoreSettings({ storeId, settings }) {
+    const nextSettings = mergeStoreSettings(config, settings)
+    await repository.setStoreSettings({
+      storeId,
+      settings: nextSettings,
+    })
+
+    return nextSettings
+  }
+
   async function ingestScrapedOrders({ storeId, deliveries, dryRun = false, syncMetadata = {} }) {
+    const startedAt = Date.now()
     const runId = syncMetadata.runId ?? `ze-delivery-${randomUUID()}`
     const summary = buildStoreSummary({
       dryRun,
@@ -117,6 +178,7 @@ export function createZeDeliveryService({
     }
 
     summary.completedAt = new Date().toISOString()
+    summary.durationMs = Date.now() - startedAt
     summary.success = summary.failed === 0
 
     if (!dryRun) {
@@ -203,18 +265,34 @@ export function createZeDeliveryService({
     })
 
     return Promise.all(
-      statuses.map(async ({ storeId: currentStoreId, status }) => ({
-        storeId: currentStoreId,
-        status,
-        recentOrders: await repository.listOrders({
+      statuses.map(async ({ storeId: currentStoreId, status }) => {
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        const [settings, recentOrders, recentLogs, logs24h] = await Promise.all([
+          getStoreSettings({ storeId: currentStoreId }),
+          repository.listOrders({
+            storeId: currentStoreId,
+            limit,
+          }),
+          repository.listSyncLogs({
+            storeId: currentStoreId,
+            limit,
+          }),
+          repository.listSyncLogs({
+            storeId: currentStoreId,
+            limit: 200,
+            since,
+          }),
+        ])
+
+        return {
           storeId: currentStoreId,
-          limit,
-        }),
-        recentLogs: await repository.listSyncLogs({
-          storeId: currentStoreId,
-          limit: Math.min(limit, 10),
-        }),
-      })),
+          status,
+          settings,
+          recentOrders,
+          recentLogs,
+          stats24h: computeStatsFromLogs(logs24h),
+        }
+      }),
     )
   }
 
@@ -268,9 +346,39 @@ export function createZeDeliveryService({
   async function getDashboard({ storeIds = config.stores } = {}) {
     const statuses = await getStatus({
       storeIds,
-      limit: 10,
+      limit: 20,
     })
     const health = await getHealth()
+    const recentRuns = sortByCreatedAtDesc(
+      statuses.flatMap((store) =>
+        (store.recentLogs ?? []).map((log) => ({
+          ...log,
+          storeId: store.storeId,
+          settings: store.settings,
+        })),
+      ),
+    ).slice(0, 20)
+    const merged24hStats = statuses.reduce(
+      (summary, store) => {
+        summary.deliveriesSynced += Number(store.stats24h?.deliveriesSynced ?? 0)
+        summary.errors += Number(store.stats24h?.errors ?? 0)
+        summary.totalRuns += Number(store.stats24h?.totalRuns ?? 0)
+        summary.averageDurationMsPool.push(Number(store.stats24h?.averageDurationMs ?? 0))
+        return summary
+      },
+      {
+        deliveriesSynced: 0,
+        errors: 0,
+        totalRuns: 0,
+        averageDurationMsPool: [],
+      },
+    )
+    const merged24hAverageDurationMs = merged24hStats.averageDurationMsPool.length
+      ? Math.round(
+          merged24hStats.averageDurationMsPool.reduce((total, value) => total + value, 0) /
+            merged24hStats.averageDurationMsPool.length,
+        )
+      : 0
 
     return {
       summary: {
@@ -282,6 +390,15 @@ export function createZeDeliveryService({
       },
       scheduler: health.scheduler,
       recentErrors: health.recentErrors,
+      recentRuns,
+      stats24h: {
+        deliveriesSynced: merged24hStats.deliveriesSynced,
+        errors: merged24hStats.errors,
+        averageDurationMs: merged24hAverageDurationMs,
+        failureRate:
+          merged24hStats.totalRuns > 0 ? merged24hStats.errors / merged24hStats.totalRuns : 0,
+        totalRuns: merged24hStats.totalRuns,
+      },
       stores: statuses,
     }
   }
@@ -293,5 +410,7 @@ export function createZeDeliveryService({
     getStatus,
     getHealth,
     getDashboard,
+    getStoreSettings,
+    updateStoreSettings,
   }
 }

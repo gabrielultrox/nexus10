@@ -34,6 +34,7 @@ import './styles/reports.css'
 import './styles/inventory.css'
 import './styles/audit-log.css'
 import './styles/history.css'
+import './styles/ze-delivery.css'
 
 registerPwa()
 setupRuntimeRecovery()

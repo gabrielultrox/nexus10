@@ -53,3 +53,7 @@ export type {
 
 export { useDashboardOrders } from './queries/useDashboardOrders'
 export { useDashboardSales } from './queries/useDashboardSales'
+export { useZeDeliverySyncStatus } from './queries/useZeDeliverySyncStatus'
+export type { IUseZeDeliverySyncStatusOptions } from './queries/useZeDeliverySyncStatus'
+export { useTriggerZeDeliverySync } from './mutations/useTriggerZeDeliverySync'
+export type { IUseZeDeliveryMutationOptions } from './mutations/useTriggerZeDeliverySync'
