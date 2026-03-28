@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto'
 
 import { getZeDeliveryConfig } from '../../config/ze-delivery.js'
 import { createLoggerContext, serializeError } from '../../logging/logger.js'
+import {
+  readZeDeliverySchedulerStates,
+  summarizeZeDeliverySchedulerStates,
+} from '../../middleware/health-check.js'
 import { zeDeliveryOrderSchema } from '../../validation/schemas.js'
 import { createZeDeliveryOrderRepository } from '../../repositories/zeDeliveryOrderRepository.js'
 import { createZeDeliveryAdapter } from './zeDeliveryAdapter.js'
@@ -215,11 +219,70 @@ export function createZeDeliveryService({
   }
 
   async function getHealth() {
+    const statuses = await repository.listStoreStatuses({
+      storeIds: config.stores,
+    })
+    const logsPerStore = await Promise.all(
+      config.stores.map(async (storeId) => ({
+        storeId,
+        logs: await repository.listSyncLogs({
+          storeId,
+          limit: 10,
+        }),
+      })),
+    )
+    const scheduler = summarizeZeDeliverySchedulerStates(readZeDeliverySchedulerStates())
+    const flattenedLogs = logsPerStore.flatMap((entry) =>
+      entry.logs.map((log) => ({
+        ...log,
+        storeId: entry.storeId,
+      })),
+    )
+    const successfulRuns = flattenedLogs.filter((log) => log.summary?.success).length
+    const failedRuns = flattenedLogs.filter((log) => log.summary?.success === false).length
+    const recentErrors = flattenedLogs.filter((log) => log.summary?.success === false).slice(0, 10)
+
     return {
+      status: scheduler.status,
       enabled: config.enabled,
       storesConfigured: config.stores.length,
       sessionFilePath: config.browser.sessionFilePath,
       lastCheckedAt: new Date().toISOString(),
+      lastSync: scheduler.lastSync,
+      nextSync: scheduler.nextSync,
+      errorCount: scheduler.errorCount,
+      successRate:
+        successfulRuns + failedRuns > 0 ? successfulRuns / (successfulRuns + failedRuns) : null,
+      stores: statuses.map(({ storeId, status }) => ({
+        storeId,
+        lastSyncAt: status?.lastSyncAt ?? null,
+        lastSyncSuccess: status?.lastSyncSuccess ?? null,
+        lastSyncError: status?.lastSyncError ?? null,
+        counters: status?.counters ?? null,
+      })),
+      recentErrors,
+      scheduler,
+    }
+  }
+
+  async function getDashboard({ storeIds = config.stores } = {}) {
+    const statuses = await getStatus({
+      storeIds,
+      limit: 10,
+    })
+    const health = await getHealth()
+
+    return {
+      summary: {
+        status: health.status,
+        lastSync: health.lastSync,
+        nextSync: health.nextSync,
+        errorCount: health.errorCount,
+        successRate: health.successRate,
+      },
+      scheduler: health.scheduler,
+      recentErrors: health.recentErrors,
+      stores: statuses,
     }
   }
 
@@ -229,5 +292,6 @@ export function createZeDeliveryService({
     retrySync,
     getStatus,
     getHealth,
+    getDashboard,
   }
 }

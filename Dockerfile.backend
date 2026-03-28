@@ -1,4 +1,4 @@
-FROM node:18 AS build
+FROM node:20-bookworm AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -7,16 +7,19 @@ RUN npm ci
 COPY . .
 RUN npm run build:backend
 
-FROM node:18-alpine AS runtime
+FROM mcr.microsoft.com/playwright:v1.58.2-jammy AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev && npm install -g pm2 && npm cache clean --force
 
 COPY --from=build /app/dist-backend ./dist-backend
+COPY --from=build /app/backend ./backend
+COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/ecosystem.config.js ./ecosystem.config.js
 COPY --from=build /app/firebase.json ./firebase.json
 COPY --from=build /app/firestore.indexes.json ./firestore.indexes.json
 COPY --from=build /app/firestore.rules ./firestore.rules

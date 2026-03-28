@@ -23,6 +23,9 @@ Automatizar a captura de entregas do painel do Zé Delivery por browser automati
   - status
   - sync manual
   - retry
+- `scripts/scheduler.js`
+  - agenda cron com health state
+  - sharding por instancias PM2
 
 ## Variaveis de ambiente
 
@@ -38,10 +41,12 @@ Principais adicionais:
 
 - `ZE_DELIVERY_STORE_IDS`
 - `ZE_DELIVERY_SYNC_INTERVAL_MINUTES`
+- `ZE_DELIVERY_WORKER_COUNT`
 - `ZE_DELIVERY_HEADLESS`
 - `ZE_DELIVERY_DRY_RUN`
 - `ZE_DELIVERY_NEXUS_API_BASE_URL`
 - `ZE_DELIVERY_SESSION_FILE`
+- `ZE_DELIVERY_SCHEDULER_LOG_LEVEL`
 - seletores `ZE_DELIVERY_*_SELECTOR`
 
 ## Como rodar
@@ -55,7 +60,7 @@ npm run ze-delivery:sync -- --once --storeId=loja-01
 Rodar scheduler:
 
 ```bash
-npm run ze-delivery:watch
+npm run scheduler:start
 ```
 
 Rodar teste interativo do scraper:
@@ -100,6 +105,10 @@ Body:
 ### Health
 
 `GET /api/integrations/ze-delivery/health`
+
+### Dashboard
+
+`GET /api/integrations/ze-delivery/dashboard`
 
 ## Firestore
 

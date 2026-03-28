@@ -62,11 +62,115 @@ services:
       IFOOD_WEBHOOK_URL: ${IFOOD_WEBHOOK_URL:-http://localhost:3001/webhooks/ifood}
       IFOOD_WEBHOOK_SECRET: ${IFOOD_WEBHOOK_SECRET:-dev-ifood-secret}
       IFOOD_POLLING_INTERVAL_SECONDS: ${IFOOD_POLLING_INTERVAL_SECONDS:-30}
+      ZE_DELIVERY_ENABLED: ${ZE_DELIVERY_ENABLED:-false}
+      ZE_DELIVERY_EMAIL: ${ZE_DELIVERY_EMAIL:-}
+      ZE_DELIVERY_PASSWORD: ${ZE_DELIVERY_PASSWORD:-}
+      ZE_DELIVERY_LOGIN_URL: ${ZE_DELIVERY_LOGIN_URL:-}
+      ZE_DELIVERY_DASHBOARD_URL_TEMPLATE: ${ZE_DELIVERY_DASHBOARD_URL_TEMPLATE:-}
+      ZE_DELIVERY_STORE_IDS: ${ZE_DELIVERY_STORE_IDS:-}
+      ZE_DELIVERY_SYNC_INTERVAL_MINUTES: ${ZE_DELIVERY_SYNC_INTERVAL_MINUTES:-5}
+      ZE_DELIVERY_WORKER_COUNT: ${ZE_DELIVERY_WORKER_COUNT:-2}
+      ZE_DELIVERY_HEADLESS: ${ZE_DELIVERY_HEADLESS:-true}
+      ZE_DELIVERY_DRY_RUN: ${ZE_DELIVERY_DRY_RUN:-false}
+      ZE_DELIVERY_NEXUS_API_BASE_URL: ${ZE_DELIVERY_NEXUS_API_BASE_URL:-http://backend:3001}
+      ZE_DELIVERY_SYNC_TOKEN: ${ZE_DELIVERY_SYNC_TOKEN:-}
+      ZE_DELIVERY_SESSION_FILE: ${ZE_DELIVERY_SESSION_FILE:-tmp/ze-delivery-storage-state.json}
+      ZE_DELIVERY_SCHEDULER_LOG_LEVEL: ${ZE_DELIVERY_SCHEDULER_LOG_LEVEL:-info}
+      ZE_DELIVERY_TIMEOUT_MS: ${ZE_DELIVERY_TIMEOUT_MS:-30000}
+      ZE_DELIVERY_REQUEST_DELAY_MS: ${ZE_DELIVERY_REQUEST_DELAY_MS:-500}
+      ZE_DELIVERY_MAX_ORDERS_PER_RUN: ${ZE_DELIVERY_MAX_ORDERS_PER_RUN:-100}
+      ZE_DELIVERY_RETRY_MAX: ${ZE_DELIVERY_RETRY_MAX:-3}
+      ZE_DELIVERY_RETRY_BASE_DELAY_MS: ${ZE_DELIVERY_RETRY_BASE_DELAY_MS:-1000}
+      ZE_DELIVERY_2FA_TIMEOUT_MS: ${ZE_DELIVERY_2FA_TIMEOUT_MS:-120000}
+      ZE_DELIVERY_BROWSER_CHANNEL: ${ZE_DELIVERY_BROWSER_CHANNEL:-}
+      ZE_DELIVERY_USER_AGENT: ${ZE_DELIVERY_USER_AGENT:-}
+      ZE_DELIVERY_LOGIN_EMAIL_SELECTOR: ${ZE_DELIVERY_LOGIN_EMAIL_SELECTOR:-input[type="email"]}
+      ZE_DELIVERY_LOGIN_PASSWORD_SELECTOR: ${ZE_DELIVERY_LOGIN_PASSWORD_SELECTOR:-input[type="password"]}
+      ZE_DELIVERY_LOGIN_SUBMIT_SELECTOR: ${ZE_DELIVERY_LOGIN_SUBMIT_SELECTOR:-button[type="submit"]}
+      ZE_DELIVERY_AFTER_LOGIN_SELECTOR: ${ZE_DELIVERY_AFTER_LOGIN_SELECTOR:-[data-testid="dashboard"]}
+      ZE_DELIVERY_2FA_SELECTOR: ${ZE_DELIVERY_2FA_SELECTOR:-}
+      ZE_DELIVERY_ORDER_ROW_SELECTOR: ${ZE_DELIVERY_ORDER_ROW_SELECTOR:-[data-testid="delivery-row"]}
+      ZE_DELIVERY_ORDER_ID_SELECTOR: ${ZE_DELIVERY_ORDER_ID_SELECTOR:-[data-testid="delivery-id"]}
+      ZE_DELIVERY_CODE_SELECTOR: ${ZE_DELIVERY_CODE_SELECTOR:-[data-testid="delivery-code"]}
+      ZE_DELIVERY_STATUS_SELECTOR: ${ZE_DELIVERY_STATUS_SELECTOR:-[data-testid="delivery-status"]}
+      ZE_DELIVERY_LOCATION_SELECTOR: ${ZE_DELIVERY_LOCATION_SELECTOR:-[data-testid="delivery-location"]}
+      ZE_DELIVERY_COURIER_SELECTOR: ${ZE_DELIVERY_COURIER_SELECTOR:-[data-testid="delivery-courier"]}
+      ZE_DELIVERY_SCANNED_BY_SELECTOR: ${ZE_DELIVERY_SCANNED_BY_SELECTOR:-[data-testid="delivery-scanned-by"]}
+      ZE_DELIVERY_TIMESTAMP_SELECTOR: ${ZE_DELIVERY_TIMESTAMP_SELECTOR:-[data-testid="delivery-timestamp"]}
+      ZE_DELIVERY_LAT_SELECTOR: ${ZE_DELIVERY_LAT_SELECTOR:-}
+      ZE_DELIVERY_LNG_SELECTOR: ${ZE_DELIVERY_LNG_SELECTOR:-}
     depends_on:
       redis:
         condition: service_started
       firestore-emulator:
         condition: service_started
+    networks:
+      - nexus10
+    restart: unless-stopped
+
+  ze-delivery-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: nexus10-ze-delivery-scheduler
+    command: ['pm2-runtime', 'start', 'ecosystem.config.js', '--only', 'nexus10-ze-delivery-sync']
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      ZE_DELIVERY_ENABLED: ${ZE_DELIVERY_ENABLED:-false}
+      ZE_DELIVERY_EMAIL: ${ZE_DELIVERY_EMAIL:-}
+      ZE_DELIVERY_PASSWORD: ${ZE_DELIVERY_PASSWORD:-}
+      ZE_DELIVERY_LOGIN_URL: ${ZE_DELIVERY_LOGIN_URL:-}
+      ZE_DELIVERY_DASHBOARD_URL_TEMPLATE: ${ZE_DELIVERY_DASHBOARD_URL_TEMPLATE:-}
+      ZE_DELIVERY_STORE_IDS: ${ZE_DELIVERY_STORE_IDS:-}
+      ZE_DELIVERY_SYNC_INTERVAL_MINUTES: ${ZE_DELIVERY_SYNC_INTERVAL_MINUTES:-5}
+      ZE_DELIVERY_WORKER_COUNT: ${ZE_DELIVERY_WORKER_COUNT:-2}
+      ZE_DELIVERY_HEADLESS: ${ZE_DELIVERY_HEADLESS:-true}
+      ZE_DELIVERY_DRY_RUN: ${ZE_DELIVERY_DRY_RUN:-false}
+      ZE_DELIVERY_NEXUS_API_BASE_URL: ${ZE_DELIVERY_NEXUS_API_BASE_URL:-http://backend:3001}
+      ZE_DELIVERY_SYNC_TOKEN: ${ZE_DELIVERY_SYNC_TOKEN:-}
+      ZE_DELIVERY_SESSION_FILE: ${ZE_DELIVERY_SESSION_FILE:-tmp/ze-delivery-storage-state.json}
+      ZE_DELIVERY_SCHEDULER_LOG_LEVEL: ${ZE_DELIVERY_SCHEDULER_LOG_LEVEL:-info}
+      ZE_DELIVERY_TIMEOUT_MS: ${ZE_DELIVERY_TIMEOUT_MS:-30000}
+      ZE_DELIVERY_REQUEST_DELAY_MS: ${ZE_DELIVERY_REQUEST_DELAY_MS:-500}
+      ZE_DELIVERY_MAX_ORDERS_PER_RUN: ${ZE_DELIVERY_MAX_ORDERS_PER_RUN:-100}
+      ZE_DELIVERY_RETRY_MAX: ${ZE_DELIVERY_RETRY_MAX:-3}
+      ZE_DELIVERY_RETRY_BASE_DELAY_MS: ${ZE_DELIVERY_RETRY_BASE_DELAY_MS:-1000}
+      ZE_DELIVERY_2FA_TIMEOUT_MS: ${ZE_DELIVERY_2FA_TIMEOUT_MS:-120000}
+      ZE_DELIVERY_BROWSER_CHANNEL: ${ZE_DELIVERY_BROWSER_CHANNEL:-}
+      ZE_DELIVERY_USER_AGENT: ${ZE_DELIVERY_USER_AGENT:-}
+      ZE_DELIVERY_LOGIN_EMAIL_SELECTOR: ${ZE_DELIVERY_LOGIN_EMAIL_SELECTOR:-input[type="email"]}
+      ZE_DELIVERY_LOGIN_PASSWORD_SELECTOR: ${ZE_DELIVERY_LOGIN_PASSWORD_SELECTOR:-input[type="password"]}
+      ZE_DELIVERY_LOGIN_SUBMIT_SELECTOR: ${ZE_DELIVERY_LOGIN_SUBMIT_SELECTOR:-button[type="submit"]}
+      ZE_DELIVERY_AFTER_LOGIN_SELECTOR: ${ZE_DELIVERY_AFTER_LOGIN_SELECTOR:-[data-testid="dashboard"]}
+      ZE_DELIVERY_2FA_SELECTOR: ${ZE_DELIVERY_2FA_SELECTOR:-}
+      ZE_DELIVERY_ORDER_ROW_SELECTOR: ${ZE_DELIVERY_ORDER_ROW_SELECTOR:-[data-testid="delivery-row"]}
+      ZE_DELIVERY_ORDER_ID_SELECTOR: ${ZE_DELIVERY_ORDER_ID_SELECTOR:-[data-testid="delivery-id"]}
+      ZE_DELIVERY_CODE_SELECTOR: ${ZE_DELIVERY_CODE_SELECTOR:-[data-testid="delivery-code"]}
+      ZE_DELIVERY_STATUS_SELECTOR: ${ZE_DELIVERY_STATUS_SELECTOR:-[data-testid="delivery-status"]}
+      ZE_DELIVERY_LOCATION_SELECTOR: ${ZE_DELIVERY_LOCATION_SELECTOR:-[data-testid="delivery-location"]}
+      ZE_DELIVERY_COURIER_SELECTOR: ${ZE_DELIVERY_COURIER_SELECTOR:-[data-testid="delivery-courier"]}
+      ZE_DELIVERY_SCANNED_BY_SELECTOR: ${ZE_DELIVERY_SCANNED_BY_SELECTOR:-[data-testid="delivery-scanned-by"]}
+      ZE_DELIVERY_TIMESTAMP_SELECTOR: ${ZE_DELIVERY_TIMESTAMP_SELECTOR:-[data-testid="delivery-timestamp"]}
+      ZE_DELIVERY_LAT_SELECTOR: ${ZE_DELIVERY_LAT_SELECTOR:-}
+      ZE_DELIVERY_LNG_SELECTOR: ${ZE_DELIVERY_LNG_SELECTOR:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "const fs=require(''fs''); const path=require(''path''); const dir=path.resolve(''/app/tmp''); if(!fs.existsSync(dir)){process.exit(1)} const files=fs.readdirSync(dir).filter((name)=>name.startsWith(''ze-delivery-scheduler-state-'')); if(!files.length){process.exit(1)} const state=JSON.parse(fs.readFileSync(path.join(dir, files[0]), ''utf8'')); process.exit(state.status === ''degraded'' ? 1 : 0)"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - scheduler-logs:/app/logs
+      - scheduler-state:/app/tmp
     networks:
       - nexus10
     restart: unless-stopped
@@ -116,3 +220,5 @@ volumes:
   redis-data:
   firebase-emulator-data:
   firebase-cache:
+  scheduler-logs:
+  scheduler-state:

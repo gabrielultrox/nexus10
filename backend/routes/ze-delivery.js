@@ -173,12 +173,46 @@ export function registerZeDeliveryRoutes(app) {
     '/api/integrations/ze-delivery/health',
     requireApiAuth,
     requirePermission('integrations:write'),
-    async (_request, response) => {
-      const health = await getZeDeliveryService().getHealth()
-      response.json({
-        ok: true,
-        data: health,
-      })
+    async (request, response) => {
+      try {
+        const health = await getZeDeliveryService().getHealth()
+        response.json({
+          ok: true,
+          data: health,
+        })
+      } catch (error) {
+        sendIntegrationError(
+          request,
+          response,
+          error,
+          'Nao foi possivel consultar a saude do Ze Delivery.',
+        )
+      }
+    },
+  )
+
+  app.get(
+    '/api/integrations/ze-delivery/dashboard',
+    requireApiAuth,
+    requirePermission('integrations:write'),
+    async (request, response) => {
+      try {
+        const storeIds = request.authUser?.storeIds?.length ? request.authUser.storeIds : undefined
+        const dashboard = await getZeDeliveryService().getDashboard({
+          storeIds,
+        })
+        response.json({
+          ok: true,
+          data: dashboard,
+        })
+      } catch (error) {
+        sendIntegrationError(
+          request,
+          response,
+          error,
+          'Nao foi possivel consultar o dashboard do Ze Delivery.',
+        )
+      }
     },
   )
 }
