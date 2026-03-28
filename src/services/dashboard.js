@@ -1,10 +1,11 @@
-﻿import {
+import { loadCashState } from './cashStateService'
+import {
   getFinanceEntryDirection,
   isFinanceEntryActive,
   subscribeToFinancialEntries,
 } from './finance'
 import { isOrderClosedStatus, isSalePosted } from './commerce'
-import { firebaseDb, firebaseReady, canUseRemoteSync } from './firebase'
+import { canUseRemoteSync, firebaseReady } from './firebase'
 import { subscribeToInventoryItems } from './inventory'
 import { loadLocalRecords, loadResettableLocalRecords } from './localAccess'
 import { courierSeedRecords } from './operationsSeedData'
@@ -12,6 +13,9 @@ import { subscribeToOrders } from './orders'
 import { subscribeToSales } from './sales'
 
 const delayedOrderThresholdMinutes = 35
+const CASH_STATE_STORAGE_KEY = 'nexus-module-cash-state'
+const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending'
+const DELIVERY_READING_STORAGE_KEY = 'nexus-module-delivery-reading'
 
 function asDate(value) {
   if (!value) {
@@ -36,6 +40,20 @@ function formatCurrency(value) {
 
 function formatInteger(value) {
   return new Intl.NumberFormat('pt-BR').format(Number(value ?? 0))
+}
+
+function formatPercent(value, digits = 0) {
+  const parsed = Number(value)
+
+  if (!Number.isFinite(parsed)) {
+    return '--'
+  }
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(parsed / 100)
 }
 
 function formatHourLabel(hour) {
@@ -79,6 +97,21 @@ function buildDateLabel(date) {
     day: '2-digit',
     month: '2-digit',
   }).format(date)
+}
+
+function formatDateTime(value) {
+  const dateValue = asDate(value)
+
+  if (!dateValue) {
+    return 'Sem registro'
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateValue)
 }
 
 function getDayKey(date) {
@@ -147,6 +180,63 @@ function shouldHighlightAdvanceReminder(now = new Date()) {
   return now >= start
 }
 
+function getShiftLabel(now = new Date()) {
+  const hour = now.getHours()
+
+  if (hour < 6) {
+    return 'Madrugada'
+  }
+
+  if (hour < 12) {
+    return 'Manha'
+  }
+
+  if (hour < 18) {
+    return 'Tarde'
+  }
+
+  return 'Noite'
+}
+
+function buildPeriodLabel(startDate, endDate) {
+  if (!startDate || !endDate) {
+    return 'Periodo atual'
+  }
+
+  if (startDate === endDate) {
+    return buildDateLabel(new Date(`${startDate}T00:00:00`))
+  }
+
+  return `${buildDateLabel(new Date(`${startDate}T00:00:00`))} - ${buildDateLabel(new Date(`${endDate}T00:00:00`))}`
+}
+
+function normalizeRate(part, total) {
+  if (!total) {
+    return null
+  }
+
+  return (part / total) * 100
+}
+
+function hasResolvedFinancialPending(record) {
+  return Boolean(record?.resolvedAtClient)
+}
+
+function matchesChannel(record, targetChannel) {
+  const normalizedTarget = String(targetChannel ?? '')
+    .trim()
+    .toUpperCase()
+  const candidates = [record?.channel, record?.source, record?.origin, record?.sourceChannel]
+    .map((value) =>
+      String(value ?? '')
+        .trim()
+        .toUpperCase(),
+    )
+    .filter(Boolean)
+
+  return candidates.some((candidate) => candidate === normalizedTarget)
+}
+
 function buildDailySalesSeries(sales, startDate, endDate) {
   const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date()
   const end = endDate ? new Date(`${endDate}T23:59:59`) : new Date()
@@ -209,6 +299,10 @@ function buildHourlyOrdersSeries(orders, sales) {
   }))
 }
 
+function buildReminder({ id, type, title, message, route }) {
+  return { id, type, title, message, route }
+}
+
 export function getDefaultDashboardPeriod() {
   const endDate = new Date()
   const startDate = new Date()
@@ -227,6 +321,9 @@ export function loadDashboardOperationalSources() {
   const advanceRecords = loadResettableLocalRecords('nexus-module-advances', [], 3)
   const occurrenceRecords = loadResettableLocalRecords('nexus-module-occurrences', [], 3)
   const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords)
+  const deliveryReadingRecords = loadResettableLocalRecords(DELIVERY_READING_STORAGE_KEY, [], 3)
+  const financialPendingRecords = loadResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [], 3)
+  const cashState = loadCashState(CASH_STATE_STORAGE_KEY, 3)
 
   return {
     scheduleRecords,
@@ -235,11 +332,14 @@ export function loadDashboardOperationalSources() {
     advanceRecords,
     occurrenceRecords,
     courierRecords,
+    deliveryReadingRecords,
+    financialPendingRecords,
+    cashState,
   }
 }
 
 export function subscribeToDashboardSources(storeId, handlers) {
-  if (!firebaseReady || !firebaseDb || !storeId || !canUseRemoteSync()) {
+  if (!firebaseReady || !storeId || !canUseRemoteSync()) {
     handlers.onSales?.([])
     handlers.onOrders?.([])
     handlers.onInventoryItems?.([])
@@ -256,7 +356,6 @@ export function subscribeToDashboardSources(storeId, handlers) {
   unsubscribers.push(
     subscribeToFinancialEntries(storeId, handlers.onFinancialEntries, handlers.onError),
   )
-
   unsubscribers.push(subscribeToOrders(storeId, handlers.onOrders, handlers.onError))
 
   return () => {
@@ -265,14 +364,17 @@ export function subscribeToDashboardSources(storeId, handlers) {
 }
 
 export function buildDashboardData({
-  sales,
-  orders,
-  financialEntries,
-  inventoryItems,
+  storeId,
+  sales = [],
+  orders = [],
+  financialEntries = [],
+  inventoryItems = [],
   startDate,
   endDate,
-  operations,
+  operations = {},
+  integrations = {},
 }) {
+  const now = new Date()
   const completedSales = sales.filter(
     (sale) =>
       isSalePosted(sale.domainStatus ?? sale.status) &&
@@ -281,7 +383,13 @@ export function buildDashboardData({
   const ordersInPeriod = orders.filter((order) =>
     isWithinPeriod(order.createdAt, startDate, endDate),
   )
+  const openOrders = ordersInPeriod.filter(
+    (order) => !isOrderClosedStatus(order.domainStatus ?? order.status),
+  )
   const delayedOrders = ordersInPeriod.filter(isOrderDelayed)
+  const completedOrders = ordersInPeriod.filter((order) =>
+    isOrderClosedStatus(order.domainStatus ?? order.status),
+  )
   const activeEntries = financialEntries.filter(
     (entry) => isWithinPeriod(entry.createdAt, startDate, endDate) && isFinanceEntryActive(entry),
   )
@@ -298,7 +406,44 @@ export function buildDashboardData({
   const lowStockItems = inventoryItems.filter(
     (item) => Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
   )
-  const activeCouriers = operations.scheduleRecords.filter((record) => record.status !== 'Pendente')
+
+  const scheduleRecords = operations.scheduleRecords ?? []
+  const machineChecklist = operations.machineChecklist ?? []
+  const changeRecords = operations.changeRecords ?? []
+  const advanceRecords = operations.advanceRecords ?? []
+  const occurrenceRecords = operations.occurrenceRecords ?? []
+  const courierRecords = operations.courierRecords ?? []
+  const deliveryReadingRecords = operations.deliveryReadingRecords ?? []
+  const financialPendingRecords = operations.financialPendingRecords ?? []
+  const cashState = operations.cashState ?? {
+    status: 'fechado',
+    currentBalance: 0,
+    initialBalance: 0,
+    pendingCount: 0,
+  }
+
+  const openFinancialPendings = financialPendingRecords.filter(
+    (record) => !hasResolvedFinancialPending(record),
+  )
+  const highPriorityFinancialPendings = openFinancialPendings.filter(
+    (record) => record.priority === 'high',
+  )
+  const openFinancialPendingAmount = openFinancialPendings.reduce(
+    (total, record) => total + parseMoney(record.amount),
+    0,
+  )
+
+  const activeCouriers = scheduleRecords.filter((record) => record.status !== 'Pendente')
+  const registeredCouriers = courierRecords.length
+  const openChanges = changeRecords.filter((record) => record.status !== 'Retornou').length
+  const openAdvances = advanceRecords.filter((record) => record.status !== 'Baixado').length
+  const openOccurrences = occurrenceRecords.filter(
+    (record) => record.status !== 'Resolvida' && record.status !== 'Fechada',
+  ).length
+  const uncheckedMachines = machineChecklist.filter((record) => record.status !== 'Presente').length
+  const closedDeliveryReadings = deliveryReadingRecords.filter((record) => Boolean(record.closed))
+  const openDeliveryReadings = deliveryReadingRecords.filter((record) => !record.closed)
+  const turboDeliveries = deliveryReadingRecords.filter((record) => Boolean(record.turbo))
 
   const productsMap = new Map()
   completedSales.forEach((sale) => {
@@ -321,96 +466,206 @@ export function buildDashboardData({
     .sort((left, right) => right.quantity - left.quantity)
     .slice(0, 5)
 
-  const openChanges = operations.changeRecords.filter(
-    (record) => record.status !== 'Retornou',
-  ).length
-  const openAdvances = operations.advanceRecords.filter(
-    (record) => record.status !== 'Baixado',
-  ).length
-  const openOccurrences = operations.occurrenceRecords.filter(
-    (record) => record.status !== 'Resolvida' && record.status !== 'Fechada',
-  ).length
-  const uncheckedMachines = operations.machineChecklist.filter(
-    (record) => record.status !== 'Presente',
-  ).length
-  const isSingleDay = startDate === endDate
-  const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder()
+  const externalIfoodOrders = ordersInPeriod.filter((order) => matchesChannel(order, 'IFOOD'))
+  const externalZeOrders = ordersInPeriod.filter((order) => matchesChannel(order, 'ZE_DELIVERY'))
+  const ifoodMerchants = integrations.ifoodMerchants ?? []
+  const zeDeliveryStore = integrations.zeDeliveryStore ?? null
+  const zeStats24h = zeDeliveryStore?.stats24h ?? null
+  const zeSuccessRate =
+    zeStats24h?.totalRuns != null
+      ? Math.max(0, 100 - Number(zeStats24h.failureRate ?? 0))
+      : (integrations.zeDeliverySummary?.successRate ?? null)
+  const zeLastSyncSuccess = zeDeliveryStore?.status?.lastSyncSuccess
+  const integrationIssueCount =
+    (zeStats24h?.errors ?? integrations.zeDeliverySummary?.errorCount ?? 0) +
+    (integrations.integrationError ? 1 : 0)
+  const iFoodConfiguredCount = ifoodMerchants.length
+  const orderCompletionRate = normalizeRate(completedOrders.length, ordersInPeriod.length) ?? 0
+  const totalOperationalRisks =
+    delayedOrders.length +
+    openOccurrences +
+    highPriorityFinancialPendings.length +
+    openChanges +
+    integrationIssueCount
+  const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder(now)
+  const periodLabel = buildPeriodLabel(startDate, endDate)
+  const shiftLabel = getShiftLabel(now)
+  const storeLabel = storeId ? `Loja ${storeId}` : 'Loja ativa'
+
+  const reminders = []
+
+  if (delayedOrders.length > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'orders-delayed',
+        type: 'danger',
+        title:
+          delayedOrders.length === 1
+            ? '1 pedido fora da janela'
+            : `${formatInteger(delayedOrders.length)} pedidos fora da janela`,
+        message: 'Priorize pedidos travados para reduzir fila e impacto no turno.',
+        route: '/orders',
+      }),
+    )
+  }
+
+  if (highPriorityFinancialPendings.length > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'financial-pending-high',
+        type: 'warning',
+        title:
+          highPriorityFinancialPendings.length === 1
+            ? '1 pendencia financeira critica'
+            : `${formatInteger(highPriorityFinancialPendings.length)} pendencias financeiras criticas`,
+        message: 'Ha valor em risco e casos de cliente aguardando retorno do financeiro.',
+        route: '/financial-pendings',
+      }),
+    )
+  }
+
+  if (openOccurrences > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'occurrences-open',
+        type: 'warning',
+        title:
+          openOccurrences === 1
+            ? '1 ocorrencia em tratamento'
+            : `${formatInteger(openOccurrences)} ocorrencias em tratamento`,
+        message: 'Ocorrencias abertas continuam pressionando a operacao do turno.',
+        route: '/occurrences',
+      }),
+    )
+  }
+
+  if (uncheckedMachines > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'machines-unchecked',
+        type: 'info',
+        title:
+          uncheckedMachines === 1
+            ? '1 maquininha sem checklist'
+            : `${formatInteger(uncheckedMachines)} maquininhas sem checklist`,
+        message: 'Feche a checagem do parque para evitar falhas na rua.',
+        route: '/machine-history',
+      }),
+    )
+  }
+
+  if (lowStockItems.length > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'low-stock',
+        type: 'warning',
+        title:
+          lowStockItems.length === 1
+            ? '1 item abaixo do minimo'
+            : `${formatInteger(lowStockItems.length)} itens abaixo do minimo`,
+        message: 'Reposicao imediata reduz risco de ruptura no atendimento.',
+        route: '/inventory',
+      }),
+    )
+  }
+
+  if (zeLastSyncSuccess === false || integrationIssueCount > 0) {
+    reminders.push(
+      buildReminder({
+        id: 'integrations-unstable',
+        type: 'danger',
+        title: 'Integracoes exigem atencao',
+        message: 'O monitoramento detectou erro recente em sincronizacao externa.',
+        route: '/integrations/ze-delivery',
+      }),
+    )
+  }
+
+  if (shouldShowAdvancesReminder) {
+    reminders.push(
+      buildReminder({
+        id: 'advances-open',
+        type: 'warning',
+        title:
+          openAdvances === 1
+            ? 'Existe 1 vale em aberto'
+            : `Existem ${formatInteger(openAdvances)} vales em aberto`,
+        message: 'Desconte do entregador antes do fechamento do turno.',
+        route: '/advances',
+      }),
+    )
+  }
 
   return {
     kpis: [
       {
         id: 'orders',
-        label: isSingleDay ? 'Pedidos hoje' : 'Pedidos no periodo',
+        label: 'Pedidos no recorte',
         value: formatInteger(ordersInPeriod.length),
-        meta: delayedOrders.length > 0 ? 'na fila' : 'sem atraso',
-        badgeText: delayedOrders.length > 0 ? 'atraso' : 'ok',
+        meta: `${formatInteger(openOrders.length)} em aberto - ${formatInteger(delayedOrders.length)} atrasados`,
+        badgeText: delayedOrders.length > 0 ? 'atencao' : 'fluxo',
         badgeClass: delayedOrders.length > 0 ? 'ui-badge--warning' : 'ui-badge--success',
-        tone: 'amber',
+        tone: delayedOrders.length > 0 ? 'amber' : 'green',
       },
       {
         id: 'sales',
-        label: isSingleDay ? 'Vendas hoje' : 'Vendas no periodo',
-        value: formatInteger(totalSalesCount),
-        meta: 'lancadas',
+        label: 'Vendas faturadas',
+        value: formatCurrency(totalSold),
+        meta: `${formatInteger(totalSalesCount)} vendas - ticket ${formatCurrency(averageTicket)}`,
         badgeText: 'comercial',
         badgeClass: 'ui-badge--info',
         tone: 'blue',
       },
       {
-        id: 'revenue',
-        label: isSingleDay ? 'Faturamento hoje' : 'Faturamento',
-        value: formatCurrency(totalIncome || totalSold),
-        meta: totalExpense > 0 ? 'financeiro ok' : 'sem saida',
-        badgeText: 'financeiro',
-        badgeClass: 'ui-badge--success',
-        tone: 'green',
+        id: 'cash',
+        label: 'Caixa do turno',
+        value: formatCurrency(cashState.currentBalance),
+        meta: cashState.status === 'aberto' ? 'caixa aberto' : 'caixa fechado',
+        badgeText: cashState.status === 'aberto' ? 'ao vivo' : 'fechado',
+        badgeClass: cashState.status === 'aberto' ? 'ui-badge--success' : 'ui-badge--neutral',
+        tone: cashState.status === 'aberto' ? 'green' : 'blue',
       },
       {
-        id: 'ticket',
-        label: 'Ticket medio',
-        value: formatCurrency(averageTicket),
-        meta: 'media do turno',
-        badgeText: 'media',
-        badgeClass: 'ui-badge--special',
-        tone: 'blue',
+        id: 'financial-pendings',
+        label: 'Pendencias financeiras',
+        value: formatCurrency(openFinancialPendingAmount),
+        meta: `${formatInteger(openFinancialPendings.length)} abertas - ${formatInteger(highPriorityFinancialPendings.length)} alta prioridade`,
+        badgeText: highPriorityFinancialPendings.length > 0 ? 'critico' : 'controle',
+        badgeClass:
+          highPriorityFinancialPendings.length > 0 ? 'ui-badge--danger' : 'ui-badge--info',
+        tone: highPriorityFinancialPendings.length > 0 ? 'red' : 'blue',
       },
       {
-        id: 'delayed',
-        label: 'Pedidos atrasados',
-        value: formatInteger(delayedOrders.length),
-        meta: delayedOrders.length > 0 ? 'acao agora' : 'estavel',
-        badgeText: delayedOrders.length > 0 ? 'acao' : 'estavel',
-        badgeClass: delayedOrders.length > 0 ? 'ui-badge--danger' : 'ui-badge--success',
-        variant: delayedOrders.length > 0 ? 'danger' : 'neutral',
-        pulse: delayedOrders.length > 0,
-        tone: delayedOrders.length > 0 ? 'red' : 'green',
+        id: 'operational-risk',
+        label: 'Falhas operacionais',
+        value: formatInteger(totalOperationalRisks),
+        meta: `${formatInteger(openOccurrences)} ocorrencias - ${formatInteger(uncheckedMachines)} checks pendentes`,
+        badgeText: totalOperationalRisks > 0 ? 'acao' : 'ok',
+        badgeClass: totalOperationalRisks > 0 ? 'ui-badge--danger' : 'ui-badge--success',
+        variant: totalOperationalRisks > 0 ? 'danger' : 'neutral',
+        pulse: totalOperationalRisks > 0,
+        tone: totalOperationalRisks > 0 ? 'red' : 'green',
       },
       {
         id: 'couriers',
         label: 'Entregadores ativos',
         value: formatInteger(activeCouriers.length),
-        meta: 'escala ativa',
+        meta: `${formatInteger(closedDeliveryReadings.length)} leituras fechadas - ${formatInteger(registeredCouriers)} cadastrados`,
         badgeText: 'escala',
         badgeClass: 'ui-badge--info',
         tone: 'blue',
       },
       {
-        id: 'top-products',
-        label: 'Top produtos',
-        value: topProducts[0] ? formatInteger(topProducts[0].quantity) : '0',
-        meta: topProducts[0] ? 'mix lider' : 'sem venda',
-        badgeText: 'mix',
-        badgeClass: 'ui-badge--special',
-        tone: 'blue',
-      },
-      {
-        id: 'low-stock',
-        label: 'Estoque baixo',
-        value: formatInteger(lowStockItems.length),
-        meta: lowStockItems.length > 0 ? 'repor agora' : 'estoque ok',
-        badgeText: lowStockItems.length > 0 ? 'alerta' : 'ok',
-        badgeClass: lowStockItems.length > 0 ? 'ui-badge--danger' : 'ui-badge--success',
-        tone: lowStockItems.length > 0 ? 'red' : 'green',
+        id: 'integrations',
+        label: 'Integracoes',
+        value:
+          zeSuccessRate != null
+            ? formatPercent(zeSuccessRate, 0)
+            : formatInteger(iFoodConfiguredCount),
+        meta: `Ze ${zeLastSyncSuccess === false ? 'instavel' : 'monitorado'} - iFood ${formatInteger(iFoodConfiguredCount)} loja(s)`,
+        badgeText: integrationIssueCount > 0 ? 'instavel' : 'ok',
+        badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+        tone: integrationIssueCount > 0 ? 'amber' : 'green',
       },
     ],
     charts: {
@@ -428,20 +683,213 @@ export function buildDashboardData({
       },
     },
     operations: {
-      reminders: shouldShowAdvancesReminder
-        ? [
-            {
-              id: 'advances-open',
-              type: 'warning',
-              title:
-                openAdvances === 1
-                  ? 'Existe 1 vale em aberto'
-                  : `Existem ${formatInteger(openAdvances)} vales em aberto`,
-              message: 'Desconte do entregador antes do fechamento do turno.',
-              route: '/advances',
-            },
-          ]
-        : [],
+      hero: {
+        eyebrow: `${storeLabel} - ${shiftLabel}`,
+        title: 'Leitura executiva da operacao',
+        description: `${periodLabel} - ${formatInteger(ordersInPeriod.length)} pedidos monitorados, ${formatInteger(totalSalesCount)} vendas faturadas e ${formatInteger(activeCouriers.length)} entregadores ativos.`,
+        statusLabel:
+          totalOperationalRisks > 0
+            ? `${formatInteger(totalOperationalRisks)} pontos de atencao`
+            : 'Operacao sob controle',
+        statusTone: totalOperationalRisks > 0 ? 'warning' : 'success',
+        signals: [
+          {
+            id: 'hero-orders',
+            label: 'Pedidos em aberto',
+            value: formatInteger(openOrders.length),
+            meta:
+              delayedOrders.length > 0
+                ? `${formatInteger(delayedOrders.length)} fora da janela`
+                : `${formatPercent(orderCompletionRate, 0)} concluidos no recorte`,
+          },
+          {
+            id: 'hero-cash',
+            label: 'Saldo de caixa',
+            value: formatCurrency(cashState.currentBalance),
+            meta: cashState.status === 'aberto' ? 'caixa aberto no turno' : 'caixa fechado',
+          },
+          {
+            id: 'hero-integrations',
+            label: 'Saude das integracoes',
+            value: zeSuccessRate != null ? formatPercent(zeSuccessRate, 0) : 'Sem sinal',
+            meta: `Ze ${zeLastSyncSuccess === false ? 'com falha' : 'ok'} - iFood ${formatInteger(iFoodConfiguredCount)} loja(s)`,
+          },
+        ],
+        actions: [
+          { id: 'hero-orders-action', label: 'Pedidos', route: '/orders', variant: 'primary' },
+          { id: 'hero-sales-action', label: 'Vendas', route: '/sales', variant: 'secondary' },
+          { id: 'hero-cash-action', label: 'Caixa', route: '/cash', variant: 'secondary' },
+          {
+            id: 'hero-integrations-action',
+            label: 'Integracoes',
+            route: '/integrations/ze-delivery',
+            variant: 'secondary',
+          },
+        ],
+      },
+      reminders,
+      commandCenter: [
+        {
+          id: 'command-orders',
+          label: 'Pedidos',
+          value: formatInteger(openOrders.length),
+          meta: `${formatInteger(ordersInPeriod.length)} no recorte - ${formatInteger(delayedOrders.length)} atrasados`,
+          badgeText: delayedOrders.length > 0 ? 'fila' : 'ok',
+          badgeClass: delayedOrders.length > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+          tone: delayedOrders.length > 0 ? 'amber' : 'green',
+          route: '/orders',
+          actionLabel: 'Abrir pedidos',
+        },
+        {
+          id: 'command-sales',
+          label: 'Vendas',
+          value: formatCurrency(totalSold),
+          meta: `${formatInteger(totalSalesCount)} vendas - ticket ${formatCurrency(averageTicket)}`,
+          badgeText: 'turno',
+          badgeClass: 'ui-badge--info',
+          tone: 'blue',
+          route: '/sales',
+          actionLabel: 'Abrir vendas',
+        },
+        {
+          id: 'command-cash',
+          label: 'Caixa',
+          value: cashState.status === 'aberto' ? 'Aberto' : 'Fechado',
+          meta: `Saldo ${formatCurrency(cashState.currentBalance)} - ${formatInteger(cashState.pendingCount)} pendencia(s)`,
+          badgeText: cashState.status === 'aberto' ? 'ao vivo' : 'turno',
+          badgeClass: cashState.status === 'aberto' ? 'ui-badge--success' : 'ui-badge--neutral',
+          tone: cashState.status === 'aberto' ? 'green' : 'blue',
+          route: '/cash',
+          actionLabel: 'Abrir caixa',
+        },
+        {
+          id: 'command-pendings',
+          label: 'Pendencias financeiras',
+          value: formatInteger(openFinancialPendings.length),
+          meta: `${formatCurrency(openFinancialPendingAmount)} em aberto - ${formatInteger(highPriorityFinancialPendings.length)} alta prioridade`,
+          badgeText: highPriorityFinancialPendings.length > 0 ? 'critico' : 'controle',
+          badgeClass:
+            highPriorityFinancialPendings.length > 0 ? 'ui-badge--danger' : 'ui-badge--info',
+          tone: highPriorityFinancialPendings.length > 0 ? 'red' : 'blue',
+          route: '/financial-pendings',
+          actionLabel: 'Abrir fila',
+        },
+        {
+          id: 'command-integrations',
+          label: 'Integracoes',
+          value: zeSuccessRate != null ? formatPercent(zeSuccessRate, 0) : 'Sem sinal',
+          meta: `Ze ${zeLastSyncSuccess === false ? 'instavel' : 'monitorado'} - iFood ${formatInteger(iFoodConfiguredCount)} configurado(s)`,
+          badgeText: integrationIssueCount > 0 ? 'atencao' : 'estavel',
+          badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+          tone: integrationIssueCount > 0 ? 'amber' : 'green',
+          route: '/integrations/ze-delivery',
+          actionLabel: 'Abrir painel',
+        },
+        {
+          id: 'command-couriers',
+          label: 'Entregadores',
+          value: formatInteger(activeCouriers.length),
+          meta: `${formatInteger(closedDeliveryReadings.length)} leituras fechadas - ${formatInteger(turboDeliveries.length)} turbo`,
+          badgeText: 'escala',
+          badgeClass: 'ui-badge--info',
+          tone: 'blue',
+          route: '/delivery-reading',
+          actionLabel: 'Abrir operacao',
+        },
+      ],
+      risks: [
+        ...(delayedOrders.length > 0
+          ? [
+              {
+                id: 'risk-delayed-orders',
+                title: 'Pedidos fora da janela',
+                description: 'Fila com risco de SLA e pressao no atendimento.',
+                badgeText: formatInteger(delayedOrders.length),
+                badgeClass: 'ui-badge--warning',
+                tone: 'warning',
+                route: '/orders',
+              },
+            ]
+          : []),
+        ...(highPriorityFinancialPendings.length > 0
+          ? [
+              {
+                id: 'risk-financial-pending',
+                title: 'Pendencias financeiras criticas',
+                description: 'Clientes aguardando retorno ou ajuste financeiro.',
+                badgeText: formatInteger(highPriorityFinancialPendings.length),
+                badgeClass: 'ui-badge--danger',
+                tone: 'danger',
+                route: '/financial-pendings',
+              },
+            ]
+          : []),
+        ...(openChanges > 0
+          ? [
+              {
+                id: 'risk-change-pending',
+                title: 'Trocos ainda em aberto',
+                description: 'Ajustes de devolucao ainda dependem de fechamento.',
+                badgeText: formatInteger(openChanges),
+                badgeClass: 'ui-badge--warning',
+                tone: 'warning',
+                route: '/change',
+              },
+            ]
+          : []),
+        ...(openOccurrences > 0
+          ? [
+              {
+                id: 'risk-occurrences',
+                title: 'Ocorrencias abertas',
+                description: 'Problemas operacionais ainda sem fechamento.',
+                badgeText: formatInteger(openOccurrences),
+                badgeClass: 'ui-badge--warning',
+                tone: 'warning',
+                route: '/occurrences',
+              },
+            ]
+          : []),
+        ...(uncheckedMachines > 0
+          ? [
+              {
+                id: 'risk-machines',
+                title: 'Checklist de maquininhas pendente',
+                description: 'Parque de pagamento ainda sem validacao completa.',
+                badgeText: formatInteger(uncheckedMachines),
+                badgeClass: 'ui-badge--info',
+                tone: 'info',
+                route: '/machine-history',
+              },
+            ]
+          : []),
+        ...(shouldShowAdvancesReminder
+          ? [
+              {
+                id: 'risk-advances',
+                title: 'Vales precisam de baixa',
+                description: 'Financeiro deve revisar descontos antes do fechamento.',
+                badgeText: formatInteger(openAdvances),
+                badgeClass: 'ui-badge--warning',
+                tone: 'warning',
+                route: '/advances',
+              },
+            ]
+          : []),
+        ...(integrationIssueCount > 0
+          ? [
+              {
+                id: 'risk-integrations',
+                title: 'Integracoes instaveis',
+                description: 'Falha recente de webhook ou scheduler externo.',
+                badgeText: formatInteger(integrationIssueCount),
+                badgeClass: 'ui-badge--danger',
+                tone: 'danger',
+                route: '/integrations/ze-delivery',
+              },
+            ]
+          : []),
+      ].slice(0, 5),
       activeShift: activeCouriers.slice(0, 5).map((record) => ({
         id: record.id,
         name: record.courier,
@@ -453,8 +901,8 @@ export function buildDashboardData({
       topProducts: topProducts.map((item) => ({
         id: item.id,
         title: summarizeProductName(item.name),
-        description: formatCurrency(item.revenue),
-        badgeText: formatInteger(item.quantity),
+        description: `${formatCurrency(item.revenue)} faturados`,
+        badgeText: `${formatInteger(item.quantity)} un.`,
         badgeClass: 'ui-badge--info',
       })),
       lowStock: lowStockItems.slice(0, 5).map((item) => ({
@@ -462,18 +910,96 @@ export function buildDashboardData({
         title: toSentenceCase(item.productName ?? 'Produto'),
         description: `${formatInteger(item.currentStock)} un.`,
       })),
-      closing: [
-        { id: 'income', label: 'Entradas', value: formatCurrency(totalIncome || totalSold) },
-        { id: 'expense', label: 'Saidas', value: formatCurrency(totalExpense) },
+      financialPulse: [
         {
-          id: 'balance',
-          label: 'Saldo',
-          value: formatCurrency((totalIncome || totalSold) - totalExpense),
+          id: 'finance-cash-balance',
+          label: 'Saldo atual',
+          value: formatCurrency(cashState.currentBalance),
+          meta: cashState.status === 'aberto' ? 'caixa em operacao' : 'caixa encerrado',
         },
         {
-          id: 'pending',
-          label: 'Pendencias',
-          value: formatInteger(openChanges + openAdvances + openOccurrences + uncheckedMachines),
+          id: 'finance-income',
+          label: 'Entradas',
+          value: formatCurrency(totalIncome || totalSold),
+          meta: `${formatInteger(totalSalesCount)} vendas faturadas`,
+        },
+        {
+          id: 'finance-expense',
+          label: 'Saidas',
+          value: formatCurrency(totalExpense),
+          meta: `${formatInteger(activeEntries.length)} lancamentos ativos`,
+        },
+        {
+          id: 'finance-risk',
+          label: 'Valor em risco',
+          value: formatCurrency(openFinancialPendingAmount),
+          meta: `${formatInteger(openFinancialPendings.length)} pendencia(s) abertas`,
+        },
+        {
+          id: 'finance-change',
+          label: 'Trocos pendentes',
+          value: formatInteger(openChanges),
+          meta: openChanges > 0 ? 'Revisar retornos do turno' : 'Sem ajuste pendente',
+        },
+      ],
+      deliveryPulse: [
+        {
+          id: 'delivery-active',
+          label: 'Entregadores na escala',
+          value: formatInteger(activeCouriers.length),
+          meta: `${formatInteger(registeredCouriers)} cadastrados`,
+        },
+        {
+          id: 'delivery-open-reading',
+          label: 'Leituras em aberto',
+          value: formatInteger(openDeliveryReadings.length),
+          meta: 'Acompanhar retorno e fechamento',
+        },
+        {
+          id: 'delivery-closed-reading',
+          label: 'Leituras fechadas',
+          value: formatInteger(closedDeliveryReadings.length),
+          meta: `${formatInteger(turboDeliveries.length)} entrega(s) turbo`,
+        },
+        {
+          id: 'delivery-advances',
+          label: 'Vales pendentes',
+          value: formatInteger(openAdvances),
+          meta: openAdvances > 0 ? 'Revisar antes do fechamento' : 'Sem pendencia',
+        },
+      ],
+      integrationWatch: [
+        {
+          id: 'integration-ze-delivery',
+          title: 'Ze Delivery',
+          description:
+            zeDeliveryStore?.status?.lastSyncAt != null
+              ? `Ultima sincronizacao em ${formatDateTime(zeDeliveryStore.status.lastSyncAt)}`
+              : 'Nenhum ciclo recente registrado',
+          badgeText:
+            zeSuccessRate != null
+              ? formatPercent(zeSuccessRate, 0)
+              : zeLastSyncSuccess === false
+                ? 'erro'
+                : 'monitorando',
+          badgeClass: zeLastSyncSuccess === false ? 'ui-badge--danger' : 'ui-badge--success',
+          route: '/integrations/ze-delivery',
+        },
+        {
+          id: 'integration-ifood',
+          title: 'iFood',
+          description: `${formatInteger(externalIfoodOrders.length)} pedido(s) no recorte e ${formatInteger(iFoodConfiguredCount)} merchant(s) configurado(s)`,
+          badgeText: iFoodConfiguredCount > 0 ? 'ativo' : 'configurar',
+          badgeClass: iFoodConfiguredCount > 0 ? 'ui-badge--info' : 'ui-badge--warning',
+          route: '/orders',
+        },
+        {
+          id: 'integration-channel-mix',
+          title: 'Canal externo',
+          description: `${formatInteger(externalZeOrders.length)} pedido(s) Ze Delivery no recorte atual`,
+          badgeText: integrationIssueCount > 0 ? 'atencao' : 'estavel',
+          badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+          route: '/integrations/ze-delivery',
         },
       ],
     },

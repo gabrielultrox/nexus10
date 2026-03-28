@@ -5,10 +5,12 @@ import '../styles/dashboard.css'
 
 import PageIntro from '../components/common/PageIntro'
 import DashboardFilters from '../components/dashboard/DashboardFilters'
+import DashboardExecutiveHero from '../components/dashboard/DashboardExecutiveHero'
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid'
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary'
 import { ErrorDisplay, LoadingOverlay, Skeleton } from '../components/ui'
 import { useStore } from '../contexts/StoreContext'
+import { useZeDeliverySyncStatus } from '../hooks/queries/useZeDeliverySyncStatus'
 import { getApiErrorDisplayModel } from '../services/apiErrorHandler'
 import {
   buildDashboardData,
@@ -16,6 +18,7 @@ import {
   loadDashboardOperationalSources,
   subscribeToDashboardSources,
 } from '../services/dashboard'
+import { subscribeToIntegrationMerchants } from '../services/externalOrders'
 import { firebaseReady } from '../services/firebase'
 
 const DashboardCharts = lazy(() => import('../components/dashboard/DashboardCharts'))
@@ -32,12 +35,21 @@ function DashboardPage() {
   const [orders, setOrders] = useState([])
   const [inventoryItems, setInventoryItems] = useState([])
   const [financialEntries, setFinancialEntries] = useState([])
+  const [ifoodMerchants, setIfoodMerchants] = useState([])
   const [operationalSources, setOperationalSources] = useState(() =>
     loadDashboardOperationalSources(),
   )
   const [errorMessage, setErrorMessage] = useState('')
   const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
+  const {
+    data: zeDashboard,
+    error: zeDashboardError,
+    isFetching: isZeFetching,
+  } = useZeDeliverySyncStatus({
+    storeId: currentStoreId,
+    enabled: Boolean(currentStoreId),
+  })
 
   useEffect(() => {
     function refreshOperationalSources() {
@@ -111,11 +123,32 @@ function DashboardPage() {
     })
   }, [currentStoreId])
 
+  useEffect(() => {
+    if (!currentStoreId) {
+      setIfoodMerchants([])
+      return undefined
+    }
+
+    return subscribeToIntegrationMerchants(
+      currentStoreId,
+      'IFOOD',
+      (nextMerchants) => setIfoodMerchants(nextMerchants),
+      () => setIfoodMerchants([]),
+    )
+  }, [currentStoreId])
+
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
+  const currentStoreZeDashboard = useMemo(
+    () =>
+      zeDashboard?.stores?.find((storeDashboard) => storeDashboard.storeId === currentStoreId) ??
+      null,
+    [currentStoreId, zeDashboard],
+  )
 
   const { kpis, charts, operations } = useMemo(
     () =>
       buildDashboardData({
+        storeId: currentStoreId,
         sales,
         orders,
         financialEntries,
@@ -123,15 +156,26 @@ function DashboardPage() {
         startDate: period.startDate,
         endDate: period.endDate,
         operations: operationalSources,
+        integrations: {
+          zeDeliverySummary: zeDashboard?.summary,
+          zeDeliveryStore: currentStoreZeDashboard,
+          ifoodMerchants,
+          integrationError: zeDashboardError,
+        },
       }),
     [
       financialEntries,
+      ifoodMerchants,
       inventoryItems,
+      currentStoreId,
+      currentStoreZeDashboard,
       operationalSources,
       orders,
       period.endDate,
       period.startDate,
       sales,
+      zeDashboard?.summary,
+      zeDashboardError,
     ],
   )
 
@@ -238,6 +282,14 @@ function DashboardPage() {
         ) : null}
 
         {isDashboardLoading ? (
+          <section className="workspace-loading-grid" aria-label="Carregando resumo executivo">
+            <Skeleton variant="rect" height="220px" />
+          </section>
+        ) : (
+          <DashboardExecutiveHero hero={operations.hero} onNavigate={navigate} />
+        )}
+
+        {isDashboardLoading ? (
           <section className="workspace-loading-grid" aria-label="Carregando indicadores">
             <Skeleton variant="rect" height="112px" />
             <Skeleton variant="rect" height="112px" />
@@ -255,7 +307,12 @@ function DashboardPage() {
         >
           <DashboardCharts charts={charts} />
         </Suspense>
-        <DashboardOperationalSummary operations={operations} />
+        {isZeFetching && !isDashboardLoading ? (
+          <div className="dashboard-sync-note" role="status" aria-live="polite">
+            Atualizando leitura das integracoes externas.
+          </div>
+        ) : null}
+        <DashboardOperationalSummary operations={operations} onNavigate={navigate} />
       </section>
     </main>
   )
