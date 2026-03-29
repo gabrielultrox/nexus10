@@ -128,7 +128,9 @@ function matchesText(value: unknown, search: string): boolean {
     return true
   }
 
-  return String(value ?? '').toLowerCase().includes(search.toLowerCase())
+  return String(value ?? '')
+    .toLowerCase()
+    .includes(search.toLowerCase())
 }
 
 async function fetchStoreCollection(
@@ -148,7 +150,10 @@ async function fetchStoreCollection(
   }))
 }
 
-function filterByOperator<TRecord extends Record<string, unknown>>(items: TRecord[], operator = '') {
+function filterByOperator<TRecord extends Record<string, unknown>>(
+  items: TRecord[],
+  operator = '',
+) {
   if (!operator) {
     return items
   }
@@ -157,8 +162,12 @@ function filterByOperator<TRecord extends Record<string, unknown>>(items: TRecor
     [
       item.createdBy,
       item.userId,
-      item.actor && typeof item.actor === 'object' ? (item.actor as Record<string, unknown>).id : '',
-      item.actor && typeof item.actor === 'object' ? (item.actor as Record<string, unknown>).name : '',
+      item.actor && typeof item.actor === 'object'
+        ? (item.actor as Record<string, unknown>).id
+        : '',
+      item.actor && typeof item.actor === 'object'
+        ? (item.actor as Record<string, unknown>).name
+        : '',
       item.cashierName,
       item.courierName,
     ].some((value) => matchesText(value, operator)),
@@ -177,7 +186,10 @@ function filterByModule<TRecord extends Record<string, unknown>>(items: TRecord[
   )
 }
 
-function buildRowsForType(type: ReportType, datasets: Record<string, Array<Record<string, unknown>>>) {
+function buildRowsForType(
+  type: ReportType,
+  datasets: Record<string, Array<Record<string, unknown>>>,
+) {
   switch (type) {
     case 'sales':
       return datasets.sales.map((item) => ({
@@ -226,9 +238,7 @@ function buildRowsForType(type: ReportType, datasets: Record<string, Array<Recor
         id: item.id,
         data: String(item.timestampUtc ?? ''),
         usuario: String(
-          (item.actor as Record<string, unknown> | undefined)?.name ??
-            item.userId ??
-            'Sistema',
+          (item.actor as Record<string, unknown> | undefined)?.name ?? item.userId ?? 'Sistema',
         ),
         acao: String(item.action ?? ''),
         modulo: String(item.module ?? ''),
@@ -260,7 +270,9 @@ function buildSummary(type: ReportType, rows: Array<Record<string, unknown>>) {
   }
 
   if (type === 'deliveries') {
-    const delivered = rows.filter((row) => String(row.status).toLowerCase().includes('deliver')).length
+    const delivered = rows.filter((row) =>
+      String(row.status).toLowerCase().includes('deliver'),
+    ).length
     return {
       records: rows.length,
       delivered,
@@ -339,7 +351,10 @@ async function buildPdfReport(
 
   rows.forEach((row, index) => {
     const line = Object.entries(row)
-      .map(([key, value]) => `${key}=${typeof value === 'number' ? value.toFixed(2) : String(value ?? '')}`)
+      .map(
+        ([key, value]) =>
+          `${key}=${typeof value === 'number' ? value.toFixed(2) : String(value ?? '')}`,
+      )
       .join(' | ')
 
     document.text(line, {
@@ -392,10 +407,12 @@ async function buildExcelReport(
   rows.forEach((row) => dataSheet.addRow(row))
   dataSheet.views = [{ state: 'frozen', ySplit: 1 }]
 
-  const chartLabels = rows.slice(0, 8).map((row) => String(row.id ?? row.registro ?? row.data ?? ''))
-  const chartValues = rows.slice(0, 8).map((row) =>
-    Number(row.total ?? row.valor ?? row.records ?? 0),
-  )
+  const chartLabels = rows
+    .slice(0, 8)
+    .map((row) => String(row.id ?? row.registro ?? row.data ?? ''))
+  const chartValues = rows
+    .slice(0, 8)
+    .map((row) => Number(row.total ?? row.valor ?? row.records ?? 0))
 
   if (chartLabels.length > 0) {
     const chartBuffer = await buildChartPngBuffer(reportTitle, chartLabels, chartValues)
@@ -447,13 +464,15 @@ async function uploadReportAsset(
 
 async function collectDatasets(request: ReportRequest) {
   const { storeId, filters } = request
-  const [sales, financialEntries, financialClosures, externalOrders, auditLogs] = await Promise.all([
-    fetchStoreCollection(storeId, 'sales'),
-    fetchStoreCollection(storeId, 'financial_entries'),
-    fetchStoreCollection(storeId, 'financial_closures'),
-    fetchStoreCollection(storeId, 'external_orders'),
-    fetchStoreCollection(storeId, 'audit_logs'),
-  ])
+  const [sales, financialEntries, financialClosures, externalOrders, auditLogs] = await Promise.all(
+    [
+      fetchStoreCollection(storeId, 'sales'),
+      fetchStoreCollection(storeId, 'financial_entries'),
+      fetchStoreCollection(storeId, 'financial_closures'),
+      fetchStoreCollection(storeId, 'external_orders'),
+      fetchStoreCollection(storeId, 'audit_logs'),
+    ],
+  )
 
   return {
     sales: filterByModule(
@@ -520,7 +539,11 @@ async function generateAsset(request: ReportRequest): Promise<GeneratedAsset> {
   }
 }
 
-async function updateReportHistory(storeId: string, reportId: string, payload: Record<string, unknown>) {
+async function updateReportHistory(
+  storeId: string,
+  reportId: string,
+  payload: Record<string, unknown>,
+) {
   await getStoreReportsCollection(storeId).doc(reportId).set(payload, { merge: true })
 }
 

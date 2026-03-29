@@ -88,7 +88,10 @@ export async function downloadReportFile({ reportId, storeId, fileName }) {
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = fileName || response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `${reportId}`
+  link.download =
+    fileName ||
+    response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') ||
+    `${reportId}`
   document.body.append(link)
   link.click()
   link.remove()

@@ -168,7 +168,9 @@ export async function publishNotificationEvent(
     ...input,
   }
 
-  await cacheSet(`nexus10:events:last:${event.id}`, event, EVENT_CACHE_TTL_SECONDS).catch(() => false)
+  await cacheSet(`nexus10:events:last:${event.id}`, event, EVENT_CACHE_TTL_SECONDS).catch(
+    () => false,
+  )
 
   for (const client of clients.values()) {
     if (!clientMatchesAudience(client, event)) {

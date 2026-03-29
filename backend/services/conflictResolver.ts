@@ -40,7 +40,9 @@ export function resolveLastWriteWinsConflict<TRecord extends TimestampedConflict
   remoteRecord: TRecord | null | undefined,
 ): ConflictResolutionResult<TRecord> {
   const localTimestamp = parseTimestamp(localRecord.updatedAtClient ?? localRecord.updatedAtServer)
-  const remoteTimestamp = parseTimestamp(remoteRecord?.updatedAtClient ?? remoteRecord?.updatedAtServer)
+  const remoteTimestamp = parseTimestamp(
+    remoteRecord?.updatedAtClient ?? remoteRecord?.updatedAtServer,
+  )
   const conflict =
     Boolean(remoteRecord) &&
     String(localRecord.checksum ?? '') !== String(remoteRecord?.checksum ?? '')

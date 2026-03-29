@@ -3,7 +3,11 @@ import type { Express, Request, Response } from 'express'
 import { requirePermission, requireScopedStoreAccess } from '../middleware/requireAuth.js'
 import { validateRequest } from '../middleware/validateRequest.js'
 import { generateReportSchema, reportHistoryQuerySchema } from '../schemas/validation.js'
-import { getReportDownload, listReportHistory, queueReportGeneration } from '../services/reportBuilder.js'
+import {
+  getReportDownload,
+  listReportHistory,
+  queueReportGeneration,
+} from '../services/reportBuilder.js'
 import { createLoggerContext, serializeError } from '../logging/logger.js'
 
 const reportsLogger = createLoggerContext({ module: 'reports.routes' })

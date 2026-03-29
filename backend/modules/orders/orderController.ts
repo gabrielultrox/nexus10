@@ -136,7 +136,11 @@ export function registerOrderRoutes(app: Express): void {
           storeId,
           actorId: request.authUser?.uid ?? null,
         })
-        sendError(response, (error as ControllerErrorLike) ?? {}, 'Nao foi possivel criar o pedido.')
+        sendError(
+          response,
+          (error as ControllerErrorLike) ?? {},
+          'Nao foi possivel criar o pedido.',
+        )
       }
     },
   )

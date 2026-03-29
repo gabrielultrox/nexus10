@@ -64,7 +64,9 @@ function NotificationCenter() {
           </div>
 
           <div className="notification-center__preferences">
-            <span className={`notification-center__live notification-center__live--${connectionStatus}`}>
+            <span
+              className={`notification-center__live notification-center__live--${connectionStatus}`}
+            >
               {connectionStatus === 'connected' ? 'Tempo real ativo' : 'Tempo real indisponivel'}
             </span>
             <button

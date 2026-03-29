@@ -37,7 +37,11 @@ const rolePermissions: Record<string, string[]> = {
 }
 
 function normalizeRole(role: unknown): string {
-  switch (String(role ?? '').trim().toLowerCase()) {
+  switch (
+    String(role ?? '')
+      .trim()
+      .toLowerCase()
+  ) {
     case 'admin':
       return 'admin'
     case 'gerente':
@@ -123,28 +127,33 @@ export function registerEventRoutes(app: Express): void {
   })
 
   if (backendEnv.appEnv !== 'production') {
-    app.post('/api/events/debug/publish', publicRateLimiter, expressJsonShim, async (request, response) => {
-      try {
-        const body = (request.body ?? {}) as Record<string, unknown>
-        const event = await publishNotificationEvent({
-          type: String(body.type ?? 'system.notice') as any,
-          title: String(body.title ?? 'Teste SSE'),
-          message: String(body.message ?? 'Evento manual disparado para teste.'),
-          severity: String(body.severity ?? 'info') as any,
-          storeId: body.storeId ? String(body.storeId) : null,
-          tenantId: body.tenantId ? String(body.tenantId) : null,
-          metadata: (body.metadata as Record<string, unknown> | undefined) ?? {},
-          audience: (body.audience as any) ?? undefined,
-          integration: body.integration ? String(body.integration) : null,
-        })
+    app.post(
+      '/api/events/debug/publish',
+      publicRateLimiter,
+      expressJsonShim,
+      async (request, response) => {
+        try {
+          const body = (request.body ?? {}) as Record<string, unknown>
+          const event = await publishNotificationEvent({
+            type: String(body.type ?? 'system.notice') as any,
+            title: String(body.title ?? 'Teste SSE'),
+            message: String(body.message ?? 'Evento manual disparado para teste.'),
+            severity: String(body.severity ?? 'info') as any,
+            storeId: body.storeId ? String(body.storeId) : null,
+            tenantId: body.tenantId ? String(body.tenantId) : null,
+            metadata: (body.metadata as Record<string, unknown> | undefined) ?? {},
+            audience: (body.audience as any) ?? undefined,
+            integration: body.integration ? String(body.integration) : null,
+          })
 
-        response.json({ data: event })
-      } catch (error) {
-        response.status(500).json({
-          error: error instanceof Error ? error.message : 'Falha ao publicar evento debug.',
-        })
-      }
-    })
+          response.json({ data: event })
+        } catch (error) {
+          response.status(500).json({
+            error: error instanceof Error ? error.message : 'Falha ao publicar evento debug.',
+          })
+        }
+      },
+    )
   }
 }
 

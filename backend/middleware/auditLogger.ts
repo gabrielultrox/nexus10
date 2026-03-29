@@ -94,7 +94,9 @@ function inferAuditContext(request: Request, response: Response) {
     return {
       module: 'orders',
       entityType: 'order',
-      entityId: String(params.orderId ?? (responseData as Record<string, unknown> | undefined)?.id ?? ''),
+      entityId: String(
+        params.orderId ?? (responseData as Record<string, unknown> | undefined)?.id ?? '',
+      ),
       action:
         response.statusCode >= 400
           ? 'reject'
@@ -116,7 +118,9 @@ function inferAuditContext(request: Request, response: Response) {
     return {
       module: 'sales',
       entityType: 'sale',
-      entityId: String(params.saleId ?? (responseData as Record<string, unknown> | undefined)?.id ?? ''),
+      entityId: String(
+        params.saleId ?? (responseData as Record<string, unknown> | undefined)?.id ?? '',
+      ),
       action:
         response.statusCode >= 400
           ? 'reject'
@@ -281,15 +285,10 @@ export function createAuditLoggerMiddleware() {
               (typeof body.reason === 'string' ? body.reason : null) ??
               (typeof body.note === 'string' ? body.note : null),
             before: extraAudit.before ?? before,
-            after:
-              extraAudit.after ??
-              (response.statusCode >= 400 ? null : responseData ?? body),
+            after: extraAudit.after ?? (response.statusCode >= 400 ? null : (responseData ?? body)),
             metadata: {
               ...(extraAudit.metadata ?? {}),
-              requestBody:
-                response.statusCode >= 400
-                  ? body
-                  : undefined,
+              requestBody: response.statusCode >= 400 ? body : undefined,
               originalPath: request.originalUrl,
             },
             ip: request.ip ?? null,

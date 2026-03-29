@@ -74,7 +74,10 @@ export function pushNotification(notification) {
     return null
   }
 
-  const nextNotifications = [notification, ...currentNotifications].slice(0, MAX_STORED_NOTIFICATIONS)
+  const nextNotifications = [notification, ...currentNotifications].slice(
+    0,
+    MAX_STORED_NOTIFICATIONS,
+  )
   saveLocalRecords(NOTIFICATIONS_STORAGE_KEY, nextNotifications)
   dispatchNotificationsUpdated('created', notification)
   return notification
@@ -181,13 +184,7 @@ export function saveNotificationPreferencesLocally({ storeId, userId, preference
   saveLocalRecords(getLocalPreferencesKey(storeId, userId), preferences)
 }
 
-export function subscribeToNotificationPreferences({
-  storeId,
-  userId,
-  session,
-  onData,
-  onError,
-}) {
+export function subscribeToNotificationPreferences({ storeId, userId, session, onData, onError }) {
   const defaults = loadNotificationPreferences({ storeId, userId, session })
   onData(defaults)
 
@@ -222,12 +219,7 @@ export function subscribeToNotificationPreferences({
   )
 }
 
-export async function persistNotificationPreferences({
-  storeId,
-  userId,
-  session,
-  preferences,
-}) {
+export async function persistNotificationPreferences({ storeId, userId, session, preferences }) {
   const defaults = buildDefaultNotificationPreferences(session)
   const nextPreferences = {
     ...defaults,

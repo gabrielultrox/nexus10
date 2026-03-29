@@ -90,7 +90,9 @@ function matchesFilter(logEntry, filters) {
   }
 
   if (resourceFilter) {
-    const resourceText = [logEntry.resource, logEntry.resourceId, logEntry.description].join(' ').toLowerCase()
+    const resourceText = [logEntry.resource, logEntry.resourceId, logEntry.description]
+      .join(' ')
+      .toLowerCase()
     if (!resourceText.includes(resourceFilter)) {
       return false
     }

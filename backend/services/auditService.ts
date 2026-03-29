@@ -125,7 +125,13 @@ async function emitAdminAlert(payload: AuditLogPayload): Promise<void> {
 }
 
 export async function recordAuditEvent(payload: AuditLogPayload): Promise<string | null> {
-  if (!payload.storeId || !payload.action || !payload.module || !payload.entityType || !payload.entityId) {
+  if (
+    !payload.storeId ||
+    !payload.action ||
+    !payload.module ||
+    !payload.entityType ||
+    !payload.entityId
+  ) {
     return null
   }
 

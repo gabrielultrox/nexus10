@@ -23,7 +23,10 @@ import type {
 import { createSaleSchema, updateSaleStatusSchema } from '../../validation/schemas.js'
 
 type SaleRouteResponse = ApiSuccessResponseBody<unknown> | ApiErrorResponseBody
-type SalePayloadBody = { tenantId?: string | null; values?: unknown; status?: string } | null | undefined
+type SalePayloadBody =
+  | { tenantId?: string | null; values?: unknown; status?: string }
+  | null
+  | undefined
 
 const salesLogger = createLoggerContext({ module: 'sales' })
 
@@ -241,7 +244,9 @@ export function registerSaleRoutes(app: Express): void {
       try {
         const body = request.body as SalePayloadBody
         const status =
-          (request.validated?.body as { status?: string } | undefined)?.status ?? body?.status ?? null
+          (request.validated?.body as { status?: string } | undefined)?.status ??
+          body?.status ??
+          null
 
         const data = await updateSaleStatus({
           storeId,

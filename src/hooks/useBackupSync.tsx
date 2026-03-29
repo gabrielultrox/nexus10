@@ -44,7 +44,14 @@ export function useBackupSync(): BackupSyncState & {
     return () => {
       shutdownBackupService()
     }
-  }, [currentStoreId, isAuthenticated, session?.displayName, session?.operatorName, session?.uid, tenantId])
+  }, [
+    currentStoreId,
+    isAuthenticated,
+    session?.displayName,
+    session?.operatorName,
+    session?.uid,
+    tenantId,
+  ])
 
   useEffect(() => {
     if (!isAuthenticated || !currentStoreId) {

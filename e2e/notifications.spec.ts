@@ -33,7 +33,9 @@ test.describe('Fluxo E2E - Notificacoes em tempo real', () => {
       }
 
       window.dispatchEvent(new CustomEvent('nexus10:e2e-live-notification', { detail: firstEvent }))
-      window.dispatchEvent(new CustomEvent('nexus10:e2e-live-notification', { detail: secondEvent }))
+      window.dispatchEvent(
+        new CustomEvent('nexus10:e2e-live-notification', { detail: secondEvent }),
+      )
     })
 
     await expect(page.locator('.sidebar__badge')).toHaveText('2')

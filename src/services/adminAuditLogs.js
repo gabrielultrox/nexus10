@@ -70,7 +70,20 @@ function escapeCsvValue(value) {
 
 export function buildAuditLogsCsv(items = []) {
   const rows = [
-    ['Data UTC', 'Data local', 'Usuario', 'Acao', 'Modulo', 'Entidade', 'Registro', 'Loja', 'Motivo', 'Descricao', 'IP', 'Request ID'],
+    [
+      'Data UTC',
+      'Data local',
+      'Usuario',
+      'Acao',
+      'Modulo',
+      'Entidade',
+      'Registro',
+      'Loja',
+      'Motivo',
+      'Descricao',
+      'IP',
+      'Request ID',
+    ],
     ...items.map((item) => [
       item.timestampUtc ?? item.createdAt ?? '',
       item.timestampLocal ?? '',
@@ -91,7 +104,20 @@ export function buildAuditLogsCsv(items = []) {
 }
 
 export function buildAuditLogsExcel(items = []) {
-  const header = ['Data UTC', 'Data local', 'Usuario', 'Acao', 'Modulo', 'Entidade', 'Registro', 'Loja', 'Motivo', 'Descricao', 'IP', 'Request ID']
+  const header = [
+    'Data UTC',
+    'Data local',
+    'Usuario',
+    'Acao',
+    'Modulo',
+    'Entidade',
+    'Registro',
+    'Loja',
+    'Motivo',
+    'Descricao',
+    'IP',
+    'Request ID',
+  ]
   const rows = items.map((item) => [
     item.timestampUtc ?? item.createdAt ?? '',
     item.timestampLocal ?? '',
@@ -108,12 +134,7 @@ export function buildAuditLogsExcel(items = []) {
   ])
 
   const htmlRows = [header, ...rows]
-    .map(
-      (row) =>
-        `<tr>${row
-          .map((value) => `<td>${escapeHtml(value)}</td>`)
-          .join('')}</tr>`,
-    )
+    .map((row) => `<tr>${row.map((value) => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`)
     .join('')
 
   return `<html><body><table>${htmlRows}</table></body></html>`

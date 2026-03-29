@@ -1,10 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  writeBatch,
-} from 'firebase/firestore'
+import { collection, doc, getDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 
 import { MANUAL_COURIER_STORAGE_KEY } from './courierService'
 import { canUseRemoteSync, firebaseDb, firebaseReady } from './firebase'
@@ -129,13 +123,19 @@ function buildScopeDefinitions() {
     category:
       modulePath === 'map'
         ? 'logs'
-        : ['change', 'advances', 'discounts', 'occurrences', 'delivery-reading'].includes(modulePath)
+        : ['change', 'advances', 'discounts', 'occurrences', 'delivery-reading'].includes(
+              modulePath,
+            )
           ? 'critical'
           : 'master',
     resetHour: config.dailyResetHour ?? null,
     readRecords() {
       if (config.dailyResetHour != null) {
-        return loadResettableLocalRecords(config.storageKey, config.initialRecords ?? [], config.dailyResetHour)
+        return loadResettableLocalRecords(
+          config.storageKey,
+          config.initialRecords ?? [],
+          config.dailyResetHour,
+        )
       }
 
       return loadLocalRecords(config.storageKey, config.initialRecords ?? [])
@@ -316,7 +316,8 @@ function buildSnapshotPayload(scope) {
   const sourceRecords = scope.readRecords()
   const records = Array.isArray(sourceRecords) ? sourceRecords : []
   const latestTimestamp = resolveLatestRecordTimestamp(records)
-  const updatedAtClient = latestTimestamp > 0 ? new Date(latestTimestamp).toISOString() : new Date().toISOString()
+  const updatedAtClient =
+    latestTimestamp > 0 ? new Date(latestTimestamp).toISOString() : new Date().toISOString()
   const recordIds = records
     .map((record) => String(record?.id ?? record?.code ?? record?.deliveryCode ?? ''))
     .filter(Boolean)
@@ -487,7 +488,10 @@ async function writeBackupRun({ reason, selectedScopeIds, mode }) {
       conflictCount: conflicts.length,
       syncedScopes,
       statistics: {
-        totalRuns: Number(serviceState.statistics.successfulRuns ?? 0) + Number(serviceState.statistics.failedRuns ?? 0) + 1,
+        totalRuns:
+          Number(serviceState.statistics.successfulRuns ?? 0) +
+          Number(serviceState.statistics.failedRuns ?? 0) +
+          1,
         successfulRuns: Number(serviceState.statistics.successfulRuns ?? 0) + 1,
         failedRuns: Number(serviceState.statistics.failedRuns ?? 0),
         scopesSynced: Number(serviceState.statistics.scopesSynced ?? 0) + syncedScopes.length,
@@ -592,10 +596,12 @@ export function scheduleBackupForStorageKey(storageKey, options = {}) {
     return getBackupSyncState()
   }
 
-  const immediate = options.immediate ?? scopeIds.some((scopeId) => {
-    const scope = scopeDefinitionsById.get(scopeId)
-    return scope?.category === 'critical'
-  })
+  const immediate =
+    options.immediate ??
+    scopeIds.some((scopeId) => {
+      const scope = scopeDefinitionsById.get(scopeId)
+      return scope?.category === 'critical'
+    })
 
   scopeIds.forEach((scopeId) => dirtyScopeIds.add(scopeId))
   updateState({
@@ -620,7 +626,11 @@ export function scheduleBackupForStorageKey(storageKey, options = {}) {
   return getBackupSyncState()
 }
 
-export async function flushBackupNow({ reason = 'manual', scopeIds = null, categories = null } = {}) {
+export async function flushBackupNow({
+  reason = 'manual',
+  scopeIds = null,
+  categories = null,
+} = {}) {
   if (!activeContext?.storeId) {
     return getBackupSyncState()
   }

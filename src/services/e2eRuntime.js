@@ -245,8 +245,7 @@ function buildOrderRecord({ state, storeId, values }) {
   const store = getStoreState(state, storeId)
   const orderIndex = nextCounter(state, 'order')
   const orderId = `order-e2e-${orderIndex}`
-  const customer =
-    store.customers.find((entry) => entry.id === values.customerId) ??
+  const customer = store.customers.find((entry) => entry.id === values.customerId) ??
     store.customers[0] ?? {
       id: null,
       name: 'Cliente avulso',
@@ -334,8 +333,7 @@ function buildSaleRecord({ state, storeId, values }) {
   const store = getStoreState(state, storeId)
   const saleIndex = nextCounter(state, 'sale')
   const saleId = `sale-e2e-${saleIndex}`
-  const customer =
-    store.customers.find((entry) => entry.id === values.customerId) ??
+  const customer = store.customers.find((entry) => entry.id === values.customerId) ??
     store.customers[0] ?? {
       id: null,
       name: 'Cliente avulso',
@@ -424,7 +422,8 @@ function buildSaleRecord({ state, storeId, values }) {
 
 function buildZeDeliveryDashboardRecord(storeId, store) {
   const logs = [...(store.zeDelivery?.logs ?? [])].sort(
-    (left, right) => new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime(),
+    (left, right) =>
+      new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime(),
   )
   const recentRuns = logs.slice(0, 20)
   const recentErrors = recentRuns.filter((log) => log.summary?.success === false)
@@ -444,7 +443,9 @@ function buildZeDeliveryDashboardRecord(storeId, store) {
     ? Number((((totalRuns - successfulRuns) / totalRuns) * 100).toFixed(1))
     : 0
   const nextSync = store.zeDelivery?.settings?.enabled
-    ? new Date(Date.now() + Number(store.zeDelivery?.settings?.intervalMinutes ?? 10) * 60_000).toISOString()
+    ? new Date(
+        Date.now() + Number(store.zeDelivery?.settings?.intervalMinutes ?? 10) * 60_000,
+      ).toISOString()
     : null
   const lastSync = lastRun?.createdAt ?? null
   const lastSyncError = recentErrors[0]?.summary?.error?.message ?? null
@@ -488,8 +489,14 @@ function buildZeDeliveryDashboardRecord(storeId, store) {
           lastSyncSuccess: lastRun ? lastRun.summary?.success !== false : null,
           lastSyncError,
           counters: {
-            created: recentRuns.reduce((total, log) => total + Number(log.summary?.created ?? 0), 0),
-            updated: recentRuns.reduce((total, log) => total + Number(log.summary?.updated ?? 0), 0),
+            created: recentRuns.reduce(
+              (total, log) => total + Number(log.summary?.created ?? 0),
+              0,
+            ),
+            updated: recentRuns.reduce(
+              (total, log) => total + Number(log.summary?.updated ?? 0),
+              0,
+            ),
             unchanged: recentRuns.reduce(
               (total, log) => total + Number(log.summary?.unchanged ?? 0),
               0,

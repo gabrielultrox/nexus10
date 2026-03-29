@@ -49,7 +49,11 @@ const rolePermissions: Record<UserRole, Set<string>> = {
 }
 
 function normalizeRole(role: string | null | undefined): UserRole {
-  switch (String(role ?? '').trim().toLowerCase() as SupportedRoleAlias) {
+  switch (
+    String(role ?? '')
+      .trim()
+      .toLowerCase() as SupportedRoleAlias
+  ) {
     case 'admin':
       return 'admin'
     case 'gerente':
@@ -95,7 +99,11 @@ function respondUnauthorized(response: Response, error: string, statusCode = 401
   response.status(statusCode).json({ error })
 }
 
-function readScopedStoreId(request: RequestRecord, source: ScopedRequestSource, field: string): string {
+function readScopedStoreId(
+  request: RequestRecord,
+  source: ScopedRequestSource,
+  field: string,
+): string {
   const validatedSource = request.validated?.[source]
 
   if (

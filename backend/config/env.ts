@@ -204,12 +204,15 @@ const backendEnvSchema = z
       runtimeEnvironmentSchema.default('development'),
     ),
     PORT: createNumericSchema(3001),
-    TRUST_PROXY: z.preprocess((value) => normalizeTrustProxyValue(value), z.union([
-      z.boolean(),
-      z.number().int().nonnegative(),
-      z.string().trim().min(1),
-      z.array(z.string().trim().min(1)).min(1),
-    ])),
+    TRUST_PROXY: z.preprocess(
+      (value) => normalizeTrustProxyValue(value),
+      z.union([
+        z.boolean(),
+        z.number().int().nonnegative(),
+        z.string().trim().min(1),
+        z.array(z.string().trim().min(1)).min(1),
+      ]),
+    ),
     LOG_LEVEL: z.preprocess(
       (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
       logLevelSchema,

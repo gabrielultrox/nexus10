@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -7,7 +15,12 @@ import { useToast } from '../hooks/useToast'
 import { useLiveNotifications } from '../hooks/useLiveNotifications'
 import { buildAuditActor, recordAuditLog } from '../services/auditLog'
 import { isOrderClosedStatus, isSalePosted, normalizeOrderDomainStatus } from '../services/commerce'
-import { canUseRemoteSync, firebaseDb, firebaseReady, guardRemoteSubscription } from '../services/firebase'
+import {
+  canUseRemoteSync,
+  firebaseDb,
+  firebaseReady,
+  guardRemoteSubscription,
+} from '../services/firebase'
 import { FIRESTORE_COLLECTIONS } from '../services/firestoreCollections'
 import { subscribeToInventoryItems } from '../services/inventory'
 import { manualModuleConfigs } from '../services/manualModuleConfig'
@@ -34,7 +47,13 @@ import {
   subscribeToNotificationPreferences,
 } from '../services/notificationService'
 import { subscribeToSales } from '../services/sales'
-import { isSoundEnabled, playError, playNotification, playWarning, setSoundEnabled } from '../services/soundManager'
+import {
+  isSoundEnabled,
+  playError,
+  playNotification,
+  playWarning,
+  setSoundEnabled,
+} from '../services/soundManager'
 
 type NotificationRecord = Record<string, any>
 type PreferencesRecord = Record<string, any>
@@ -100,7 +119,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }
   const { session } = useAuth() as { session: NotificationRecord | null }
   const toastApi = useToast()
-  const [notifications, setNotifications] = useState<NotificationRecord[]>(() => loadNotifications())
+  const [notifications, setNotifications] = useState<NotificationRecord[]>(() =>
+    loadNotifications(),
+  )
   const [advanceRecords, setAdvanceRecords] = useState<NotificationRecord[]>([])
   const [preferences, setPreferences] = useState<PreferencesRecord>(() =>
     loadNotificationPreferences({ storeId: currentStoreId, userId: session?.uid, session }),
@@ -123,7 +144,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
 
     const now = Date.now()
-    presentationWindowRef.current = presentationWindowRef.current.filter((timestamp) => now - timestamp < 60_000)
+    presentationWindowRef.current = presentationWindowRef.current.filter(
+      (timestamp) => now - timestamp < 60_000,
+    )
     const withinLimit = presentationWindowRef.current.length < MAX_PRESENTED_PER_MINUTE
 
     if (!withinLimit) {
@@ -220,7 +243,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       initialRecords: advancesConfig.initialRecords,
       dailyResetHour: advancesConfig.dailyResetHour as any,
       onData: setAdvanceRecords,
-      onError: (error: any) => notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
+      onError: (error: any) =>
+        notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
     })
   }, [currentStoreId])
 
@@ -251,7 +275,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         machineStatusRef.current = nextMap
       },
       onError: (error: any) =>
-        notifyImportantError(error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.'),
+        notifyImportantError(
+          error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
+        ),
     })
   }, [currentStoreId])
 
@@ -273,9 +299,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     function maybeNotifyOpenAdvances() {
       const now = new Date()
       const todayKey = getTodayKey(now)
-      const openAdvancesCount = advanceRecords.filter((record: NotificationRecord) => record.status !== 'Baixado').length
+      const openAdvancesCount = advanceRecords.filter(
+        (record: NotificationRecord) => record.status !== 'Baixado',
+      ).length
 
-      if (!shouldRunAdvancesReminder(now) || openAdvancesCount === 0 || getLastReminderDate() === todayKey) {
+      if (
+        !shouldRunAdvancesReminder(now) ||
+        openAdvancesCount === 0 ||
+        getLastReminderDate() === todayKey
+      ) {
         return
       }
 
@@ -317,7 +349,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
 
     function handleUnhandledRejection(event: PromiseRejectionEvent) {
-      const reason = event.reason?.message ?? String(event.reason ?? 'Falha inesperada de execucao.')
+      const reason =
+        event.reason?.message ?? String(event.reason ?? 'Falha inesperada de execucao.')
       notifyImportantError(reason)
     }
 
@@ -340,7 +373,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
 
     const ordersQuery = query(
-      collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, currentStoreId, FIRESTORE_COLLECTIONS.orders),
+      collection(
+        firebaseDb,
+        FIRESTORE_COLLECTIONS.stores,
+        currentStoreId,
+        FIRESTORE_COLLECTIONS.orders,
+      ),
       orderBy('createdAt', 'desc'),
     )
 
@@ -380,11 +418,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
             ordersInitializedRef.current = true
           },
-          (error) => notifyImportantError(error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.'),
+          (error) =>
+            notifyImportantError(
+              error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
+            ),
         ),
       {
         onError(error: any) {
-          notifyImportantError(error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.')
+          notifyImportantError(
+            error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
+          )
         },
       },
     )
@@ -396,7 +439,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
         if (salesInitializedRef.current) {
           sales.forEach((sale: NotificationRecord) => {
-            if (!knownSaleIdsRef.current.has(sale.id) && isSalePosted(sale.domainStatus ?? sale.status)) {
+            if (
+              !knownSaleIdsRef.current.has(sale.id) &&
+              isSalePosted(sale.domainStatus ?? sale.status)
+            ) {
               notifySaleCompleted(sale)
             }
             nextKnownIds.add(sale.id)
@@ -415,7 +461,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       currentStoreId,
       (items: NotificationRecord[]) => {
         items
-          .filter((item: NotificationRecord) => Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0))
+          .filter(
+            (item: NotificationRecord) =>
+              Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
+          )
           .forEach((item: NotificationRecord) => notifyLowStock(item))
         inventoryInitializedRef.current = true
       },

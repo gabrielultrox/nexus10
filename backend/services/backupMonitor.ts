@@ -82,7 +82,8 @@ export async function getBackupMonitoringSnapshot() {
         .collection('settings')
         .doc('backup_status')
         .get()
-      const status = (statusSnapshot.exists ? (statusSnapshot.data() as BackupStatusRecord) : null) ?? null
+      const status =
+        (statusSnapshot.exists ? (statusSnapshot.data() as BackupStatusRecord) : null) ?? null
       const statistics = status?.statistics ?? {}
       const pendingScopes = Array.isArray(status?.pendingScopes) ? status.pendingScopes : []
 
@@ -145,7 +146,9 @@ export async function getBackupMonitoringSnapshot() {
         return left.lastError ? -1 : 1
       }
 
-      return parseTimestamp(right.lastSuccessfulBackupAt) - parseTimestamp(left.lastSuccessfulBackupAt)
+      return (
+        parseTimestamp(right.lastSuccessfulBackupAt) - parseTimestamp(left.lastSuccessfulBackupAt)
+      )
     })
     .slice(0, 10)
 
@@ -176,7 +179,11 @@ export async function writeDailyBackupAuditReport() {
   const firestore = getAdminFirestore()
   const snapshot = await getBackupMonitoringSnapshot()
   const reportDate = new Date().toISOString().slice(0, 10)
-  const reportRef = firestore.collection('ops_reports').doc('backup').collection('daily').doc(reportDate)
+  const reportRef = firestore
+    .collection('ops_reports')
+    .doc('backup')
+    .collection('daily')
+    .doc(reportDate)
   const existingSnapshot = await reportRef.get()
   const candidate = {
     reportDate,

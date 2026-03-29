@@ -121,7 +121,7 @@ function ReportGenerator() {
 
     try {
       const response = await listReportHistory({ storeId: currentStoreId, limit: 20 })
-      setHistory(Array.isArray(response) ? response : response.data ?? [])
+      setHistory(Array.isArray(response) ? response : (response.data ?? []))
       setErrorMessage('')
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel carregar o historico de relatorios.')
@@ -161,7 +161,8 @@ function ReportGenerator() {
       {
         key: 'type',
         label: 'Relatorio',
-        render: (row) => reportTypeOptions.find((option) => option.value === row.type)?.label ?? row.type,
+        render: (row) =>
+          reportTypeOptions.find((option) => option.value === row.type)?.label ?? row.type,
       },
       {
         key: 'format',
