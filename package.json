@@ -6,7 +6,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "vite",
-    "dev:backend": "node --watch --loader ts-node/esm backend/server.ts",
+    "dev:backend": "TS_NODE_PROJECT=tsconfig.backend.json node --watch --loader ts-node/esm backend/server.ts",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "vite build",
     "build:sentry": "vite build --mode production",

@@ -253,11 +253,11 @@ const backendEnvSchema = z
     IFOOD_EVENTS_ACK_PATH: z.string().trim().default('/events/v1.0/events/acknowledgment'),
     IFOOD_ORDER_DETAILS_PATH: z.string().trim().default('/order/v1.0/orders'),
     IFOOD_WEBHOOK_URL: z.string().trim().default(''),
-    IFOOD_WEBHOOK_SECRET: createRequiredStringSchema('IFOOD_WEBHOOK_SECRET'),
+    IFOOD_WEBHOOK_SECRET: z.string().trim().default(''),
     IFOOD_POLLING_INTERVAL_SECONDS: createNumericSchema(30),
-    FIREBASE_ADMIN_PROJECT_ID: createRequiredStringSchema('FIREBASE_ADMIN_PROJECT_ID'),
-    FIREBASE_ADMIN_CLIENT_EMAIL: createRequiredStringSchema('FIREBASE_ADMIN_CLIENT_EMAIL'),
-    FIREBASE_ADMIN_PRIVATE_KEY: createRequiredStringSchema('FIREBASE_ADMIN_PRIVATE_KEY'),
+    FIREBASE_ADMIN_PROJECT_ID: z.string().trim().default(''),
+    FIREBASE_ADMIN_CLIENT_EMAIL: z.string().trim().default(''),
+    FIREBASE_ADMIN_PRIVATE_KEY: z.string().trim().default(''),
     FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
     FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
     FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
@@ -294,6 +294,38 @@ const backendEnvSchema = z
         code: z.ZodIssueCode.custom,
         path: ['IFOOD_CLIENT_SECRET'],
         message: 'e obrigatoria quando IFOOD_ENABLED=true.',
+      })
+    }
+
+    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_WEBHOOK_SECRET)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['IFOOD_WEBHOOK_SECRET'],
+        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
+      })
+    }
+
+    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_PROJECT_ID)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FIREBASE_ADMIN_PROJECT_ID'],
+        message: 'e obrigatoria em producao.',
+      })
+    }
+
+    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_CLIENT_EMAIL)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FIREBASE_ADMIN_CLIENT_EMAIL'],
+        message: 'e obrigatoria em producao.',
+      })
+    }
+
+    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_PRIVATE_KEY)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FIREBASE_ADMIN_PRIVATE_KEY'],
+        message: 'e obrigatoria em producao.',
       })
     }
   })
