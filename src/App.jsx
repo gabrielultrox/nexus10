@@ -11,7 +11,7 @@ import {
   setFrontendSentryStore,
   setFrontendSentryUser,
 } from './config/sentry'
-import { useAuth, useConfirm, useStore, useToast } from './hooks'
+import { useAuth, useBackupSync, useConfirm, useStore, useToast } from './hooks'
 import AppRoutes from './routes'
 import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
 import { recordComponentRenderMetric, recordPageLoadMetric } from './services/frontendMetrics'
@@ -52,6 +52,7 @@ function App() {
   const { currentStoreId } = useStore()
   const confirm = useConfirm()
   const toast = useToast()
+  useBackupSync()
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false)
   const [routeAnimationKey, setRouteAnimationKey] = useState(0)
   const [isRoutePending, startRouteTransition] = useTransition()

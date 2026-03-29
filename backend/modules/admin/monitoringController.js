@@ -1,8 +1,9 @@
-import { getObservabilitySnapshot } from '../../monitoring/metrics.js'
 import { requireRole } from '../../middleware/requireAuth.js'
+import { getObservabilitySnapshot } from '../../monitoring/metrics.js'
+import { getBackupMonitoringSnapshot } from '../../services/backupMonitor.js'
 
-function renderMonitoringDashboard(snapshot) {
-  const routeRows = snapshot.routes
+function renderRouteRows(snapshot) {
+  return snapshot.routes
     .map(
       (route) => `
     <tr>
@@ -15,6 +16,27 @@ function renderMonitoringDashboard(snapshot) {
   `,
     )
     .join('')
+}
+
+function renderBackupRows(backupSnapshot) {
+  return backupSnapshot.stores
+    .map(
+      (store) => `
+    <tr>
+      <td>${store.storeName}</td>
+      <td>${store.lastSuccessfulBackupAt ?? 'Nunca'}</td>
+      <td>${store.pendingScopes.length}</td>
+      <td>${store.conflictCount}</td>
+      <td>${store.lastError || 'Sem erro'}</td>
+    </tr>
+  `,
+    )
+    .join('')
+}
+
+function renderMonitoringDashboard(snapshot, backupSnapshot) {
+  const routeRows = renderRouteRows(snapshot)
+  const backupRows = renderBackupRows(backupSnapshot)
 
   return `<!doctype html>
   <html lang="pt-BR">
@@ -42,6 +64,12 @@ function renderMonitoringDashboard(snapshot) {
         <div class="card"><div class="label">p95</div><div class="value">${snapshot.summary.p95}ms</div></div>
         <div class="card"><div class="label">Webhook Failures</div><div class="value">${snapshot.webhooks.failureCount}</div></div>
         <div class="card"><div class="label">Requests</div><div class="value">${snapshot.summary.totalRequests}</div></div>
+        <div class="card"><div class="label">Scheduler</div><div class="value">${snapshot.system.scheduler.status}</div></div>
+        <div class="card"><div class="label">Scheduler Errors</div><div class="value">${snapshot.system.scheduler.errorCount}</div></div>
+        <div class="card"><div class="label">Backup Stores</div><div class="value">${backupSnapshot.summary.totalStores}</div></div>
+        <div class="card"><div class="label">Backup Stale</div><div class="value">${backupSnapshot.summary.staleStores}</div></div>
+        <div class="card"><div class="label">Backup Errors</div><div class="value">${backupSnapshot.summary.storesWithErrors}</div></div>
+        <div class="card"><div class="label">Backup Success Rate</div><div class="value">${backupSnapshot.summary.successRate}%</div></div>
       </div>
       <h2>Top Routes</h2>
       <table>
@@ -54,7 +82,20 @@ function renderMonitoringDashboard(snapshot) {
             <th>Max</th>
           </tr>
         </thead>
-        <tbody>${routeRows || '<tr><td colspan="5">Sem tráfego suficiente.</td></tr>'}</tbody>
+        <tbody>${routeRows || '<tr><td colspan="5">Sem trafego suficiente.</td></tr>'}</tbody>
+      </table>
+      <h2 style="margin-top:24px;">Backup Status</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Loja</th>
+            <th>Ultimo backup</th>
+            <th>Scopes pendentes</th>
+            <th>Conflitos</th>
+            <th>Ultimo erro</th>
+          </tr>
+        </thead>
+        <tbody>${backupRows || '<tr><td colspan="5">Nenhum backup reportado.</td></tr>'}</tbody>
       </table>
     </body>
   </html>`
@@ -63,11 +104,18 @@ function renderMonitoringDashboard(snapshot) {
 export function registerMonitoringRoutes(app) {
   app.get('/api/admin/monitoring/summary', requireRole('admin'), async (_request, response) => {
     response.json({
-      data: await getObservabilitySnapshot(),
+      data: {
+        observability: await getObservabilitySnapshot(),
+        backups: await getBackupMonitoringSnapshot(),
+      },
     })
   })
 
   app.get('/api/admin/monitoring/dashboard', requireRole('admin'), async (_request, response) => {
-    response.type('html').send(renderMonitoringDashboard(await getObservabilitySnapshot()))
+    const [observabilitySnapshot, backupSnapshot] = await Promise.all([
+      getObservabilitySnapshot(),
+      getBackupMonitoringSnapshot(),
+    ])
+    response.type('html').send(renderMonitoringDashboard(observabilitySnapshot, backupSnapshot))
   })
 }

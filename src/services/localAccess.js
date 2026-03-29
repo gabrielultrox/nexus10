@@ -1,5 +1,6 @@
 export const ACCESS_PIN_STORAGE_KEY = 'hd2_pin'
 export const DEFAULT_ACCESS_PIN = '0101'
+export const LOCAL_RECORDS_EVENT = 'nexus10:local-records'
 
 function getStorage() {
   if (typeof window === 'undefined') {
@@ -7,6 +8,21 @@ function getStorage() {
   }
 
   return window.localStorage
+}
+
+function emitLocalRecordsEvent(detail) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') {
+    return
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(LOCAL_RECORDS_EVENT, {
+      detail: {
+        changedAt: new Date().toISOString(),
+        ...detail,
+      },
+    }),
+  )
 }
 
 export function getStoredPin() {
@@ -57,12 +73,24 @@ export function loadLocalRecords(storageKey, fallback = []) {
 }
 
 export function saveLocalRecords(storageKey, records) {
+  saveLocalRecordsInternal(storageKey, records, {
+    resettable: false,
+  })
+}
+
+function saveLocalRecordsInternal(storageKey, records, metadata = {}) {
   if (typeof window === 'undefined') {
     return
   }
 
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(records))
+    emitLocalRecordsEvent({
+      storageKey,
+      resettable: false,
+      recordsCount: Array.isArray(records) ? records.length : 0,
+      ...metadata,
+    })
   } catch {
     // Ignore storage write failures to keep the operational shell usable.
   }
@@ -121,7 +149,10 @@ export function saveResettableLocalRecords(storageKey, records, resetHour = 3) {
     // Ignore metadata write failures to keep the operational shell usable.
   }
 
-  saveLocalRecords(storageKey, records)
+  saveLocalRecordsInternal(storageKey, records, {
+    resettable: true,
+    resetHour,
+  })
 }
 
 export function resetLocalRecordsNow(storageKey, fallback = [], resetHour = 3) {
@@ -132,6 +163,13 @@ export function resetLocalRecordsNow(storageKey, fallback = [], resetHour = 3) {
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(fallback))
     window.localStorage.setItem(getResetMetaKey(storageKey), getOperationalDay(resetHour))
+    emitLocalRecordsEvent({
+      storageKey,
+      resettable: true,
+      resetHour,
+      recordsCount: Array.isArray(fallback) ? fallback.length : 0,
+      operation: 'reset',
+    })
   } catch {
     return fallback
   }
