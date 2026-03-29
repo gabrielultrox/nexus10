@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
 import EmptyState from '../../../components/ui/EmptyState'
+import { Input } from '../../../components/ui'
+import FilterChips from '../../../components/Historico/FilterChips'
+import FilterDropdown from '../../../components/Historico/FilterDropdown'
+import useHistoricoFilters from '../../../hooks/useHistoricoFilters'
+import { useToast } from '../../../hooks/useToast'
 import { loadAuditEvents } from '../../../services/localAudit'
 import { routeDefinitions } from '../../../utils/routeCatalog'
 
@@ -134,31 +139,6 @@ function buildCalendarDays(baseDayKey, eventsByDay) {
   return days
 }
 
-function buildQueryFilter(searchParams) {
-  const requested = searchParams.get('modulo') ?? searchParams.get('screen') ?? 'all'
-  return ALL_HISTORY_FILTERS.find((filter) => filter.id === requested) ?? PRIMARY_HISTORY_FILTERS[0]
-}
-
-function buildEventTypeFilter(searchParams) {
-  const requested = searchParams.get('tipo') ?? 'all'
-  return EVENT_TYPE_FILTERS.find((filter) => filter.id === requested) ?? EVENT_TYPE_FILTERS[0]
-}
-
-function buildSelectedDay(searchParams, availableDays) {
-  const requestedDay = searchParams.get('data') ?? searchParams.get('day') ?? 'hoje'
-  const todayKey = getTodayKey()
-
-  if (requestedDay === 'hoje') {
-    return todayKey
-  }
-
-  if (availableDays.includes(requestedDay)) {
-    return requestedDay
-  }
-
-  return availableDays[0] ?? todayKey
-}
-
 function groupEventsByHour(events) {
   const groups = []
 
@@ -236,6 +216,34 @@ function eventMatchesQuery(event, query) {
   }
 
   return buildSearchBlob(event).includes(normalizeText(query))
+}
+
+function eventMatchesOperator(event, operator) {
+  if (!operator) {
+    return true
+  }
+
+  return normalizeText(event.actor).includes(normalizeText(operator))
+}
+
+function eventMatchesValue(event, value) {
+  if (!value) {
+    return true
+  }
+
+  return normalizeText(
+    [event.value, event.target, event.details].filter(Boolean).join(' '),
+  ).includes(normalizeText(value))
+}
+
+function eventMatchesDateRange(event, dateRange) {
+  const dayKey = toDayKey(event)
+
+  if (!dateRange?.start || !dateRange?.end) {
+    return true
+  }
+
+  return dayKey >= dateRange.start && dayKey <= dateRange.end
 }
 
 function findRouteForModule(modulePath) {
@@ -338,13 +346,17 @@ function buildFinancialAuditContext(event) {
 }
 
 function HistoryTimelineModule() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const toast = useToast()
   const [allEvents, setAllEvents] = useState(() => loadAuditEvents())
   const [collapsedHours, setCollapsedHours] = useState({})
+  const { filters, addChip, removeChip, setFilterValue, setDay, setSearchQuery } =
+    useHistoricoFilters(toast)
 
-  const activeFilter = useMemo(() => buildQueryFilter(searchParams), [searchParams])
-  const activeTypeFilter = useMemo(() => buildEventTypeFilter(searchParams), [searchParams])
-  const searchQuery = searchParams.get('q') ?? ''
+  const activeFilter =
+    ALL_HISTORY_FILTERS.find((filter) => filter.id === filters.module) ?? PRIMARY_HISTORY_FILTERS[0]
+  const activeTypeFilter =
+    EVENT_TYPE_FILTERS.find((filter) => filter.id === filters.status) ?? EVENT_TYPE_FILTERS[0]
+  const searchQuery = filters.q ?? ''
 
   useEffect(() => {
     function refreshEvents() {
@@ -369,9 +381,20 @@ function HistoryTimelineModule() {
     () =>
       moduleFilteredEvents.filter(
         (event) =>
-          eventMatchesType(event, activeTypeFilter) && eventMatchesQuery(event, searchQuery),
+          eventMatchesType(event, activeTypeFilter) &&
+          eventMatchesQuery(event, searchQuery) &&
+          eventMatchesOperator(event, filters.operator) &&
+          eventMatchesValue(event, filters.value) &&
+          eventMatchesDateRange(event, filters.dateRange),
       ),
-    [activeTypeFilter, moduleFilteredEvents, searchQuery],
+    [
+      activeTypeFilter,
+      filters.dateRange,
+      filters.operator,
+      filters.value,
+      moduleFilteredEvents,
+      searchQuery,
+    ],
   )
 
   const availableDays = useMemo(
@@ -382,43 +405,19 @@ function HistoryTimelineModule() {
     [refinedEvents],
   )
 
-  const selectedDay = useMemo(
-    () => buildSelectedDay(searchParams, availableDays),
-    [availableDays, searchParams],
-  )
-
-  useEffect(() => {
-    if (!selectedDay) {
-      return
+  const selectedDay = useMemo(() => {
+    if (availableDays.includes(filters.day)) {
+      return filters.day
     }
 
-    setSearchParams((currentParams) => {
-      const currentModule = currentParams.get('modulo') ?? 'all'
-      const currentType = currentParams.get('tipo') ?? 'all'
-      const currentDay = currentParams.get('data') ?? 'hoje'
-      const currentQuery = currentParams.get('q') ?? ''
+    return availableDays[0] ?? filters.dateRange.end ?? getTodayKey()
+  }, [availableDays, filters.dateRange.end, filters.day])
 
-      if (
-        currentModule === activeFilter.id &&
-        currentType === activeTypeFilter.id &&
-        currentDay === selectedDay &&
-        currentQuery === searchQuery
-      ) {
-        return currentParams
-      }
-
-      const nextParams = new URLSearchParams(currentParams)
-      nextParams.set('modulo', activeFilter.id)
-      nextParams.set('tipo', activeTypeFilter.id)
-      nextParams.set('data', selectedDay)
-
-      if (!searchQuery) {
-        nextParams.delete('q')
-      }
-
-      return nextParams
-    })
-  }, [activeFilter.id, activeTypeFilter.id, searchQuery, selectedDay, setSearchParams])
+  useEffect(() => {
+    if (filters.day !== selectedDay) {
+      setDay(selectedDay)
+    }
+  }, [filters.day, selectedDay, setDay])
 
   const visibleEvents = useMemo(
     () =>
@@ -480,42 +479,11 @@ function HistoryTimelineModule() {
     ]
   }, [availableDays.length, refinedEvents, selectedDay, visibleEvents.length])
 
-  const updateParams = useCallback(
-    (nextValues) => {
-      setSearchParams((currentParams) => {
-        const nextParams = new URLSearchParams(currentParams)
-
-        if (nextValues.modulo) {
-          nextParams.set('modulo', nextValues.modulo)
-        }
-
-        if (nextValues.tipo) {
-          nextParams.set('tipo', nextValues.tipo)
-        }
-
-        if (nextValues.data) {
-          nextParams.set('data', nextValues.data)
-        }
-
-        if ('q' in nextValues) {
-          if (nextValues.q) {
-            nextParams.set('q', nextValues.q)
-          } else {
-            nextParams.delete('q')
-          }
-        }
-
-        return nextParams
-      })
-    },
-    [setSearchParams],
-  )
-
   const handleDayChange = useCallback(
     (dayKey) => {
-      updateParams({ data: dayKey })
+      setDay(dayKey)
     },
-    [updateParams],
+    [setDay],
   )
 
   useEffect(() => {
@@ -548,6 +516,10 @@ function HistoryTimelineModule() {
   }, [availableDays, handleDayChange, selectedDay])
 
   function handleFilterChange(filterId) {
+    if (!filters.activeChips.includes('module')) {
+      addChip('module')
+    }
+
     const nextFilter =
       ALL_HISTORY_FILTERS.find((filter) => filter.id === filterId) ?? PRIMARY_HISTORY_FILTERS[0]
     const nextEvents =
@@ -567,10 +539,15 @@ function HistoryTimelineModule() {
         ? todayKey
         : (nextDays[0] ?? todayKey)
 
-    updateParams({ modulo: filterId, data: nextDay })
+    setFilterValue('module', filterId)
+    setDay(nextDay)
   }
 
   function handleTypeFilterChange(typeId) {
+    if (!filters.activeChips.includes('status')) {
+      addChip('status')
+    }
+
     const nextType =
       EVENT_TYPE_FILTERS.find((filter) => filter.id === typeId) ?? EVENT_TYPE_FILTERS[0]
     const nextRefined = moduleFilteredEvents.filter(
@@ -586,7 +563,8 @@ function HistoryTimelineModule() {
         ? todayKey
         : (nextDays[0] ?? todayKey)
 
-    updateParams({ tipo: typeId, data: nextDay })
+    setFilterValue('status', typeId)
+    setDay(nextDay)
   }
 
   function handleSearchChange(event) {
@@ -605,7 +583,8 @@ function HistoryTimelineModule() {
         ? todayKey
         : (nextDays[0] ?? todayKey)
 
-    updateParams({ q: nextQuery, data: nextDay })
+    setSearchQuery(nextQuery)
+    setDay(nextDay)
   }
 
   function handleHourToggle(hourKey) {
@@ -615,7 +594,7 @@ function HistoryTimelineModule() {
     }))
   }
 
-  const visibleFilterChips = useMemo(() => {
+  const quickModuleChips = useMemo(() => {
     const baseFilters = [...PRIMARY_HISTORY_FILTERS]
 
     if (
@@ -644,12 +623,30 @@ function HistoryTimelineModule() {
       </div>
 
       <div className="history-module__filters">
+        <div className="history-module__filters-top">
+          <FilterChips
+            filters={filters}
+            moduleOptions={ALL_HISTORY_FILTERS.map((filter) => ({
+              value: filter.id,
+              label: filter.label,
+            }))}
+            statusOptions={EVENT_TYPE_FILTERS.map((filter) => ({
+              value: filter.id,
+              label: filter.label,
+            }))}
+            activeChips={filters.activeChips}
+            onRemoveChip={removeChip}
+            onSetFilterValue={setFilterValue}
+          />
+          <FilterDropdown activeChips={filters.activeChips} onAddChip={addChip} />
+        </div>
+
         <div
           className="history-module__chips"
           role="tablist"
           aria-label="Filtro rapido do historico"
         >
-          {visibleFilterChips.map((filter) => (
+          {quickModuleChips.map((filter) => (
             <button
               key={filter.id}
               type="button"
@@ -663,8 +660,7 @@ function HistoryTimelineModule() {
 
         <div className="history-module__toolbar">
           <div className="history-module__search">
-            <input
-              className="ui-input"
+            <Input
               type="search"
               value={searchQuery}
               onChange={handleSearchChange}
