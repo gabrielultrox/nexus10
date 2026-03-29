@@ -220,6 +220,8 @@ function CustomersModule() {
 
     try {
       if (editingCustomerId) {
+        const previousCustomer =
+          customers.find((customer) => customer.id === editingCustomerId) ?? null
         await updateCustomer({
           storeId: currentStoreId,
           customerId: editingCustomerId,
@@ -230,9 +232,16 @@ function CustomersModule() {
           tenantId,
           actor: buildAuditActor(session),
           action: 'customer.updated',
+          module: 'customers',
           entityType: 'customer',
           entityId: editingCustomerId,
           description: `Cliente ${formState.name} atualizado na base.`,
+          before: previousCustomer,
+          after: {
+            ...previousCustomer,
+            ...formState,
+          },
+          notifyAdmin: true,
         })
         setFeedbackMessage('Cliente atualizado com sucesso.')
       } else {
@@ -246,9 +255,11 @@ function CustomersModule() {
           tenantId,
           actor: buildAuditActor(session),
           action: 'customer.created',
+          module: 'customers',
           entityType: 'customer',
           entityId: customerId,
           description: `Cliente ${formState.name} criado na base.`,
+          after: formState,
         })
         setFeedbackMessage('Cliente cadastrado com sucesso.')
       }
@@ -292,6 +303,7 @@ function CustomersModule() {
         tenantId,
         actor: buildAuditActor(session),
         action: 'customer.seeded',
+        module: 'customers',
         entityType: 'customer',
         entityId: 'base-seed',
         description: `Base inicial de clientes processada com ${result.createdCount} novos cadastros.`,
@@ -343,6 +355,7 @@ function CustomersModule() {
         tenantId,
         actor: buildAuditActor(session),
         action: 'customer.csv_imported',
+        module: 'customers',
         entityType: 'customer',
         entityId: 'csv-import',
         description: `${result.importedCount} cliente(s) processados via CSV. ${result.createdCount} criado(s). ${result.updatedCount} atualizado(s). ${result.skippedCount} ignorado(s).`,
@@ -405,9 +418,11 @@ function CustomersModule() {
         tenantId,
         actor: buildAuditActor(session),
         action: 'customer.deleted',
+        module: 'customers',
         entityType: 'customer',
         entityId: customerId,
         description: `Cliente ${customer?.name ?? customerId} removido da base.`,
+        before: customer,
       })
 
       if (editingCustomerId === customerId) {

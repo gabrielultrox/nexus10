@@ -29,6 +29,7 @@ import {
   loginRateLimiter,
   publicRateLimiter,
 } from './middleware/rateLimiter.js'
+import { createAuditLoggerMiddleware } from './middleware/auditLogger.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { validateRequest } from './middleware/validateRequest.js'
 import { registerMonitoringRoutes } from './modules/admin/monitoringController.js'
@@ -240,6 +241,7 @@ export function createApp(): Express {
   app.use('/api', requireApiAuth)
   app.use('/api', sentryRequestContextMiddleware)
   app.use('/api', authenticatedApiRateLimiter)
+  app.use('/api', createAuditLoggerMiddleware())
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
   registerFinanceRoutes(app)

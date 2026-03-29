@@ -36,31 +36,48 @@ function resolveStoreIdFromPath(refPath = '') {
 
 function normalizeAuditLogDocument(documentSnapshot) {
   const data = documentSnapshot.data() ?? {}
-  const createdAt = asDate(data.createdAt)
+  const createdAt = asDate(data.timestampUtc ?? data.createdAt)
   const storeId = normalizeText(data.storeId) || resolveStoreIdFromPath(documentSnapshot.ref.path)
 
   return {
     id: documentSnapshot.id,
     storeId,
+    userId: normalizeText(data.userId) || normalizeText(data.actor?.id),
     actorId: normalizeText(data.actor?.id),
     actorName: normalizeText(data.actor?.name) || 'Sistema',
     actorRole: normalizeText(data.actor?.role),
     action: normalizeText(data.action),
+    module: normalizeText(data.module),
     resource: normalizeText(data.entityType),
+    entityType: normalizeText(data.entityType),
     resourceId: normalizeText(data.entityId),
+    entityId: normalizeText(data.entityId),
     description: normalizeText(data.description),
     createdAt: createdAt ? createdAt.toISOString() : null,
+    timestampUtc: normalizeText(data.timestampUtc) || (createdAt ? createdAt.toISOString() : null),
+    timestampLocal: normalizeText(data.timestampLocal),
+    timezone: normalizeText(data.timezone),
+    reason: normalizeText(data.reason),
+    ip: normalizeText(data.ip),
+    method: normalizeText(data.method),
+    path: normalizeText(data.path),
+    requestId: normalizeText(data.requestId),
+    statusCode: Number.isFinite(Number(data.statusCode)) ? Number(data.statusCode) : null,
+    before: data.before ?? null,
+    after: data.after ?? null,
     metadata: data.metadata ?? null,
   }
 }
 
 function matchesFilter(logEntry, filters) {
-  const actorFilter = filters.actor.toLowerCase()
+  const actorFilter = (filters.user || filters.actor).toLowerCase()
   const actionFilter = filters.action.toLowerCase()
-  const resourceFilter = filters.resource.toLowerCase()
+  const resourceFilter = (filters.entity || filters.resource).toLowerCase()
+  const moduleFilter = filters.module.toLowerCase()
+  const searchFilter = filters.search.toLowerCase()
 
   if (actorFilter) {
-    const actorText = [logEntry.actorName, logEntry.actorId, logEntry.actorRole]
+    const actorText = [logEntry.actorName, logEntry.actorId, logEntry.actorRole, logEntry.userId]
       .join(' ')
       .toLowerCase()
     if (!actorText.includes(actorFilter)) {
@@ -73,15 +90,37 @@ function matchesFilter(logEntry, filters) {
   }
 
   if (resourceFilter) {
-    const resourceText = [logEntry.resource, logEntry.resourceId].join(' ').toLowerCase()
+    const resourceText = [logEntry.resource, logEntry.resourceId, logEntry.description].join(' ').toLowerCase()
     if (!resourceText.includes(resourceFilter)) {
       return false
     }
   }
 
+  if (moduleFilter && !logEntry.module.toLowerCase().includes(moduleFilter)) {
+    return false
+  }
+
   if (filters.date) {
     const entryDate = logEntry.createdAt ? logEntry.createdAt.slice(0, 10) : ''
     if (entryDate !== filters.date) {
+      return false
+    }
+  }
+
+  if (searchFilter) {
+    const haystack = [
+      logEntry.id,
+      logEntry.entityId,
+      logEntry.resourceId,
+      logEntry.requestId,
+      logEntry.description,
+      JSON.stringify(logEntry.before ?? {}),
+      JSON.stringify(logEntry.after ?? {}),
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    if (!haystack.includes(searchFilter)) {
       return false
     }
   }
@@ -106,7 +145,7 @@ async function listAuditLogsForStores(storeIds, filters) {
   const snapshots = await Promise.all(
     storeChunks.map((storeChunk) => {
       let currentQuery = firestore
-        .collectionGroup('auditLogs')
+        .collectionGroup('audit_logs')
         .where('storeId', 'in', storeChunk)
         .orderBy('createdAt', 'desc')
         .limit(fetchWindow)

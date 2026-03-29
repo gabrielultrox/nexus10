@@ -1,14 +1,4 @@
-import { createAuditRepository } from './auditRepository.js'
-
-const repository = createAuditRepository()
-
-function buildActor(actor) {
-  return {
-    id: actor?.id ?? actor?.uid ?? null,
-    name: actor?.name ?? actor?.operatorName ?? actor?.displayName ?? 'Sistema',
-    role: actor?.role ?? 'system',
-  }
-}
+import { recordAuditEvent as recordCentralAuditEvent } from '../../services/auditService.js'
 
 export async function recordAuditEvent({
   storeId,
@@ -24,18 +14,15 @@ export async function recordAuditEvent({
     return null
   }
 
-  return repository.createAuditLog({
+  return recordCentralAuditEvent({
     storeId,
-    payload: {
-      storeId,
-      tenantId,
-      actor: buildActor(actor),
-      action,
-      entityType,
-      entityId,
-      description,
-      metadata,
-      createdAt: new Date(),
-    },
+    tenantId,
+    actor,
+    action,
+    module: entityType,
+    entityType,
+    entityId,
+    description,
+    metadata,
   })
 }

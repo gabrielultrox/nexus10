@@ -2,43 +2,32 @@ import { useEffect, useMemo, useState } from 'react'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
-import { Button } from '../../../components/ui'
-import EmptyState from '../../../components/ui/EmptyState'
+import { Button, Input } from '../../../components/ui'
+import AuditGrid from '../../../components/AuditLog/AuditGrid'
 import {
   buildAuditLogsCsv,
+  buildAuditLogsExcel,
+  buildAuditLogsPdfHtml,
   listAdminAuditLogs,
   listAllAdminAuditLogs,
 } from '../../../services/adminAuditLogs'
 
 const INITIAL_FILTERS = {
   date: '',
-  actor: '',
+  user: '',
   action: '',
-  resource: '',
+  module: '',
+  entity: '',
+  search: '',
 }
 
-function formatDateTime(value) {
-  if (!value) {
-    return '--'
-  }
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
-function downloadCsvFile(content) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+function downloadFile(content, type, filename) {
+  const blob = new Blob([content], { type })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
-  const stamp = new Date().toISOString().slice(0, 10)
 
   anchor.href = url
-  anchor.download = `audit-logs-${stamp}.csv`
+  anchor.download = filename
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
@@ -157,7 +146,46 @@ function AuditLogModule() {
     try {
       const exportItems = await listAllAdminAuditLogs(filters)
       const csvContent = buildAuditLogsCsv(exportItems)
-      downloadCsvFile(csvContent)
+      const stamp = new Date().toISOString().slice(0, 10)
+      downloadFile(csvContent, 'text/csv;charset=utf-8;', `audit-logs-${stamp}.csv`)
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function handleExportExcel() {
+    setExporting(true)
+
+    try {
+      const exportItems = await listAllAdminAuditLogs(filters)
+      const content = buildAuditLogsExcel(exportItems)
+      const stamp = new Date().toISOString().slice(0, 10)
+      downloadFile(content, 'application/vnd.ms-excel;charset=utf-8;', `audit-logs-${stamp}.xls`)
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function handleExportPdf() {
+    setExporting(true)
+
+    try {
+      const exportItems = await listAllAdminAuditLogs(filters)
+      const printableHtml = buildAuditLogsPdfHtml(exportItems)
+      const printWindow = window.open('', '_blank', 'noopener,noreferrer')
+
+      if (!printWindow) {
+        throw new Error('Nao foi possivel abrir a janela de impressao.')
+      }
+
+      printWindow.document.write(printableHtml)
+      printWindow.document.close()
+      printWindow.focus()
+      printWindow.print()
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel exportar os logs.')
     } finally {
@@ -186,9 +214,8 @@ function AuditLogModule() {
             <label className="ui-label" htmlFor="audit-log-date">
               Data
             </label>
-            <input
+            <Input
               id="audit-log-date"
-              className="ui-input"
               type="date"
               value={filters.date}
               onChange={(event) => updateFilter('date', event.target.value)}
@@ -196,25 +223,11 @@ function AuditLogModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-actor">
-              Ator
-            </label>
-            <input
-              id="audit-log-actor"
-              className="ui-input"
-              value={filters.actor}
-              onChange={(event) => updateFilter('actor', event.target.value)}
-              placeholder="Gabriel, local-gabriel..."
-            />
-          </div>
-
-          <div className="ui-field">
             <label className="ui-label" htmlFor="audit-log-action">
               Acao
             </label>
-            <input
+            <Input
               id="audit-log-action"
-              className="ui-input"
               value={filters.action}
               onChange={(event) => updateFilter('action', event.target.value)}
               placeholder="CREATE, UPDATE, DELETE..."
@@ -222,15 +235,50 @@ function AuditLogModule() {
           </div>
 
           <div className="ui-field">
-            <label className="ui-label" htmlFor="audit-log-resource">
-              Recurso
+            <label className="ui-label" htmlFor="audit-log-user">
+              Usuario
             </label>
-            <input
-              id="audit-log-resource"
-              className="ui-input"
-              value={filters.resource}
-              onChange={(event) => updateFilter('resource', event.target.value)}
-              placeholder="orders, sales, trocos..."
+            <Input
+              id="audit-log-user"
+              value={filters.user}
+              onChange={(event) => updateFilter('user', event.target.value)}
+              placeholder="Gabriel, uid, role..."
+            />
+          </div>
+
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="audit-log-module">
+              Modulo
+            </label>
+            <Input
+              id="audit-log-module"
+              value={filters.module}
+              onChange={(event) => updateFilter('module', event.target.value)}
+              placeholder="orders, sales, finance..."
+            />
+          </div>
+
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="audit-log-entity">
+              Entidade
+            </label>
+            <Input
+              id="audit-log-entity"
+              value={filters.entity}
+              onChange={(event) => updateFilter('entity', event.target.value)}
+              placeholder="order, sale, customer..."
+            />
+          </div>
+
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="audit-log-search">
+              Busca
+            </label>
+            <Input
+              id="audit-log-search"
+              value={filters.search}
+              onChange={(event) => updateFilter('search', event.target.value)}
+              placeholder="ID, descricao, request-id..."
             />
           </div>
         </div>
@@ -253,7 +301,25 @@ function AuditLogModule() {
             onClick={handleExportCsv}
             disabled={exporting || loading}
           >
-            {exporting ? 'Exportando CSV...' : 'Exportar CSV'}
+            {exporting ? 'Exportando...' : 'CSV'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleExportExcel}
+            disabled={exporting || loading}
+          >
+            Excel
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleExportPdf}
+            disabled={exporting || loading}
+          >
+            PDF
           </Button>
         </div>
       </SurfaceCard>
@@ -261,68 +327,41 @@ function AuditLogModule() {
       {errorMessage ? <div className="auth-error">{errorMessage}</div> : null}
 
       <SurfaceCard title="Tabela de auditoria">
-        {loading ? (
-          <EmptyState message="Carregando logs de auditoria..." />
-        ) : logs.length === 0 ? (
-          <EmptyState message="Nenhum log encontrado com os filtros atuais" />
-        ) : (
-          <>
-            <div className="entity-table-wrap entity-table-wrap--dense">
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Ator</th>
-                    <th>Acao</th>
-                    <th>Recurso</th>
-                    <th>Registro</th>
-                    <th>Loja</th>
-                    <th>Descricao</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log) => (
-                    <tr key={log.id}>
-                      <td className="ui-table__cell--mono">{formatDateTime(log.createdAt)}</td>
-                      <td className="ui-table__cell--strong">{log.actorName || 'Sistema'}</td>
-                      <td>{log.action || '--'}</td>
-                      <td>{log.resource || '--'}</td>
-                      <td className="ui-table__cell--mono">{log.resourceId || '--'}</td>
-                      <td className="ui-table__cell--mono">{log.storeId || '--'}</td>
-                      <td className="audit-log-table__description">{log.description || '--'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="entity-table-wrap entity-table-wrap--dense">
+          <AuditGrid
+            items={logs}
+            loading={loading}
+            emptyMessage="Nenhum log encontrado com os filtros atuais"
+          />
+        </div>
 
-            <div className="audit-log-pagination">
-              <p className="audit-log-pagination__summary">
-                Pagina {pagination.page} de {Math.max(pagination.pages, 1)} · {pagination.total}{' '}
-                registros
-              </p>
+        {!loading && logs.length > 0 ? (
+          <div className="audit-log-pagination">
+            <p className="audit-log-pagination__summary">
+              Pagina {pagination.page} de {Math.max(pagination.pages, 1)} - {pagination.total}{' '}
+              registros
+            </p>
 
-              <div className="audit-log-pagination__actions">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
-                  disabled={pagination.page <= 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setPage((current) => current + 1)}
-                  disabled={pagination.pages === 0 || pagination.page >= pagination.pages}
-                >
-                  Proxima
-                </Button>
-              </div>
+            <div className="audit-log-pagination__actions">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                disabled={pagination.page <= 1}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={pagination.pages === 0 || pagination.page >= pagination.pages}
+              >
+                Proxima
+              </Button>
             </div>
-          </>
-        )}
+          </div>
+        ) : null}
       </SurfaceCard>
     </section>
   )

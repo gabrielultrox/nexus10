@@ -249,6 +249,12 @@ export const adminAuditLogQuerySchema = z.object({
     .max(120, 'actor deve ter no maximo 120 caracteres.')
     .optional()
     .default(''),
+  user: z
+    .string()
+    .trim()
+    .max(120, 'user deve ter no maximo 120 caracteres.')
+    .optional()
+    .default(''),
   action: z
     .string()
     .trim()
@@ -259,6 +265,24 @@ export const adminAuditLogQuerySchema = z.object({
     .string()
     .trim()
     .max(120, 'resource deve ter no maximo 120 caracteres.')
+    .optional()
+    .default(''),
+  module: z
+    .string()
+    .trim()
+    .max(120, 'module deve ter no maximo 120 caracteres.')
+    .optional()
+    .default(''),
+  entity: z
+    .string()
+    .trim()
+    .max(120, 'entity deve ter no maximo 120 caracteres.')
+    .optional()
+    .default(''),
+  search: z
+    .string()
+    .trim()
+    .max(200, 'search deve ter no maximo 200 caracteres.')
     .optional()
     .default(''),
   date: z
