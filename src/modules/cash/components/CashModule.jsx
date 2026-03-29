@@ -1,6 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { toPng } from 'html-to-image'
 
 import CaixaStatusBar from '../../../components/caixa/CaixaStatusBar'
 import PageTabs from '../../../components/common/PageTabs'
@@ -15,7 +14,9 @@ import { formatCurrencyBRL } from '../../../services/commerce'
 import { subscribeToCouriers } from '../../../services/courierService'
 import { appendAuditEvent } from '../../../services/localAudit'
 import {
+  loadLocalRecords,
   loadResettableLocalRecords,
+  saveLocalRecords,
   saveResettableLocalRecords,
 } from '../../../services/localAccess'
 import {
@@ -35,6 +36,7 @@ import { playCashSuccess, playWarning } from '../../../services/soundManager'
 import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
+import { Checkbox, Input, Textarea } from '../../../components/ui'
 
 const CASH_STORAGE_KEY = 'nexus-module-cash'
 const CASH_STATE_STORAGE_KEY = 'nexus-module-cash-state'
@@ -127,6 +129,17 @@ const initialFinancialPendingForm = {
   description: '',
   courierRelated: false,
   courierName: '',
+}
+
+let htmlToImageModulePromise
+
+async function loadToPng() {
+  if (!htmlToImageModulePromise) {
+    htmlToImageModulePromise = import('html-to-image')
+  }
+
+  const { toPng } = await htmlToImageModulePromise
+  return toPng
 }
 
 function createCashId() {
@@ -416,11 +429,13 @@ function FinancialPendingTable({ records, onChecklistToggle, onResolvedToggle, o
                     >
                       {isResolved ? 'Reabrir' : 'Concluir'}
                     </Button>
-                    <DestructiveIconButton
-                      className="native-module__delete-action"
-                      onClick={() => onDelete(record.id)}
-                      label="Excluir pendencia"
-                    />
+                    {!isResolved ? (
+                      <DestructiveIconButton
+                        className="native-module__delete-action"
+                        onClick={() => onDelete(record.id)}
+                        label="Excluir pendencia"
+                      />
+                    ) : null}
                   </div>
                 </td>
               </tr>
@@ -590,7 +605,7 @@ function CashModule({ mode = 'cash' }) {
     loadResettableLocalRecords(CASH_STORAGE_KEY, [], CASH_RESET_HOUR),
   )
   const [financialPendingRecords, setFinancialPendingRecords] = useState(() =>
-    loadResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [], CASH_RESET_HOUR),
+    loadLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, []),
   )
   const [cashState, setCashState] = useState(() =>
     loadCashState(CASH_STATE_STORAGE_KEY, CASH_RESET_HOUR),
@@ -665,7 +680,6 @@ function CashModule({ mode = 'cash' }) {
       modulePath: 'cash-financial-pending',
       storageKey: FINANCIAL_PENDING_STORAGE_KEY,
       initialRecords: [],
-      dailyResetHour: CASH_RESET_HOUR,
       onData(nextRecords) {
         setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords))
       },
@@ -876,9 +890,9 @@ function CashModule({ mode = 'cash' }) {
           meta: 'itens para acompanhamento',
         },
         {
-          label: 'Resolvidas no dia',
+          label: 'Resolvidas',
           value: String(resolvedFinancialPendingRecords.length).padStart(2, '0'),
-          meta: 'itens ja tratados',
+          meta: 'historico permanente',
         },
         {
           label: 'Valor em risco',
@@ -1024,7 +1038,7 @@ function CashModule({ mode = 'cash' }) {
   async function persistFinancialPendingRecords(nextRecords, nextRecord = null) {
     const sortedRecords = sortFinancialPendingRecords(nextRecords)
     setFinancialPendingRecords(sortedRecords)
-    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, sortedRecords, CASH_RESET_HOUR)
+    saveLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, sortedRecords)
 
     if (!nextRecord) {
       return
@@ -1035,7 +1049,6 @@ function CashModule({ mode = 'cash' }) {
         storeId: currentStoreId,
         tenantId,
         modulePath: 'cash-financial-pending',
-        dailyResetHour: CASH_RESET_HOUR,
         record: nextRecord,
       })
       setFinancialPendingSyncMessage(wasSavedRemotely ? '' : 'Pendencias financeiras em modo local')
@@ -1360,7 +1373,7 @@ function CashModule({ mode = 'cash' }) {
 
     const nextRecords = financialPendingRecords.filter((record) => record.id !== recordId)
     setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords))
-    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, nextRecords, CASH_RESET_HOUR)
+    saveLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, nextRecords)
 
     try {
       const wasDeletedRemotely = await deleteManualModuleRecord({
@@ -1448,56 +1461,6 @@ function CashModule({ mode = 'cash' }) {
     playCashSuccess()
   }
 
-  async function handleClearResolvedFinancialPendings() {
-    const resolvedIds = resolvedFinancialPendingRecords.map((record) => record.id)
-
-    if (resolvedIds.length === 0) {
-      return
-    }
-
-    const confirmed = await confirm.ask({
-      title: 'Limpar resolvidas',
-      message: `Confirma remover ${resolvedIds.length} pendencia(s) ja resolvida(s)?`,
-      confirmLabel: 'Limpar resolvidas',
-      tone: 'danger',
-    })
-
-    if (!confirmed) {
-      return
-    }
-
-    const nextRecords = financialPendingRecords.filter((record) => !resolvedIds.includes(record.id))
-    setFinancialPendingRecords(sortFinancialPendingRecords(nextRecords))
-    saveResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, nextRecords, CASH_RESET_HOUR)
-
-    try {
-      await Promise.all(
-        resolvedIds.map((recordId) =>
-          deleteManualModuleRecord({
-            storeId: currentStoreId,
-            modulePath: 'cash-financial-pending',
-            recordId,
-          }),
-        ),
-      )
-      setFinancialPendingSyncMessage('')
-    } catch (error) {
-      console.error('Nao foi possivel limpar pendencias resolvidas remotamente.', error)
-      setFinancialPendingSyncMessage('Limpeza mantida no modo local')
-    }
-
-    appendAuditEvent({
-      module: 'Caixa',
-      modulePath: 'cash',
-      actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
-      action: 'Limpou pendencias financeiras resolvidas',
-      target: 'Pendencias financeiras',
-      details: `${resolvedIds.length} registro(s) removido(s)`,
-    })
-    toast.success('Pendencias resolvidas removidas')
-    playCashSuccess()
-  }
-
   async function handleExportFinancialPendingsImage() {
     const exportNode = document.getElementById('financial-pending-export-canvas')
 
@@ -1507,6 +1470,7 @@ function CashModule({ mode = 'cash' }) {
     }
 
     try {
+      const toPng = await loadToPng()
       const image = await toPng(exportNode, {
         cacheBust: true,
         pixelRatio: 2,
@@ -1628,9 +1592,8 @@ function CashModule({ mode = 'cash' }) {
                 <label className="ui-label" htmlFor="financial-pending-customer">
                   Cliente
                 </label>
-                <input
+                <Input
                   id="financial-pending-customer"
-                  className="ui-input"
                   placeholder="Nome do cliente"
                   value={financialPendingForm.customerName}
                   onChange={(event) =>
@@ -1646,9 +1609,8 @@ function CashModule({ mode = 'cash' }) {
                 <label className="ui-label" htmlFor="financial-pending-phone">
                   Numero
                 </label>
-                <input
+                <Input
                   id="financial-pending-phone"
-                  className="ui-input"
                   placeholder="Telefone / WhatsApp"
                   value={financialPendingForm.customerPhone}
                   onChange={(event) =>
@@ -1730,9 +1692,8 @@ function CashModule({ mode = 'cash' }) {
                 <label className="ui-label" htmlFor="financial-pending-value">
                   Valor
                 </label>
-                <input
+                <Input
                   id="financial-pending-value"
-                  className="ui-input"
                   inputMode="decimal"
                   placeholder="0,00"
                   value={financialPendingForm.amount}
@@ -1748,20 +1709,18 @@ function CashModule({ mode = 'cash' }) {
 
             {financialPendingForm.channel === 'delivery' ? (
               <div className="cash-module__pending-delivery-tools">
-                <label className="cash-module__pending-check">
-                  <input
-                    type="checkbox"
-                    checked={financialPendingForm.courierRelated}
-                    onChange={(event) =>
-                      setFinancialPendingForm((current) => ({
-                        ...current,
-                        courierRelated: event.target.checked,
-                        courierName: event.target.checked ? current.courierName : '',
-                      }))
-                    }
-                  />
-                  <span>Pendencia relacionada a entregador</span>
-                </label>
+                <Checkbox
+                  className="cash-module__pending-check"
+                  checked={financialPendingForm.courierRelated}
+                  label="Pendencia relacionada a entregador"
+                  onChange={(event) =>
+                    setFinancialPendingForm((current) => ({
+                      ...current,
+                      courierRelated: event.target.checked,
+                      courierName: event.target.checked ? current.courierName : '',
+                    }))
+                  }
+                />
 
                 {financialPendingForm.courierRelated ? (
                   <div className="ui-field cash-module__row-field cash-module__row-field--value">
@@ -1795,9 +1754,8 @@ function CashModule({ mode = 'cash' }) {
               <label className="ui-label" htmlFor="financial-pending-description">
                 Descricao
               </label>
-              <textarea
+              <Textarea
                 id="financial-pending-description"
-                className="ui-textarea"
                 placeholder="Explique o problema: troco nao entregue, estorno em aberto, cobranca divergente..."
                 value={financialPendingForm.description}
                 onChange={(event) =>
@@ -1833,29 +1791,40 @@ function CashModule({ mode = 'cash' }) {
             onSubmit={handleSubmit}
           >
             {activeTab.id === 'closing' ? (
-              <div className="cash-module__closing-summary">
-                <div className="cash-module__closing-row">
-                  <span>Entradas</span>
-                  <strong>
-                    {formatCurrencyBRL(
-                      (totalAmountByTab.opening ?? 0) + (totalAmountByTab.supply ?? 0),
-                    )}
-                  </strong>
+              <>
+                <div className="cash-module__closing-summary">
+                  <div className="cash-module__closing-row">
+                    <span>Entradas</span>
+                    <strong>
+                      {formatCurrencyBRL(
+                        (totalAmountByTab.opening ?? 0) + (totalAmountByTab.supply ?? 0),
+                      )}
+                    </strong>
+                  </div>
+                  <div className="cash-module__closing-row">
+                    <span>Saidas</span>
+                    <strong>
+                      {formatCurrencyBRL(
+                        (totalAmountByTab.withdrawal ?? 0) +
+                          (totalAmountByTab['courier-withdrawal'] ?? 0),
+                      )}
+                    </strong>
+                  </div>
+                  <div className="cash-module__closing-row cash-module__closing-row--total">
+                    <span>Saldo final</span>
+                    <strong>{formatCurrencyBRL(cashState.currentBalance ?? 0)}</strong>
+                  </div>
                 </div>
-                <div className="cash-module__closing-row">
-                  <span>Saidas</span>
-                  <strong>
-                    {formatCurrencyBRL(
-                      (totalAmountByTab.withdrawal ?? 0) +
-                        (totalAmountByTab['courier-withdrawal'] ?? 0),
-                    )}
-                  </strong>
+
+                <div className="cash-module__form-actions">
+                  <Button type="button" variant="secondary" onClick={clearForm}>
+                    Limpar
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={isSaving || !isCashOpen}>
+                    {activeTab.submitLabel}
+                  </Button>
                 </div>
-                <div className="cash-module__closing-row cash-module__closing-row--total">
-                  <span>Saldo final</span>
-                  <strong>{formatCurrencyBRL(cashState.currentBalance ?? 0)}</strong>
-                </div>
-              </div>
+              </>
             ) : (
               <FormRow className="cash-module__form-row">
                 {requiresCourier ? (
@@ -1884,9 +1853,8 @@ function CashModule({ mode = 'cash' }) {
                   <label className="ui-label" htmlFor="cash-value">
                     Valor
                   </label>
-                  <input
+                  <Input
                     id="cash-value"
-                    className="ui-input"
                     inputMode="decimal"
                     placeholder="0,00"
                     value={valueInput}
@@ -1899,9 +1867,8 @@ function CashModule({ mode = 'cash' }) {
                     <label className="ui-label" htmlFor="cash-note">
                       Observacao
                     </label>
-                    <input
+                    <Input
                       id="cash-note"
-                      className="ui-input"
                       placeholder="Observacao"
                       value={note}
                       onChange={(event) => setNote(event.target.value)}
@@ -1984,8 +1951,8 @@ function CashModule({ mode = 'cash' }) {
             </span>
 
             <div className="cash-module__history-toolbar-actions">
-              <input
-                className="ui-input cash-module__pending-search"
+              <Input
+                className="cash-module__pending-search"
                 placeholder="Buscar cliente, numero ou descricao"
                 value={financialPendingSearch}
                 onChange={(event) => setFinancialPendingSearch(event.target.value)}
@@ -2009,11 +1976,9 @@ function CashModule({ mode = 'cash' }) {
               <Button variant="secondary" onClick={handleExportFinancialPendingsImage}>
                 Exportar imagem
               </Button>
-              {resolvedFinancialPendingRecords.length > 0 ? (
-                <Button variant="secondary" onClick={handleClearResolvedFinancialPendings}>
-                  Limpar resolvidas
-                </Button>
-              ) : null}
+              <span className="cash-module__pending-history-note">
+                Resolvidas permanecem no historico.
+              </span>
             </div>
           </div>
 

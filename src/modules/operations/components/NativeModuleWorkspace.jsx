@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { toPng } from 'html-to-image'
 
 import MetricCard from '../../../components/common/MetricCard'
 import PageIntro from '../../../components/common/PageIntro'
@@ -51,6 +50,17 @@ import NativeModuleStatusBar from './NativeModuleStatusBar'
 
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/
 const DELIVERY_READING_LAST_COURIER_KEY = 'leitura_last_entregador'
+
+let htmlToImageModulePromise
+
+async function loadToPng() {
+  if (!htmlToImageModulePromise) {
+    htmlToImageModulePromise = import('html-to-image')
+  }
+
+  const { toPng } = await htmlToImageModulePromise
+  return toPng
+}
 
 function isPlaceholderOption(value) {
   const normalized = String(value ?? '')
@@ -350,6 +360,14 @@ function formatAuditText(record, fallback = 'Sem atualizacao') {
   }
 
   return actorLabel || timeLabel || fallback
+}
+
+function resolveAuditEventDayKey(event) {
+  if (typeof event?.operationalDay === 'string' && event.operationalDay.trim()) {
+    return event.operationalDay.trim()
+  }
+
+  return String(event?.timestamp ?? '').slice(0, 10)
 }
 
 function buildOperationsAuditSummary(routePath, record) {
@@ -2059,6 +2077,7 @@ function NativeModuleWorkspace({ route }) {
     try {
       setErrorMessage('')
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve()))
+      const toPng = await loadToPng()
 
       return await toPng(exportNode, {
         cacheBust: true,
@@ -2580,7 +2599,7 @@ function NativeModuleWorkspace({ route }) {
             const eventDate = new Date(event.timestamp)
             return {
               id: event.id,
-              dayKey: event.timestamp.slice(0, 10),
+              dayKey: resolveAuditEventDayKey(event),
               dayLabel: new Intl.DateTimeFormat('pt-BR', {
                 weekday: 'short',
                 day: '2-digit',

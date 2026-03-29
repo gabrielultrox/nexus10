@@ -322,7 +322,7 @@ export function loadDashboardOperationalSources() {
   const occurrenceRecords = loadResettableLocalRecords('nexus-module-occurrences', [], 3)
   const courierRecords = loadLocalRecords('nexus-manual-couriers', courierSeedRecords)
   const deliveryReadingRecords = loadResettableLocalRecords(DELIVERY_READING_STORAGE_KEY, [], 3)
-  const financialPendingRecords = loadResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [], 3)
+  const financialPendingRecords = loadLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [])
   const cashState = loadCashState(CASH_STATE_STORAGE_KEY, 3)
 
   return {

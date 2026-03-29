@@ -396,6 +396,11 @@
   flex-wrap: wrap;
 }
 
+.cash-module__pending-history-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .cash-module__pending-export-canvas {
   position: fixed;
   left: -99999px;

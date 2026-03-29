@@ -48,8 +48,12 @@ const MODULE_TONE_MAP = {
   'machine-history': 'info',
 }
 
-function toDayKey(timestamp) {
-  return String(timestamp ?? '').slice(0, 10)
+function toDayKey(event) {
+  if (typeof event?.operationalDay === 'string' && event.operationalDay.trim()) {
+    return event.operationalDay.trim()
+  }
+
+  return String(event?.timestamp ?? '').slice(0, 10)
 }
 
 function getTodayKey() {
@@ -372,9 +376,9 @@ function HistoryTimelineModule() {
 
   const availableDays = useMemo(
     () =>
-      Array.from(
-        new Set(refinedEvents.map((event) => toDayKey(event.timestamp)).filter(Boolean)),
-      ).sort((left, right) => right.localeCompare(left)),
+      Array.from(new Set(refinedEvents.map((event) => toDayKey(event)).filter(Boolean))).sort(
+        (left, right) => right.localeCompare(left),
+      ),
     [refinedEvents],
   )
 
@@ -419,7 +423,7 @@ function HistoryTimelineModule() {
   const visibleEvents = useMemo(
     () =>
       refinedEvents
-        .filter((event) => toDayKey(event.timestamp) === selectedDay)
+        .filter((event) => toDayKey(event) === selectedDay)
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp)),
     [refinedEvents, selectedDay],
   )
@@ -428,7 +432,7 @@ function HistoryTimelineModule() {
     const nextMap = new Map()
 
     refinedEvents.forEach((event) => {
-      const dayKey = toDayKey(event.timestamp)
+      const dayKey = toDayKey(event)
       const currentEvents = nextMap.get(dayKey) ?? []
       currentEvents.push(event)
       nextMap.set(dayKey, currentEvents)
@@ -554,7 +558,7 @@ function HistoryTimelineModule() {
       (event) => eventMatchesType(event, activeTypeFilter) && eventMatchesQuery(event, searchQuery),
     )
     const nextDays = Array.from(
-      new Set(nextRefined.map((event) => toDayKey(event.timestamp)).filter(Boolean)),
+      new Set(nextRefined.map((event) => toDayKey(event)).filter(Boolean)),
     ).sort((left, right) => right.localeCompare(left))
     const todayKey = getTodayKey()
     const nextDay = nextDays.includes(selectedDay)
@@ -573,7 +577,7 @@ function HistoryTimelineModule() {
       (event) => eventMatchesType(event, nextType) && eventMatchesQuery(event, searchQuery),
     )
     const nextDays = Array.from(
-      new Set(nextRefined.map((event) => toDayKey(event.timestamp)).filter(Boolean)),
+      new Set(nextRefined.map((event) => toDayKey(event)).filter(Boolean)),
     ).sort((left, right) => right.localeCompare(left))
     const todayKey = getTodayKey()
     const nextDay = nextDays.includes(selectedDay)
@@ -592,7 +596,7 @@ function HistoryTimelineModule() {
         eventMatchesType(auditEvent, activeTypeFilter) && eventMatchesQuery(auditEvent, nextQuery),
     )
     const nextDays = Array.from(
-      new Set(nextRefined.map((auditEvent) => toDayKey(auditEvent.timestamp)).filter(Boolean)),
+      new Set(nextRefined.map((auditEvent) => toDayKey(auditEvent)).filter(Boolean)),
     ).sort((left, right) => right.localeCompare(left))
     const todayKey = getTodayKey()
     const nextDay = nextDays.includes(selectedDay)

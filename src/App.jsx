@@ -15,7 +15,7 @@ import { useAuth, useConfirm, useStore, useToast } from './hooks'
 import AppRoutes from './routes'
 import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
 import { recordComponentRenderMetric, recordPageLoadMetric } from './services/frontendMetrics'
-import { loadResettableLocalRecords } from './services/localAccess'
+import { loadLocalRecords } from './services/localAccess'
 import {
   bindGlobalSoundEffects,
   playNavigation,
@@ -25,7 +25,6 @@ import {
 import { queryClient } from './services/queryClient'
 
 ensureFrontendEnvLoaded()
-initializeFrontendSentry()
 
 const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending'
 const CASH_RESET_HOUR = 3
@@ -64,6 +63,10 @@ function App() {
   const lastPathRef = useRef(location.pathname)
   const routeStartedAtRef = useRef(performance.now())
   const bootVisible = !bootSequenceComplete || loading
+
+  useEffect(() => {
+    initializeFrontendSentry()
+  }, [])
 
   useEffect(() => {
     setFrontendSentryUser(session ?? null)
@@ -184,7 +187,7 @@ function App() {
         return
       }
 
-      const records = loadResettableLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [], CASH_RESET_HOUR)
+      const records = loadLocalRecords(FINANCIAL_PENDING_STORAGE_KEY, [])
       const openRecords = records.filter((record) => !record?.resolvedAtClient)
 
       if (openRecords.length === 0) {
@@ -204,7 +207,7 @@ function App() {
 
       const shouldOpen = await confirm.ask({
         title: 'Pendencias financeiras abertas',
-        message: `${openRecords.length} pendencia(s) aberta(s) neste dia. Matriz: ${matrixCount} | Delivery: ${deliveryCount}. Deseja abrir a fila agora?`,
+        message: `${openRecords.length} pendencia(s) aberta(s). Matriz: ${matrixCount} | Delivery: ${deliveryCount}. Deseja abrir a fila agora?`,
         confirmLabel: 'Abrir pendencias',
         cancelLabel: 'Depois',
         tone: 'warning',
@@ -215,7 +218,7 @@ function App() {
         return
       }
 
-      toast.warning('Pendencias financeiras abertas para acompanhamento do dia.', {
+      toast.warning('Pendencias financeiras abertas para acompanhamento.', {
         duration: 4500,
       })
     }

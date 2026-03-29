@@ -7,7 +7,7 @@ function FinancialPendingsPage() {
       <PageIntro
         eyebrow="Financeiro"
         title="Pendencias financeiras"
-        description="Fila unica para trocos pendentes, estornos, cobrancas incorretas e ajustes do dia."
+        description="Fila unica para trocos pendentes, estornos, cobrancas incorretas e ajustes com historico permanente."
       />
 
       <CashModule mode="financial-pending" />
