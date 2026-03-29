@@ -148,13 +148,20 @@ function OrderFormPanel({
                 Voltar
               </button>
               <div className="commerce-step__footer-actions">
-                <button type="button" className="ui-button ui-button--ghost" onClick={onCancel}>
+                <button
+                  type="button"
+                  className="ui-button ui-button--ghost"
+                  onClick={onCancel}
+                  title="Cancelar (Esc)"
+                  data-shortcut-cancel="true"
+                >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   className="ui-button ui-button--primary"
                   disabled={saving || !canWrite}
+                  title="Salvar (Ctrl+S)"
                 >
                   {saving ? 'Salvando...' : 'Lancar'}
                 </button>

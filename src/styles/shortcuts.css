@@ -1,0 +1,184 @@
+.shortcut-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-medium, rgba(15, 23, 42, 0.16));
+  background: var(--color-surface-elevated, rgba(255, 255, 255, 0.92));
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.76));
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.command-palette {
+  display: grid;
+  gap: 16px;
+}
+
+.command-palette__meta {
+  color: var(--color-text-muted, rgba(15, 23, 42, 0.6));
+  font-size: 0.84rem;
+}
+
+.command-palette__results {
+  display: grid;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.command-palette__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--color-border-light, rgba(15, 23, 42, 0.08));
+  border-radius: 16px;
+  background: var(--color-surface-elevated, rgba(255, 255, 255, 0.94));
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.command-palette__item:hover,
+.command-palette__item:focus-visible {
+  border-color: var(--color-blue-500, #2563eb);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.command-palette__item-copy,
+.command-palette__item-meta {
+  display: grid;
+  gap: 6px;
+}
+
+.command-palette__item-copy span,
+.command-palette__item-category {
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.76));
+  font-size: 0.86rem;
+}
+
+.command-palette__item-meta {
+  justify-items: end;
+  align-content: center;
+}
+
+.command-palette__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.command-palette__help-section {
+  display: grid;
+  gap: 12px;
+}
+
+.command-palette__help-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.command-palette__help-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.command-palette__help-item p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.76));
+  font-size: 0.86rem;
+}
+
+.keyboard-settings__panel,
+.keyboard-settings__group {
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border-light, rgba(15, 23, 42, 0.08));
+  background: var(--color-surface-elevated, rgba(255, 255, 255, 0.92));
+}
+
+.keyboard-settings__panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.keyboard-settings__meta {
+  display: grid;
+  gap: 4px;
+}
+
+.keyboard-settings__meta span {
+  color: var(--color-text-muted, rgba(15, 23, 42, 0.6));
+  font-size: 0.82rem;
+}
+
+.keyboard-settings__groups,
+.keyboard-settings__list {
+  display: grid;
+  gap: 14px;
+}
+
+.keyboard-settings__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.keyboard-settings__copy p {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.76));
+  font-size: 0.86rem;
+}
+
+.keyboard-settings__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.keyboard-settings__capture {
+  width: 180px;
+  text-align: center;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .command-palette__item,
+  .keyboard-settings__row {
+    grid-template-columns: 1fr;
+  }
+
+  .command-palette__item-meta,
+  .keyboard-settings__controls {
+    justify-items: start;
+  }
+
+  .command-palette__footer,
+  .keyboard-settings__panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .keyboard-settings__capture {
+    width: 100%;
+  }
+}

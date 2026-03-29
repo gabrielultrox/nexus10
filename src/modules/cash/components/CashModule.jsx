@@ -32,6 +32,7 @@ import {
   saveCashState,
   subscribeToCashState,
 } from '../../../services/cashStateService'
+import { SHORTCUT_ACTION_EVENT } from '../../../services/shortcutService'
 import { playCashSuccess, playWarning } from '../../../services/soundManager'
 import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
@@ -1317,6 +1318,70 @@ function CashModule({ mode = 'cash' }) {
     }
   }
 
+  useEffect(() => {
+    function handleShortcut(event) {
+      const actionId = event?.detail?.actionId
+
+      if (!actionId) {
+        return
+      }
+
+      if (actionId === 'cash-opening') {
+        event.preventDefault()
+        handleTabChange('opening')
+        return
+      }
+
+      if (actionId === 'cash-closing') {
+        event.preventDefault()
+        handleTabChange('closing')
+        return
+      }
+
+      if (actionId === 'save' || actionId === 'orders-confirm') {
+        event.preventDefault()
+
+        if (confirmAction) {
+          void handleConfirmAction()
+          return
+        }
+
+        const submitHandler = isFinancialPendingView ? handleFinancialPendingSubmit : handleSubmit
+        void submitHandler({
+          preventDefault() {},
+        })
+        return
+      }
+
+      if (actionId === 'cancel') {
+        if (confirmAction) {
+          event.preventDefault()
+          setConfirmAction(null)
+          return
+        }
+
+        if (note || valueInput || selectedCourier) {
+          event.preventDefault()
+          clearForm()
+        }
+      }
+    }
+
+    window.addEventListener(SHORTCUT_ACTION_EVENT, handleShortcut)
+    return () => {
+      window.removeEventListener(SHORTCUT_ACTION_EVENT, handleShortcut)
+    }
+  }, [
+    confirmAction,
+    handleConfirmAction,
+    handleFinancialPendingSubmit,
+    handleSubmit,
+    isFinancialPendingView,
+    note,
+    selectedCourier,
+    valueInput,
+  ])
+
   async function handleDelete(recordId) {
     const targetRecord = records.find((record) => record.id === recordId)
     const confirmed = await confirm.ask({
@@ -1876,7 +1941,12 @@ function CashModule({ mode = 'cash' }) {
                   </div>
                 ) : null}
 
-                <Button variant="secondary" onClick={clearForm}>
+                <Button
+                  variant="secondary"
+                  onClick={clearForm}
+                  title="Limpar formulario (Esc)"
+                  data-shortcut-cancel="true"
+                >
                   Limpar
                 </Button>
                 <Button
@@ -1893,7 +1963,7 @@ function CashModule({ mode = 'cash' }) {
                       ? 'O caixa ja foi aberto para este turno'
                       : activeTab.id === 'courier-withdrawal' && courierOptions.length === 0
                         ? 'Cadastre entregadores antes de registrar retiradas'
-                        : undefined
+                        : 'Salvar (Ctrl+S)'
                   }
                 >
                   {activeTab.submitLabel}
@@ -1912,7 +1982,13 @@ function CashModule({ mode = 'cash' }) {
                   ) : null}
                 </div>
                 <div className="cash-module__form-actions">
-                  <Button type="button" variant="secondary" onClick={() => setConfirmAction(null)}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setConfirmAction(null)}
+                    title="Cancelar (Esc)"
+                    data-shortcut-cancel="true"
+                  >
                     Cancelar
                   </Button>
                   <Button
@@ -1920,6 +1996,7 @@ function CashModule({ mode = 'cash' }) {
                     variant="primary"
                     onClick={handleConfirmAction}
                     disabled={isSaving}
+                    title="Confirmar (Ctrl+S)"
                   >
                     Confirmar
                   </Button>

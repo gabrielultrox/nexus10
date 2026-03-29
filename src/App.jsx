@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import CommandPalette from './components/CommandPalette'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 import ErrorDisplay from './components/ui/ErrorDisplay'
 import SystemBoot from './components/system/SystemBoot'
@@ -11,7 +12,14 @@ import {
   setFrontendSentryStore,
   setFrontendSentryUser,
 } from './config/sentry'
-import { useAuth, useBackupSync, useConfirm, useStore, useToast } from './hooks'
+import {
+  useAuth,
+  useBackupSync,
+  useConfirm,
+  useKeyboardShortcuts,
+  useStore,
+  useToast,
+} from './hooks'
 import AppRoutes from './routes'
 import { getPendingOfflineRequestsCount, retryPendingOfflineRequests } from './services/backendApi'
 import { recordComponentRenderMetric, recordPageLoadMetric } from './services/frontendMetrics'
@@ -64,6 +72,9 @@ function App() {
   const lastPathRef = useRef(location.pathname)
   const routeStartedAtRef = useRef(performance.now())
   const bootVisible = !bootSequenceComplete || loading
+  const keyboardShortcuts = useKeyboardShortcuts({
+    enabled: bootSequenceComplete && isAuthenticated,
+  })
 
   useEffect(() => {
     initializeFrontendSentry()
@@ -262,6 +273,20 @@ function App() {
         >
           <AppRoutes />
         </div>
+        <CommandPalette
+          commands={keyboardShortcuts.commands}
+          helpSections={keyboardShortcuts.helpSections}
+          isHelpOpen={keyboardShortcuts.isHelpOpen}
+          isPaletteOpen={keyboardShortcuts.isPaletteOpen}
+          recentCommands={keyboardShortcuts.recentCommands}
+          searchCommands={keyboardShortcuts.searchCommands}
+          onCloseHelp={keyboardShortcuts.closeHelp}
+          onClosePalette={keyboardShortcuts.closePalette}
+          onExecute={(commandId) => {
+            keyboardShortcuts.executeCommand(commandId)
+            keyboardShortcuts.closePalette()
+          }}
+        />
       </AppErrorBoundary>
       {bootVisible ? <SystemBoot onComplete={handleBootComplete} /> : null}
     </QueryClientProvider>

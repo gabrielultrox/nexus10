@@ -4,6 +4,7 @@ import PageIntro from '../components/common/PageIntro'
 import SurfaceCard from '../components/common/SurfaceCard'
 import PwaStatusCard from '../components/settings/PwaStatusCard'
 import ThemeToggle from '../components/theme/ThemeToggle'
+import KeyboardSettings from './Sistema/KeyboardSettings'
 import Select from '../components/ui/Select'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../contexts/AuthContext'
@@ -506,6 +507,8 @@ function SettingsPage() {
           <PwaStatusCard />
         </div>
       </SettingsSection>
+
+      <KeyboardSettings canWriteSettings={canWriteSettings} />
     </div>
   )
 }
