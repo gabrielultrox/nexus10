@@ -86,7 +86,7 @@ function NotificationCenter() {
               onClick={() =>
                 updatePreferences({
                   channels: {
-                    vibration: !Boolean(preferences?.channels?.vibration),
+                    vibration: !preferences?.channels?.vibration,
                   },
                 })
               }
