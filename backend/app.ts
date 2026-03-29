@@ -380,7 +380,7 @@ export function createApp(): Express {
     '/api/integrations/ifood/orders/:storeId/:merchantId/:orderId/sync',
     validateRequest(ifoodOrderSyncParamsSchema, {
       source: 'params',
-      mapRequest: (request) => (request as Request).params,
+      mapRequest: (request: Request) => request.params,
     }),
     requirePermission('integrations:write'),
     requireScopedStoreAccess({ source: 'params', field: 'storeId' }),
@@ -463,9 +463,9 @@ export function createApp(): Express {
     sentryRequestContextMiddleware,
     validateRequest(ifoodWebhookSchema, {
       source: 'webhook',
-      mapRequest: (request) => ({
-        signature: (request as Request).header('X-IFood-Signature'),
-        body: String((request as Request).body ?? ''),
+      mapRequest: (request: Request) => ({
+        signature: request.header('X-IFood-Signature'),
+        body: String(request.body ?? ''),
       }),
     }),
     async (request, response) => {

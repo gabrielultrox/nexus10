@@ -91,7 +91,7 @@ export function registerOrderRoutes(app: Express): void {
     '/api/stores/:storeId/orders',
     requirePermission('orders:write'),
     validateRequest(createOrderSchema, {
-      mapRequest: (request) => getPayload((request as Request).body as OrderPayloadBody),
+      mapRequest: (request: Request) => getPayload(request.body as OrderPayloadBody),
     }),
     async (request: Request, response: Response<OrderRouteResponse>) => {
       const { storeId } = getRouteParams<StoreRouteParams>(request)
@@ -149,7 +149,7 @@ export function registerOrderRoutes(app: Express): void {
     '/api/stores/:storeId/orders/:orderId',
     requirePermission('orders:write'),
     validateRequest(updateOrderSchema, {
-      mapRequest: (request) => getPayload((request as Request).body as OrderPayloadBody),
+      mapRequest: (request: Request) => getPayload(request.body as OrderPayloadBody),
     }),
     async (request: Request, response: Response<OrderRouteResponse>) => {
       const { storeId, orderId } = getRouteParams<OrderRouteParams>(request)
