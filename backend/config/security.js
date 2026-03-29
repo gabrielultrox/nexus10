@@ -30,6 +30,10 @@ export function isDevelopmentEnvironment() {
   return backendEnv.nodeEnv !== 'production'
 }
 
+export function getTrustProxySetting() {
+  return backendEnv.trustProxy
+}
+
 export function getAllowedOrigins() {
   const configuredOrigins = backendEnv.frontendOrigin.map(normalizeOrigin).filter(Boolean)
 
