@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import MetricCard from '../../../components/common/MetricCard'
 import PageIntro from '../../../components/common/PageIntro'
 import { useConfirm } from '../../../hooks/useConfirm'
+import useMaquinihaSelection from '../../../hooks/useMaquinihaSelection'
 import { useToast } from '../../../hooks/useToast'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
@@ -23,6 +24,7 @@ import {
   clearManualModuleRecords,
   deleteManualModuleRecord,
   saveManualModuleRecord,
+  saveManualModuleRecordsBatch,
   subscribeToManualModuleRecords,
 } from '../../../services/manualModuleService'
 import {
@@ -450,6 +452,24 @@ function loadMachineChecklistState() {
   return loadResettableLocalRecords('nexus-module-machine-history', [], 3)
 }
 
+function isMachineChecklistRecordInvalid(record) {
+  return !record?.device?.trim() || !record?.model?.trim()
+}
+
+function hasMachineChecklistDiscrepancy(record) {
+  const normalizedStatus = String(record?.machineStatus ?? '')
+    .trim()
+    .toLowerCase()
+
+  return normalizedStatus === 'manutencao' || normalizedStatus === 'carga'
+}
+
+function waitForRetry(delayMs) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, delayMs)
+  })
+}
+
 function shouldUseLocalFallback(error) {
   return Boolean(error)
 }
@@ -530,6 +550,8 @@ function NativeModuleWorkspace({ route }) {
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null)
   const [freshRecordId, setFreshRecordId] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isBulkConfirmingMachines, setIsBulkConfirmingMachines] = useState(false)
+  const [bulkConfirmProgress, setBulkConfirmProgress] = useState({ processed: 0, total: 0 })
   const [focusFieldKey, setFocusFieldKey] = useState(0)
   const [invalidFieldName, setInvalidFieldName] = useState('')
   const [pendingSyncCount, setPendingSyncCount] = useState(() =>
@@ -1047,6 +1069,9 @@ function NativeModuleWorkspace({ route }) {
     () => visibleMachineChecklistRecords.filter((record) => record.status === 'Presente'),
     [visibleMachineChecklistRecords],
   )
+  const machineSelection = useMaquinihaSelection(
+    visibleMachineChecklistRecords.map((record) => record.id),
+  )
   const visibleOpenDeliveryRecords = useMemo(
     () =>
       route.path === 'delivery-reading' ? visibleRecords.filter((record) => !record.closed) : [],
@@ -1392,6 +1417,83 @@ function NativeModuleWorkspace({ route }) {
       })
       return 'local'
     }
+  }
+
+  async function saveRecordsBatchWithFallback({
+    modulePath,
+    storageKey,
+    dailyResetHour = null,
+    records: recordsToPersist,
+    onLocalApply,
+  }) {
+    if (!Array.isArray(recordsToPersist) || recordsToPersist.length === 0) {
+      return 'noop'
+    }
+
+    if (!canSyncModuleRecords) {
+      onLocalApply()
+      recordsToPersist.forEach((record) => {
+        queueSyncOperation({
+          type: 'save',
+          modulePath,
+          storageKey,
+          dailyResetHour,
+          record,
+        })
+      })
+      return 'local'
+    }
+
+    try {
+      await saveManualModuleRecordsBatch({
+        storeId: currentStoreId,
+        tenantId,
+        modulePath,
+        dailyResetHour,
+        records: recordsToPersist,
+      })
+      onLocalApply()
+      refreshPendingSyncCount()
+      refreshSyncHistory()
+      setSyncActivityLabel('Lote sincronizado em tempo real')
+      return 'remote'
+    } catch (error) {
+      if (!shouldUseLocalFallback(error)) {
+        throw error
+      }
+
+      onLocalApply()
+      recordsToPersist.forEach((record) => {
+        queueSyncOperation({
+          type: 'save',
+          modulePath,
+          storageKey,
+          dailyResetHour,
+          record,
+        })
+      })
+      return 'local'
+    }
+  }
+
+  async function executeWithRetry(task, attempts = 3) {
+    let lastError = null
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await task(attempt)
+      } catch (error) {
+        lastError = error
+
+        if (attempt === attempts) {
+          throw error
+        }
+
+        await waitForRetry(250 * attempt)
+      }
+    }
+
+    throw lastError
   }
 
   async function deleteRecordWithFallback({ modulePath, recordId, onLocalApply }) {
@@ -2525,11 +2627,58 @@ function NativeModuleWorkspace({ route }) {
   }
 
   async function handleConfirmAllMachines() {
-    const recordsToConfirm = visibleMachineChecklistRecords.filter(
-      (record) => record.status !== 'Presente',
+    const selectedRecords = visibleMachineChecklistRecords.filter((record) =>
+      machineSelection.selectedIds.includes(record.id),
     )
 
+    if (selectedRecords.length === 0) {
+      setErrorMessage('Selecione ao menos uma maquininha para confirmar em massa.')
+      toast.warning('Selecione ao menos uma maquininha.')
+      playOperationalWarning()
+      return
+    }
+
+    const invalidRecords = selectedRecords.filter(isMachineChecklistRecordInvalid)
+
+    if (invalidRecords.length > 0) {
+      setErrorMessage('Existem maquininhas selecionadas com cadastro incompleto.')
+      toast.error('Corrija dispositivo e modelo antes da confirmacao em massa.')
+      playError()
+      return
+    }
+
+    const discrepancyRecords = selectedRecords.filter(hasMachineChecklistDiscrepancy)
+    const recordsToConfirm = selectedRecords.filter((record) => record.status !== 'Presente')
+    const alreadyConfirmedCount = selectedRecords.length - recordsToConfirm.length
+
     if (recordsToConfirm.length === 0) {
+      setErrorMessage('')
+      toast.info('As maquininhas selecionadas ja estao confirmadas.')
+      playOperationalWarning()
+      return
+    }
+
+    const confirmationMessage = [
+      `Confirmar ${recordsToConfirm.length} maquininha${recordsToConfirm.length === 1 ? '' : 's'} de uma vez?`,
+      alreadyConfirmedCount > 0
+        ? `${alreadyConfirmedCount} selecionada${alreadyConfirmedCount === 1 ? '' : 's'} ja esta confirmada e sera ignorada.`
+        : null,
+      discrepancyRecords.length > 0
+        ? `${discrepancyRecords.length} esta${discrepancyRecords.length === 1 ? '' : 'o'} com status de carga/manutencao. Revise antes de seguir.`
+        : null,
+      'A operacao aplica o checklist em lote, com retry automatico e sem estado parcial visivel.',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const confirmed = await confirm.ask({
+      title: 'Confirmar maquininhas selecionadas',
+      message: confirmationMessage,
+      confirmLabel: `Confirmar ${recordsToConfirm.length}`,
+      tone: discrepancyRecords.length > 0 ? 'warning' : 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 
@@ -2541,50 +2690,70 @@ function NativeModuleWorkspace({ route }) {
       updatedBy: auditContext.updatedBy,
     }))
 
+    setIsBulkConfirmingMachines(true)
+    setBulkConfirmProgress({ processed: 0, total: nextRecords.length })
+
     try {
-      await Promise.all(
-        nextRecords.map((nextRecord) =>
-          saveRecordWithFallback({
-            modulePath: 'machine-history',
-            storageKey: 'nexus-module-machine-history',
-            dailyResetHour: 3,
-            record: nextRecord,
-            onLocalApply: () => {
-              setMachineChecklistRecords((current) =>
-                current.map((item) => (item.id === nextRecord.id ? nextRecord : item)),
-              )
-              setMachineChecklistState((current) => {
-                const existingRecord = current.find((item) => item.id === nextRecord.id)
+      await executeWithRetry(async (attempt) => {
+        setBulkConfirmProgress({
+          processed: Math.min(attempt - 1, nextRecords.length),
+          total: nextRecords.length,
+        })
 
-                if (existingRecord) {
-                  return current.map((item) => (item.id === nextRecord.id ? nextRecord : item))
-                }
-
-                return [nextRecord, ...current]
+        const result = await saveRecordsBatchWithFallback({
+          modulePath: 'machine-history',
+          storageKey: 'nexus-module-machine-history',
+          dailyResetHour: 3,
+          records: nextRecords,
+          onLocalApply: () => {
+            setMachineChecklistRecords((current) =>
+              current.map((item) => {
+                const updatedRecord = nextRecords.find((record) => record.id === item.id)
+                return updatedRecord ?? item
+              }),
+            )
+            setMachineChecklistState((current) => {
+              const byId = new Map(current.map((item) => [item.id, item]))
+              nextRecords.forEach((record) => {
+                byId.set(record.id, record)
               })
-            },
-          }),
-        ),
-      )
+              return Array.from(byId.values())
+            })
+          },
+        })
+
+        setBulkConfirmProgress({
+          processed: nextRecords.length,
+          total: nextRecords.length,
+        })
+
+        return result
+      })
 
       setErrorMessage('')
+      machineSelection.clear()
       playOperationalSuccess()
-      toast.success(`${recordsToConfirm.length} maquininhas confirmadas`)
+      toast.success(
+        `${nextRecords.length} maquininha${nextRecords.length === 1 ? '' : 's'} confirmada${nextRecords.length === 1 ? '' : 's'} em lote.`,
+      )
       nextRecords.forEach((record) => {
         appendAuditEvent({
           module: 'Maquininhas',
           modulePath: 'machines',
           recordId: record.id,
           actor: auditContext.updatedBy,
-          action: 'Marcou presente no checklist',
+          action: 'Marcou presente em massa no checklist',
           target: record.device ?? 'maquininha',
-          details: `Checklist atualizado para ${record.device ?? 'maquininha'}`,
+          details: `Checklist em lote confirmado para ${record.device ?? 'maquininha'}`,
         })
       })
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel confirmar as maquininhas em massa.')
-      toast.error(error.message ?? 'Nao foi possivel confirmar as maquininhas.')
+      toast.error(error.message ?? 'Nao foi possivel confirmar as maquininhas em lote.')
       playError()
+    } finally {
+      setIsBulkConfirmingMachines(false)
+      setBulkConfirmProgress({ processed: 0, total: 0 })
     }
   }
 
@@ -2715,11 +2884,20 @@ function NativeModuleWorkspace({ route }) {
         visibleRecords={visibleRecords}
         visibleMachineChecklistRecords={visibleMachineChecklistRecords}
         machineConfirmedCount={presentMachineChecklistRecords.length}
+        machineSelectedCount={machineSelection.selectedCount}
+        machineSelectedIds={machineSelection.selectedIds}
+        machineAllVisibleSelected={machineSelection.allVisibleSelected}
+        machineSomeVisibleSelected={machineSelection.someVisibleSelected}
         formatAuditText={formatAuditText}
         handleApplyAction={handleApplyAction}
         handleDelete={handleDelete}
         handleMachineChecklistToggle={handleMachineChecklistToggle}
         handleConfirmAllMachines={handleConfirmAllMachines}
+        handleToggleMachineSelection={machineSelection.toggle}
+        handleToggleAllMachineSelection={machineSelection.toggleAllVisible}
+        handleClearMachineSelection={machineSelection.clear}
+        isBulkConfirmingMachines={isBulkConfirmingMachines}
+        bulkConfirmProgress={bulkConfirmProgress}
         scheduleMachineDrafts={scheduleMachineDrafts}
         editableRecordDrafts={editableRecordDrafts}
         editableRecordOptions={getEditableRecordOptions()}

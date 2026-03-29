@@ -6,6 +6,7 @@ import StatusBadge from '../../../components/ui/StatusBadge'
 import DestructiveIconButton from '../../../components/ui/DestructiveIconButton'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
+import { Button, Input } from '../../../components/ui'
 import { useConfirm } from '../../../hooks/useConfirm'
 
 const ROW_EXIT_DURATION_MS = 200
@@ -220,9 +221,8 @@ function NativeModuleToolbar({
           <label className="ui-label" htmlFor={`${routePath}-search`}>
             Buscar
           </label>
-          <input
+          <Input
             id={`${routePath}-search`}
-            className="ui-input"
             type="text"
             value={searchTerm}
             placeholder={
@@ -272,13 +272,9 @@ function NativeModuleToolbar({
           ) : null}
           {routePath === 'schedule' ? (
             <div className="native-module__toolbar-menu" ref={menuRef}>
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={onExportSchedule}
-              >
+              <Button type="button" variant="ghost" onClick={onExportSchedule}>
                 Exportar escala
-              </button>
+              </Button>
               <button
                 type="button"
                 className="native-module__toolbar-more"
@@ -292,7 +288,7 @@ function NativeModuleToolbar({
 
               {menuOpen ? (
                 <div className="native-module__toolbar-dropdown" role="menu">
-                  <button
+                  <Button
                     type="button"
                     className="native-module__toolbar-dropdown-item"
                     role="menuitem"
@@ -300,10 +296,11 @@ function NativeModuleToolbar({
                       setMenuOpen(false)
                       onExportScheduleMachines()
                     }}
+                    variant="ghost"
                   >
                     Exportar maquininhas usadas
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="native-module__toolbar-dropdown-item"
                     role="menuitem"
@@ -311,11 +308,12 @@ function NativeModuleToolbar({
                       setMenuOpen(false)
                       onExportBackup()
                     }}
+                    variant="ghost"
                   >
                     Exportar backup
-                  </button>
+                  </Button>
                   {manager.manualResetLabel ? (
-                    <button
+                    <Button
                       type="button"
                       className="native-module__toolbar-dropdown-item native-module__toolbar-dropdown-item--danger"
                       role="menuitem"
@@ -323,91 +321,64 @@ function NativeModuleToolbar({
                         setMenuOpen(false)
                         onManualReset()
                       }}
+                      variant="danger"
                     >
                       {manager.manualResetLabel}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               ) : null}
             </div>
           ) : null}
           {routePath === 'machines' ? (
-            <button
-              type="button"
-              className="ui-button ui-button--secondary"
-              onClick={onExportMachines}
-            >
+            <Button type="button" variant="secondary" onClick={onExportMachines}>
               Exportar presentes
-            </button>
+            </Button>
           ) : null}
           {routePath === 'change' ? (
             <>
-              <button
-                type="button"
-                className="ui-button ui-button--secondary"
-                onClick={onExportDeliveredChanges}
-              >
+              <Button type="button" variant="secondary" onClick={onExportDeliveredChanges}>
                 Exportar entregues
-              </button>
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={onPrintDeliveredChanges}
-              >
+              </Button>
+              <Button type="button" variant="ghost" onClick={onPrintDeliveredChanges}>
                 Imprimir entregues
-              </button>
+              </Button>
             </>
           ) : null}
           {routePath === 'delivery-reading' ? (
             <>
-              <button
-                type="button"
-                className="ui-button ui-button--secondary"
-                onClick={onExportClosedDeliveries}
-              >
+              <Button type="button" variant="secondary" onClick={onExportClosedDeliveries}>
                 Exportar fechadas
-              </button>
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={onPrintClosedDeliveries}
-              >
+              </Button>
+              <Button type="button" variant="ghost" onClick={onPrintClosedDeliveries}>
                 Imprimir fechadas
-              </button>
+              </Button>
             </>
           ) : null}
           {routePath === 'advances' ? (
             <>
-              <button
-                type="button"
-                className="ui-button ui-button--secondary"
-                onClick={onExportPaidAdvances}
-              >
+              <Button type="button" variant="secondary" onClick={onExportPaidAdvances}>
                 Exportar baixados
-              </button>
-              <button
-                type="button"
-                className="ui-button ui-button--ghost"
-                onClick={onPrintPaidAdvances}
-              >
+              </Button>
+              <Button type="button" variant="ghost" onClick={onPrintPaidAdvances}>
                 Imprimir baixados
-              </button>
+              </Button>
             </>
           ) : null}
           {routePath !== 'schedule' ? (
-            <button type="button" className="ui-button ui-button--ghost" onClick={onExportBackup}>
+            <Button type="button" variant="ghost" onClick={onExportBackup}>
               Exportar backup
-            </button>
+            </Button>
           ) : null}
           {manager.manualResetLabel && routePath !== 'schedule' ? (
-            <button type="button" className="ui-button ui-button--ghost" onClick={onManualReset}>
+            <Button type="button" variant="ghost" onClick={onManualReset}>
               {manager.manualResetLabel}
-            </button>
+            </Button>
           ) : null}
           {recordsLength > 0 && manager.allowClearAll !== false ? (
-            <button type="button" className="ui-button ui-button--ghost" onClick={onClearAll}>
+            <Button type="button" variant="ghost" onClick={onClearAll}>
               Limpar tudo
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -774,42 +745,101 @@ function NativeModuleMachines({
   onToggle,
   onConfirmAll,
   confirmedCount,
+  selectedCount,
+  selectedIds,
   totalCount,
   exitingIds,
+  onToggleSelection,
+  onToggleAllSelection,
+  onClearSelection,
+  allVisibleSelected,
+  someVisibleSelected,
+  isBulkConfirming,
+  bulkConfirmProgress,
 }) {
-  const allConfirmed = totalCount > 0 && confirmedCount === totalCount
+  const headerCheckboxRef = useRef(null)
+
+  useEffect(() => {
+    if (!headerCheckboxRef.current) {
+      return
+    }
+
+    headerCheckboxRef.current.indeterminate = someVisibleSelected
+  }, [someVisibleSelected])
 
   return (
     <div className="machine-operations">
       <div className="machine-operations__bulk-bar">
-        <label className="machine-operations__bulk-check" htmlFor="machines-confirm-all">
+        <label className="machine-operations__bulk-check" htmlFor="machines-select-all">
           <input
-            id="machines-confirm-all"
+            ref={headerCheckboxRef}
+            id="machines-select-all"
             type="checkbox"
-            checked={allConfirmed}
-            onChange={(event) => {
-              if (event.target.checked) {
-                onConfirmAll?.()
-              }
-            }}
+            checked={allVisibleSelected}
+            disabled={totalCount === 0 || isBulkConfirming}
+            onChange={() => onToggleAllSelection?.()}
           />
-          <span>Confirmar todos presentes</span>
+          <span>Selecionar todos visiveis</span>
         </label>
-        <span className="machine-operations__bulk-count">
-          {confirmedCount} de {totalCount} confirmadas
-        </span>
+        <div className="machine-operations__bulk-meta">
+          <span className="machine-operations__bulk-count">
+            {selectedCount} de {totalCount} selecionadas
+          </span>
+          <span className="machine-operations__bulk-count machine-operations__bulk-count--muted">
+            {confirmedCount} confirmadas no filtro
+          </span>
+          {isBulkConfirming ? (
+            <span className="machine-operations__bulk-count machine-operations__bulk-count--processing">
+              Processando {bulkConfirmProgress.processed} de {bulkConfirmProgress.total}
+            </span>
+          ) : null}
+        </div>
+        <div className="machine-operations__bulk-actions">
+          <Button
+            type="button"
+            variant="primary"
+            loading={isBulkConfirming}
+            disabled={selectedCount === 0}
+            onClick={() => onConfirmAll?.()}
+          >
+            Confirmar {selectedCount}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={selectedCount === 0 || isBulkConfirming}
+            onClick={() => onClearSelection?.()}
+          >
+            Desselecionar todos
+          </Button>
+        </div>
       </div>
       <div className="machine-operations__list">
         {records.map((record) => {
           const isPresent = record.status === 'Presente'
           const statusLabel = isPresent ? 'Ativo' : 'Ausente'
           const statusClass = isPresent ? 'ui-badge--success' : 'ui-badge--warning'
+          const isSelected = selectedIds.includes(record.id)
 
           return (
             <article
               key={record.id}
-              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
+              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${isSelected ? ' machine-operations__row--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
             >
+              <label
+                className={`machine-operations__select ${isSelected ? 'is-selected' : ''}`}
+                htmlFor={`machine-select-${record.id}`}
+              >
+                <input
+                  id={`machine-select-${record.id}`}
+                  type="checkbox"
+                  checked={isSelected}
+                  disabled={exitingIds.has(record.id) || isBulkConfirming}
+                  onChange={() => onToggleSelection?.(record.id)}
+                />
+                <span className="machine-operations__select-box" aria-hidden="true" />
+                <span className="sr-only">Selecionar {record.device}</span>
+              </label>
               <strong className="machine-operations__row-device">{record.device}</strong>
               <span className="machine-operations__row-meta">
                 {record.holder || 'Sem entregador'}
@@ -824,15 +854,17 @@ function NativeModuleMachines({
                   id={`machine-check-${record.id}`}
                   type="checkbox"
                   checked={isPresent}
-                  disabled={exitingIds.has(record.id)}
+                  disabled={exitingIds.has(record.id) || isBulkConfirming}
                   onChange={() => onToggle(record.id)}
                 />
                 <span className="machine-operations__row-check-box" aria-hidden="true" />
-                <span className="machine-operations__row-check-label">Confirmar</span>
+                <span className="machine-operations__row-check-label">
+                  {isPresent ? 'Confirmada' : 'Confirmar'}
+                </span>
               </label>
               <DestructiveIconButton
                 className="machine-operations__icon-button"
-                disabled={exitingIds.has(record.id)}
+                disabled={exitingIds.has(record.id) || isBulkConfirming}
                 onClick={() => onDelete(record.id)}
                 label={`Excluir ${record.device}`}
               />
@@ -1046,10 +1078,19 @@ function NativeModuleRecordsSection(props) {
     visibleRecords,
     visibleMachineChecklistRecords,
     machineConfirmedCount,
+    machineSelectedCount,
+    machineSelectedIds,
+    machineAllVisibleSelected,
+    machineSomeVisibleSelected,
     handleApplyAction,
     handleDelete,
     handleMachineChecklistToggle,
     handleConfirmAllMachines,
+    handleToggleMachineSelection,
+    handleToggleAllMachineSelection,
+    handleClearMachineSelection,
+    isBulkConfirmingMachines,
+    bulkConfirmProgress,
     scheduleMachineDrafts,
     editableRecordDrafts,
     editableRecordOptions,
@@ -1369,8 +1410,17 @@ function NativeModuleRecordsSection(props) {
           onToggle={handleMachineChecklistToggle}
           onConfirmAll={handleConfirmAllMachines}
           confirmedCount={machineConfirmedCount}
+          selectedCount={machineSelectedCount}
+          selectedIds={machineSelectedIds}
           totalCount={visibleMachineChecklistRecords.length}
           exitingIds={exitingIds}
+          onToggleSelection={handleToggleMachineSelection}
+          onToggleAllSelection={handleToggleAllMachineSelection}
+          onClearSelection={handleClearMachineSelection}
+          allVisibleSelected={machineAllVisibleSelected}
+          someVisibleSelected={machineSomeVisibleSelected}
+          isBulkConfirming={isBulkConfirmingMachines}
+          bulkConfirmProgress={bulkConfirmProgress}
         />
       ) : (
         <NativeModuleTable

@@ -6,6 +6,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  writeBatch,
 } from 'firebase/firestore'
 
 import { firebaseDb, firebaseReady, guardRemoteSubscription } from './firebase'
@@ -269,6 +270,50 @@ export async function saveManualModuleRecord({
     { merge: true },
   )
 
+  return true
+}
+
+export async function saveManualModuleRecordsBatch({
+  storeId,
+  tenantId,
+  modulePath,
+  dailyResetHour = null,
+  records,
+}) {
+  if (
+    !firebaseReady ||
+    !firebaseDb ||
+    !storeId ||
+    !Array.isArray(records) ||
+    records.length === 0
+  ) {
+    return false
+  }
+
+  const timestamp = new Date().toISOString()
+  const batch = writeBatch(firebaseDb)
+
+  records.forEach((record) => {
+    const documentRef = doc(getModuleRecordsCollectionRef(storeId, modulePath), record.id)
+
+    batch.set(
+      documentRef,
+      {
+        ...record,
+        storeId,
+        tenantId: tenantId ?? null,
+        modulePath,
+        operationalDay: dailyResetHour != null ? getOperationalDay(dailyResetHour) : null,
+        createdAtClient: record.createdAtClient ?? timestamp,
+        updatedAtClient: timestamp,
+        createdAtServer: serverTimestamp(),
+        updatedAtServer: serverTimestamp(),
+      },
+      { merge: true },
+    )
+  })
+
+  await batch.commit()
   return true
 }
 
