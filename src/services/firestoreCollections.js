@@ -21,6 +21,7 @@ export const FIRESTORE_COLLECTIONS = {
   backupSnapshots: 'backup_snapshots',
   settings: 'settings',
   notificationsPreferences: 'notifications_preferences',
+  reports: 'reports',
 }
 
 export const firestoreDataModel = {

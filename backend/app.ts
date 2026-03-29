@@ -42,6 +42,7 @@ import { buildPrometheusMetrics } from './metrics/prometheus.js'
 import { getObservabilitySnapshot } from './monitoring/metrics.js'
 import { registerZeDeliveryRoutes } from './routes/ze-delivery.js'
 import { registerEventRoutes } from './routes/events.js'
+import { registerReportRoutes } from './routes/reports.js'
 import {
   buildMonitoredErrorPayload,
   captureError,
@@ -244,6 +245,7 @@ export function createApp(): Express {
   app.use('/api', createAuditLoggerMiddleware())
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
+  registerReportRoutes(app)
   registerFinanceRoutes(app)
   app.use('/api/stores/:storeId', requireStoreAccess, sentryRequestContextMiddleware)
 

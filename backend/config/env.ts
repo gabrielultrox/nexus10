@@ -86,6 +86,44 @@ function createNumericSchema(defaultValue: number) {
   }, z.number().finite())
 }
 
+function normalizeTrustProxyValue(value: unknown): boolean | number | string | string[] {
+  if (value == null || value === '') {
+    return ['loopback', 'linklocal', 'uniquelocal']
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  const normalized = String(value).trim()
+  const lowered = normalized.toLowerCase()
+
+  if (['false', '0', 'off', 'no'].includes(lowered)) {
+    return false
+  }
+
+  if (['true', '1', 'on', 'yes'].includes(lowered)) {
+    return true
+  }
+
+  const numeric = Number(normalized)
+
+  if (Number.isInteger(numeric) && numeric >= 0) {
+    return numeric
+  }
+
+  const segments = normalized
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  if (segments.length > 1) {
+    return segments
+  }
+
+  return segments[0] ?? normalized
+}
+
 const booleanStringSchema = z.preprocess((value) => {
   if (typeof value === 'boolean') {
     return value
@@ -135,6 +173,12 @@ function buildRawBackendEnv(): NodeJS.ProcessEnv {
 
   rawEnv.APP_ENV = rawEnv.APP_ENV ?? effectiveEnvironment
   rawEnv.NODE_ENV = String(normalizeRuntimeEnvironment(rawEnv.NODE_ENV ?? effectiveEnvironment))
+  rawEnv.SENTRY_RELEASE ??=
+    rawEnv.VERCEL_GIT_COMMIT_SHA ??
+    rawEnv.GITHUB_SHA ??
+    rawEnv.RENDER_GIT_COMMIT ??
+    rawEnv.npm_package_version ??
+    'development'
 
   if (effectiveEnvironment === 'test' || process.env.VITEST) {
     rawEnv.FIREBASE_ADMIN_PROJECT_ID ??= 'test-project'
@@ -160,6 +204,12 @@ const backendEnvSchema = z
       runtimeEnvironmentSchema.default('development'),
     ),
     PORT: createNumericSchema(3001),
+    TRUST_PROXY: z.preprocess((value) => normalizeTrustProxyValue(value), z.union([
+      z.boolean(),
+      z.number().int().nonnegative(),
+      z.string().trim().min(1),
+      z.array(z.string().trim().min(1)).min(1),
+    ])),
     LOG_LEVEL: z.preprocess(
       (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
       logLevelSchema,
@@ -205,9 +255,11 @@ const backendEnvSchema = z
     FIREBASE_ADMIN_PROJECT_ID: createRequiredStringSchema('FIREBASE_ADMIN_PROJECT_ID'),
     FIREBASE_ADMIN_CLIENT_EMAIL: createRequiredStringSchema('FIREBASE_ADMIN_CLIENT_EMAIL'),
     FIREBASE_ADMIN_PRIVATE_KEY: createRequiredStringSchema('FIREBASE_ADMIN_PRIVATE_KEY'),
+    FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
     FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
     FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
     VITE_FIREBASE_PROJECT_ID: z.string().trim().optional(),
+    VITE_FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
   })
   .superRefine((data, context) => {
     if (data.APP_ENV === 'production' && !asOptionalString(data.FRONTEND_ORIGIN)) {
@@ -250,6 +302,7 @@ function normalizeBackendEnv(parsedEnv: RawBackendEnvironment): BackendEnvironme
     port: parsedEnv.PORT,
     nodeEnv: parsedEnv.NODE_ENV,
     appEnv: parsedEnv.APP_ENV,
+    trustProxy: parsedEnv.TRUST_PROXY,
     logLevel: parsedEnv.LOG_LEVEL,
     sentryDsn: parsedEnv.SENTRY_DSN,
     sentryRelease: parsedEnv.SENTRY_RELEASE,
@@ -302,6 +355,10 @@ function normalizeBackendEnv(parsedEnv: RawBackendEnvironment): BackendEnvironme
       /\\n/g,
       '\n',
     ),
+    firebaseStorageBucket:
+      asOptionalString(parsedEnv.FIREBASE_STORAGE_BUCKET) ??
+      asOptionalString(parsedEnv.VITE_FIREBASE_STORAGE_BUCKET) ??
+      `${asOptionalString(parsedEnv.FIREBASE_ADMIN_PROJECT_ID) ?? asOptionalString(parsedEnv.VITE_FIREBASE_PROJECT_ID) ?? ''}.firebasestorage.app`,
     firestoreEmulatorHost: asOptionalString(parsedEnv.FIRESTORE_EMULATOR_HOST) ?? '',
     firebaseAuthEmulatorHost: asOptionalString(parsedEnv.FIREBASE_AUTH_EMULATOR_HOST) ?? '',
   }

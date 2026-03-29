@@ -375,6 +375,32 @@ export const zeDeliverySettingsUpdateSchema = z.object({
     .default(''),
 })
 
+const reportTypeSchema = z.enum(['sales', 'cash', 'deliveries', 'operations', 'audit'])
+const reportFormatSchema = z.enum(['pdf', 'excel'])
+
+export const generateReportSchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  type: reportTypeSchema,
+  format: reportFormatSchema,
+  startDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate deve estar no formato YYYY-MM-DD.'),
+  endDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'endDate deve estar no formato YYYY-MM-DD.'),
+  operator: z.string().trim().max(120).optional().default(''),
+  module: z.string().trim().max(120).optional().default(''),
+  template: z.string().trim().max(80).optional().default('default'),
+  scheduledFor: z.string().trim().datetime().optional().nullable().default(null),
+})
+
+export const reportHistoryQuerySchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+})
+
 export {
   financeEntryRefSchema,
   isoDateTimeString,

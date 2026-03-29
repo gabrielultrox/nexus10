@@ -5,6 +5,7 @@ import SurfaceCard from '../components/common/SurfaceCard'
 import NativeModuleWorkspace from '../modules/operations/components/NativeModuleWorkspace'
 import { routeDefinitions } from '../utils/routeCatalog'
 import Select from '../components/ui/Select'
+import ReportGenerator from './Reports/ReportGenerator'
 
 const ANALYSIS_ROUTE_IDS = ['reports', 'monthly-report', 'orders-hour', 'ratings']
 
@@ -54,7 +55,11 @@ function AnalysisPage() {
         </div>
       </SurfaceCard>
 
-      <NativeModuleWorkspace route={activeRoute} />
+      {activeRoute.path === 'reports' ? (
+        <ReportGenerator />
+      ) : (
+        <NativeModuleWorkspace route={activeRoute} />
+      )}
     </>
   )
 }

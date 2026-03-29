@@ -1,8 +1,7 @@
-import NativeModulePage from './NativeModulePage'
-import { getRouteByPathname } from '../utils/routeCatalog'
+import ReportGenerator from './Reports/ReportGenerator'
 
 function ReportsPage() {
-  return <NativeModulePage route={getRouteByPathname('/reports')} />
+  return <ReportGenerator />
 }
 
 export default ReportsPage

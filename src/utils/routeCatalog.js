@@ -158,7 +158,7 @@ export const routeDefinitions = [
     eyebrow: 'Analise',
     title: 'Relatorios',
     description: 'Camada analitica principal com indicadores e leitura historica.',
-    requiredRoles: ['gerente'],
+    requiredRoles: ['operador'],
     hiddenInSidebar: true,
   },
   {

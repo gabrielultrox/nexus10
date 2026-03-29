@@ -4,6 +4,7 @@ import { backendEnv, hasFirebaseAdminConfig } from './config/env.js'
 
 let firestoreInstance = null
 let adminAppInstance = null
+let storageBucketInstance = null
 
 export function getAdminApp() {
   if (adminAppInstance) {
@@ -26,6 +27,7 @@ export function getAdminApp() {
             privateKey: backendEnv.firebasePrivateKey,
           }),
           projectId: backendEnv.firebaseProjectId,
+          storageBucket: backendEnv.firebaseStorageBucket,
         })
 
   return adminAppInstance
@@ -46,4 +48,14 @@ export function getAdminFirestore() {
 
   firestoreInstance = app.firestore()
   return firestoreInstance
+}
+
+export function getAdminStorageBucket() {
+  if (storageBucketInstance) {
+    return storageBucketInstance
+  }
+
+  const app = getAdminApp()
+  storageBucketInstance = app.storage().bucket(backendEnv.firebaseStorageBucket)
+  return storageBucketInstance
 }

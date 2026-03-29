@@ -18,6 +18,8 @@ export type FinancialEntryType =
   | 'refund'
   | 'chargeback'
   | string
+export type ReportFormat = 'pdf' | 'excel'
+export type ReportType = 'sales' | 'cash' | 'deliveries' | 'operations' | 'audit'
 
 export interface UserIdentity {
   uid: string
@@ -287,6 +289,81 @@ export interface RequestValidationPayload<
   query?: TQuery
 }
 
+export type ValidationSource = 'body' | 'params' | 'query' | 'webhook'
+
+export interface ValidationMiddlewareOptions<TRequestSource = unknown> {
+  source?: ValidationSource
+  targetKey?: string
+  mapRequest?: (request: any) => TRequestSource
+}
+
+export interface ValidationSourceConfigEntry<TRequestSource = unknown> {
+  schema: unknown
+  source?: ValidationSource
+  mapRequest?: (request: any) => TRequestSource
+}
+
+export type ValidationSourceConfig =
+  | ValidationSourceConfigEntry
+  | {
+      safeParse: (value: unknown) => { success: boolean; data?: unknown; error?: unknown }
+    }
+
+export interface StoreRouteParams extends Record<string, string> {
+  storeId: string
+}
+
+export interface OrderRouteParams extends StoreRouteParams {
+  orderId: string
+}
+
+export interface SaleRouteParams extends StoreRouteParams {
+  saleId: string
+}
+
+export interface FinanceRequestActor {
+  uid: string | null
+}
+
+export interface ControllerErrorLike {
+  message?: string
+  statusCode?: number
+}
+
+export interface IntegrationMerchantLookupOptions {
+  storeId: string
+  merchantId: string
+  source?: IntegrationSource | string
+}
+
+export interface IntegrationMerchantListOptions {
+  storeId: string
+  source?: IntegrationSource | string
+  enabledOnly?: boolean
+}
+
+export interface IntegrationMerchantTouchOptions {
+  storeId: string
+  merchantId: string
+  updates: Partial<MerchantRecord> & Record<string, unknown>
+}
+
+export interface FinanceRepository {
+  getFinancialEntryRef(storeId: string, entryId: string): unknown
+  getFinancialClosureRef(storeId: string, closureId: string): unknown
+  getFinancialEntryById(storeId: string, entryId: string): Promise<Record<string, unknown> | null>
+  upsertFinancialEntry(
+    storeId: string,
+    entryId: string,
+    payload: Record<string, unknown>,
+  ): Promise<string>
+  upsertFinancialClosure(
+    storeId: string,
+    closureId: string,
+    payload: Record<string, unknown>,
+  ): Promise<string>
+}
+
 export interface TypedRequestContext<
   TBody = unknown,
   TParams = Record<string, string>,
@@ -300,6 +377,7 @@ export interface BackendEnvironment {
   port: number
   nodeEnv: RuntimeEnvironment
   appEnv: RuntimeEnvironment
+  trustProxy: boolean | number | string | string[]
   logLevel: Exclude<LogLevel, 'fatal'>
   sentryDsn: string
   sentryRelease: string
@@ -339,6 +417,7 @@ export interface BackendEnvironment {
   firebaseProjectId: string
   firebaseClientEmail: string
   firebasePrivateKey: string
+  firebaseStorageBucket: string
   firestoreEmulatorHost: string
   firebaseAuthEmulatorHost: string
 }
