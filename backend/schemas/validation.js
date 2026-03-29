@@ -377,6 +377,8 @@ export const zeDeliverySettingsUpdateSchema = z.object({
 
 const reportTypeSchema = z.enum(['sales', 'cash', 'deliveries', 'operations', 'audit'])
 const reportFormatSchema = z.enum(['pdf', 'excel'])
+const analyticsModuleSchema = z.enum(['all', 'pdv', 'ifood', 'ze_delivery'])
+const analyticsCompareSchema = z.enum(['previous_period', 'week', 'month', 'year'])
 
 export const generateReportSchema = z.object({
   storeId: nonEmptyString('storeId'),
@@ -399,6 +401,20 @@ export const generateReportSchema = z.object({
 export const reportHistoryQuerySchema = z.object({
   storeId: nonEmptyString('storeId'),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+})
+
+export const analyticsQuerySchema = z.object({
+  storeId: nonEmptyString('storeId'),
+  startDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate deve estar no formato YYYY-MM-DD.'),
+  endDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'endDate deve estar no formato YYYY-MM-DD.'),
+  module: analyticsModuleSchema.optional().default('all'),
+  compareBy: analyticsCompareSchema.optional().default('previous_period'),
 })
 
 export {

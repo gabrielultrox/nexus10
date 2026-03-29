@@ -22,6 +22,7 @@ import { subscribeToIntegrationMerchants } from '../services/externalOrders'
 import { firebaseReady } from '../services/firebase'
 
 const DashboardCharts = lazy(() => import('../components/dashboard/DashboardCharts'))
+const DashboardAnalytics = lazy(() => import('./Dashboard/DashboardAnalytics'))
 
 function formatDateInputValue(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -29,7 +30,7 @@ function formatDateInputValue(date) {
 
 function DashboardPage() {
   const navigate = useNavigate()
-  const { currentStoreId } = useStore()
+  const { currentStoreId, availableStoreIds, setCurrentStoreId } = useStore()
   const [period, setPeriod] = useState(() => getDefaultDashboardPeriod())
   const [sales, setSales] = useState([])
   const [orders, setOrders] = useState([])
@@ -313,6 +314,19 @@ function DashboardPage() {
           </div>
         ) : null}
         <DashboardOperationalSummary operations={operations} onNavigate={navigate} />
+        <Suspense
+          fallback={
+            <div className="workspace-loading-grid">
+              <Skeleton variant="rect" height="280px" />
+            </div>
+          }
+        >
+          <DashboardAnalytics
+            currentStoreId={currentStoreId}
+            availableStoreIds={availableStoreIds}
+            onStoreChange={setCurrentStoreId}
+          />
+        </Suspense>
       </section>
     </main>
   )

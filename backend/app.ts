@@ -43,6 +43,7 @@ import { getObservabilitySnapshot } from './monitoring/metrics.js'
 import { registerZeDeliveryRoutes } from './routes/ze-delivery.js'
 import { registerEventRoutes } from './routes/events.js'
 import { registerReportRoutes } from './routes/reports.js'
+import { registerAnalyticsRoutes } from './routes/analytics.js'
 import {
   buildMonitoredErrorPayload,
   captureError,
@@ -246,6 +247,7 @@ export function createApp(): Express {
   registerAdminAuditLogRoutes(app)
   registerMonitoringRoutes(app)
   registerReportRoutes(app)
+  registerAnalyticsRoutes(app)
   registerFinanceRoutes(app)
   app.use('/api/stores/:storeId', requireStoreAccess, sentryRequestContextMiddleware)
 
