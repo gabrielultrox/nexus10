@@ -18,6 +18,7 @@ export const FIRESTORE_COLLECTIONS = {
   financialClosures: 'financial_closures',
   auditLogs: 'audit_logs',
   settings: 'settings',
+  notificationsPreferences: 'notifications_preferences',
 }
 
 export const firestoreDataModel = {
@@ -248,5 +249,9 @@ export const firestoreDataModel = {
   settings: {
     path: 'stores/{storeId}/settings/{settingId}',
     fields: ['storeId', 'tenantId', 'type', 'payload'],
+  },
+  notifications_preferences: {
+    path: 'stores/{storeId}/notifications_preferences/{userId}',
+    fields: ['enabled', 'channels', 'types', 'updatedAt', 'updatedBy'],
   },
 }

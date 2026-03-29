@@ -40,6 +40,7 @@ import { registerSaleRoutes } from './modules/sales/saleController.js'
 import { buildPrometheusMetrics } from './metrics/prometheus.js'
 import { getObservabilitySnapshot } from './monitoring/metrics.js'
 import { registerZeDeliveryRoutes } from './routes/ze-delivery.js'
+import { registerEventRoutes } from './routes/events.js'
 import {
   buildMonitoredErrorPayload,
   captureError,
@@ -234,6 +235,7 @@ export function createApp(): Express {
   )
 
   registerAuthRoutes(app)
+  registerEventRoutes(app)
   registerZeDeliveryRoutes(app)
   app.use('/api', requireApiAuth)
   app.use('/api', sentryRequestContextMiddleware)

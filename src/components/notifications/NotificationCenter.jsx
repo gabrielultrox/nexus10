@@ -17,7 +17,16 @@ function formatDateTime(value) {
 
 function NotificationCenter() {
   const navigate = useNavigate()
-  const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications()
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    dismiss,
+    preferences,
+    updatePreferences,
+    connectionStatus,
+  } = useNotifications()
   const [open, setOpen] = useState(false)
 
   function handleNotificationClick(notification) {
@@ -51,6 +60,38 @@ function NotificationCenter() {
             </div>
             <button type="button" className="ui-button ui-button--ghost" onClick={markAllAsRead}>
               Marcar tudo
+            </button>
+          </div>
+
+          <div className="notification-center__preferences">
+            <span className={`notification-center__live notification-center__live--${connectionStatus}`}>
+              {connectionStatus === 'connected' ? 'Tempo real ativo' : 'Tempo real indisponivel'}
+            </span>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={() =>
+                updatePreferences({
+                  channels: {
+                    sound: !(preferences?.channels?.sound !== false),
+                  },
+                })
+              }
+            >
+              Som {preferences?.channels?.sound !== false ? 'ligado' : 'desligado'}
+            </button>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost"
+              onClick={() =>
+                updatePreferences({
+                  channels: {
+                    vibration: !Boolean(preferences?.channels?.vibration),
+                  },
+                })
+              }
+            >
+              Vibracao {preferences?.channels?.vibration ? 'ligada' : 'desligada'}
             </button>
           </div>
 

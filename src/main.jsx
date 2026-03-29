@@ -46,13 +46,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <StoreProvider>
-            <NotificationsProvider>
-              <ToastProvider>
+            <ToastProvider>
+              <NotificationsProvider>
                 <ConfirmProvider>
                   <App />
                 </ConfirmProvider>
-              </ToastProvider>
-            </NotificationsProvider>
+              </NotificationsProvider>
+            </ToastProvider>
           </StoreProvider>
         </AuthProvider>
       </ThemeProvider>
