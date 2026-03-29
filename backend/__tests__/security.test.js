@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../config/env.js', () => ({
   backendEnv: {
+    trustProxy: true,
     nodeEnv: 'production',
     appEnv: 'production',
     logLevel: 'silent',
@@ -66,6 +67,7 @@ vi.mock('../middleware/requestLogger.js', () => ({
 vi.mock('../middleware/requireAuth.js', () => ({
   requireApiAuth: (_request, _response, next) => next(),
   requirePermission: () => (_request, _response, next) => next(),
+  requireScopedStoreAccess: () => (_request, _response, next) => next(),
   requireStoreAccess: (_request, _response, next) => next(),
 }))
 
@@ -108,6 +110,10 @@ vi.mock('../modules/admin/monitoringController.js', () => ({
 
 vi.mock('../modules/finance/financeController.js', () => ({
   registerFinanceRoutes: () => {},
+}))
+
+vi.mock('../routes/ze-delivery.js', () => ({
+  registerZeDeliveryRoutes: () => {},
 }))
 
 vi.mock('../integrations/ifood/ifoodFirestoreRepository.js', () => ({
@@ -227,6 +233,23 @@ describe('backend security', () => {
     expect(response.headers.get('referrer-policy')).toBe('no-referrer')
     expect(response.headers.get('permissions-policy')).toContain('camera=()')
     expect(response.headers.get('x-powered-by')).toBeNull()
+  })
+
+  it('expõe readiness operacional sem autenticação para smoke checks', async () => {
+    const response = await fetch(`${baseUrl}/api/health/ready`, {
+      headers: {
+        'x-forwarded-proto': 'https',
+      },
+    })
+
+    expect([200, 503]).toContain(response.status)
+
+    const payload = await response.json()
+
+    expect(payload.service).toBe('nexus-ifood-integration')
+    expect(payload.checks.firestore.status).toBeDefined()
+    expect(payload.checks.metrics.status).toBe('ok')
+    expect(payload.checks.scheduler.errorCount).toBeDefined()
   })
 
   it('rejeita origem CORS invalida', async () => {

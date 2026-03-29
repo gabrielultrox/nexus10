@@ -2,6 +2,10 @@ import admin from 'firebase-admin'
 
 import { backendEnv, hasFirebaseAdminConfig } from '../config/env.js'
 import { isRedisConfigured, getRedisClient } from '../cache/redisClient.js'
+import {
+  readZeDeliverySchedulerStates,
+  summarizeZeDeliverySchedulerStates,
+} from '../middleware/health-check.js'
 
 const routeMetrics = new Map()
 const webhookEvents = []
@@ -15,6 +19,14 @@ const cacheCounters = {
   invalidations: 0,
   errors: 0,
 }
+
+const NON_OPERATIONAL_ROUTES = new Set([
+  'GET /api/health',
+  'GET /api/health/ready',
+  'GET /api/metrics',
+  'GET /api-docs',
+  'GET /api-docs.json',
+])
 
 function nowMs() {
   return Date.now()
@@ -91,7 +103,11 @@ function collectAllRouteEvents() {
   const aggregated = []
 
   for (const events of routeMetrics.values()) {
-    aggregated.push(...getWindowedEvents(events))
+    aggregated.push(
+      ...getWindowedEvents(events).filter(
+        (event) => !NON_OPERATIONAL_ROUTES.has(`${event.method} ${event.route}`),
+      ),
+    )
   }
 
   return aggregated
@@ -122,6 +138,7 @@ function roundMegabytes(valueInBytes) {
 
 function getSystemSnapshot() {
   const memory = process.memoryUsage()
+  const schedulerSummary = summarizeZeDeliverySchedulerStates(readZeDeliverySchedulerStates())
 
   return {
     processUptimeSeconds: Number(process.uptime().toFixed(2)),
@@ -151,6 +168,19 @@ function getSystemSnapshot() {
               ((cacheCounters.hits / (cacheCounters.hits + cacheCounters.misses)) * 100).toFixed(2),
             )
           : 0,
+    },
+    scheduler: {
+      provider: 'node-cron-pm2',
+      status: schedulerSummary.status,
+      errorCount: schedulerSummary.errorCount,
+      staleWorkerCount: schedulerSummary.staleWorkerCount,
+      successRate:
+        schedulerSummary.successRate == null
+          ? null
+          : Number((schedulerSummary.successRate * 100).toFixed(2)),
+      workerCount: schedulerSummary.workers.length,
+      lastSyncAt: schedulerSummary.lastSync,
+      nextSyncAt: schedulerSummary.nextSync,
     },
   }
 }

@@ -8,6 +8,7 @@ import {
   createHttpsEnforcementMiddleware,
   createSecurityHeadersMiddleware,
   createUserAgentGuard,
+  getTrustProxySetting,
   isAllowedOrigin,
 } from './config/security.js'
 import { RequestValidationError } from './errors/RequestValidationError.js'
@@ -15,7 +16,12 @@ import { logger, serializeError } from './logging/logger.js'
 import { registerAuthRoutes } from './modules/auth/authController.js'
 import { createIfoodFirestoreRepository } from './integrations/ifood/ifoodFirestoreRepository.js'
 import { createIfoodIntegrationRuntime } from './integrations/ifood/ifoodIntegrationRuntime.js'
-import { requireApiAuth, requireStoreAccess } from './middleware/requireAuth.js'
+import {
+  requireApiAuth,
+  requirePermission,
+  requireScopedStoreAccess,
+  requireStoreAccess,
+} from './middleware/requireAuth.js'
 import {
   authenticatedApiRateLimiter,
   fileUploadRateLimiter,
@@ -32,6 +38,7 @@ import { registerFinanceRoutes } from './modules/finance/financeController.js'
 import { registerOrderRoutes } from './modules/orders/orderController.js'
 import { registerSaleRoutes } from './modules/sales/saleController.js'
 import { buildPrometheusMetrics } from './metrics/prometheus.js'
+import { getObservabilitySnapshot } from './monitoring/metrics.js'
 import { registerZeDeliveryRoutes } from './routes/ze-delivery.js'
 import {
   buildMonitoredErrorPayload,
@@ -40,6 +47,7 @@ import {
   sentryRequestContextMiddleware,
   setupExpressSentry,
 } from './monitoring/sentry.js'
+import { getAdminApp } from './firebaseAdmin.js'
 import { swaggerSpec, swaggerUiOptions } from './swagger.js'
 import {
   getIntegrationMerchant,
@@ -58,9 +66,42 @@ interface HealthResponseBody {
   timestamp: string
 }
 
+interface ReadinessResponseBody {
+  status: 'ok' | 'degraded'
+  service: string
+  timestamp: string
+  release: string | null
+  checks: {
+    sentry: { status: 'ok' | 'disabled' }
+    firestore: { status: 'ok' | 'degraded' }
+    redis: { status: 'ok' | 'disabled' | 'degraded' }
+    metrics: { status: 'ok' | 'degraded' }
+    scheduler: { status: 'ok' | 'degraded'; staleWorkerCount: number; errorCount: number }
+  }
+}
+
 interface IfoodAccessToken {
   accessToken?: string
   access_token?: string
+}
+
+function sanitizeIfoodMerchantForResponse(merchant: unknown) {
+  const record = (merchant ?? {}) as Record<string, unknown>
+
+  return {
+    id: record.id ?? null,
+    merchantId: record.merchantId ?? record.id ?? null,
+    source: record.source ?? 'ifood',
+    name: record.name ?? null,
+    tenantId: record.tenantId ?? null,
+    status: record.status ?? null,
+    lastPollingAt: record.lastPollingAt ?? null,
+    lastSyncAt: record.lastSyncAt ?? null,
+    lastSyncError: record.lastSyncError ?? null,
+    lastWebhookAt: record.lastWebhookAt ?? null,
+    updatedAt: record.updatedAt ?? null,
+    createdAt: record.createdAt ?? null,
+  }
 }
 
 export function createApp(): Express {
@@ -76,7 +117,7 @@ export function createApp(): Express {
 
   initializeSentry()
 
-  app.set('trust proxy', true)
+  app.set('trust proxy', getTrustProxySetting())
   app.disable('x-powered-by')
   app.use(requestLogger)
   app.use(sentryRequestContextMiddleware)
@@ -99,6 +140,62 @@ export function createApp(): Express {
         status: 'ok',
         service: 'nexus-ifood-integration',
         timestamp: new Date().toISOString(),
+      })
+    },
+  )
+
+  app.get(
+    '/api/health/ready',
+    publicRateLimiter,
+    async (_request: Request, response: Response<ReadinessResponseBody>) => {
+      let firestoreReady = false
+
+      try {
+        getAdminApp()
+        firestoreReady = true
+      } catch {
+        firestoreReady = false
+      }
+
+      const snapshot = await getObservabilitySnapshot()
+      const checks = {
+        sentry: {
+          status: backendEnv.sentryDsn ? 'ok' : 'disabled',
+        } as const,
+        firestore: {
+          status: snapshot.system.database.configured && firestoreReady ? 'ok' : 'degraded',
+        } as const,
+        redis: {
+          status: !snapshot.system.cache.configured
+            ? 'disabled'
+            : snapshot.system.cache.status === 'connected'
+              ? 'ok'
+              : 'degraded',
+        } as const,
+        metrics: {
+          status: snapshot.routes.length >= 0 ? 'ok' : 'degraded',
+        } as const,
+        scheduler: {
+          status:
+            snapshot.system.scheduler.status === 'degraded' ||
+            snapshot.system.scheduler.staleWorkerCount > 0
+              ? 'degraded'
+              : 'ok',
+          staleWorkerCount: snapshot.system.scheduler.staleWorkerCount ?? 0,
+          errorCount: snapshot.system.scheduler.errorCount ?? 0,
+        } as const,
+      }
+
+      const status = Object.values(checks).some((check) => check.status === 'degraded')
+        ? 'degraded'
+        : 'ok'
+
+      response.status(status === 'ok' ? 200 : 503).json({
+        status,
+        service: 'nexus-ifood-integration',
+        timestamp: new Date().toISOString(),
+        release: backendEnv.sentryRelease || null,
+        checks,
       })
     },
   )
@@ -150,35 +247,44 @@ export function createApp(): Express {
   registerSaleRoutes(app)
   registerAssistantRoutes(app)
 
-  app.get('/api/integrations/ifood/merchants/:storeId', async (request, response) => {
-    try {
-      const merchants = await listIntegrationMerchants({
-        storeId: request.params.storeId,
-        source: 'ifood',
-      })
+  app.get(
+    '/api/integrations/ifood/merchants/:storeId',
+    requirePermission('integrations:write'),
+    requireScopedStoreAccess({ source: 'params', field: 'storeId' }),
+    async (request, response) => {
+      try {
+        const merchants = await listIntegrationMerchants({
+          storeId: String(request.params.storeId),
+          source: 'ifood',
+        })
 
-      response.json({
-        data: merchants,
-      })
-    } catch (error) {
-      request.log?.error(
-        {
-          context: 'ifood.merchants.list',
-          storeId: request.params.storeId,
-          error: serializeError(error),
-        },
-        'Failed to list iFood merchants',
-      )
-      response.status(500).json({
-        error:
-          error instanceof Error ? error.message : 'Nao foi possivel listar os merchants do iFood.',
-      })
-    }
-  })
+        response.json({
+          data: merchants.map(sanitizeIfoodMerchantForResponse),
+        })
+      } catch (error) {
+        request.log?.error(
+          {
+            context: 'ifood.merchants.list',
+            storeId: String(request.params.storeId),
+            error: serializeError(error),
+          },
+          'Failed to list iFood merchants',
+        )
+        response.status(500).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Nao foi possivel listar os merchants do iFood.',
+        })
+      }
+    },
+  )
 
   app.post(
     '/api/integrations/ifood/polling/run',
     validateRequest(ifoodPollingSchema),
+    requirePermission('integrations:write'),
+    requireScopedStoreAccess({ source: 'body', field: 'storeId' }),
     async (request, response) => {
       const { storeId, merchantId } = (request.validated?.body ?? request.body ?? {}) as {
         storeId: string
@@ -266,8 +372,10 @@ export function createApp(): Express {
     '/api/integrations/ifood/orders/:storeId/:merchantId/:orderId/sync',
     validateRequest(ifoodOrderSyncParamsSchema, {
       source: 'params',
-      mapRequest: (request: Request) => request.params,
+      mapRequest: (request) => (request as Request).params,
     }),
+    requirePermission('integrations:write'),
+    requireScopedStoreAccess({ source: 'params', field: 'storeId' }),
     async (request, response) => {
       const { storeId, merchantId, orderId } = (request.validated?.params ?? request.params) as {
         storeId: string
@@ -347,13 +455,14 @@ export function createApp(): Express {
     sentryRequestContextMiddleware,
     validateRequest(ifoodWebhookSchema, {
       source: 'webhook',
-      mapRequest: (request: Request) => ({
-        signature: request.header('X-IFood-Signature'),
-        body: String(request.body ?? ''),
+      mapRequest: (request) => ({
+        signature: (request as Request).header('X-IFood-Signature'),
+        body: String((request as Request).body ?? ''),
       }),
     }),
     async (request, response) => {
-      const { storeId, merchantId } = request.params
+      const storeId = String(request.params.storeId)
+      const merchantId = String(request.params.merchantId)
       const validatedWebhook = (((request.validated as Record<string, unknown> | undefined) ?? {})[
         'webhook'
       ] ?? {}) as {

@@ -17,6 +17,13 @@ O Nexus10 usa Sentry para:
 - `SENTRY_RELEASE`
 - `SENTRY_TRACES_SAMPLE_RATE`
 
+Fallback de release no backend:
+
+- `VERCEL_GIT_COMMIT_SHA`
+- `GITHUB_SHA`
+- `RENDER_GIT_COMMIT`
+- `npm_package_version`
+
 ### Frontend
 
 - `VITE_SENTRY_DSN`
@@ -24,6 +31,14 @@ O Nexus10 usa Sentry para:
 - `VITE_SENTRY_TRACES_SAMPLE_RATE`
 - `VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE`
 - `VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE`
+
+Fallback de release no frontend:
+
+- `VITE_SENTRY_RELEASE`
+- `SENTRY_RELEASE`
+- `VERCEL_GIT_COMMIT_SHA`
+- `GITHUB_SHA`
+- `npm_package_version`
 
 ### Upload de sourcemaps
 
@@ -51,6 +66,7 @@ Tags automaticas:
 - `user_id`
 - `store_id`
 - `merchant_id`
+- `integration`
 
 ## Frontend
 
@@ -81,6 +97,11 @@ Script:
 npm run sentry:upload-sourcemaps
 ```
 
+Observacao:
+
+- o `vite.config.js` agora injeta release fallback automaticamente no bundle
+- o plugin de sourcemaps usa o mesmo release resolvido, reduzindo divergencia entre evento e artifact
+
 ## Smoke test
 
 ### Frontend
@@ -106,8 +127,11 @@ Esse endpoint gera um erro proposital e envia o evento para o Sentry antes de re
 1. definir DSN backend e frontend
 2. definir `SENTRY_RELEASE`
 3. buildar frontend com upload de sourcemaps
-4. abrir o app e rodar o smoke test
-5. confirmar evento e trace no dashboard
+4. rodar `npm run ops:smoke`
+5. abrir o app e rodar o smoke test
+6. confirmar evento e trace no dashboard
+7. confirmar que o evento aponta para a release esperada
+8. abrir o stack trace e validar sourcemap resolvido
 
 ## Boas praticas
 

@@ -119,5 +119,46 @@ export async function buildPrometheusMetrics() {
     { labels: { state: 'connected' }, value: snapshot.system.cache.status === 'connected' ? 1 : 0 },
   ])
 
+  pushMetric(
+    lines,
+    'nexus_scheduler_health',
+    'Scheduler health and error counters for background integrations.',
+    'gauge',
+    [
+      {
+        labels: { integration: 'ze-delivery', state: 'healthy' },
+        value:
+          snapshot.system.scheduler.status === 'healthy' ||
+          snapshot.system.scheduler.status === 'idle'
+            ? 1
+            : 0,
+      },
+      {
+        labels: { integration: 'ze-delivery', state: 'degraded' },
+        value: snapshot.system.scheduler.status === 'degraded' ? 1 : 0,
+      },
+      {
+        labels: { integration: 'ze-delivery', state: 'running' },
+        value: snapshot.system.scheduler.status === 'running' ? 1 : 0,
+      },
+      {
+        labels: { integration: 'ze-delivery', state: 'stopped' },
+        value: snapshot.system.scheduler.status === 'stopped' ? 1 : 0,
+      },
+      {
+        labels: { integration: 'ze-delivery', metric: 'error_count' },
+        value: snapshot.system.scheduler.errorCount,
+      },
+      {
+        labels: { integration: 'ze-delivery', metric: 'success_rate_percent' },
+        value: snapshot.system.scheduler.successRate ?? 0,
+      },
+      {
+        labels: { integration: 'ze-delivery', metric: 'stale_workers' },
+        value: snapshot.system.scheduler.staleWorkerCount ?? 0,
+      },
+    ],
+  )
+
   return `${lines.join('\n')}\n`
 }

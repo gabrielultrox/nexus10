@@ -27,6 +27,7 @@
     "logs:list": "node scripts/list-backend-logs.mjs",
     "logs:tail": "node scripts/tail-backend-log.mjs",
     "logs:clean": "node scripts/clean-backend-logs.mjs",
+    "ops:smoke": "node scripts/observability-smoke-check.mjs",
     "seed:ifood-merchant": "node backend/scripts/seedIfoodMerchant.js",
     "inventory:import-csv": "node backend/scripts/importInventoryCsv.js",
     "preview": "vite preview",
@@ -47,6 +48,9 @@
     "test": "vitest run",
     "test:backend": "vitest run backend",
     "test:frontend": "vitest run src",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
@@ -84,6 +88,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@eslint/js": "^9.39.0",
     "@sentry/vite-plugin": "^5.1.1",
     "@storybook/addon-essentials": "^8.6.14",

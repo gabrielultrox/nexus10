@@ -1,11 +1,12 @@
-# Metrics
+# Metricas
 
 ## Objetivo
 
-O Nexus10 expõe observability básica em dois formatos:
+O Nexus10 expoe observabilidade operacional em tres saidas:
 
-- Prometheus-style em `GET /api/metrics`
+- Prometheus em `GET /api/metrics`
 - dashboard JSON em `GET /api/admin/monitoring/summary`
+- readiness em `GET /api/health/ready`
 
 ## Backend
 
@@ -13,75 +14,84 @@ Arquivos principais:
 
 - `backend/monitoring/metrics.js`
 - `backend/metrics/prometheus.js`
+- `backend/monitoring/alerts.js`
 
-## Métricas HTTP
+## Metricas HTTP
 
-Incluídas:
+Incluidas:
 
 - taxa de requests por rota
-- distribuição por status code
-- latência por rota com `p50`, `p95`, `p99`
+- distribuicao por status code
+- latencia por rota com `p50`, `p95`, `p99`
 
-Endpoint Prometheus:
-
-- `GET /api/metrics`
-
-Exemplos:
+Metricas Prometheus:
 
 - `nexus_http_requests_total`
 - `nexus_http_latency_ms`
 
-## Métricas de negócio
+## Metricas de negocio
 
-Incluídas:
+Incluidas:
 
 - pedidos criados na janela atual
 - valor total de vendas na janela atual
-- taxa de sucesso de webhook iFood
+- taxa de sucesso do webhook iFood
 
-No JSON:
+Campos no JSON:
 
 - `business.ordersCreatedLastHour`
 - `business.salesTotalAmount`
 - `webhooks.successRate`
 
-## Saúde do sistema
+## Saude do sistema
 
-Incluídas:
+Incluidas:
 
-- uso de memória do processo
+- uso de memoria do processo
 - uptime do backend
 - status do Firestore Admin SDK
 - status do Redis
 - cache hit/miss/set/invalidation/error
+- status do scheduler do Ze Delivery
+- contagem de erros do scheduler
+- contagem de workers stale do scheduler
+- taxa de sucesso do scheduler
 
-Observação:
+Metrica Prometheus:
 
-O Firestore Admin SDK não expõe pool de conexão tradicional. Por isso o Nexus10 publica:
+- `nexus_scheduler_health`
 
-- `configured`
-- `initialized`
-- `pool: "not_applicable"`
+Observacoes:
+
+- O Firestore Admin SDK nao expoe pool de conexao tradicional.
+- O endpoint de readiness e seguro para smoke checks e devolve status por dependencia.
 
 ## Frontend
 
-Métricas leves em memória do navegador:
+Metricas leves mantidas na memoria do navegador:
 
 - page load por rota
-- latência de chamadas de API
-- tempo de render de componentes principais
+- latencia de API
+- tempo de render de componentes
 
 Arquivo:
 
 - `src/services/frontendMetrics.ts`
 
-Inspeção local no navegador:
+Inspecao local:
 
 ```js
 window.__NEXUS10_FRONTEND_METRICS__
 ```
 
 ## Endpoints
+
+### Health
+
+```bash
+curl http://127.0.0.1:8787/api/health
+curl http://127.0.0.1:8787/api/health/ready
+```
 
 ### Prometheus
 
@@ -95,11 +105,16 @@ curl http://127.0.0.1:8787/api/metrics
 curl http://127.0.0.1:8787/api/admin/monitoring/summary
 ```
 
+## Alertas recomendados
+
+- error rate > 5%
+- p95 > 1000ms
+- falhas de webhook iFood acima do limiar
+- scheduler do Ze Delivery degradado, stale ou com erro
+
 ## Uso recomendado
 
-1. Prometheus scrape em `/api/metrics`
-2. dashboard operacional usando `/api/admin/monitoring/summary`
-3. alertas a partir de:
-   - erro > 5%
-   - p95 > 1000ms
-   - webhook failure rate acima do limiar
+1. Configurar scrape Prometheus em `/api/metrics`.
+2. Usar `/api/health/ready` em smoke checks de deploy e probes.
+3. Usar `/api/admin/monitoring/summary` como painel operacional rapido.
+4. Correlacionar incidentes no Sentry por `request_id`, `store_id`, `user_id` e `integration`.
