@@ -37,6 +37,7 @@ ensureFrontendEnvLoaded()
 const FINANCIAL_PENDING_STORAGE_KEY = 'nexus-module-cash-financial-pending'
 const CASH_RESET_HOUR = 3
 const FINANCIAL_PENDING_REMINDER_KEY = 'nexus10.financialPendingReminder'
+const BOOT_SEQUENCE_SESSION_KEY = 'nexus10.bootSequenceCompleted'
 
 function getOperationalDay(resetHour = 3) {
   const now = new Date()
@@ -61,7 +62,16 @@ function App() {
   const confirm = useConfirm()
   const toast = useToast()
   useBackupSync()
-  const [bootSequenceComplete, setBootSequenceComplete] = useState(false)
+  const [bootSequenceComplete, setBootSequenceComplete] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    return (
+      window.sessionStorage.getItem(BOOT_SEQUENCE_SESSION_KEY) === 'true' ||
+      window.location.pathname === '/login'
+    )
+  })
   const [routeAnimationKey, setRouteAnimationKey] = useState(0)
   const [isRoutePending, startRouteTransition] = useTransition()
   const [isOffline, setIsOffline] = useState(
@@ -71,7 +81,7 @@ function App() {
   const renderStartedAtRef = useRef(performance.now())
   const lastPathRef = useRef(location.pathname)
   const routeStartedAtRef = useRef(performance.now())
-  const bootVisible = !bootSequenceComplete || loading
+  const bootVisible = location.pathname !== '/login' && (!bootSequenceComplete || loading)
   const keyboardShortcuts = useKeyboardShortcuts({
     enabled: bootSequenceComplete && isAuthenticated,
   })
@@ -239,6 +249,9 @@ function App() {
   }, [bootSequenceComplete, confirm, currentStoreId, isAuthenticated, loading, navigate, toast])
 
   function handleBootComplete() {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(BOOT_SEQUENCE_SESSION_KEY, 'true')
+    }
     setBootSequenceComplete(true)
   }
 

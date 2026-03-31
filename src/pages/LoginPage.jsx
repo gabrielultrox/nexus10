@@ -10,6 +10,9 @@ import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/l
 import { playError, playSuccess } from '../services/soundManager'
 import Select from '../components/ui/Select'
 
+const PIN_VERIFY_DELAY_MS = 80
+const PIN_UNLOCK_DELAY_MS = 140
+
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -86,14 +89,14 @@ function LoginPage() {
         playSuccess()
         window.setTimeout(() => {
           setStage('login')
-        }, 520)
+        }, PIN_UNLOCK_DELAY_MS)
         return
       }
 
       setPinError('PIN invalido. Tente novamente.')
       playError()
       setPinValue('')
-    }, 220)
+    }, PIN_VERIFY_DELAY_MS)
 
     return () => {
       window.clearTimeout(timeoutId)

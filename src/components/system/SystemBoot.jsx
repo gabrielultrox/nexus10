@@ -14,9 +14,9 @@ const SUBSYSTEMS = [
   { id: 'sub-4', label: 'Acesso', value: 'Protegido', tone: 'danger' },
 ]
 
-const PARTICLE_COUNT = 18
-const BOOT_DURATION_MS = 1800
-const FADE_DURATION_MS = 280
+const PARTICLE_COUNT = 10
+const BOOT_DURATION_MS = 900
+const FADE_DURATION_MS = 180
 
 function createParticles() {
   return Array.from({ length: PARTICLE_COUNT }, (_, index) => ({
