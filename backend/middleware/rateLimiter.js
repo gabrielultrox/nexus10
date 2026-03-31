@@ -94,7 +94,12 @@ class RedisBackedRateLimitStore {
       const client = await getRedisClient()
 
       if (!client) {
-        return this.fallbackStore.increment(namespacedKey, windowMs)
+        const memoryResult = await this.fallbackStore.increment(namespacedKey, windowMs)
+
+        return {
+          totalHits: memoryResult.totalHits,
+          resetTime: new Date(memoryResult.resetTime),
+        }
       }
 
       const transactionResult = await client.multi().incr(namespacedKey).pttl(namespacedKey).exec()
