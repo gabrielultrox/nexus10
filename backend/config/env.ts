@@ -269,22 +269,6 @@ const backendEnvSchema = z
     VITE_FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
   })
   .superRefine((data, context) => {
-    if (data.APP_ENV === 'production' && !asOptionalString(data.FRONTEND_ORIGIN)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['FRONTEND_ORIGIN'],
-        message: 'e obrigatoria em producao.',
-      })
-    }
-
-    if (data.APP_ENV === 'production' && !asOptionalString(data.LOCAL_OPERATOR_PASSWORD)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['LOCAL_OPERATOR_PASSWORD'],
-        message: 'e obrigatoria em producao.',
-      })
-    }
-
     if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_CLIENT_ID)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -306,30 +290,6 @@ const backendEnvSchema = z
         code: z.ZodIssueCode.custom,
         path: ['IFOOD_WEBHOOK_SECRET'],
         message: 'e obrigatoria quando IFOOD_ENABLED=true.',
-      })
-    }
-
-    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_PROJECT_ID)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['FIREBASE_ADMIN_PROJECT_ID'],
-        message: 'e obrigatoria em producao.',
-      })
-    }
-
-    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_CLIENT_EMAIL)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['FIREBASE_ADMIN_CLIENT_EMAIL'],
-        message: 'e obrigatoria em producao.',
-      })
-    }
-
-    if (data.APP_ENV === 'production' && !asOptionalString(data.FIREBASE_ADMIN_PRIVATE_KEY)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['FIREBASE_ADMIN_PRIVATE_KEY'],
-        message: 'e obrigatoria em producao.',
       })
     }
   })
