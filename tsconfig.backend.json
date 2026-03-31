@@ -18,7 +18,7 @@
     "outDir": "dist-backend",
     "types": ["node"]
   },
-  "include": ["backend/**/*.ts", "backend/**/*.d.ts", "backend/**/*.js", "api/**/*.ts"],
+  "include": ["backend/**/*.ts", "backend/**/*.d.ts", "backend/**/*.js"],
   "exclude": [
     "backend/**/*.test.js",
     "backend/**/*.test.ts",
