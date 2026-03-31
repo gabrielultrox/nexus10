@@ -37,9 +37,34 @@ import './styles/audit-log.css'
 import './styles/history.css'
 import './styles/ze-delivery.css'
 
-registerPwa()
-setupRuntimeRecovery()
-initializeSoundManager()
+function scheduleNonCriticalStartup(work) {
+  if (typeof window === 'undefined') {
+    work()
+    return
+  }
+
+  const run = () => {
+    window.setTimeout(work, 0)
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 1200 })
+    return
+  }
+
+  if (document.readyState === 'complete') {
+    run()
+    return
+  }
+
+  window.addEventListener('load', run, { once: true })
+}
+
+scheduleNonCriticalStartup(() => {
+  registerPwa()
+  setupRuntimeRecovery()
+  initializeSoundManager()
+})
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

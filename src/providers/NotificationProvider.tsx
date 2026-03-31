@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { useLocation } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
 import { useStore } from '../contexts/StoreContext'
@@ -113,6 +114,7 @@ function supportsVibration() {
 }
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const location = useLocation()
   const { currentStoreId, tenantId } = useStore() as {
     currentStoreId: string | null
     tenantId: string | null
@@ -126,6 +128,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<PreferencesRecord>(() =>
     loadNotificationPreferences({ storeId: currentStoreId, userId: session?.uid, session }),
   )
+  const operationalNotificationsEnabled = Boolean(
+    currentStoreId && session?.uid && location.pathname !== '/login',
+  )
   const ordersInitializedRef = useRef(false)
   const salesInitializedRef = useRef(false)
   const inventoryInitializedRef = useRef(false)
@@ -134,7 +139,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const advancesReminderTimeoutRef = useRef<number | null>(null)
   const presentationWindowRef = useRef<number[]>([])
   const liveNotifications = useLiveNotifications({
-    enabled: Boolean(currentStoreId && session?.uid),
+    enabled: operationalNotificationsEnabled,
     storeId: currentStoreId,
   })
 
@@ -201,7 +206,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [preferences, toastApi])
 
   useEffect(() => {
-    if (!currentStoreId || !session?.uid) {
+    if (!operationalNotificationsEnabled || !currentStoreId || !session?.uid) {
       setPreferences(loadNotificationPreferences({ storeId: null, userId: null, session }))
       return undefined
     }
@@ -213,9 +218,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onData: setPreferences,
       onError: () => undefined,
     })
-  }, [currentStoreId, session])
+  }, [currentStoreId, operationalNotificationsEnabled, session])
 
   useEffect(() => {
+    if (!operationalNotificationsEnabled) {
+      return undefined
+    }
+
     const unsubscribeLive = liveNotifications.subscribe('notification', (event) => {
       const notification = createNotificationFromLiveEvent(event)
 
@@ -227,10 +236,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     })
 
     return () => unsubscribeLive()
-  }, [liveNotifications, preferences])
+  }, [liveNotifications, operationalNotificationsEnabled, preferences])
 
   useEffect(() => {
-    if (!currentStoreId) {
+    if (!operationalNotificationsEnabled || !currentStoreId) {
       setAdvanceRecords([])
       return undefined
     }
@@ -246,10 +255,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onError: (error: any) =>
         notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
     })
-  }, [currentStoreId])
+  }, [currentStoreId, operationalNotificationsEnabled])
 
   useEffect(() => {
-    if (!currentStoreId) {
+    if (!operationalNotificationsEnabled || !currentStoreId) {
       machineStatusRef.current = new Map()
       return undefined
     }
@@ -279,9 +288,17 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
         ),
     })
-  }, [currentStoreId])
+  }, [currentStoreId, operationalNotificationsEnabled])
 
   useEffect(() => {
+    if (!operationalNotificationsEnabled) {
+      if (advancesReminderTimeoutRef.current) {
+        clearTimeout(advancesReminderTimeoutRef.current)
+        advancesReminderTimeoutRef.current = null
+      }
+      return undefined
+    }
+
     function markReminderAsSent(todayKey: string) {
       if (typeof window === 'undefined') {
         return
@@ -339,7 +356,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         advancesReminderTimeoutRef.current = null
       }
     }
-  }, [advanceRecords])
+  }, [advanceRecords, operationalNotificationsEnabled])
 
   useEffect(() => {
     function handleWindowError(event: ErrorEvent) {
@@ -368,7 +385,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     inventoryInitializedRef.current = false
     knownSaleIdsRef.current = new Set()
 
-    if (!firebaseReady || !firebaseDb || !currentStoreId || !canUseRemoteSync()) {
+    if (
+      !operationalNotificationsEnabled ||
+      !firebaseReady ||
+      !firebaseDb ||
+      !currentStoreId ||
+      !canUseRemoteSync()
+    ) {
       return undefined
     }
 
@@ -476,7 +499,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       unsubscribeSales?.()
       unsubscribeInventory?.()
     }
-  }, [currentStoreId, tenantId])
+  }, [currentStoreId, operationalNotificationsEnabled, tenantId])
 
   const value = useMemo(
     () => ({
