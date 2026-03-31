@@ -131,6 +131,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const operationalNotificationsEnabled = Boolean(
     currentStoreId && session?.uid && location.pathname !== '/login',
   )
+  const [deferredNotificationsEnabled, setDeferredNotificationsEnabled] = useState(false)
   const ordersInitializedRef = useRef(false)
   const salesInitializedRef = useRef(false)
   const inventoryInitializedRef = useRef(false)
@@ -139,9 +140,42 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const advancesReminderTimeoutRef = useRef<number | null>(null)
   const presentationWindowRef = useRef<number[]>([])
   const liveNotifications = useLiveNotifications({
-    enabled: operationalNotificationsEnabled,
+    enabled: deferredNotificationsEnabled,
     storeId: currentStoreId,
   })
+
+  useEffect(() => {
+    if (!operationalNotificationsEnabled) {
+      setDeferredNotificationsEnabled(false)
+      return undefined
+    }
+
+    let cancelled = false
+    let timeoutId: number | null = null
+    let idleId: number | null = null
+
+    const activate = () => {
+      if (!cancelled) {
+        setDeferredNotificationsEnabled(true)
+      }
+    }
+
+    timeoutId = window.setTimeout(activate, 900)
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(activate, { timeout: 1200 })
+    }
+
+    return () => {
+      cancelled = true
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+      if (idleId && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+    }
+  }, [operationalNotificationsEnabled])
 
   function presentNotification(notification: NotificationRecord) {
     if (!shouldPresentNotification(notification, preferences)) {
@@ -206,7 +240,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [preferences, toastApi])
 
   useEffect(() => {
-    if (!operationalNotificationsEnabled || !currentStoreId || !session?.uid) {
+    if (!deferredNotificationsEnabled || !currentStoreId || !session?.uid) {
       setPreferences(loadNotificationPreferences({ storeId: null, userId: null, session }))
       return undefined
     }
@@ -218,10 +252,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onData: setPreferences,
       onError: () => undefined,
     })
-  }, [currentStoreId, operationalNotificationsEnabled, session])
+  }, [currentStoreId, deferredNotificationsEnabled, session])
 
   useEffect(() => {
-    if (!operationalNotificationsEnabled) {
+    if (!deferredNotificationsEnabled) {
       return undefined
     }
 
@@ -236,10 +270,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     })
 
     return () => unsubscribeLive()
-  }, [liveNotifications, operationalNotificationsEnabled, preferences])
+  }, [deferredNotificationsEnabled, liveNotifications, preferences])
 
   useEffect(() => {
-    if (!operationalNotificationsEnabled || !currentStoreId) {
+    if (!deferredNotificationsEnabled || !currentStoreId) {
       setAdvanceRecords([])
       return undefined
     }
@@ -255,10 +289,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onError: (error: any) =>
         notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
     })
-  }, [currentStoreId, operationalNotificationsEnabled])
+  }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
-    if (!operationalNotificationsEnabled || !currentStoreId) {
+    if (!deferredNotificationsEnabled || !currentStoreId) {
       machineStatusRef.current = new Map()
       return undefined
     }
@@ -288,10 +322,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
         ),
     })
-  }, [currentStoreId, operationalNotificationsEnabled])
+  }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
-    if (!operationalNotificationsEnabled) {
+    if (!deferredNotificationsEnabled) {
       if (advancesReminderTimeoutRef.current) {
         clearTimeout(advancesReminderTimeoutRef.current)
         advancesReminderTimeoutRef.current = null
@@ -356,7 +390,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         advancesReminderTimeoutRef.current = null
       }
     }
-  }, [advanceRecords, operationalNotificationsEnabled])
+  }, [advanceRecords, deferredNotificationsEnabled])
 
   useEffect(() => {
     function handleWindowError(event: ErrorEvent) {
@@ -386,7 +420,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     knownSaleIdsRef.current = new Set()
 
     if (
-      !operationalNotificationsEnabled ||
+      !deferredNotificationsEnabled ||
       !firebaseReady ||
       !firebaseDb ||
       !currentStoreId ||
@@ -499,13 +533,17 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       unsubscribeSales?.()
       unsubscribeInventory?.()
     }
-  }, [currentStoreId, operationalNotificationsEnabled, tenantId])
+  }, [currentStoreId, deferredNotificationsEnabled, tenantId])
 
   const value = useMemo(
     () => ({
       notifications,
       unreadCount: notifications.filter((notification) => !notification.read).length,
-      connectionStatus: liveNotifications.connectionStatus,
+      connectionStatus: deferredNotificationsEnabled
+        ? liveNotifications.connectionStatus
+        : operationalNotificationsEnabled
+          ? 'pending'
+          : 'idle',
       lastConnectedAt: liveNotifications.lastConnectedAt,
       preferences,
       async updatePreferences(nextPreferences: PreferencesRecord) {
@@ -540,7 +578,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         liveNotifications.reconnect()
       },
     }),
-    [currentStoreId, liveNotifications, notifications, preferences, session],
+    [
+      currentStoreId,
+      deferredNotificationsEnabled,
+      liveNotifications,
+      notifications,
+      operationalNotificationsEnabled,
+      preferences,
+      session,
+    ],
   )
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>
