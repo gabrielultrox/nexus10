@@ -29,12 +29,14 @@ import {
   playNotification,
   playPdvSuccess,
 } from '../../../services/soundManager'
+import { SHORTCUT_ACTION_EVENT } from '../../../services/shortcutService'
 import OrderDetailPanel from './OrderDetailPanel'
 import OrderFormPanel from './OrderFormPanel'
 import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 import DestructiveIconButton from '../../../components/ui/DestructiveIconButton'
+import { Input, Table } from '../../../components/ui'
 import { useConfirm } from '../../../hooks/useConfirm'
 import { useToast } from '../../../hooks/useToast'
 
@@ -465,6 +467,152 @@ function OrdersModule({ orderId, viewMode, formResetToken, onOpenDetail, onOpenE
     ]
   }, [internalOrders])
 
+  const orderTableRows = useMemo(
+    () =>
+      visibleOrders.map((order) => ({
+        id: order.id,
+        number: order.number,
+        origin: order.origin,
+        customerName: order.customerName,
+        total: order.total,
+        domainStatus: order.domainStatus,
+        saleStatus: order.saleStatus,
+        createdAtLabel: formatDateTime(order.createdAt),
+        actionCell: '',
+        order,
+      })),
+    [visibleOrders],
+  )
+
+  const orderTableColumns = [
+    {
+      key: 'number',
+      label: 'Pedido',
+      render: (row) => <span className="ui-table__cell--strong">{row.number}</span>,
+    },
+    { key: 'origin', label: 'Canal' },
+    { key: 'customerName', label: 'Cliente' },
+    {
+      key: 'total',
+      label: 'Total',
+      render: (row) => <span className="ui-table__cell--numeric">{row.total}</span>,
+    },
+    {
+      key: 'domainStatus',
+      label: 'Status',
+      render: (row) => (
+        <span
+          className={`ui-badge ${row.domainStatus === 'OPEN' ? 'ui-badge--warning' : row.domainStatus === 'DISPATCHED' ? 'ui-badge--info' : row.domainStatus === 'CONVERTED_TO_SALE' ? 'ui-badge--success' : 'ui-badge--danger'}`}
+        >
+          {getListStatusLabel(row.order)}
+        </span>
+      ),
+    },
+    {
+      key: 'saleStatus',
+      label: 'Venda',
+      render: (row) => (
+        <span
+          className={`ui-badge ${row.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--info'}`}
+        >
+          {row.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}
+        </span>
+      ),
+    },
+    {
+      key: 'createdAtLabel',
+      label: 'Criado em',
+      render: (row) => <span className="ui-table__cell--muted">{row.createdAtLabel}</span>,
+    },
+    {
+      key: 'actionCell',
+      label: 'Acao',
+      render: (row) => {
+        const order = row.order
+        const actionConfig = getInlineActionConfig(order)
+        const isPendingAction = pendingAction?.orderId === order.id
+        const canDeleteOrder =
+          !order.isExternal &&
+          order.saleStatus !== 'LAUNCHED' &&
+          order.domainStatus !== 'CONVERTED_TO_SALE'
+        const actionStateLabel =
+          order.domainStatus === 'CONVERTED_TO_SALE'
+            ? 'Concluido'
+            : canDeleteOrder
+              ? null
+              : 'Sem acoes'
+
+        return (
+          <div
+            className={`orders-domain__row-actions ${isPendingAction ? 'orders-domain__row-actions--visible' : ''}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {actionConfig ? (
+              isPendingAction ? (
+                <div className="orders-domain__inline-confirm">
+                  <p>{actionConfig.confirmMessage}</p>
+                  <div className="orders-domain__inline-confirm-actions">
+                    <Button
+                      variant="secondary"
+                      className="orders-domain__inline-button"
+                      onClick={() => setPendingAction(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant={
+                        actionConfig.tone === 'success'
+                          ? 'primary'
+                          : actionConfig.tone === 'info'
+                            ? 'secondary'
+                            : 'danger'
+                      }
+                      className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
+                      onClick={(event) => handleInlineActionConfirm(order, actionConfig, event)}
+                    >
+                      Confirmar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant={
+                    actionConfig.tone === 'success'
+                      ? 'primary'
+                      : actionConfig.tone === 'info'
+                        ? 'secondary'
+                        : 'danger'
+                  }
+                  className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
+                  onClick={() =>
+                    setPendingAction({
+                      orderId: order.id,
+                      kind: actionConfig.kind,
+                    })
+                  }
+                >
+                  {actionConfig.label}
+                </Button>
+              )
+            ) : order.domainStatus === 'CONVERTED_TO_SALE' ? (
+              <span className="orders-domain__row-complete">Concluido</span>
+            ) : null}
+            {canDeleteOrder ? (
+              <DestructiveIconButton
+                className="orders-domain__delete-button"
+                label={`Excluir pedido ${order.number}`}
+                disabled={deletingOrderId === order.id}
+                onClick={(event) => handleDeleteOrder(order, event)}
+              />
+            ) : !actionConfig && actionStateLabel ? (
+              <span className="orders-domain__row-complete">{actionStateLabel}</span>
+            ) : null}
+          </div>
+        )
+      },
+    },
+  ]
+
   function getInlineActionConfig(order) {
     if (order.domainStatus === 'OPEN') {
       return {
@@ -832,22 +980,6 @@ function OrdersModule({ orderId, viewMode, formResetToken, onOpenDetail, onOpenE
     }
   }
 
-  if (!firebaseReady) {
-    return (
-      <SurfaceCard title="Pedidos">
-        <EmptyState message="Firebase nao configurado" />
-      </SurfaceCard>
-    )
-  }
-
-  if (!currentStoreId) {
-    return (
-      <SurfaceCard title="Pedidos">
-        <EmptyState message="Nenhuma loja ativa" />
-      </SurfaceCard>
-    )
-  }
-
   async function handleSubmitAndNavigate(event) {
     event.preventDefault()
 
@@ -919,6 +1051,74 @@ function OrdersModule({ orderId, viewMode, formResetToken, onOpenDetail, onOpenE
     }
   }
 
+  useEffect(() => {
+    function handleShortcut(event) {
+      const shortcutEvent = event
+      const actionId = shortcutEvent?.detail?.actionId
+
+      if (!actionId) {
+        return
+      }
+
+      if (actionId === 'save' || actionId === 'orders-confirm') {
+        if (viewMode === 'create' || viewMode === 'edit') {
+          event.preventDefault()
+          void handleSubmitAndNavigate({
+            preventDefault() {},
+          })
+        }
+        return
+      }
+
+      if (actionId === 'orders-delete' && viewMode === 'detail' && selectedOrder) {
+        event.preventDefault()
+        void handleDeleteOrder(selectedOrder, {
+          stopPropagation() {},
+        })
+        return
+      }
+
+      if (actionId === 'cancel' && (viewMode === 'create' || viewMode === 'edit')) {
+        event.preventDefault()
+        if (editingOrderId) {
+          onOpenDetail(editingOrderId)
+          return
+        }
+
+        onOpenList()
+      }
+    }
+
+    window.addEventListener(SHORTCUT_ACTION_EVENT, handleShortcut)
+    return () => {
+      window.removeEventListener(SHORTCUT_ACTION_EVENT, handleShortcut)
+    }
+  }, [
+    editingOrderId,
+    handleDeleteOrder,
+    handleSubmitAndNavigate,
+    onOpenDetail,
+    onOpenList,
+    selectedOrder,
+    viewMode,
+  ])
+
+  if (!firebaseReady) {
+    return (
+      <SurfaceCard title="Pedidos">
+        <EmptyState message="Firebase nao configurado" />
+      </SurfaceCard>
+    )
+  }
+
+  if (!currentStoreId) {
+    return (
+      <SurfaceCard title="Pedidos">
+        <EmptyState message="Nenhuma loja ativa" />
+      </SurfaceCard>
+    )
+  }
+
   return (
     <section className="entity-module orders-domain orders-domain--screen">
       {viewMode === 'list' ? (
@@ -955,9 +1155,8 @@ function OrdersModule({ orderId, viewMode, formResetToken, onOpenDetail, onOpenE
                   <label className="ui-label" htmlFor="orders-search">
                     Buscar
                   </label>
-                  <input
+                  <Input
                     id="orders-search"
-                    className="ui-input"
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Codigo, cliente ou observacao"
@@ -992,152 +1191,26 @@ function OrdersModule({ orderId, viewMode, formResetToken, onOpenDetail, onOpenE
                 <EmptyState message="Nenhum pedido encontrado" />
               ) : (
                 <div className="entity-table-wrap">
-                  <table className="ui-table">
-                    <thead>
-                      <tr>
-                        <th>Pedido</th>
-                        <th>Canal</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Venda</th>
-                        <th>Criado em</th>
-                        <th>Acao</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleOrders.map((order, index) => {
-                        const actionConfig = getInlineActionConfig(order)
-                        const isPendingAction = pendingAction?.orderId === order.id
-                        const canDeleteOrder =
-                          !order.isExternal &&
-                          order.saleStatus !== 'LAUNCHED' &&
-                          order.domainStatus !== 'CONVERTED_TO_SALE'
-                        const actionStateLabel =
-                          order.domainStatus === 'CONVERTED_TO_SALE'
-                            ? 'Concluido'
-                            : canDeleteOrder
-                              ? null
-                              : 'Sem acoes'
-
-                        return (
-                          <tr
-                            key={order.id}
-                            className={[
-                              freshOrderIds.has(order.id)
-                                ? 'ui-table__row-fresh'
-                                : 'ui-table__row-enter',
-                              order.id === orderId ? 'entity-table__row--selected' : '',
-                              isPendingAction ? 'orders-domain__row--action-open' : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
-                            onClick={() => onOpenDetail(order.id)}
-                          >
-                            <td className="ui-table__cell--strong">{order.number}</td>
-                            <td>{order.origin}</td>
-                            <td>{order.customerName}</td>
-                            <td className="ui-table__cell--numeric">{order.total}</td>
-                            <td>
-                              <span
-                                className={`ui-badge ${order.domainStatus === 'OPEN' ? 'ui-badge--warning' : order.domainStatus === 'DISPATCHED' ? 'ui-badge--info' : order.domainStatus === 'CONVERTED_TO_SALE' ? 'ui-badge--success' : 'ui-badge--danger'}`}
-                              >
-                                {getListStatusLabel(order)}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`ui-badge ${order.saleStatus === 'LAUNCHED' ? 'ui-badge--success' : 'ui-badge--info'}`}
-                              >
-                                {order.saleStatus === 'LAUNCHED' ? 'Lancada' : 'Nao lancada'}
-                              </span>
-                            </td>
-                            <td className="ui-table__cell--muted">
-                              {formatDateTime(order.createdAt)}
-                            </td>
-                            <td className="orders-domain__action-cell">
-                              <div
-                                className={`orders-domain__row-actions ${isPendingAction ? 'orders-domain__row-actions--visible' : ''}`}
-                              >
-                                {actionConfig ? (
-                                  isPendingAction ? (
-                                    <div
-                                      className="orders-domain__inline-confirm"
-                                      onClick={(event) => event.stopPropagation()}
-                                    >
-                                      <p>{actionConfig.confirmMessage}</p>
-                                      <div className="orders-domain__inline-confirm-actions">
-                                        <Button
-                                          variant="secondary"
-                                          className="orders-domain__inline-button"
-                                          onClick={(event) => {
-                                            event.stopPropagation()
-                                            setPendingAction(null)
-                                          }}
-                                        >
-                                          Cancelar
-                                        </Button>
-                                        <Button
-                                          variant={
-                                            actionConfig.tone === 'success'
-                                              ? 'primary'
-                                              : actionConfig.tone === 'info'
-                                                ? 'secondary'
-                                                : 'danger'
-                                          }
-                                          className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
-                                          onClick={(event) =>
-                                            handleInlineActionConfirm(order, actionConfig, event)
-                                          }
-                                        >
-                                          Confirmar
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <Button
-                                      variant={
-                                        actionConfig.tone === 'success'
-                                          ? 'primary'
-                                          : actionConfig.tone === 'info'
-                                            ? 'secondary'
-                                            : 'danger'
-                                      }
-                                      className={`orders-domain__inline-button orders-domain__inline-button--${actionConfig.tone}`}
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        setPendingAction({
-                                          orderId: order.id,
-                                          kind: actionConfig.kind,
-                                        })
-                                      }}
-                                    >
-                                      {actionConfig.label}
-                                    </Button>
-                                  )
-                                ) : order.domainStatus === 'CONVERTED_TO_SALE' ? (
-                                  <span className="orders-domain__row-complete">Concluido</span>
-                                ) : null}
-                                {canDeleteOrder ? (
-                                  <DestructiveIconButton
-                                    className="orders-domain__delete-button"
-                                    label={`Excluir pedido ${order.number}`}
-                                    disabled={deletingOrderId === order.id}
-                                    onClick={(event) => handleDeleteOrder(order, event)}
-                                  />
-                                ) : !actionConfig && actionStateLabel ? (
-                                  <span className="orders-domain__row-complete">
-                                    {actionStateLabel}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                  <Table
+                    columns={orderTableColumns}
+                    data={orderTableRows}
+                    caption="Lista de pedidos"
+                    paginate={false}
+                    getRowKey={(row) => row.id}
+                    getRowClassName={(row) =>
+                      [
+                        freshOrderIds.has(row.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter',
+                        row.id === orderId ? 'entity-table__row--selected' : '',
+                        pendingAction?.orderId === row.id ? 'orders-domain__row--action-open' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')
+                    }
+                    getRowStyle={(_, index) => ({
+                      '--row-delay': `${Math.min(index * 40, 240)}ms`,
+                    })}
+                    onRowClick={(row) => onOpenDetail(row.id)}
+                  />
                 </div>
               )}
             </div>

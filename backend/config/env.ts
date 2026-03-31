@@ -180,6 +180,10 @@ function buildRawBackendEnv(): NodeJS.ProcessEnv {
     rawEnv.npm_package_version ??
     'development'
 
+  if (effectiveEnvironment !== 'production') {
+    rawEnv.IFOOD_WEBHOOK_SECRET ??= 'dev-ifood-webhook-secret'
+  }
+
   if (effectiveEnvironment === 'test' || process.env.VITEST) {
     rawEnv.FIREBASE_ADMIN_PROJECT_ID ??= 'test-project'
     rawEnv.FIREBASE_ADMIN_CLIENT_EMAIL ??= 'firebase-adminsdk@test-project.iam.gserviceaccount.com'

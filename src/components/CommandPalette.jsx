@@ -45,7 +45,6 @@ function HelpSection({ section }) {
 }
 
 function CommandPalette({
-  commands,
   helpSections,
   isHelpOpen,
   isPaletteOpen,
