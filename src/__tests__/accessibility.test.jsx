@@ -42,6 +42,7 @@ vi.mock('../contexts/StoreContext', () => ({
 
 vi.mock('../services/localAccess', () => ({
   DEFAULT_ACCESS_PIN: '0101',
+  LOCAL_RECORDS_EVENT: 'nexus10:local-records',
   hasStoredPin: () => mockHasStoredPin(),
   verifyStoredPin: (value) => mockVerifyStoredPin(value),
 }))

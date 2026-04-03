@@ -9,6 +9,7 @@ import FilterChips from '../../../components/Historico/FilterChips'
 import FilterDropdown from '../../../components/Historico/FilterDropdown'
 import useHistoricoFilters from '../../../hooks/useHistoricoFilters'
 import { useToast } from '../../../hooks/useToast'
+import { LOCAL_RECORDS_EVENT } from '../../../services/localAccess'
 import { loadAuditEvents } from '../../../services/localAudit'
 import { routeDefinitions } from '../../../utils/routeCatalog'
 
@@ -359,14 +360,18 @@ function HistoryTimelineModule() {
   const searchQuery = filters.q ?? ''
 
   useEffect(() => {
-    function refreshEvents() {
+    function refreshEvents(event) {
+      if (event?.detail?.storageKey && event.detail.storageKey !== 'nexus-local-audit-log') {
+        return
+      }
+
       setAllEvents(loadAuditEvents())
     }
 
     refreshEvents()
-    window.addEventListener('focus', refreshEvents)
+    window.addEventListener(LOCAL_RECORDS_EVENT, refreshEvents)
 
-    return () => window.removeEventListener('focus', refreshEvents)
+    return () => window.removeEventListener(LOCAL_RECORDS_EVENT, refreshEvents)
   }, [])
 
   const moduleFilteredEvents = useMemo(() => {

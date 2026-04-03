@@ -20,6 +20,7 @@ import {
 } from '../services/dashboard'
 import { subscribeToIntegrationMerchants } from '../services/externalOrders'
 import { firebaseReady } from '../services/firebase'
+import { LOCAL_RECORDS_EVENT } from '../services/localAccess'
 
 const DashboardCharts = lazy(() => import('../components/dashboard/DashboardCharts'))
 const DashboardAnalytics = lazy(() => import('./Dashboard/DashboardAnalytics'))
@@ -66,17 +67,31 @@ function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    function refreshOperationalSources() {
+    const relevantStorageKeys = new Set([
+      'nexus-module-schedule',
+      'nexus-module-machine-history',
+      'nexus-module-change',
+      'nexus-module-advances',
+      'nexus-module-occurrences',
+      'nexus-manual-couriers',
+      'nexus-module-delivery-reading',
+      'nexus-module-cash-financial-pending',
+      'nexus-module-cash-state',
+    ])
+
+    function refreshOperationalSources(event) {
+      if (event?.detail?.storageKey && !relevantStorageKeys.has(event.detail.storageKey)) {
+        return
+      }
+
       setOperationalSources(loadDashboardOperationalSources())
     }
 
     refreshOperationalSources()
-    window.addEventListener('focus', refreshOperationalSources)
-    document.addEventListener('visibilitychange', refreshOperationalSources)
+    window.addEventListener(LOCAL_RECORDS_EVENT, refreshOperationalSources)
 
     return () => {
-      window.removeEventListener('focus', refreshOperationalSources)
-      document.removeEventListener('visibilitychange', refreshOperationalSources)
+      window.removeEventListener(LOCAL_RECORDS_EVENT, refreshOperationalSources)
     }
   }, [])
 

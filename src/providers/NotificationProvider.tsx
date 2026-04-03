@@ -306,7 +306,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onError: (error: any) =>
         notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
     })
-  }, [currentStoreId, deferredNotificationsEnabled])
   }, [currentStoreId, deferredNotificationsEnabled, isPageVisible])
 
   useEffect(() => {
@@ -345,7 +344,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
         ),
     })
-  }, [currentStoreId, deferredNotificationsEnabled])
   }, [currentStoreId, deferredNotificationsEnabled, isPageVisible])
 
   useEffect(() => {

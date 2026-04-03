@@ -58,6 +58,9 @@ export function useBackupSync(): BackupSyncState & {
       return undefined
     }
 
+    let visibilityTimerId: number | null = null
+    let foregroundSyncRunning = false
+
     function handleLocalRecords(event: Event) {
       const customEvent = event as CustomEvent<{ storageKey?: string }>
       const storageKey = customEvent.detail?.storageKey
@@ -71,10 +74,45 @@ export function useBackupSync(): BackupSyncState & {
       })
     }
 
-    function handleVisibilityOrReconnect() {
-      if (document.visibilityState === 'visible' && navigator.onLine) {
-        flushBackupNow({ reason: 'foreground-sync' }).catch(() => {})
+    async function flushForegroundBackup(reason: string) {
+      if (foregroundSyncRunning || !navigator.onLine) {
+        return
       }
+
+      const currentState = getBackupSyncState()
+
+      if (currentState.pendingScopes.length === 0 && !currentState.lastError) {
+        return
+      }
+
+      foregroundSyncRunning = true
+
+      try {
+        await flushBackupNow({ reason })
+      } catch {
+        // ignore foreground retry failures
+      } finally {
+        foregroundSyncRunning = false
+      }
+    }
+
+    function handleReconnect() {
+      void flushForegroundBackup('reconnect-sync')
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') {
+        if (visibilityTimerId) {
+          window.clearTimeout(visibilityTimerId)
+          visibilityTimerId = null
+        }
+        return
+      }
+
+      visibilityTimerId = window.setTimeout(() => {
+        visibilityTimerId = null
+        void flushForegroundBackup('foreground-sync')
+      }, 1500)
     }
 
     function handleBackgroundEvent(event: Event) {
@@ -86,16 +124,17 @@ export function useBackupSync(): BackupSyncState & {
     }
 
     window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords as EventListener)
-    window.addEventListener('online', handleVisibilityOrReconnect)
-    window.addEventListener('focus', handleVisibilityOrReconnect)
-    document.addEventListener('visibilitychange', handleVisibilityOrReconnect)
+    window.addEventListener('online', handleReconnect)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
 
     return () => {
+      if (visibilityTimerId) {
+        window.clearTimeout(visibilityTimerId)
+      }
       window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords as EventListener)
-      window.removeEventListener('online', handleVisibilityOrReconnect)
-      window.removeEventListener('focus', handleVisibilityOrReconnect)
-      document.removeEventListener('visibilitychange', handleVisibilityOrReconnect)
+      window.removeEventListener('online', handleReconnect)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
     }
   }, [currentStoreId, isAuthenticated])

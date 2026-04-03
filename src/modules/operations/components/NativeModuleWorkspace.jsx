@@ -12,6 +12,7 @@ import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../servic
 import { canUseRemoteSync, firebaseReady } from '../../../services/firebase'
 import { appendAuditEvent, loadAuditEvents } from '../../../services/localAudit'
 import {
+  LOCAL_RECORDS_EVENT,
   loadLocalRecords,
   loadResettableLocalRecords,
   resetLocalRecordsNow,
@@ -769,12 +770,21 @@ function NativeModuleWorkspace({ route }) {
       setRecords(buildRouteRecords(route.path, manager))
     }
 
-    window.addEventListener('focus', refreshRecords)
-    return () => window.removeEventListener('focus', refreshRecords)
+    function handleLocalRecords(event) {
+      const changedStorageKey = event?.detail?.storageKey
+
+      if (changedStorageKey === manager.storageKey) {
+        refreshRecords()
+      }
+    }
+
+    window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
+    return () => window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
   }, [manager, route.path])
 
   useEffect(() => {
     let cancelled = false
+    let visibilityTimerId = null
 
     async function refreshSyncState() {
       if (currentStoreId && isOnline && !localOnlyMode && canUseRemoteSync()) {
@@ -800,14 +810,36 @@ function NativeModuleWorkspace({ route }) {
       }
     }
 
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') {
+        if (visibilityTimerId) {
+          window.clearTimeout(visibilityTimerId)
+          visibilityTimerId = null
+        }
+        return
+      }
+
+      if (getManualModulePendingCount(syncModulePaths) === 0) {
+        return
+      }
+
+      visibilityTimerId = window.setTimeout(() => {
+        visibilityTimerId = null
+        refreshSyncState()
+      }, 1500)
+    }
+
     refreshSyncState()
     window.addEventListener('online', refreshSyncState)
-    window.addEventListener('focus', refreshSyncState)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       cancelled = true
+      if (visibilityTimerId) {
+        window.clearTimeout(visibilityTimerId)
+      }
       window.removeEventListener('online', refreshSyncState)
-      window.removeEventListener('focus', refreshSyncState)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [currentStoreId, isOnline, localOnlyMode, syncModulePaths, tenantId])
 
