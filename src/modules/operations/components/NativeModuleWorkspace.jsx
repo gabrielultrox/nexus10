@@ -12,7 +12,6 @@ import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../servic
 import { canUseRemoteSync, firebaseReady } from '../../../services/firebase'
 import { appendAuditEvent, loadAuditEvents } from '../../../services/localAudit'
 import {
-  LOCAL_RECORDS_EVENT,
   loadLocalRecords,
   loadResettableLocalRecords,
   resetLocalRecordsNow,
@@ -490,13 +489,17 @@ function NativeModuleWorkspace({ route }) {
       .map((courier) => courier?.name?.trim())
       .filter(Boolean),
   )
+  const needsMachineRecords =
+    route.path === 'schedule' || route.path === 'machines' || route.path === 'machine-history'
   const [availableMachineRecords, setAvailableMachineRecords] = useState(() =>
-    loadLocalRecords('nexus-module-machines', machineSeedRecords),
+    needsMachineRecords ? loadLocalRecords('nexus-module-machines', machineSeedRecords) : [],
   )
   const [availableMachineOptions, setAvailableMachineOptions] = useState(() =>
-    loadLocalRecords('nexus-module-machines', machineSeedRecords)
-      .map((machine) => machine?.device?.trim())
-      .filter(Boolean),
+    needsMachineRecords
+      ? loadLocalRecords('nexus-module-machines', machineSeedRecords)
+          .map((machine) => machine?.device?.trim())
+          .filter(Boolean)
+      : [],
   )
   const storeMemberOptions = useMemo(
     () => Array.from(new Set([...storeUserOptions, ...availableCourierNames])),
@@ -540,7 +543,7 @@ function NativeModuleWorkspace({ route }) {
       : [],
   )
   const [machineChecklistState, setMachineChecklistState] = useState(() =>
-    loadMachineChecklistState(),
+    route.path === 'machines' ? loadMachineChecklistState() : [],
   )
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -622,41 +625,52 @@ function NativeModuleWorkspace({ route }) {
     [currentStoreId],
   )
 
-  useEffect(
-    () =>
-      subscribeToManualModuleRecords({
-        storeId: currentStoreId,
-        modulePath: 'machines',
-        storageKey: 'nexus-module-machines',
-        initialRecords: machineSeedRecords,
-        onData: (machineRecords) => {
-          setAvailableMachineRecords(machineRecords)
-          const nextMachineOptions = Array.from(
-            new Set(machineRecords.map((machine) => machine?.device?.trim()).filter(Boolean)),
-          )
+  useEffect(() => {
+    if (!needsMachineRecords) {
+      setAvailableMachineRecords([])
+      setAvailableMachineOptions([])
+      return () => {}
+    }
 
-          setAvailableMachineOptions(nextMachineOptions)
-        },
-      }),
-    [currentStoreId],
-  )
+    return subscribeToManualModuleRecords({
+      storeId: currentStoreId,
+      modulePath: 'machines',
+      storageKey: 'nexus-module-machines',
+      initialRecords: machineSeedRecords,
+      onData: (machineRecords) => {
+        setAvailableMachineRecords(machineRecords)
+        const nextMachineOptions = Array.from(
+          new Set(machineRecords.map((machine) => machine?.device?.trim()).filter(Boolean)),
+        )
 
-  useEffect(
-    () =>
-      subscribeToManualModuleRecords({
-        storeId: currentStoreId,
-        modulePath: 'machine-history',
-        storageKey: 'nexus-module-machine-history',
-        initialRecords: [],
-        dailyResetHour: 3,
-        onData: (checklistRecords) => {
-          setMachineChecklistState(checklistRecords)
-        },
-      }),
-    [currentStoreId],
-  )
+        setAvailableMachineOptions(nextMachineOptions)
+      },
+    })
+  }, [currentStoreId, needsMachineRecords])
 
   useEffect(() => {
+    if (route.path !== 'machines') {
+      setMachineChecklistState([])
+      return () => {}
+    }
+
+    return subscribeToManualModuleRecords({
+      storeId: currentStoreId,
+      modulePath: 'machine-history',
+      storageKey: 'nexus-module-machine-history',
+      initialRecords: [],
+      dailyResetHour: 3,
+      onData: (checklistRecords) => {
+        setMachineChecklistState(checklistRecords)
+      },
+    })
+  }, [currentStoreId, route.path])
+
+  useEffect(() => {
+    if (route.path !== 'machines') {
+      return () => {}
+    }
+
     const refreshChecklistState = () => {
       setMachineChecklistState(loadMachineChecklistState())
     }
@@ -665,7 +679,7 @@ function NativeModuleWorkspace({ route }) {
     const intervalId = window.setInterval(refreshChecklistState, 60_000)
 
     return () => window.clearInterval(intervalId)
-  }, [])
+  }, [route.path])
 
   useEffect(() => {
     if (!managerWithResolvedFields) {
@@ -760,27 +774,6 @@ function NativeModuleWorkspace({ route }) {
 
     saveResettableLocalRecords('nexus-module-machine-history', machineChecklistRecords, 3)
   }, [machineChecklistRecords, route.path])
-
-  useEffect(() => {
-    if (manager?.dailyResetHour == null) {
-      return
-    }
-
-    const refreshRecords = () => {
-      setRecords(buildRouteRecords(route.path, manager))
-    }
-
-    function handleLocalRecords(event) {
-      const changedStorageKey = event?.detail?.storageKey
-
-      if (changedStorageKey === manager.storageKey) {
-        refreshRecords()
-      }
-    }
-
-    window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
-    return () => window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
-  }, [manager, route.path])
 
   useEffect(() => {
     let cancelled = false
