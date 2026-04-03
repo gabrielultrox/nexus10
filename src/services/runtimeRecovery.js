@@ -1,6 +1,7 @@
 const RECOVERY_STORAGE_KEY = 'nexus.runtime-recovery-attempt'
 const RECOVERY_TTL_MS = 15000
 const HARD_RECOVERY_PARAM = 'nexus-recover'
+const SOFT_RECOVERY_COUNT_KEY = 'nexus.runtime-recovery-soft-count'
 
 function getErrorMessage(errorLike) {
   if (!errorLike) {
@@ -39,11 +40,35 @@ function canAttemptRecovery() {
   }
 }
 
+function getSoftRecoveryCount() {
+  try {
+    return Number(window.sessionStorage.getItem(SOFT_RECOVERY_COUNT_KEY) ?? 0)
+  } catch {
+    return 0
+  }
+}
+
 function markRecoveryAttempt() {
   try {
     window.sessionStorage.setItem(RECOVERY_STORAGE_KEY, String(Date.now()))
   } catch (error) {
     console.warn('Nao foi possivel registrar tentativa de recovery.', error)
+  }
+}
+
+function markSoftRecoveryAttempt() {
+  try {
+    window.sessionStorage.setItem(SOFT_RECOVERY_COUNT_KEY, String(getSoftRecoveryCount() + 1))
+  } catch (error) {
+    console.warn('Nao foi possivel registrar tentativa de recovery leve.', error)
+  }
+}
+
+function clearSoftRecoveryAttempt() {
+  try {
+    window.sessionStorage.removeItem(SOFT_RECOVERY_COUNT_KEY)
+  } catch {
+    // ignore storage cleanup failures
   }
 }
 
@@ -81,11 +106,13 @@ async function reloadApp({ hardReset = false } = {}) {
   markRecoveryAttempt()
 
   if (hardReset) {
+    clearSoftRecoveryAttempt()
     await resetPwaState()
     window.location.replace(buildRecoveryUrl())
     return
   }
 
+  markSoftRecoveryAttempt()
   window.location.reload()
 }
 
@@ -102,21 +129,25 @@ export function setupRuntimeRecovery() {
     window.history.replaceState({}, '', sanitizedUrl.toString())
   }
 
+  window.addEventListener('pageshow', () => {
+    clearSoftRecoveryAttempt()
+  })
+
   window.addEventListener('vite:preloadError', (event) => {
     event.preventDefault?.()
-    reloadApp({ hardReset: true })
+    reloadApp({ hardReset: getSoftRecoveryCount() > 0 })
   })
 
   window.addEventListener('error', (event) => {
     if (shouldRecoverFromError(event.error ?? event.message)) {
-      reloadApp({ hardReset: true })
+      reloadApp({ hardReset: getSoftRecoveryCount() > 0 })
     }
   })
 
   window.addEventListener('unhandledrejection', (event) => {
     if (shouldRecoverFromError(event.reason)) {
       event.preventDefault?.()
-      reloadApp({ hardReset: true })
+      reloadApp({ hardReset: getSoftRecoveryCount() > 0 })
     }
   })
 }

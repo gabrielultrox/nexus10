@@ -43,14 +43,27 @@ function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
+  const [isPageVisible, setIsPageVisible] = useState(
+    () => typeof document === 'undefined' || document.visibilityState === 'visible',
+  )
+  const [showHeavyPanels, setShowHeavyPanels] = useState(false)
   const {
     data: zeDashboard,
     error: zeDashboardError,
     isFetching: isZeFetching,
   } = useZeDeliverySyncStatus({
     storeId: currentStoreId,
-    enabled: Boolean(currentStoreId),
+    enabled: Boolean(currentStoreId && isPageVisible && showHeavyPanels),
   })
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      setIsPageVisible(document.visibilityState === 'visible')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   useEffect(() => {
     function refreshOperationalSources() {
@@ -66,6 +79,24 @@ function DashboardPage() {
       document.removeEventListener('visibilitychange', refreshOperationalSources)
     }
   }, [])
+
+  useEffect(() => {
+    setShowHeavyPanels(false)
+
+    if (isDashboardLoading || !isPageVisible) {
+      return undefined
+    }
+
+    const schedule = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 180))
+
+    const cancel = window.cancelIdleCallback ?? ((handle) => window.clearTimeout(handle))
+
+    const handle = schedule(() => {
+      setShowHeavyPanels(true)
+    })
+
+    return () => cancel(handle)
+  }, [isDashboardLoading, isPageVisible, currentStoreId, period.endDate, period.startDate])
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -125,7 +156,7 @@ function DashboardPage() {
   }, [currentStoreId])
 
   useEffect(() => {
-    if (!currentStoreId) {
+    if (!currentStoreId || !isPageVisible || !showHeavyPanels) {
       setIfoodMerchants([])
       return undefined
     }
@@ -136,7 +167,7 @@ function DashboardPage() {
       (nextMerchants) => setIfoodMerchants(nextMerchants),
       () => setIfoodMerchants([]),
     )
-  }, [currentStoreId])
+  }, [currentStoreId, isPageVisible, showHeavyPanels])
 
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
   const currentStoreZeDashboard = useMemo(
@@ -299,34 +330,46 @@ function DashboardPage() {
         ) : (
           <DashboardKpiGrid items={kpis} />
         )}
-        <Suspense
-          fallback={
-            <div className="workspace-loading-grid">
-              <Skeleton variant="rect" height="240px" />
-            </div>
-          }
-        >
-          <DashboardCharts charts={charts} />
-        </Suspense>
+        {showHeavyPanels ? (
+          <Suspense
+            fallback={
+              <div className="workspace-loading-grid">
+                <Skeleton variant="rect" height="240px" />
+              </div>
+            }
+          >
+            <DashboardCharts charts={charts} />
+          </Suspense>
+        ) : (
+          <div className="workspace-loading-grid" role="status" aria-live="polite">
+            <Skeleton variant="rect" height="240px" />
+          </div>
+        )}
         {isZeFetching && !isDashboardLoading ? (
           <div className="dashboard-sync-note" role="status" aria-live="polite">
             Atualizando leitura das integracoes externas.
           </div>
         ) : null}
         <DashboardOperationalSummary operations={operations} onNavigate={navigate} />
-        <Suspense
-          fallback={
-            <div className="workspace-loading-grid">
-              <Skeleton variant="rect" height="280px" />
-            </div>
-          }
-        >
-          <DashboardAnalytics
-            currentStoreId={currentStoreId}
-            availableStoreIds={availableStoreIds}
-            onStoreChange={setCurrentStoreId}
-          />
-        </Suspense>
+        {showHeavyPanels ? (
+          <Suspense
+            fallback={
+              <div className="workspace-loading-grid">
+                <Skeleton variant="rect" height="280px" />
+              </div>
+            }
+          >
+            <DashboardAnalytics
+              currentStoreId={currentStoreId}
+              availableStoreIds={availableStoreIds}
+              onStoreChange={setCurrentStoreId}
+            />
+          </Suspense>
+        ) : (
+          <div className="workspace-loading-grid" role="status" aria-live="polite">
+            <Skeleton variant="rect" height="280px" />
+          </div>
+        )}
       </section>
     </main>
   )
