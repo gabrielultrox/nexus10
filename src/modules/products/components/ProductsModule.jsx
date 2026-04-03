@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
@@ -39,6 +39,9 @@ const initialBulkState = {
   minimumStock: '',
   status: 'keep',
 }
+
+const INITIAL_VISIBLE_PRODUCTS = 120
+const LOAD_MORE_PRODUCTS_STEP = 120
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', {
@@ -104,6 +107,7 @@ function ProductsModule() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [qualityFilter, setQualityFilter] = useState('all')
   const [selectedProductIds, setSelectedProductIds] = useState([])
+  const [visibleLimit, setVisibleLimit] = useState(INITIAL_VISIBLE_PRODUCTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [seeding, setSeeding] = useState(false)
@@ -112,6 +116,7 @@ function ProductsModule() {
   const [applyingBulkEdit, setApplyingBulkEdit] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [feedbackMessage, setFeedbackMessage] = useState('')
+  const deferredSearchTerm = useDeferredValue(searchTerm)
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -155,7 +160,7 @@ function ProductsModule() {
   )
 
   const visibleProducts = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
+    const normalizedSearch = deferredSearchTerm.trim().toLowerCase()
 
     return products.filter((product) => {
       const matchesSearch =
@@ -178,7 +183,16 @@ function ProductsModule() {
 
       return matchesSearch && matchesCategory && matchesStatus && matchesQuality
     })
-  }, [auditSets, categoryFilter, products, qualityFilter, searchTerm, statusFilter])
+  }, [auditSets, categoryFilter, deferredSearchTerm, products, qualityFilter, statusFilter])
+
+  const displayedProducts = useMemo(
+    () => visibleProducts.slice(0, visibleLimit),
+    [visibleLimit, visibleProducts],
+  )
+
+  useEffect(() => {
+    setVisibleLimit(INITIAL_VISIBLE_PRODUCTS)
+  }, [deferredSearchTerm, categoryFilter, qualityFilter, statusFilter, currentStoreId])
 
   useEffect(() => {
     setSelectedProductIds((current) =>
@@ -581,7 +595,7 @@ function ProductsModule() {
   }
 
   function toggleVisibleSelection() {
-    const visibleIds = visibleProducts.map((product) => product.id)
+    const visibleIds = displayedProducts.map((product) => product.id)
     const allVisibleSelected =
       visibleIds.length > 0 &&
       visibleIds.every((productId) => selectedProductIds.includes(productId))
@@ -1091,100 +1105,127 @@ function ProductsModule() {
         ) : visibleProducts.length === 0 ? (
           <EmptyState message="Nenhum produto encontrado" />
         ) : (
-          <div className="entity-table-wrap entity-table-wrap--dense">
-            <table className="ui-table">
-              <thead>
-                <tr>
-                  <th>
-                    <input
-                      type="checkbox"
-                      aria-label="Selecionar produtos visiveis"
-                      checked={
-                        visibleProducts.length > 0 &&
-                        visibleProducts.every((product) => selectedProductIds.includes(product.id))
-                      }
-                      onChange={toggleVisibleSelection}
-                    />
-                  </th>
-                  <th>Produto</th>
-                  <th>Categoria</th>
-                  <th>Preco</th>
-                  <th>Custo</th>
-                  <th>Qtd. estoque</th>
-                  <th>Minimo</th>
-                  <th>Status</th>
-                  <th>Saude</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleProducts.map((product) => {
-                  const issueBadges = buildIssueBadges(product, auditSets)
+          <>
+            <div className="entity-toolbar-shell entity-toolbar-shell--section">
+              <div className="entity-toolbar-copy">
+                <p className="text-section-title">Resultados visiveis</p>
+                <p className="text-body">
+                  Mostrando {displayedProducts.length} de {visibleProducts.length} produto(s).
+                </p>
+              </div>
+              {visibleProducts.length > displayedProducts.length ? (
+                <div className="entity-form-actions entity-form-actions--inline">
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={() =>
+                      setVisibleLimit((current) =>
+                        Math.min(current + LOAD_MORE_PRODUCTS_STEP, visibleProducts.length),
+                      )
+                    }
+                  >
+                    Carregar mais 120
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="entity-table-wrap entity-table-wrap--dense">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        aria-label="Selecionar produtos visiveis"
+                        checked={
+                          displayedProducts.length > 0 &&
+                          displayedProducts.every((product) =>
+                            selectedProductIds.includes(product.id),
+                          )
+                        }
+                        onChange={toggleVisibleSelection}
+                      />
+                    </th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Preco</th>
+                    <th>Custo</th>
+                    <th>Qtd. estoque</th>
+                    <th>Minimo</th>
+                    <th>Status</th>
+                    <th>Saude</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedProducts.map((product) => {
+                    const issueBadges = buildIssueBadges(product, auditSets)
 
-                  return (
-                    <tr
-                      key={product.id}
-                      className={
-                        selectedProductIds.includes(product.id)
-                          ? 'entity-table__row--selected'
-                          : undefined
-                      }
-                    >
-                      <td>
-                        <input
-                          type="checkbox"
-                          aria-label={`Selecionar ${product.name}`}
-                          checked={selectedProductIds.includes(product.id)}
-                          onChange={() => toggleProductSelection(product.id)}
-                        />
-                      </td>
-                      <td className="ui-table__cell--strong">{product.name}</td>
-                      <td>{product.category || '-'}</td>
-                      <td className="ui-table__cell--numeric">{formatCurrency(product.price)}</td>
-                      <td className="ui-table__cell--numeric">{formatCurrency(product.cost)}</td>
-                      <td className="ui-table__cell--numeric">{product.stock}</td>
-                      <td className="ui-table__cell--numeric">{product.minimumStock ?? 0}</td>
-                      <td>{product.status === 'active' ? 'Ativo' : 'Inativo'}</td>
-                      <td>
-                        <div className="entity-table__actions">
-                          {issueBadges.length === 0 ? (
-                            <span className="ui-badge ui-badge--success">OK</span>
-                          ) : (
-                            issueBadges.slice(0, 3).map((badge) => (
-                              <span
-                                key={`${product.id}-${badge.label}`}
-                                className={`ui-badge ${badge.tone}`}
-                              >
-                                {badge.label}
-                              </span>
-                            ))
-                          )}
-                        </div>
-                      </td>
-                      <td className="entity-table__actions">
-                        <button
-                          type="button"
-                          className="ui-button ui-button--ghost"
-                          onClick={() => handleEdit(product)}
-                          disabled={!can('catalog:write')}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="ui-button ui-button--danger"
-                          onClick={() => handleDelete(product.id)}
-                          disabled={!can('catalog:write')}
-                        >
-                          Excluir
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                    return (
+                      <tr
+                        key={product.id}
+                        className={
+                          selectedProductIds.includes(product.id)
+                            ? 'entity-table__row--selected'
+                            : undefined
+                        }
+                      >
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Selecionar ${product.name}`}
+                            checked={selectedProductIds.includes(product.id)}
+                            onChange={() => toggleProductSelection(product.id)}
+                          />
+                        </td>
+                        <td className="ui-table__cell--strong">{product.name}</td>
+                        <td>{product.category || '-'}</td>
+                        <td className="ui-table__cell--numeric">{formatCurrency(product.price)}</td>
+                        <td className="ui-table__cell--numeric">{formatCurrency(product.cost)}</td>
+                        <td className="ui-table__cell--numeric">{product.stock}</td>
+                        <td className="ui-table__cell--numeric">{product.minimumStock ?? 0}</td>
+                        <td>{product.status === 'active' ? 'Ativo' : 'Inativo'}</td>
+                        <td>
+                          <div className="entity-table__actions">
+                            {issueBadges.length === 0 ? (
+                              <span className="ui-badge ui-badge--success">OK</span>
+                            ) : (
+                              issueBadges.slice(0, 3).map((badge) => (
+                                <span
+                                  key={`${product.id}-${badge.label}`}
+                                  className={`ui-badge ${badge.tone}`}
+                                >
+                                  {badge.label}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+                        <td className="entity-table__actions">
+                          <button
+                            type="button"
+                            className="ui-button ui-button--ghost"
+                            onClick={() => handleEdit(product)}
+                            disabled={!can('catalog:write')}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="ui-button ui-button--danger"
+                            onClick={() => handleDelete(product.id)}
+                            disabled={!can('catalog:write')}
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </SurfaceCard>
     </section>

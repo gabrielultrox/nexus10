@@ -146,6 +146,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     enabled: deferredNotificationsEnabled && isPageVisible,
     storeId: currentStoreId,
   })
+  const shouldUseFirestoreNotificationFallback =
+    deferredNotificationsEnabled &&
+    isPageVisible &&
+    liveNotifications.connectionStatus !== 'connected'
 
   useEffect(() => {
     function handleVisibilityChange() {
@@ -442,8 +446,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     knownSaleIdsRef.current = new Set()
 
     if (
-      !deferredNotificationsEnabled ||
-      !isPageVisible ||
+      !shouldUseFirestoreNotificationFallback ||
       !firebaseReady ||
       !firebaseDb ||
       !currentStoreId ||
@@ -556,7 +559,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       unsubscribeSales?.()
       unsubscribeInventory?.()
     }
-  }, [currentStoreId, deferredNotificationsEnabled, isPageVisible, tenantId])
+  }, [currentStoreId, shouldUseFirestoreNotificationFallback, tenantId])
 
   const value = useMemo(
     () => ({

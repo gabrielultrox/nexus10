@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
@@ -24,6 +24,11 @@ const initialAdjustmentState = {
   quantity: '',
   reason: '',
 }
+
+const INITIAL_VISIBLE_INVENTORY_ITEMS = 120
+const INITIAL_VISIBLE_MOVEMENTS = 150
+const LOAD_MORE_INVENTORY_STEP = 120
+const LOAD_MORE_MOVEMENTS_STEP = 150
 
 function formatDateTime(value) {
   if (!value) {
@@ -129,6 +134,12 @@ function InventoryModule() {
   const [saving, setSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [visibleInventoryLimit, setVisibleInventoryLimit] = useState(
+    INITIAL_VISIBLE_INVENTORY_ITEMS,
+  )
+  const [visibleMovementLimit, setVisibleMovementLimit] = useState(INITIAL_VISIBLE_MOVEMENTS)
+  const deferredSearchTerm = useDeferredValue(searchTerm)
+  const deferredMovementSearchTerm = useDeferredValue(movementSearchTerm)
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -204,7 +215,7 @@ function InventoryModule() {
   )
 
   const visibleInventoryItems = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
+    const normalizedSearch = deferredSearchTerm.trim().toLowerCase()
 
     return stockRows.filter((item) => {
       const matchesSearch =
@@ -228,10 +239,15 @@ function InventoryModule() {
 
       return matchesSearch && matchesStatus && matchesQuality
     })
-  }, [qualityFilter, searchTerm, statusFilter, stockRows])
+  }, [deferredSearchTerm, qualityFilter, statusFilter, stockRows])
+
+  const displayedInventoryItems = useMemo(
+    () => visibleInventoryItems.slice(0, visibleInventoryLimit),
+    [visibleInventoryItems, visibleInventoryLimit],
+  )
 
   const visibleMovements = useMemo(() => {
-    const normalizedSearch = movementSearchTerm.trim().toLowerCase()
+    const normalizedSearch = deferredMovementSearchTerm.trim().toLowerCase()
 
     return movements.filter((movement) => {
       const matchesSearch =
@@ -243,7 +259,20 @@ function InventoryModule() {
 
       return matchesSearch && isWithinPeriod(movement.createdAt, movementStartDate, movementEndDate)
     })
-  }, [movementEndDate, movementSearchTerm, movementStartDate, movements])
+  }, [deferredMovementSearchTerm, movementEndDate, movementStartDate, movements])
+
+  const displayedMovements = useMemo(
+    () => visibleMovements.slice(0, visibleMovementLimit),
+    [visibleMovementLimit, visibleMovements],
+  )
+
+  useEffect(() => {
+    setVisibleInventoryLimit(INITIAL_VISIBLE_INVENTORY_ITEMS)
+  }, [currentStoreId, deferredSearchTerm, qualityFilter, statusFilter])
+
+  useEffect(() => {
+    setVisibleMovementLimit(INITIAL_VISIBLE_MOVEMENTS)
+  }, [currentStoreId, deferredMovementSearchTerm, movementEndDate, movementStartDate])
 
   useEffect(() => {
     let isMounted = true
@@ -738,53 +767,79 @@ function InventoryModule() {
         ) : visibleInventoryItems.length === 0 ? (
           <EmptyState message="Nenhum item encontrado" />
         ) : (
-          <div className="entity-table-wrap entity-table-wrap--dense">
-            <table className="ui-table">
-              <thead>
-                <tr>
-                  <th>Produto</th>
-                  <th>Categoria</th>
-                  <th>SKU</th>
-                  <th>Qtd. estoque</th>
-                  <th>Minimo</th>
-                  <th>Saude</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleInventoryItems.map((item) => {
-                  const isLowStock =
-                    Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0)
-                  const qualityBadges = buildInventoryQualityBadges(item, isLowStock)
+          <>
+            <div className="entity-toolbar-shell entity-toolbar-shell--section">
+              <div className="entity-toolbar-copy">
+                <p className="text-section-title">Resultados visiveis</p>
+                <p className="text-body">
+                  Mostrando {displayedInventoryItems.length} de {visibleInventoryItems.length}{' '}
+                  item(ns).
+                </p>
+              </div>
+              {visibleInventoryItems.length > displayedInventoryItems.length ? (
+                <div className="entity-form-actions entity-form-actions--inline">
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={() =>
+                      setVisibleInventoryLimit((current) =>
+                        Math.min(current + LOAD_MORE_INVENTORY_STEP, visibleInventoryItems.length),
+                      )
+                    }
+                  >
+                    Carregar mais 120
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="entity-table-wrap entity-table-wrap--dense">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>SKU</th>
+                    <th>Qtd. estoque</th>
+                    <th>Minimo</th>
+                    <th>Saude</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedInventoryItems.map((item) => {
+                    const isLowStock =
+                      Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0)
+                    const qualityBadges = buildInventoryQualityBadges(item, isLowStock)
 
-                  return (
-                    <tr key={item.id}>
-                      <td className="ui-table__cell--strong">{item.productName}</td>
-                      <td>{item.category || '-'}</td>
-                      <td>{item.sku || '-'}</td>
-                      <td className="ui-table__cell--numeric">{item.currentStock}</td>
-                      <td className="ui-table__cell--numeric">{item.minimumStock ?? 0}</td>
-                      <td>
-                        <div className="entity-table__actions">
-                          {qualityBadges.length === 0 ? (
-                            <span className="ui-badge ui-badge--success">OK</span>
-                          ) : (
-                            qualityBadges.slice(0, 3).map((badge) => (
-                              <span
-                                key={`${item.id}-${badge.label}`}
-                                className={`ui-badge ${badge.tone}`}
-                              >
-                                {badge.label}
-                              </span>
-                            ))
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                    return (
+                      <tr key={item.id}>
+                        <td className="ui-table__cell--strong">{item.productName}</td>
+                        <td>{item.category || '-'}</td>
+                        <td>{item.sku || '-'}</td>
+                        <td className="ui-table__cell--numeric">{item.currentStock}</td>
+                        <td className="ui-table__cell--numeric">{item.minimumStock ?? 0}</td>
+                        <td>
+                          <div className="entity-table__actions">
+                            {qualityBadges.length === 0 ? (
+                              <span className="ui-badge ui-badge--success">OK</span>
+                            ) : (
+                              qualityBadges.slice(0, 3).map((badge) => (
+                                <span
+                                  key={`${item.id}-${badge.label}`}
+                                  className={`ui-badge ${badge.tone}`}
+                                >
+                                  {badge.label}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </SurfaceCard>
 
@@ -840,34 +895,60 @@ function InventoryModule() {
         {visibleMovements.length === 0 ? (
           <EmptyState message="Nenhuma movimentacao encontrada" />
         ) : (
-          <div className="entity-table-wrap entity-table-wrap--dense">
-            <table className="ui-table">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Produto</th>
-                  <th>Tipo</th>
-                  <th>Qtd.</th>
-                  <th>Antes</th>
-                  <th>Depois</th>
-                  <th>Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleMovements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td>{formatDateTime(movement.createdAt)}</td>
-                    <td className="ui-table__cell--strong">{movement.productName}</td>
-                    <td>{getMovementLabel(movement.movementType)}</td>
-                    <td className="ui-table__cell--numeric">{movement.quantity}</td>
-                    <td className="ui-table__cell--numeric">{movement.previousStock}</td>
-                    <td className="ui-table__cell--numeric">{movement.resultingStock}</td>
-                    <td>{movement.reason}</td>
+          <>
+            <div className="entity-toolbar-shell entity-toolbar-shell--section">
+              <div className="entity-toolbar-copy">
+                <p className="text-section-title">Resultados visiveis</p>
+                <p className="text-body">
+                  Mostrando {displayedMovements.length} de {visibleMovements.length}{' '}
+                  movimentacao(oes).
+                </p>
+              </div>
+              {visibleMovements.length > displayedMovements.length ? (
+                <div className="entity-form-actions entity-form-actions--inline">
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={() =>
+                      setVisibleMovementLimit((current) =>
+                        Math.min(current + LOAD_MORE_MOVEMENTS_STEP, visibleMovements.length),
+                      )
+                    }
+                  >
+                    Carregar mais 150
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="entity-table-wrap entity-table-wrap--dense">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>Quando</th>
+                    <th>Produto</th>
+                    <th>Tipo</th>
+                    <th>Qtd.</th>
+                    <th>Antes</th>
+                    <th>Depois</th>
+                    <th>Motivo</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {displayedMovements.map((movement) => (
+                    <tr key={movement.id}>
+                      <td>{formatDateTime(movement.createdAt)}</td>
+                      <td className="ui-table__cell--strong">{movement.productName}</td>
+                      <td>{getMovementLabel(movement.movementType)}</td>
+                      <td className="ui-table__cell--numeric">{movement.quantity}</td>
+                      <td className="ui-table__cell--numeric">{movement.previousStock}</td>
+                      <td className="ui-table__cell--numeric">{movement.resultingStock}</td>
+                      <td>{movement.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </SurfaceCard>
     </section>
