@@ -165,7 +165,6 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__body-copy {
-        min-height: 86mm;
         font-size: 3.15mm;
         line-height: 1.55;
         white-space: pre-wrap;
