@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useLocation } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -16,16 +15,8 @@ import { useToast } from '../hooks/useToast'
 import { useLiveNotifications } from '../hooks/useLiveNotifications'
 import { buildAuditActor, recordAuditLog } from '../services/auditLog'
 import { isOrderClosedStatus, isSalePosted, normalizeOrderDomainStatus } from '../services/commerce'
-import {
-  canUseRemoteSync,
-  firebaseDb,
-  firebaseReady,
-  guardRemoteSubscription,
-} from '../services/firebase'
-import { FIRESTORE_COLLECTIONS } from '../services/firestoreCollections'
-import { subscribeToInventoryItems } from '../services/inventory'
+import { canUseRemoteSync, firebaseReady } from '../services/firebase'
 import { manualModuleConfigs } from '../services/manualModuleConfig'
-import { subscribeToManualModuleRecords } from '../services/manualModuleService'
 import {
   ADVANCES_REMINDER_STORAGE_KEY,
   createNotificationFromLiveEvent,
@@ -42,12 +33,9 @@ import {
   notifyNewOrder,
   notifyOpenAdvancesReminder,
   notifySaleCompleted,
-  persistNotificationPreferences,
   pushNotification,
   shouldPresentNotification,
-  subscribeToNotificationPreferences,
 } from '../services/notificationService'
-import { subscribeToSales } from '../services/sales'
 import {
   isSoundEnabled,
   playError,
@@ -159,6 +147,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const ordersInitializedRef = useRef(false)
   const salesInitializedRef = useRef(false)
   const inventoryInitializedRef = useRef(false)
+  const knownOrderIdsRef = useRef<Set<string>>(new Set())
   const knownSaleIdsRef = useRef<Set<string>>(new Set())
   const machineStatusRef = useRef<Map<string, string>>(new Map())
   const advancesReminderTimeoutRef = useRef<number | null>(null)
@@ -279,13 +268,29 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return undefined
     }
 
-    return subscribeToNotificationPreferences({
-      storeId: currentStoreId,
-      userId: session.uid,
-      session,
-      onData: setPreferences,
-      onError: () => undefined,
-    })
+    let unsubscribe = () => {}
+    let cancelled = false
+
+    void import('../services/notificationPreferencesRemote')
+      .then(({ subscribeToNotificationPreferences }) => {
+        if (cancelled) {
+          return
+        }
+
+        unsubscribe = subscribeToNotificationPreferences({
+          storeId: currentStoreId,
+          userId: session.uid,
+          session,
+          onData: setPreferences,
+          onError: () => undefined,
+        })
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [currentStoreId, deferredNotificationsEnabled, session])
 
   useEffect(() => {
@@ -313,16 +318,32 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
 
     const advancesConfig = manualModuleConfigs.advances
-    return subscribeToManualModuleRecords({
-      storeId: currentStoreId,
-      modulePath: 'advances',
-      storageKey: advancesConfig.storageKey,
-      initialRecords: advancesConfig.initialRecords,
-      dailyResetHour: advancesConfig.dailyResetHour as any,
-      onData: setAdvanceRecords,
-      onError: (error: any) =>
-        notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
-    })
+    let unsubscribe = () => {}
+    let cancelled = false
+
+    void import('../services/manualModuleService')
+      .then(({ subscribeToManualModuleRecords }) => {
+        if (cancelled) {
+          return
+        }
+
+        unsubscribe = subscribeToManualModuleRecords({
+          storeId: currentStoreId,
+          modulePath: 'advances',
+          storageKey: advancesConfig.storageKey,
+          initialRecords: advancesConfig.initialRecords,
+          dailyResetHour: advancesConfig.dailyResetHour as any,
+          onData: setAdvanceRecords,
+          onError: (error: any) =>
+            notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
+        })
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
@@ -332,30 +353,50 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
 
     const config = manualModuleConfigs['machine-history']
-    return subscribeToManualModuleRecords({
-      storeId: currentStoreId,
-      modulePath: 'machine-history',
-      storageKey: config.storageKey,
-      initialRecords: config.initialRecords,
-      dailyResetHour: config.dailyResetHour as any,
-      onData(records: NotificationRecord[]) {
-        const nextMap = new Map()
+    let unsubscribe = () => {}
+    let cancelled = false
 
-        records.forEach((record: NotificationRecord) => {
-          nextMap.set(record.id, record.status)
-          const previousStatus = machineStatusRef.current.get(record.id)
-          if (previousStatus && previousStatus !== record.status && record.status === 'Presente') {
-            notifyMachineConfirmation(record)
-          }
+    void import('../services/manualModuleService')
+      .then(({ subscribeToManualModuleRecords }) => {
+        if (cancelled) {
+          return
+        }
+
+        unsubscribe = subscribeToManualModuleRecords({
+          storeId: currentStoreId,
+          modulePath: 'machine-history',
+          storageKey: config.storageKey,
+          initialRecords: config.initialRecords,
+          dailyResetHour: config.dailyResetHour as any,
+          onData(records: NotificationRecord[]) {
+            const nextMap = new Map()
+
+            records.forEach((record: NotificationRecord) => {
+              nextMap.set(record.id, record.status)
+              const previousStatus = machineStatusRef.current.get(record.id)
+              if (
+                previousStatus &&
+                previousStatus !== record.status &&
+                record.status === 'Presente'
+              ) {
+                notifyMachineConfirmation(record)
+              }
+            })
+
+            machineStatusRef.current = nextMap
+          },
+          onError: (error: any) =>
+            notifyImportantError(
+              error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
+            ),
         })
+      })
+      .catch(() => undefined)
 
-        machineStatusRef.current = nextMap
-      },
-      onError: (error: any) =>
-        notifyImportantError(
-          error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
-        ),
-    })
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
@@ -453,121 +494,118 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     ordersInitializedRef.current = false
     salesInitializedRef.current = false
     inventoryInitializedRef.current = false
+    knownOrderIdsRef.current = new Set()
     knownSaleIdsRef.current = new Set()
 
     if (
       !shouldUseFirestoreNotificationFallback ||
       !firebaseReady ||
-      !firebaseDb ||
       !currentStoreId ||
       !canUseRemoteSync()
     ) {
       return undefined
     }
 
-    const ordersQuery = query(
-      collection(
-        firebaseDb,
-        FIRESTORE_COLLECTIONS.stores,
-        currentStoreId,
-        FIRESTORE_COLLECTIONS.orders,
-      ),
-      orderBy('createdAt', 'desc'),
-    )
+    let cancelled = false
+    let unsubscribers: Array<() => void> = []
 
-    const unsubscribeOrders = guardRemoteSubscription(
-      () =>
-        onSnapshot(
-          ordersQuery,
-          (snapshot) => {
-            const orders = snapshot.docs.map((documentSnapshot) => ({
-              id: documentSnapshot.id,
-              ...documentSnapshot.data(),
-            }))
+    void Promise.all([
+      import('../services/orders'),
+      import('../services/sales'),
+      import('../services/inventory'),
+    ])
+      .then(([ordersModule, salesModule, inventoryModule]) => {
+        if (cancelled) {
+          return
+        }
+
+        const unsubscribeOrders = ordersModule.subscribeToOrders(
+          currentStoreId,
+          (orders: NotificationRecord[]) => {
+            const nextKnownIds = new Set<string>()
 
             if (ordersInitializedRef.current) {
-              snapshot.docChanges().forEach((change) => {
-                if (change.type === 'added') {
-                  const orderData: NotificationRecord = { id: change.doc.id, ...change.doc.data() }
-                  notifyNewOrder(orderData)
+              orders.forEach((order: NotificationRecord) => {
+                nextKnownIds.add(order.id)
+
+                if (!knownOrderIdsRef.current.has(order.id)) {
+                  notifyNewOrder(order)
                   recordAuditLog({
                     storeId: currentStoreId,
                     tenantId,
                     actor: buildAuditActor(),
                     action: 'order.created',
                     entityType: 'order',
-                    entityId: change.doc.id,
-                    description: `Pedido ${String(orderData.number ?? `#${change.doc.id.slice(0, 6).toUpperCase()}`)} entrou na fila operacional.`,
+                    entityId: order.id,
+                    description: `Pedido ${String(order.number ?? `#${order.id.slice(0, 6).toUpperCase()}`)} entrou na fila operacional.`,
                   })
                 }
               })
+            } else {
+              orders.forEach((order: NotificationRecord) => nextKnownIds.add(order.id))
             }
 
-            orders.forEach((order) => {
+            orders.forEach((order: NotificationRecord) => {
               if (isOrderDelayed(order)) {
                 notifyDelayedOrder(order)
               }
             })
 
+            knownOrderIdsRef.current = nextKnownIds
             ordersInitializedRef.current = true
           },
-          (error) =>
+          (error: any) =>
             notifyImportantError(
               error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
             ),
-        ),
-      {
-        onError(error: any) {
-          notifyImportantError(
-            error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
-          )
-        },
-      },
-    )
+        )
 
-    const unsubscribeSales = subscribeToSales(
-      currentStoreId,
-      (sales: NotificationRecord[]) => {
-        const nextKnownIds = new Set(knownSaleIdsRef.current)
+        const unsubscribeSales = salesModule.subscribeToSales(
+          currentStoreId,
+          (sales: NotificationRecord[]) => {
+            const nextKnownIds = new Set(knownSaleIdsRef.current)
 
-        if (salesInitializedRef.current) {
-          sales.forEach((sale: NotificationRecord) => {
-            if (
-              !knownSaleIdsRef.current.has(sale.id) &&
-              isSalePosted(sale.domainStatus ?? sale.status)
-            ) {
-              notifySaleCompleted(sale)
+            if (salesInitializedRef.current) {
+              sales.forEach((sale: NotificationRecord) => {
+                if (
+                  !knownSaleIdsRef.current.has(sale.id) &&
+                  isSalePosted(sale.domainStatus ?? sale.status)
+                ) {
+                  notifySaleCompleted(sale)
+                }
+                nextKnownIds.add(sale.id)
+              })
+            } else {
+              sales.forEach((sale: NotificationRecord) => nextKnownIds.add(sale.id))
             }
-            nextKnownIds.add(sale.id)
-          })
-        } else {
-          sales.forEach((sale: NotificationRecord) => nextKnownIds.add(sale.id))
-        }
 
-        knownSaleIdsRef.current = nextKnownIds
-        salesInitializedRef.current = true
-      },
-      (error: any) => notifyImportantError(error.message),
-    )
+            knownSaleIdsRef.current = nextKnownIds
+            salesInitializedRef.current = true
+          },
+          (error: any) => notifyImportantError(error.message),
+        )
 
-    const unsubscribeInventory = subscribeToInventoryItems(
-      currentStoreId,
-      (items: NotificationRecord[]) => {
-        items
-          .filter(
-            (item: NotificationRecord) =>
-              Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
-          )
-          .forEach((item: NotificationRecord) => notifyLowStock(item))
-        inventoryInitializedRef.current = true
-      },
-      (error: any) => notifyImportantError(error.message),
-    )
+        const unsubscribeInventory = inventoryModule.subscribeToInventoryItems(
+          currentStoreId,
+          (items: NotificationRecord[]) => {
+            items
+              .filter(
+                (item: NotificationRecord) =>
+                  Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
+              )
+              .forEach((item: NotificationRecord) => notifyLowStock(item))
+            inventoryInitializedRef.current = true
+          },
+          (error: any) => notifyImportantError(error.message),
+        )
+
+        unsubscribers = [unsubscribeOrders, unsubscribeSales, unsubscribeInventory].filter(Boolean)
+      })
+      .catch(() => undefined)
 
     return () => {
-      unsubscribeOrders()
-      unsubscribeSales?.()
-      unsubscribeInventory?.()
+      cancelled = true
+      unsubscribers.forEach((unsubscribe) => unsubscribe())
     }
   }, [currentStoreId, shouldUseFirestoreNotificationFallback, tenantId])
 
@@ -583,6 +621,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       lastConnectedAt: liveLastConnectedAt,
       preferences,
       async updatePreferences(nextPreferences: PreferencesRecord) {
+        const { persistNotificationPreferences } = await import(
+          '../services/notificationPreferencesRemote'
+        )
+
         const merged = await persistNotificationPreferences({
           storeId: currentStoreId,
           userId: session?.uid,
