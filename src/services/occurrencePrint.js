@@ -23,6 +23,15 @@ function formatPrintableDate(value) {
   }).format(normalized)
 }
 
+function normalizePrintableBodyText(value) {
+  const normalized = String(value ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
+
+  return normalized || 'Sem descricao adicional.'
+}
+
 function renderField(label, value) {
   if (value == null || String(value).trim() === '') {
     return ''
@@ -218,7 +227,7 @@ function buildPrintHtml(entry) {
 
       <section class="occurrence-print__body occurrence-print__section">
         <span class="occurrence-print__body-title">Descricao detalhada</span>
-        <div class="occurrence-print__body-copy">${escapeHtml(entry.description || 'Sem descricao adicional.')}</div>
+        <div class="occurrence-print__body-copy">${escapeHtml(normalizePrintableBodyText(entry.description))}</div>
       </section>
 
       <section class="occurrence-print__footer occurrence-print__section">
