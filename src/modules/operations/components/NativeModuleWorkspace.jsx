@@ -50,7 +50,13 @@ import {
   playOperationalSuccess,
   playOperationalWarning,
 } from '../../../services/soundManager'
+import {
+  buildOccurrenceMalotePrintPayload,
+  syncOccurrenceMaloteStatus,
+  upsertOccurrenceMaloteEntry,
+} from '../../../services/occurrenceMalote'
 import { printOccurrenceReport } from '../../../services/occurrencePrint'
+import OccurrenceHistoryPanel from './OccurrenceHistoryPanel'
 import NativeModuleFormCard from './NativeModuleFormCard'
 import NativeModuleStatusBar from './NativeModuleStatusBar'
 
@@ -431,34 +437,6 @@ function formatAuditText(record, fallback = 'Sem atualizacao') {
   }
 
   return actorLabel || timeLabel || fallback
-}
-
-function formatOccurrenceDateTime(timestamp) {
-  const date = timestamp ? new Date(timestamp) : new Date()
-  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
-}
-
-function buildOccurrencePrintPayload(record, session) {
-  const code = String(record?.code ?? '').trim() || 'Sem codigo'
-  const type = String(record?.type ?? '').trim() || 'Ocorrencia operacional'
-  const owner = String(record?.owner ?? '').trim() || session?.operatorName || 'Operador local'
-  const status = String(record?.status ?? '').trim() || 'Em triagem'
-
-  return {
-    documentTitle: 'Ocorrencia para malote',
-    subtitle: 'Encaminhamento interno para Financeiro / RH',
-    meta: status,
-    destinationSector: 'Financeiro / RH',
-    category: 'Ocorrencia operacional',
-    title: `Ocorrencia ${code}`,
-    reference: code,
-    cashierName: owner,
-    operatorName: session?.operatorName ?? session?.displayName ?? owner,
-    occurredAt: formatOccurrenceDateTime(record?.createdAtClient ?? record?.updatedAtClient),
-    printedAt: new Date().toISOString(),
-    description: type,
-    footer: 'Documento para envio no malote interno.',
-  }
 }
 
 function resolveAuditEventDayKey(event) {
@@ -2045,7 +2023,13 @@ function NativeModuleWorkspace({ route }) {
     }
 
     try {
-      printOccurrenceReport(buildOccurrencePrintPayload(occurrenceRecord, session))
+      printOccurrenceReport(buildOccurrenceMalotePrintPayload(occurrenceRecord, session))
+      upsertOccurrenceMaloteEntry({
+        storeId: currentStoreId,
+        tenantId,
+        record: occurrenceRecord,
+        session,
+      })
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -2078,7 +2062,13 @@ function NativeModuleWorkspace({ route }) {
         return
       }
 
-      printOccurrenceReport(buildOccurrencePrintPayload(newRecord, session))
+      upsertOccurrenceMaloteEntry({
+        storeId: currentStoreId,
+        tenantId,
+        record: newRecord,
+        session,
+      })
+      printOccurrenceReport(buildOccurrenceMalotePrintPayload(newRecord, session))
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -2842,6 +2832,14 @@ function NativeModuleWorkspace({ route }) {
         value: operationsSummary?.value,
         courier: operationsSummary?.courier,
       })
+
+      if (route.path === 'occurrences') {
+        syncOccurrenceMaloteStatus({
+          storeId: currentStoreId,
+          sourceRecordId: recordId,
+          status: nextRecord.status,
+        })
+      }
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel atualizar o registro.')
       playError()
@@ -3237,6 +3235,10 @@ function NativeModuleWorkspace({ route }) {
           highlightedRecordId={requestedRecordId || highlightedScheduleRecordId}
         />
       </Suspense>
+
+      {route.path === 'occurrences' ? (
+        <OccurrenceHistoryPanel storeId={currentStoreId} session={session} />
+      ) : null}
 
       <Suspense fallback={null}>
         <NativeModuleExportCanvases
