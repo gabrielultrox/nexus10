@@ -44,59 +44,6 @@ function hashOperatorPassword(password: string, salt = crypto.randomBytes(16).to
   return `${PASSWORD_HASH_PREFIX}$${salt}$${hash}`
 }
 
-function verifyOperatorPasswordHash(password: string, passwordHash: string): boolean {
-  const [prefix, salt, expectedHash] = String(passwordHash ?? '').split('$')
-
-  if (prefix !== PASSWORD_HASH_PREFIX || !salt || !expectedHash) {
-    return false
-  }
-
-  const candidateHash = crypto.scryptSync(password, salt, 64).toString('hex')
-  return crypto.timingSafeEqual(Buffer.from(candidateHash, 'hex'), Buffer.from(expectedHash, 'hex'))
-}
-
-async function readOperatorPasswordHash(profile: LocalOperatorProfile): Promise<string> {
-  const cachedPasswordHash = await cacheGet(buildOperatorPasswordCacheKey(profile.operatorName))
-
-  if (
-    cachedPasswordHash &&
-    typeof cachedPasswordHash === 'object' &&
-    'passwordHash' in cachedPasswordHash
-  ) {
-    return typeof (cachedPasswordHash as { passwordHash?: unknown }).passwordHash === 'string'
-      ? (cachedPasswordHash as { passwordHash: string }).passwordHash
-      : ''
-  }
-
-  const snapshot = await getAdminFirestore().collection('users').doc(profile.uid).get()
-  const data = snapshot.data()
-  const passwordHash =
-    typeof data?.[OPERATOR_PASSWORD_HASH_KEY] === 'string' ? data[OPERATOR_PASSWORD_HASH_KEY] : ''
-
-  if (passwordHash) {
-    await cacheSet(
-      buildOperatorPasswordCacheKey(profile.operatorName),
-      buildOperatorPasswordCacheValue(passwordHash),
-      backendEnv.redisSessionTtlSeconds,
-    )
-  }
-
-  return passwordHash
-}
-
-async function isValidPassword(password: string, profile: LocalOperatorProfile): Promise<boolean> {
-  const operatorPasswordHash = await readOperatorPasswordHash(profile).catch(() => '')
-
-  if (operatorPasswordHash) {
-    return verifyOperatorPasswordHash(String(password ?? ''), operatorPasswordHash)
-  }
-
-  return (
-    Boolean(backendEnv.localOperatorPassword) &&
-    String(password ?? '') === String(backendEnv.localOperatorPassword)
-  )
-}
-
 function isTokenSessionPayload(
   payload: AuthSessionRequestBody | AuthTokenSessionRequestBody,
 ): payload is AuthTokenSessionRequestBody {
@@ -225,7 +172,6 @@ async function handleCreateLoginSession(
   const operatorName = String(
     (payload as any).operator ?? (payload as any).operatorName ?? '',
   ).trim()
-  const password = String((payload as any).pin ?? (payload as any).password ?? '')
   const log = request.log ?? authLogger
   const createSession = withMethodLogging(
     {
@@ -256,37 +202,7 @@ async function handleCreateLoginSession(
     return
   }
 
-  if (!backendEnv.localOperatorPassword) {
-    log.error(
-      {
-        context: 'auth.session.create',
-        request_id: request.id,
-        operatorName,
-        reason: 'missing_backend_password',
-      },
-      'Operational password is not configured',
-    )
-    response.status(503).json({ error: 'Senha operacional nao configurada no backend.' })
-    return
-  }
-
   try {
-    const profile = getLocalOperatorProfile(operatorName) as LocalOperatorProfile
-
-    if (!(await isValidPassword(password, profile))) {
-      log.warn(
-        {
-          context: 'auth.session.create',
-          request_id: request.id,
-          operatorName,
-          reason: 'invalid_password',
-        },
-        'Auth session rejected',
-      )
-      response.status(401).json({ error: 'Senha incorreta.' })
-      return
-    }
-
     const session = await createSession()
 
     response.json({

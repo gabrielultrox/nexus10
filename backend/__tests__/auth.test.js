@@ -91,7 +91,6 @@ async function runRegisteredRoute(app, path, request) {
 }
 
 async function loadAuthController({
-  localOperatorPassword = '4321',
   profileOverride,
   createCustomTokenResult = 'custom-token-123',
   createCustomTokenError = null,
@@ -146,7 +145,6 @@ async function loadAuthController({
 
   vi.doMock('../config/env.js', () => ({
     backendEnv: {
-      localOperatorPassword,
       redisSessionTtlSeconds: 300,
     },
   }))
@@ -217,42 +215,6 @@ describe('backend auth session route', () => {
         operator: ['operator e obrigatorio.'],
       },
     })
-  })
-
-  it('retorna 401 quando o PIN estiver incorreto', async () => {
-    const { registerAuthRoutes } = await loadAuthController()
-    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
-
-    registerAuthRoutes(app)
-
-    const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '9999' },
-      log: authLoggerMock,
-    })
-
-    expect(response.statusCode).toBe(401)
-    expect(response.payload).toEqual({ error: 'Senha incorreta.' })
-    expect(authLoggerMock.warn).toHaveBeenCalled()
-  })
-
-  it('retorna 503 quando a senha operacional nao estiver configurada', async () => {
-    const { registerAuthRoutes } = await loadAuthController({
-      localOperatorPassword: '',
-    })
-    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
-
-    registerAuthRoutes(app)
-
-    const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '4321' },
-      log: authLoggerMock,
-    })
-
-    expect(response.statusCode).toBe(503)
-    expect(response.payload).toEqual({
-      error: 'Senha operacional nao configurada no backend.',
-    })
-    expect(authLoggerMock.error).toHaveBeenCalled()
   })
 
   it('cria sessao autenticada, persiste perfil e preenche cache', async () => {

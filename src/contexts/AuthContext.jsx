@@ -158,7 +158,7 @@ export function AuthProvider({ children }) {
             skipAuth: true,
             body: {
               operator: operatorName,
-              pin: credentials.password,
+              pin: credentials.pin,
               storeId: null,
             },
           })

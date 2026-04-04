@@ -19,13 +19,11 @@ function LoginPage() {
   const { signIn, authError, operatorOptions, getLastOperator } = useAuth()
   const [formState, setFormState] = useState({
     operatorName: '',
-    password: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState({
     operatorName: '',
-    password: '',
   })
   const [stage, setStage] = useState('pin')
   const [pinValue, setPinValue] = useState('')
@@ -35,7 +33,6 @@ function LoginPage() {
   const pinErrorId = 'login-pin-error'
   const authErrorId = 'login-auth-error'
   const operatorErrorId = 'login-operator-error'
-  const passwordErrorId = 'login-password-error'
   const { captureError, errorModel, clearError } = useError({
     autoToast: false,
     context: {
@@ -132,22 +129,23 @@ function LoginPage() {
     setErrorMessage('')
     setFieldErrors({
       operatorName: '',
-      password: '',
     })
 
     const nextFieldErrors = {
       operatorName: formState.operatorName ? '' : 'Selecione um operador.',
-      password: formState.password ? '' : 'Informe a senha do operador.',
     }
 
-    if (nextFieldErrors.operatorName || nextFieldErrors.password) {
+    if (nextFieldErrors.operatorName) {
       setFieldErrors(nextFieldErrors)
       setSubmitting(false)
       return
     }
 
     try {
-      await signIn(formState)
+      await signIn({
+        operatorName: formState.operatorName,
+        pin: pinValue,
+      })
       playSuccess()
       navigate(redirectPath, { replace: true })
     } catch (error) {
@@ -287,7 +285,7 @@ function LoginPage() {
               <div className="auth-login__hero-panels">
                 <div className="auth-login__hero-card">
                   <span>Entrada</span>
-                  <strong>Operador + senha curta</strong>
+                  <strong>PIN + operador</strong>
                 </div>
                 <div className="auth-login__hero-card">
                   <span>Ambiente</span>
@@ -301,7 +299,7 @@ function LoginPage() {
                 <p className="text-overline">Login do operador</p>
                 <h2 className="text-display">Entrar no ERP</h2>
                 <p className="text-body">
-                  Entre com o operador usando a senha remota sincronizada para esse operador.
+                  O PIN ja foi validado. Agora selecione apenas o operador para abrir a sessao.
                 </p>
               </div>
 
@@ -337,34 +335,6 @@ function LoginPage() {
                 ) : null}
               </div>
 
-              <div className="ui-field">
-                <label className="ui-label" htmlFor="login-password">
-                  Senha
-                </label>
-                <input
-                  id="login-password"
-                  className={`ui-input${fieldErrors.password ? ' is-error' : ''}`}
-                  type="password"
-                  value={formState.password}
-                  onChange={(event) => handleChange('password', event.target.value)}
-                  placeholder="******"
-                  autoComplete="current-password"
-                  aria-invalid={Boolean(fieldErrors.password || errorMessage || authError)}
-                  aria-describedby={
-                    fieldErrors.password
-                      ? passwordErrorId
-                      : errorMessage || authError
-                        ? authErrorId
-                        : undefined
-                  }
-                />
-                {fieldErrors.password ? (
-                  <p id={passwordErrorId} className="ui-field__error" role="alert">
-                    {fieldErrors.password}
-                  </p>
-                ) : null}
-              </div>
-
               {errorMessage || authError ? (
                 <div id={authErrorId}>
                   <ErrorDisplay
@@ -385,8 +355,8 @@ function LoginPage() {
                 Entrar
               </Button>
               <p className="text-caption">
-                As senhas dos operadores sao gerenciadas remotamente e sincronizadas entre os
-                terminais.
+                A autenticacao operacional agora usa apenas o PIN do terminal e a selecao do
+                operador.
               </p>
             </form>
           </div>

@@ -33,7 +33,7 @@ function createSnapshot(data = {}) {
 
 vi.mock('../../config/env.js', () => ({
   backendEnv: {
-    localOperatorPassword: '4321',
+    redisSessionTtlSeconds: 300,
   },
 }))
 
@@ -190,18 +190,6 @@ describe('registerAuthRoutes', () => {
         operator: ['operator e obrigatorio.'],
       },
     })
-  })
-
-  it('retorna 401 quando a senha estiver incorreta', async () => {
-    const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
-
-    registerAuthRoutes(app)
-
-    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '9999' } })
-
-    expect(response.statusCode).toBe(401)
-    expect(response.payload).toEqual({ error: 'Senha incorreta.' })
   })
 
   it('cria sessao autenticada quando os dados forem validos', async () => {
