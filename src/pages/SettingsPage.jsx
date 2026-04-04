@@ -36,6 +36,62 @@ function SettingsStatusTile({ eyebrow, value, meta, tone = 'neutral' }) {
   )
 }
 
+function formatSettingsDateTime(value) {
+  if (!value) {
+    return 'Sem registro'
+  }
+
+  const parsedDate = new Date(value)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Sem registro'
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsedDate)
+}
+
+function resolvePinStorageLabel(storageMode) {
+  if (storageMode === 'firestore') {
+    return 'Store remota'
+  }
+
+  if (storageMode === 'default-fallback') {
+    return 'Fallback padrao'
+  }
+
+  return 'Nao identificado'
+}
+
+function resolvePinHealth(storageMode) {
+  if (storageMode === 'firestore') {
+    return {
+      label: 'Saudavel',
+      meta: 'Leitura remota ativa',
+      tone: 'success',
+    }
+  }
+
+  if (storageMode === 'default-fallback') {
+    return {
+      label: 'Degradado',
+      meta: 'Store remota indisponivel',
+      tone: 'warning',
+    }
+  }
+
+  return {
+    label: 'Indefinido',
+    meta: 'Sem telemetria',
+    tone: 'neutral',
+  }
+}
+
 function SettingsSection({ eyebrow, title, description, children }) {
   return (
     <section className="settings-section">
@@ -62,17 +118,29 @@ function SettingsPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [pinEnabled, setPinEnabled] = useState(false)
   const [currentPinMask, setCurrentPinMask] = useState(DEFAULT_REMOTE_ACCESS_PIN_MASK)
+  const [pinStorageMode, setPinStorageMode] = useState('unknown')
+  const [pinUpdatedAt, setPinUpdatedAt] = useState(null)
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled())
   const [soundProfile, setSoundProfileState] = useState(() => getSoundProfile())
   const soundProfiles = getSoundProfiles()
   const activeSoundProfile =
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
+  const pinHealth = resolvePinHealth(pinStorageMode)
+
+  async function loadAccessPinStatus() {
+    const status = await getRemoteAccessPinStatus()
+
+    setPinEnabled(Boolean(status.hasCustomPin))
+    setCurrentPinMask(status.maskedPin ?? DEFAULT_REMOTE_ACCESS_PIN_MASK)
+    setPinStorageMode(String(status.storageMode ?? 'unknown'))
+    setPinUpdatedAt(status.updatedAt ?? null)
+  }
 
   useEffect(() => {
     let active = true
 
-    async function loadAccessPinStatus() {
+    async function loadAccessPinStatusState() {
       try {
         const status = await getRemoteAccessPinStatus()
 
@@ -82,6 +150,8 @@ function SettingsPage() {
 
         setPinEnabled(Boolean(status.hasCustomPin))
         setCurrentPinMask(status.maskedPin ?? DEFAULT_REMOTE_ACCESS_PIN_MASK)
+        setPinStorageMode(String(status.storageMode ?? 'unknown'))
+        setPinUpdatedAt(status.updatedAt ?? null)
       } catch (error) {
         if (!active) {
           return
@@ -91,7 +161,7 @@ function SettingsPage() {
       }
     }
 
-    loadAccessPinStatus()
+    loadAccessPinStatusState()
 
     return () => {
       active = false
@@ -146,9 +216,8 @@ function SettingsPage() {
     }
 
     try {
-      const result = await updateRemoteAccessPin(pinDraft)
-      setPinEnabled(Boolean(result.hasCustomPin))
-      setCurrentPinMask(result.maskedPin ?? '****')
+      await updateRemoteAccessPin(pinDraft)
+      await loadAccessPinStatus()
       setPinDraft('')
       setPinConfirm('')
       setFeedback('PIN remoto atualizado com sucesso.')
@@ -178,9 +247,8 @@ function SettingsPage() {
     }
 
     try {
-      const result = await updateRemoteAccessPin(null)
-      setPinEnabled(Boolean(result.hasCustomPin))
-      setCurrentPinMask(result.maskedPin ?? DEFAULT_REMOTE_ACCESS_PIN_MASK)
+      await updateRemoteAccessPin(null)
+      await loadAccessPinStatus()
       setPinDraft('')
       setPinConfirm('')
       setFeedback('PIN remoto restaurado para a configuracao padrao compartilhada.')
@@ -325,9 +393,15 @@ function SettingsPage() {
             />
             <SettingsStatusTile
               eyebrow="PIN remoto"
-              value={pinEnabled ? currentPinMask : 'Padrao'}
-              meta={pinEnabled ? 'Customizado' : 'Configuracao padrao ativa'}
+              value={pinEnabled ? currentPinMask : DEFAULT_REMOTE_ACCESS_PIN_MASK}
+              meta={pinEnabled ? 'Customizado remoto' : 'Padrao compartilhado'}
               tone={pinEnabled ? 'warning' : 'neutral'}
+            />
+            <SettingsStatusTile
+              eyebrow="Saude remota"
+              value={pinHealth.label}
+              meta={pinHealth.meta}
+              tone={pinHealth.tone}
             />
             <SettingsStatusTile
               eyebrow="Audio"
@@ -339,8 +413,8 @@ function SettingsPage() {
 
           <div className="settings-overview__actions">
             <div className="settings-overview__meta">
-              <span>Modo local</span>
-              <strong>Boot + PIN + operador</strong>
+              <span>Modo de acesso</span>
+              <strong>PIN remoto + operador</strong>
             </div>
             <div className="settings-overview__meta">
               <span>Permissao</span>
@@ -463,10 +537,10 @@ function SettingsPage() {
       <SettingsSection
         eyebrow="Seguranca"
         title="Acesso e prontidao do app"
-        description="Controles locais de PIN e o estado da instalacao offline do terminal."
+        description="Estado do PIN compartilhado, saude da autenticacao remota e instalacao offline do terminal."
       >
         <div className="settings-grid settings-grid--duo">
-          <SurfaceCard title="Seguranca local">
+          <SurfaceCard title="PIN remoto">
             <form className="settings-pin-form" onSubmit={handleSavePin}>
               <div className="settings-summary settings-summary--dense">
                 <div className="settings-summary__row">
@@ -474,8 +548,16 @@ function SettingsPage() {
                   <strong>{currentPinMask}</strong>
                 </div>
                 <div className="settings-summary__row">
-                  <span>Camada</span>
-                  <strong>{pinEnabled ? 'Customizada' : 'Padrao remoto'}</strong>
+                  <span>Origem</span>
+                  <strong>{pinEnabled ? 'Customizado remoto' : 'Padrao compartilhado'}</strong>
+                </div>
+                <div className="settings-summary__row">
+                  <span>Store de leitura</span>
+                  <strong>{resolvePinStorageLabel(pinStorageMode)}</strong>
+                </div>
+                <div className="settings-summary__row">
+                  <span>Ultima atualizacao</span>
+                  <strong>{formatSettingsDateTime(pinUpdatedAt)}</strong>
                 </div>
               </div>
 
@@ -537,7 +619,36 @@ function SettingsPage() {
             </form>
           </SurfaceCard>
 
-          <PwaStatusCard />
+          <SurfaceCard title="Saude da autenticacao">
+            <div className="settings-summary settings-summary--dense">
+              <div className="settings-summary__row">
+                <span>Status remoto</span>
+                <strong>{pinHealth.label}</strong>
+              </div>
+              <div className="settings-summary__row">
+                <span>Diagnostico</span>
+                <strong>{pinHealth.meta}</strong>
+              </div>
+              <div className="settings-summary__row">
+                <span>Comportamento atual</span>
+                <strong>
+                  {pinStorageMode === 'firestore'
+                    ? 'Leitura do PIN customizado ou padrao remoto'
+                    : 'Fallback para padrao compartilhado'}
+                </strong>
+              </div>
+            </div>
+
+            <p className="text-caption settings-remote-health__caption">
+              Quando a store remota estiver indisponivel, o terminal continua aceitando apenas a
+              configuracao padrao compartilhada. Um PIN customizado remoto depende da store
+              saudavel.
+            </p>
+          </SurfaceCard>
+
+          <div className="settings-grid-span-2">
+            <PwaStatusCard />
+          </div>
         </div>
       </SettingsSection>
 
