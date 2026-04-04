@@ -1,18 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addDoc = vi.fn(async () => ({ id: 'closure-1' }))
+const doc = vi.fn(() => 'doc-ref')
 const canUseRemoteSync = vi.fn(() => false)
 const guardRemoteSubscription = vi.fn()
 const collection = vi.fn(() => 'collection-ref')
 const serverTimestamp = vi.fn(() => 'server-timestamp')
+const updateDoc = vi.fn(async () => undefined)
 
 vi.mock('firebase/firestore', () => ({
   addDoc,
   collection,
+  doc,
   onSnapshot: vi.fn(),
   orderBy: vi.fn(),
   query: vi.fn(),
   serverTimestamp,
+  updateDoc,
 }))
 
 vi.mock('../firebase', () => ({
@@ -26,7 +30,9 @@ describe('finance service', () => {
   beforeEach(() => {
     addDoc.mockClear()
     collection.mockClear()
+    doc.mockClear()
     serverTimestamp.mockClear()
+    updateDoc.mockClear()
     canUseRemoteSync.mockReturnValue(false)
     guardRemoteSubscription.mockReset()
   })
@@ -107,6 +113,27 @@ describe('finance service', () => {
         destinationSector: 'Financeiro / RH',
         category: 'Sangria / caixa',
         operatorName: 'Gabriel',
+        status: 'pendente',
+      }),
+    )
+  })
+
+  it('updates occurrence status with timestamp fields', async () => {
+    const { updateFinancialOccurrenceStatus } = await import('../finance')
+
+    await updateFinancialOccurrenceStatus({
+      storeId: 'store-1',
+      occurrenceId: 'occ-1',
+      status: 'resolvida',
+    })
+
+    expect(doc).toHaveBeenCalledWith({}, 'stores', 'store-1', 'financial_occurrences', 'occ-1')
+    expect(updateDoc).toHaveBeenCalledWith(
+      'doc-ref',
+      expect.objectContaining({
+        status: 'resolvida',
+        statusUpdatedAt: 'server-timestamp',
+        updatedAt: 'server-timestamp',
       }),
     )
   })

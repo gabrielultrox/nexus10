@@ -11,9 +11,11 @@ import {
   createManualExpense,
   getFinanceEntryDirection,
   isFinanceEntryActive,
+  getFinancialOccurrenceStatusMeta,
   subscribeToFinancialClosures,
   subscribeToFinancialEntries,
   subscribeToFinancialOccurrences,
+  updateFinancialOccurrenceStatus,
 } from '../../../services/finance'
 import { printOccurrenceReport } from '../../../services/occurrencePrint'
 import { playError, playSuccess } from '../../../services/soundManager'
@@ -123,6 +125,9 @@ function FinanceModule() {
   const [errorMessage, setErrorMessage] = useState('')
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [occurrenceSearchTerm, setOccurrenceSearchTerm] = useState('')
+  const [occurrenceDestinationFilter, setOccurrenceDestinationFilter] = useState('todos')
+  const [occurrenceStatusFilter, setOccurrenceStatusFilter] = useState('todos')
   const [startDate, setStartDate] = useState(() => formatDateInputValue(new Date()))
   const [endDate, setEndDate] = useState(() => formatDateInputValue(new Date()))
   const [expenseForm, setExpenseForm] = useState(() => ({
@@ -390,6 +395,8 @@ function FinanceModule() {
       operatorName: entry.operatorName ?? 'Operador',
       amount: entry.amount?.trim() || '--',
       reference: entry.reference?.trim() || '--',
+      status: entry.status ?? 'pendente',
+      statusMeta: getFinancialOccurrenceStatusMeta(entry.status),
       occurredAt: formatDateTime(entry.occurredAt),
       printedAt: formatDateTime(entry.printedAt || entry.createdAt),
       description: entry.description ?? '',
@@ -397,6 +404,34 @@ function FinanceModule() {
       rawPrintedAt: entry.printedAt || entry.createdAt,
     }))
   }, [occurrences])
+
+  const filteredOccurrenceRows = useMemo(() => {
+    const normalizedSearch = occurrenceSearchTerm.trim().toLowerCase()
+
+    return occurrenceRows.filter((entry) => {
+      const matchesPeriod = isWithinPeriod(entry.rawOccurredAt, startDate, endDate)
+      const matchesDestination =
+        occurrenceDestinationFilter === 'todos' ||
+        entry.destinationSector === occurrenceDestinationFilter
+      const matchesStatus =
+        occurrenceStatusFilter === 'todos' || entry.status === occurrenceStatusFilter
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [entry.title, entry.reference, entry.description, entry.cashierName, entry.operatorName]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearch)
+
+      return matchesPeriod && matchesDestination && matchesStatus && matchesSearch
+    })
+  }, [
+    endDate,
+    occurrenceDestinationFilter,
+    occurrenceRows,
+    occurrenceSearchTerm,
+    occurrenceStatusFilter,
+    startDate,
+  ])
 
   async function handleManualExpenseSubmit(event) {
     event.preventDefault()
@@ -596,6 +631,41 @@ function FinanceModule() {
       playError()
     } finally {
       setPrintingOccurrence(false)
+    }
+  }
+
+  async function handleOccurrenceStatusChange(occurrence, nextStatus) {
+    if (!can('finance:write')) {
+      setErrorMessage('Seu perfil nao pode atualizar ocorrencias financeiras.')
+      playError()
+      return
+    }
+
+    setErrorMessage('')
+    setFeedbackMessage('')
+
+    try {
+      await updateFinancialOccurrenceStatus({
+        storeId: currentStoreId,
+        occurrenceId: occurrence.id,
+        status: nextStatus,
+      })
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: `financial.occurrence_${nextStatus}`,
+        entityType: 'financial_occurrence',
+        entityId: occurrence.id,
+        description: `Ocorrencia ${occurrence.title} marcada como ${nextStatus}.`,
+      })
+
+      setFeedbackMessage(`Ocorrencia marcada como ${nextStatus}.`)
+      playSuccess()
+    } catch (error) {
+      setErrorMessage(error.message)
+      playError()
     }
   }
 
@@ -946,14 +1016,69 @@ function FinanceModule() {
 
       <SurfaceCard title="Ocorrencias emitidas">
         <div className="finance-table-meta">
-          <span className="ui-badge ui-badge--info">{occurrenceRows.length} ocorrencias</span>
+          <span className="ui-badge ui-badge--info">
+            {filteredOccurrenceRows.length} ocorrencias visiveis
+          </span>
+          <span className="ui-badge ui-badge--warning">
+            {occurrenceRows.filter((entry) => entry.status === 'encaminhada').length} encaminhadas
+          </span>
+          <span className="ui-badge ui-badge--success">
+            {occurrenceRows.filter((entry) => entry.status === 'resolvida').length} resolvidas
+          </span>
         </div>
 
-        {occurrenceRows.length === 0 ? (
+        <div className="finance-toolbar finance-toolbar--occurrence">
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-search">
+              Buscar ocorrencia
+            </label>
+            <input
+              id="finance-occurrence-search"
+              className="ui-input"
+              value={occurrenceSearchTerm}
+              onChange={(event) => setOccurrenceSearchTerm(event.target.value)}
+              placeholder="Titulo, referencia, operador"
+            />
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-destination-filter">
+              Destino
+            </label>
+            <Select
+              id="finance-occurrence-destination-filter"
+              className="ui-select"
+              value={occurrenceDestinationFilter}
+              onChange={(event) => setOccurrenceDestinationFilter(event.target.value)}
+            >
+              <option value="todos">Todos</option>
+              <option value="Financeiro / RH">Financeiro / RH</option>
+              <option value="Financeiro">Financeiro</option>
+              <option value="RH">RH</option>
+            </Select>
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-status-filter">
+              Status
+            </label>
+            <Select
+              id="finance-occurrence-status-filter"
+              className="ui-select"
+              value={occurrenceStatusFilter}
+              onChange={(event) => setOccurrenceStatusFilter(event.target.value)}
+            >
+              <option value="todos">Todos</option>
+              <option value="pendente">Pendentes</option>
+              <option value="encaminhada">Encaminhadas</option>
+              <option value="resolvida">Resolvidas</option>
+            </Select>
+          </div>
+        </div>
+
+        {filteredOccurrenceRows.length === 0 ? (
           <EmptyState message="Nenhuma ocorrencia emitida" />
         ) : (
           <div className="finance-occurrence-list">
-            {occurrenceRows.map((row) => (
+            {filteredOccurrenceRows.map((row) => (
               <article key={row.id} className="finance-occurrence-card">
                 <div className="finance-occurrence-card__header">
                   <div>
@@ -962,27 +1087,9 @@ function FinanceModule() {
                       {row.category} - {row.destinationSector}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="ui-button ui-button--ghost"
-                    onClick={() =>
-                      printOccurrenceReport({
-                        destinationSector: row.destinationSector,
-                        category: row.category,
-                        title: row.title,
-                        reference: row.reference === '--' ? '' : row.reference,
-                        amount: row.amount === '--' ? '' : row.amount,
-                        cashierName: row.cashierName,
-                        operatorName: row.operatorName,
-                        occurredAt: row.rawOccurredAt,
-                        printedAt: row.rawPrintedAt,
-                        description: row.description,
-                        meta: `Store ${currentStoreId ?? '--'} - ${session?.roleLabel ?? 'Operacao'}`,
-                      })
-                    }
-                  >
-                    Reimprimir
-                  </button>
+                  <span className={`ui-badge ${row.statusMeta.badgeClass}`}>
+                    {row.statusMeta.label}
+                  </span>
                 </div>
                 <div className="finance-occurrence-card__grid">
                   <span>
@@ -1005,6 +1112,45 @@ function FinanceModule() {
                   </span>
                 </div>
                 <p className="finance-occurrence-card__description">{row.description}</p>
+                <div className="finance-occurrence-card__actions">
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={() =>
+                      printOccurrenceReport({
+                        destinationSector: row.destinationSector,
+                        category: row.category,
+                        title: row.title,
+                        reference: row.reference === '--' ? '' : row.reference,
+                        amount: row.amount === '--' ? '' : row.amount,
+                        cashierName: row.cashierName,
+                        operatorName: row.operatorName,
+                        occurredAt: row.rawOccurredAt,
+                        printedAt: row.rawPrintedAt,
+                        description: row.description,
+                        meta: `Store ${currentStoreId ?? '--'} - ${session?.roleLabel ?? 'Operacao'}`,
+                      })
+                    }
+                  >
+                    Reimprimir
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button--secondary"
+                    disabled={row.status === 'encaminhada'}
+                    onClick={() => handleOccurrenceStatusChange(row, 'encaminhada')}
+                  >
+                    Encaminhar
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button--primary"
+                    disabled={row.status === 'resolvida'}
+                    onClick={() => handleOccurrenceStatusChange(row, 'resolvida')}
+                  >
+                    Resolver
+                  </button>
+                </div>
               </article>
             ))}
           </div>

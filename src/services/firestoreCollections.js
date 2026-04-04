@@ -252,6 +252,8 @@ export const firestoreDataModel = {
       'occurredAt',
       'description',
       'printedAt',
+      'status',
+      'statusUpdatedAt',
       'createdAt',
       'updatedAt',
     ],

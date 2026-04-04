@@ -1,4 +1,13 @@
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore'
 
 import {
   assertFirebaseReady,
@@ -15,6 +24,7 @@ import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
 
 const financeTypes = new Set(['entrada', 'saida'])
 const financeSources = new Set(['venda', 'manual'])
+const financialOccurrenceStatuses = new Set(['pendente', 'encaminhada', 'resolvida'])
 
 function parseMoney(value, fieldLabel) {
   const normalized = String(value ?? '')
@@ -63,6 +73,17 @@ function getFinancialOccurrencesCollectionRef(storeId) {
     FIRESTORE_COLLECTIONS.stores,
     storeId,
     FIRESTORE_COLLECTIONS.financialOccurrences,
+  )
+}
+
+function getFinancialOccurrenceDocRef(storeId, occurrenceId) {
+  assertFirebaseReady()
+  return doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.financialOccurrences,
+    occurrenceId,
   )
 }
 
@@ -255,6 +276,7 @@ export function validateFinancialOccurrenceInput(values) {
   const occurredAt = values.occurredAt?.trim()
   const description = values.description?.trim()
   const printedAt = values.printedAt?.trim()
+  const status = values.status?.trim() || 'pendente'
 
   if (!title) {
     throw new Error('Informe o titulo da ocorrencia.')
@@ -268,6 +290,10 @@ export function validateFinancialOccurrenceInput(values) {
     throw new Error('Informe a descricao da ocorrencia.')
   }
 
+  if (!financialOccurrenceStatuses.has(status)) {
+    throw new Error('Informe um status valido para a ocorrencia.')
+  }
+
   return {
     destinationSector,
     category,
@@ -279,6 +305,7 @@ export function validateFinancialOccurrenceInput(values) {
     occurredAt,
     description,
     printedAt,
+    status,
   }
 }
 
@@ -340,6 +367,42 @@ export async function createFinancialOccurrence({ storeId, tenantId, values }) {
 
   invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialOccurrences))
   return occurrenceRef.id
+}
+
+export async function updateFinancialOccurrenceStatus({ storeId, occurrenceId, status }) {
+  const normalizedStatus = String(status ?? '').trim()
+
+  if (!storeId || !occurrenceId) {
+    throw new Error('Ocorrencia invalida para atualizacao.')
+  }
+
+  if (!financialOccurrenceStatuses.has(normalizedStatus)) {
+    throw new Error('Status da ocorrencia invalido.')
+  }
+
+  await updateDoc(getFinancialOccurrenceDocRef(storeId, occurrenceId), {
+    status: normalizedStatus,
+    statusUpdatedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialOccurrences))
+}
+
+export function getFinancialOccurrenceStatusMeta(status) {
+  const normalizedStatus = String(status ?? 'pendente')
+    .trim()
+    .toLowerCase()
+
+  if (normalizedStatus === 'resolvida') {
+    return { label: 'Resolvida', badgeClass: 'ui-badge--success' }
+  }
+
+  if (normalizedStatus === 'encaminhada') {
+    return { label: 'Encaminhada', badgeClass: 'ui-badge--warning' }
+  }
+
+  return { label: 'Pendente', badgeClass: 'ui-badge--danger' }
 }
 
 export function getFinanceEntryDirection(entry) {
