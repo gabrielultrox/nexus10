@@ -27,7 +27,6 @@ const ProductsPage = lazy(() => import('../pages/ProductsPage'))
 const ReportsPage = lazy(() => import('../pages/ReportsPage'))
 const SalesPage = lazy(() => import('../pages/SalesPage'))
 const SettingsPage = lazy(() => import('../pages/SettingsPage'))
-const ZeDeliveryIntegrationPage = lazy(() => import('../pages/ZeDeliveryIntegrationPage'))
 const ordersRoute = routeDefinitions.find((route) => route.path === 'orders')
 const salesRoute = routeDefinitions.find((route) => route.path === 'sales')
 
@@ -81,8 +80,6 @@ function getRouteElement(route) {
         return withRouteSuspense(<ReportsPage />)
       case 'settings':
         return withRouteSuspense(<SettingsPage />)
-      case 'integrations/ze-delivery':
-        return withRouteSuspense(<ZeDeliveryIntegrationPage />)
       default:
         return withRouteSuspense(<NativeModulePage route={route} />)
     }

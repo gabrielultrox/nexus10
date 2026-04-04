@@ -35,7 +35,6 @@ import './styles/shortcuts.css'
 import './styles/inventory.css'
 import './styles/audit-log.css'
 import './styles/history.css'
-import './styles/ze-delivery.css'
 
 function scheduleNonCriticalStartup(work) {
   if (typeof window === 'undefined') {

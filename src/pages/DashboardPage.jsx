@@ -10,7 +10,6 @@ import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid'
 import DashboardOperationalSummary from '../components/dashboard/DashboardOperationalSummary'
 import { ErrorDisplay, LoadingOverlay, Skeleton } from '../components/ui'
 import { useStore } from '../contexts/StoreContext'
-import { useZeDeliverySyncStatus } from '../hooks/queries/useZeDeliverySyncStatus'
 import { getApiErrorDisplayModel } from '../services/apiErrorHandler'
 import {
   buildDashboardData,
@@ -18,7 +17,6 @@ import {
   loadDashboardOperationalSources,
   subscribeToDashboardSources,
 } from '../services/dashboard'
-import { subscribeToIntegrationMerchants } from '../services/externalOrders'
 import { firebaseReady } from '../services/firebase'
 import { LOCAL_RECORDS_EVENT } from '../services/localAccess'
 
@@ -37,7 +35,6 @@ function DashboardPage() {
   const [orders, setOrders] = useState([])
   const [inventoryItems, setInventoryItems] = useState([])
   const [financialEntries, setFinancialEntries] = useState([])
-  const [ifoodMerchants, setIfoodMerchants] = useState([])
   const [operationalSources, setOperationalSources] = useState(() =>
     loadDashboardOperationalSources(),
   )
@@ -45,14 +42,6 @@ function DashboardPage() {
   const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [showHeavyPanels, setShowHeavyPanels] = useState(false)
-  const {
-    data: zeDashboard,
-    error: zeDashboardError,
-    isFetching: isZeFetching,
-  } = useZeDeliverySyncStatus({
-    storeId: currentStoreId,
-    enabled: Boolean(currentStoreId && showHeavyPanels),
-  })
 
   useEffect(() => {
     const relevantStorageKeys = new Set([
@@ -158,27 +147,7 @@ function DashboardPage() {
     })
   }, [currentStoreId])
 
-  useEffect(() => {
-    if (!currentStoreId || !showHeavyPanels) {
-      setIfoodMerchants([])
-      return undefined
-    }
-
-    return subscribeToIntegrationMerchants(
-      currentStoreId,
-      'IFOOD',
-      (nextMerchants) => setIfoodMerchants(nextMerchants),
-      () => setIfoodMerchants([]),
-    )
-  }, [currentStoreId, showHeavyPanels])
-
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
-  const currentStoreZeDashboard = useMemo(
-    () =>
-      zeDashboard?.stores?.find((storeDashboard) => storeDashboard.storeId === currentStoreId) ??
-      null,
-    [currentStoreId, zeDashboard],
-  )
 
   const { kpis, charts, operations } = useMemo(
     () =>
@@ -191,26 +160,16 @@ function DashboardPage() {
         startDate: period.startDate,
         endDate: period.endDate,
         operations: operationalSources,
-        integrations: {
-          zeDeliverySummary: zeDashboard?.summary,
-          zeDeliveryStore: currentStoreZeDashboard,
-          ifoodMerchants,
-          integrationError: zeDashboardError,
-        },
       }),
     [
       financialEntries,
-      ifoodMerchants,
       inventoryItems,
       currentStoreId,
-      currentStoreZeDashboard,
       operationalSources,
       orders,
       period.endDate,
       period.startDate,
       sales,
-      zeDashboard?.summary,
-      zeDashboardError,
     ],
   )
 
@@ -348,11 +307,6 @@ function DashboardPage() {
             <Skeleton variant="rect" height="240px" />
           </div>
         )}
-        {isZeFetching && !isDashboardLoading ? (
-          <div className="dashboard-sync-note" role="status" aria-live="polite">
-            Atualizando leitura das integracoes externas.
-          </div>
-        ) : null}
         <DashboardOperationalSummary operations={operations} onNavigate={navigate} />
         {showHeavyPanels ? (
           <Suspense

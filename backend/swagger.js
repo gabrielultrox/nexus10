@@ -6,7 +6,7 @@ export const swaggerSpec = {
     title: 'Nexus10 Backend API',
     version: '1.0.0',
     description:
-      'Documentacao OpenAPI do backend do Nexus10. Cobre autenticacao, pedidos, vendas, auditoria, assistente e integracoes iFood.',
+      'Documentacao OpenAPI do backend do Nexus10. Cobre autenticacao, pedidos, vendas, auditoria e assistente.',
   },
   servers: [{ url: '/', description: 'Servidor atual' }],
   tags: [
@@ -16,8 +16,6 @@ export const swaggerSpec = {
     { name: 'Orders', description: 'Gestao de pedidos internos do Nexus10.' },
     { name: 'Sales', description: 'Gestao de vendas diretas e conversoes de pedido.' },
     { name: 'Assistant', description: 'Consulta assistida de dados operacionais.' },
-    { name: 'iFood', description: 'Operacoes de integracao e sincronizacao com iFood.' },
-    { name: 'Webhook', description: 'Endpoints de recepcao de webhooks externos.' },
   ],
   components: {
     securitySchemes: {
@@ -81,7 +79,7 @@ export const swaggerSpec = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'ok' },
-          service: { type: 'string', example: 'nexus-ifood-integration' },
+          service: { type: 'string', example: 'nexus10-backend' },
           timestamp: { type: 'string', format: 'date-time', example: '2026-03-27T15:02:12.000Z' },
         },
         required: ['status', 'service', 'timestamp'],
@@ -735,128 +733,6 @@ swaggerSpec.paths['/api/stores/{storeId}/assistant/query'] = {
         content: {
           'application/json': { schema: { $ref: '#/components/schemas/AssistantQueryResponse' } },
         },
-      },
-    },
-  },
-}
-
-swaggerSpec.paths['/api/integrations/ifood/merchants/{storeId}'] = {
-  get: {
-    tags: ['iFood'],
-    security: bearerSecurity,
-    summary: 'Lista merchants iFood da loja',
-    parameters: [{ $ref: '#/components/parameters/StoreId' }],
-    responses: {
-      200: {
-        description: 'Merchants encontrados',
-        content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/IfoodMerchantListResponse' },
-          },
-        },
-      },
-    },
-  },
-}
-
-swaggerSpec.paths['/api/integrations/ifood/polling/run'] = {
-  post: {
-    tags: ['iFood'],
-    security: bearerSecurity,
-    summary: 'Executa polling manual do iFood',
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/IfoodPollingRequest' },
-          examples: {
-            default: { value: { storeId: 'store-demo-001', merchantId: 'ifood-merchant-001' } },
-          },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Polling processado',
-        content: {
-          'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } },
-        },
-      },
-      404: {
-        description: 'Merchant nao encontrado',
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
-      },
-    },
-  },
-}
-
-swaggerSpec.paths['/api/integrations/ifood/orders/{storeId}/{merchantId}/{orderId}/sync'] = {
-  post: {
-    tags: ['iFood'],
-    security: bearerSecurity,
-    summary: 'Sincroniza um pedido especifico do iFood',
-    parameters: [
-      { $ref: '#/components/parameters/StoreId' },
-      { $ref: '#/components/parameters/MerchantId' },
-      { $ref: '#/components/parameters/OrderId' },
-    ],
-    responses: {
-      200: {
-        description: 'Pedido sincronizado',
-        content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/IfoodProcessResponse' },
-            examples: {
-              default: {
-                value: {
-                  ok: true,
-                  data: {
-                    id: 'ifood-order-001',
-                    status: 'PLACED',
-                    merchantId: 'ifood-merchant-001',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-}
-
-swaggerSpec.paths['/webhooks/ifood/{storeId}/{merchantId}'] = {
-  post: {
-    tags: ['Webhook', 'iFood'],
-    summary: 'Recebe webhook do iFood',
-    parameters: [
-      { $ref: '#/components/parameters/StoreId' },
-      { $ref: '#/components/parameters/MerchantId' },
-      {
-        name: 'X-IFood-Signature',
-        in: 'header',
-        required: true,
-        schema: { type: 'string' },
-        example: 'sha256=14b8b8b9af5f1c3...',
-      },
-    ],
-    requestBody: {
-      required: true,
-      content: {
-        'text/plain': { schema: { $ref: '#/components/schemas/IfoodWebhookTextBody' } },
-        'application/json': { schema: { $ref: '#/components/schemas/IfoodWebhookTextBody' } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Webhook processado',
-        content: {
-          'application/json': { schema: { $ref: '#/components/schemas/IfoodProcessResponse' } },
-        },
-      },
-      401: {
-        description: 'Assinatura invalida ou falha de processamento',
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
       },
     },
   },

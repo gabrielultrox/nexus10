@@ -99,21 +99,6 @@ function buildDateLabel(date) {
   }).format(date)
 }
 
-function formatDateTime(value) {
-  const dateValue = asDate(value)
-
-  if (!dateValue) {
-    return 'Sem registro'
-  }
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(dateValue)
-}
-
 function getDayKey(date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -372,7 +357,6 @@ export function buildDashboardData({
   startDate,
   endDate,
   operations = {},
-  integrations = {},
 }) {
   const now = new Date()
   const completedSales = sales.filter(
@@ -466,27 +450,20 @@ export function buildDashboardData({
     .sort((left, right) => right.quantity - left.quantity)
     .slice(0, 5)
 
-  const externalIfoodOrders = ordersInPeriod.filter((order) => matchesChannel(order, 'IFOOD'))
-  const externalZeOrders = ordersInPeriod.filter((order) => matchesChannel(order, 'ZE_DELIVERY'))
-  const ifoodMerchants = integrations.ifoodMerchants ?? []
-  const zeDeliveryStore = integrations.zeDeliveryStore ?? null
-  const zeStats24h = zeDeliveryStore?.stats24h ?? null
-  const zeSuccessRate =
-    zeStats24h?.totalRuns != null
-      ? Math.max(0, 100 - Number(zeStats24h.failureRate ?? 0))
-      : (integrations.zeDeliverySummary?.successRate ?? null)
-  const zeLastSyncSuccess = zeDeliveryStore?.status?.lastSyncSuccess
-  const integrationIssueCount =
-    (zeStats24h?.errors ?? integrations.zeDeliverySummary?.errorCount ?? 0) +
-    (integrations.integrationError ? 1 : 0)
-  const iFoodConfiguredCount = ifoodMerchants.length
+  const externalChannelOrders = ordersInPeriod.filter(
+    (order) =>
+      matchesChannel(order, 'EXTERNAL') ||
+      matchesChannel(order, 'MARKETPLACE') ||
+      matchesChannel(order, 'APP') ||
+      matchesChannel(order, 'DELIVERY'),
+  )
+  const completedChecklistRate = normalizeRate(
+    machineChecklist.length - uncheckedMachines,
+    Math.max(machineChecklist.length, 1),
+  )
   const orderCompletionRate = normalizeRate(completedOrders.length, ordersInPeriod.length) ?? 0
   const totalOperationalRisks =
-    delayedOrders.length +
-    openOccurrences +
-    highPriorityFinancialPendings.length +
-    openChanges +
-    integrationIssueCount
+    delayedOrders.length + openOccurrences + highPriorityFinancialPendings.length + openChanges
   const shouldShowAdvancesReminder = openAdvances > 0 && shouldHighlightAdvanceReminder(now)
   const periodLabel = buildPeriodLabel(startDate, endDate)
   const shiftLabel = getShiftLabel(now)
@@ -569,18 +546,6 @@ export function buildDashboardData({
     )
   }
 
-  if (zeLastSyncSuccess === false || integrationIssueCount > 0) {
-    reminders.push(
-      buildReminder({
-        id: 'integrations-unstable',
-        type: 'danger',
-        title: 'Integracoes exigem atencao',
-        message: 'O monitoramento detectou erro recente em sincronizacao externa.',
-        route: '/integrations/ze-delivery',
-      }),
-    )
-  }
-
   if (shouldShowAdvancesReminder) {
     reminders.push(
       buildReminder({
@@ -656,16 +621,20 @@ export function buildDashboardData({
         tone: 'blue',
       },
       {
-        id: 'integrations',
-        label: 'Integracoes',
+        id: 'monitoring',
+        label: 'Monitoramento local',
         value:
-          zeSuccessRate != null
-            ? formatPercent(zeSuccessRate, 0)
-            : formatInteger(iFoodConfiguredCount),
-        meta: `Ze ${zeLastSyncSuccess === false ? 'instavel' : 'monitorado'} - iFood ${formatInteger(iFoodConfiguredCount)} loja(s)`,
-        badgeText: integrationIssueCount > 0 ? 'instavel' : 'ok',
-        badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
-        tone: integrationIssueCount > 0 ? 'amber' : 'green',
+          machineChecklist.length > 0
+            ? formatPercent(completedChecklistRate ?? 0, 0)
+            : formatInteger(openOccurrences),
+        meta:
+          machineChecklist.length > 0
+            ? `${formatInteger(uncheckedMachines)} checklist(s) pendente(s)`
+            : `${formatInteger(openOccurrences)} ocorrencia(s) aberta(s)`,
+        badgeText: uncheckedMachines > 0 || openOccurrences > 0 ? 'acao' : 'ok',
+        badgeClass:
+          uncheckedMachines > 0 || openOccurrences > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+        tone: uncheckedMachines > 0 || openOccurrences > 0 ? 'amber' : 'green',
       },
     ],
     charts: {
@@ -709,10 +678,13 @@ export function buildDashboardData({
             meta: cashState.status === 'aberto' ? 'caixa aberto no turno' : 'caixa fechado',
           },
           {
-            id: 'hero-integrations',
-            label: 'Saude das integracoes',
-            value: zeSuccessRate != null ? formatPercent(zeSuccessRate, 0) : 'Sem sinal',
-            meta: `Ze ${zeLastSyncSuccess === false ? 'com falha' : 'ok'} - iFood ${formatInteger(iFoodConfiguredCount)} loja(s)`,
+            id: 'hero-monitoring',
+            label: 'Checklist e ocorrencias',
+            value: formatInteger(uncheckedMachines + openOccurrences),
+            meta:
+              uncheckedMachines > 0
+                ? `${formatInteger(uncheckedMachines)} checklist(s) pendente(s)`
+                : `${formatInteger(openOccurrences)} ocorrencia(s) aberta(s)`,
           },
         ],
         actions: [
@@ -720,9 +692,9 @@ export function buildDashboardData({
           { id: 'hero-sales-action', label: 'Vendas', route: '/sales', variant: 'secondary' },
           { id: 'hero-cash-action', label: 'Caixa', route: '/cash', variant: 'secondary' },
           {
-            id: 'hero-integrations-action',
-            label: 'Integracoes',
-            route: '/integrations/ze-delivery',
+            id: 'hero-history-action',
+            label: 'Historico',
+            route: '/history',
             variant: 'secondary',
           },
         ],
@@ -775,15 +747,18 @@ export function buildDashboardData({
           actionLabel: 'Abrir fila',
         },
         {
-          id: 'command-integrations',
-          label: 'Integracoes',
-          value: zeSuccessRate != null ? formatPercent(zeSuccessRate, 0) : 'Sem sinal',
-          meta: `Ze ${zeLastSyncSuccess === false ? 'instavel' : 'monitorado'} - iFood ${formatInteger(iFoodConfiguredCount)} configurado(s)`,
-          badgeText: integrationIssueCount > 0 ? 'atencao' : 'estavel',
-          badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
-          tone: integrationIssueCount > 0 ? 'amber' : 'green',
-          route: '/integrations/ze-delivery',
-          actionLabel: 'Abrir painel',
+          id: 'command-monitoring',
+          label: 'Ocorrencias',
+          value: formatInteger(openOccurrences),
+          meta: `${formatInteger(uncheckedMachines)} checklist(s) pendente(s) - ${formatInteger(openChanges)} troco(s) em aberto`,
+          badgeText: openOccurrences > 0 || uncheckedMachines > 0 ? 'acao' : 'ok',
+          badgeClass:
+            openOccurrences > 0 || uncheckedMachines > 0
+              ? 'ui-badge--warning'
+              : 'ui-badge--success',
+          tone: openOccurrences > 0 || uncheckedMachines > 0 ? 'amber' : 'green',
+          route: '/occurrences',
+          actionLabel: 'Abrir ocorrencias',
         },
         {
           id: 'command-couriers',
@@ -876,19 +851,6 @@ export function buildDashboardData({
               },
             ]
           : []),
-        ...(integrationIssueCount > 0
-          ? [
-              {
-                id: 'risk-integrations',
-                title: 'Integracoes instaveis',
-                description: 'Falha recente de webhook ou scheduler externo.',
-                badgeText: formatInteger(integrationIssueCount),
-                badgeClass: 'ui-badge--danger',
-                tone: 'danger',
-                route: '/integrations/ze-delivery',
-              },
-            ]
-          : []),
       ].slice(0, 5),
       activeShift: activeCouriers.slice(0, 5).map((record) => ({
         id: record.id,
@@ -970,36 +932,32 @@ export function buildDashboardData({
       ],
       integrationWatch: [
         {
-          id: 'integration-ze-delivery',
-          title: 'Ze Delivery',
+          id: 'monitoring-checklist',
+          title: 'Checklist operacional',
           description:
-            zeDeliveryStore?.status?.lastSyncAt != null
-              ? `Ultima sincronizacao em ${formatDateTime(zeDeliveryStore.status.lastSyncAt)}`
-              : 'Nenhum ciclo recente registrado',
-          badgeText:
-            zeSuccessRate != null
-              ? formatPercent(zeSuccessRate, 0)
-              : zeLastSyncSuccess === false
-                ? 'erro'
-                : 'monitorando',
-          badgeClass: zeLastSyncSuccess === false ? 'ui-badge--danger' : 'ui-badge--success',
-          route: '/integrations/ze-delivery',
+            machineChecklist.length > 0
+              ? `${formatInteger(machineChecklist.length - uncheckedMachines)} validado(s) de ${formatInteger(machineChecklist.length)}`
+              : 'Nenhum checklist registrado no recorte atual',
+          badgeText: uncheckedMachines > 0 ? 'pendente' : 'ok',
+          badgeClass: uncheckedMachines > 0 ? 'ui-badge--warning' : 'ui-badge--success',
+          route: '/machine-history',
         },
         {
-          id: 'integration-ifood',
-          title: 'iFood',
-          description: `${formatInteger(externalIfoodOrders.length)} pedido(s) no recorte e ${formatInteger(iFoodConfiguredCount)} merchant(s) configurado(s)`,
-          badgeText: iFoodConfiguredCount > 0 ? 'ativo' : 'configurar',
-          badgeClass: iFoodConfiguredCount > 0 ? 'ui-badge--info' : 'ui-badge--warning',
+          id: 'monitoring-channel-mix',
+          title: 'Canais monitorados',
+          description: `${formatInteger(externalChannelOrders.length)} pedido(s) vieram de canais externos registrados no recorte`,
+          badgeText: externalChannelOrders.length > 0 ? 'ativo' : 'interno',
+          badgeClass: externalChannelOrders.length > 0 ? 'ui-badge--info' : 'ui-badge--neutral',
           route: '/orders',
         },
         {
-          id: 'integration-channel-mix',
-          title: 'Canal externo',
-          description: `${formatInteger(externalZeOrders.length)} pedido(s) Ze Delivery no recorte atual`,
-          badgeText: integrationIssueCount > 0 ? 'atencao' : 'estavel',
-          badgeClass: integrationIssueCount > 0 ? 'ui-badge--warning' : 'ui-badge--success',
-          route: '/integrations/ze-delivery',
+          id: 'monitoring-financial-pulse',
+          title: 'Pendencias financeiras',
+          description: `${formatInteger(openFinancialPendings.length)} item(ns) em aberto e ${formatCurrency(openFinancialPendingAmount)} em risco`,
+          badgeText: highPriorityFinancialPendings.length > 0 ? 'critico' : 'controle',
+          badgeClass:
+            highPriorityFinancialPendings.length > 0 ? 'ui-badge--danger' : 'ui-badge--info',
+          route: '/financial-pendings',
         },
       ],
     },

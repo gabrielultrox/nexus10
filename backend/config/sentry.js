@@ -29,14 +29,6 @@ function resolveUserId(request) {
 function resolveIntegration(request) {
   const path = String(request?.originalUrl ?? request?.path ?? '').toLowerCase()
 
-  if (path.includes('/webhooks/ifood') || path.includes('/integrations/ifood')) {
-    return 'ifood'
-  }
-
-  if (path.includes('/integrations/ze-delivery')) {
-    return 'ze-delivery'
-  }
-
   return null
 }
 

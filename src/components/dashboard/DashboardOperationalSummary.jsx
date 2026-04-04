@@ -62,7 +62,7 @@ function DashboardOperationalSummary({ operations, onNavigate }) {
           </div>
         </SurfaceCard>
 
-        <SurfaceCard title="Integracoes">
+        <SurfaceCard title="Monitoramento">
           <div className="ops-list ops-list--compact">
             {operations.integrationWatch.map((item) => (
               <button

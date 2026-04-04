@@ -246,7 +246,7 @@ describe('backend security', () => {
 
     const payload = await response.json()
 
-    expect(payload.service).toBe('nexus-ifood-integration')
+    expect(payload.service).toBe('nexus10-backend')
     expect(payload.checks.firestore.status).toBeDefined()
     expect(payload.checks.metrics.status).toBe('ok')
     expect(payload.checks.scheduler.errorCount).toBeDefined()

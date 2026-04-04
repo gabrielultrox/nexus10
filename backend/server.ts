@@ -17,7 +17,7 @@ const server = app.listen(backendEnv.port, () => {
       port: backendEnv.port,
       environment: backendEnv.nodeEnv,
     },
-    `nexus-ifood backend ativo em http://127.0.0.1:${backendEnv.port} (${backendEnv.nodeEnv})`,
+    `nexus10 backend ativo em http://127.0.0.1:${backendEnv.port} (${backendEnv.nodeEnv})`,
   )
 })
 

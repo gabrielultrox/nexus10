@@ -235,49 +235,6 @@ beforeEach(() => {
 })
 
 describe('backend authorization and permissions', () => {
-  it('blocks iFood merchant listing for a store outside the authenticated scope', async () => {
-    const response = await fetch(`${baseUrl}/api/integrations/ifood/merchants/store-b`)
-
-    expect(response.status).toBe(403)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Seu perfil nao tem acesso a esta loja.',
-    })
-    expect(mockState.listIntegrationMerchants).not.toHaveBeenCalled()
-  })
-
-  it('redacts merchant secrets when returning iFood merchants to the frontend', async () => {
-    mockState.listIntegrationMerchants.mockResolvedValue([
-      {
-        id: 'merchant-1',
-        merchantId: 'merchant-1',
-        source: 'ifood',
-        name: 'Loja teste',
-        tenantId: 'tenant-1',
-        status: 'active',
-        clientId: 'public-client',
-        clientSecret: 'super-secret',
-        accessToken: 'sensitive-access-token',
-        refreshToken: 'sensitive-refresh-token',
-      },
-    ])
-
-    const response = await fetch(`${baseUrl}/api/integrations/ifood/merchants/store-a`)
-    const payload = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(payload.data).toHaveLength(1)
-    expect(payload.data[0]).toMatchObject({
-      id: 'merchant-1',
-      merchantId: 'merchant-1',
-      name: 'Loja teste',
-      source: 'ifood',
-      status: 'active',
-    })
-    expect(payload.data[0]).not.toHaveProperty('clientSecret')
-    expect(payload.data[0]).not.toHaveProperty('accessToken')
-    expect(payload.data[0]).not.toHaveProperty('refreshToken')
-  })
-
   it('blocks finance entry creation for a role without finance:write', async () => {
     mockState.currentAuthUser = {
       uid: 'operator-1',

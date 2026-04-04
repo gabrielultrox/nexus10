@@ -116,7 +116,7 @@ export const routeDefinitions = [
     section: 'Mapa',
     eyebrow: 'Mapa',
     title: 'Zonas de nao entrega',
-    description: 'Controle manual das areas bloqueadas pelo Ze Delivery e restricoes por zona.',
+    description: 'Controle manual das areas bloqueadas e restricoes operacionais por zona.',
     requiredRoles: ['operador'],
   },
   {
@@ -202,16 +202,6 @@ export const routeDefinitions = [
     eyebrow: 'Sistema',
     title: 'Log de auditoria',
     description: 'Historico de acoes, eventos e rastreabilidade do sistema.',
-    requiredRoles: ['admin'],
-  },
-  {
-    path: 'integrations/ze-delivery',
-    label: 'Ze Delivery',
-    icon: '17A',
-    section: 'Sistema',
-    eyebrow: 'Integracoes',
-    title: 'Ze Delivery',
-    description: 'Monitoramento e controle da sincronizacao automatica do Ze Delivery.',
     requiredRoles: ['admin'],
   },
   {

@@ -8,10 +8,6 @@
       "destination": "/api/index.ts"
     },
     {
-      "source": "/webhooks/ifood/(.*)",
-      "destination": "/api/index.ts"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

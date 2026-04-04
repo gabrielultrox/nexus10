@@ -173,8 +173,6 @@ function DashboardAnalytics({ currentStoreId, availableStoreIds = [], onStoreCha
               >
                 <option value="all">Todos</option>
                 <option value="pdv">PDV</option>
-                <option value="ifood">iFood</option>
-                <option value="ze_delivery">Ze Delivery</option>
               </Select>
             </div>
 
