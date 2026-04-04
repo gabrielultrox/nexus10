@@ -43,7 +43,6 @@ export function requestLogger(request, response, next) {
     const userId = request.authUser?.uid ?? null
     const logLevel =
       response.statusCode >= 500 ? 'error' : response.statusCode >= 400 ? 'warn' : 'info'
-    const isIfoodWebhook = request.originalUrl.startsWith('/webhooks/ifood/')
     const requestLog = request.log?.child
       ? request.log.child({ user_id: userId, route: resolvedRoute, ip_address: ipAddress })
       : request.log
@@ -69,7 +68,6 @@ export function requestLogger(request, response, next) {
       path: request.originalUrl,
       statusCode: response.statusCode,
       durationMs: Number(durationMs.toFixed(2)),
-      isIfoodWebhook,
       storeId: request.params?.storeId,
       merchantId: request.params?.merchantId,
     })

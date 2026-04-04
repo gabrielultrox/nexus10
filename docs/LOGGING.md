@@ -100,7 +100,7 @@ Exemplo:
 const runSync = withMethodLogging(
   {
     logger: serviceLogger,
-    action: 'ifood.order.sync',
+    action: 'orders.sync',
     getStartPayload: ({ orderId }) => ({ order_id: orderId }),
   },
   async ({ orderId }) => {
@@ -124,14 +124,6 @@ const runSync = withMethodLogging(
 Arquivo:
 
 - `backend/modules/auth/authController.ts`
-
-### iFood
-
-- `getAccessToken`
-
-Arquivo:
-
-- `backend/integrations/ifood/ifoodAdapter.js`
 
 ## Scripts úteis
 

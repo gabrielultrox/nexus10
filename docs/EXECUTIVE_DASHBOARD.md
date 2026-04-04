@@ -54,14 +54,6 @@ Mostra capacidade atual de rua.
 - Meta: leituras fechadas e base cadastrada
 - Acao: abrir `/delivery-reading`
 
-### Integracoes
-
-Mostra saude externa para pedidos automatizados.
-
-- Valor: taxa de sucesso do Ze Delivery quando disponivel
-- Fallback: quantidade de merchants iFood configurados
-- Acao: abrir `/integrations/ze-delivery`
-
 ## Estrutura da tela
 
 ### Hero executivo
@@ -78,7 +70,6 @@ Agrupa:
 
 - riscos do turno
 - financeiro e caixa
-- integracoes
 - entregadores e leitura
 - top produtos
 - estoque e abastecimento
@@ -91,8 +82,6 @@ Agrupa:
 - vendas
 - estoque
 - lancamentos financeiros
-- merchants iFood
-- dashboard Ze Delivery
 
 ### Locais operacionais
 
@@ -110,9 +99,8 @@ Ordem de severidade adotada:
 
 1. pedidos fora da janela
 2. pendencias financeiras criticas
-3. falhas de integracao
-4. ocorrencias abertas
-5. checklists e estoque
+3. ocorrencias abertas
+4. checklists e estoque
 
 Essa ordem foi escolhida porque ataca primeiro o que afeta cliente, faturamento e continuidade do turno.
 

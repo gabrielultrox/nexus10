@@ -39,7 +39,7 @@ function getMerchantCollection(storeId: string): CollectionReference<DocumentDat
 export async function getIntegrationMerchant({
   storeId,
   merchantId,
-  source = 'ifood',
+  source = 'external',
 }: IntegrationMerchantLookupOptions): Promise<MerchantRecord | null> {
   const cacheKey = buildCacheKey('store', storeId, 'merchant', merchantId, source)
 
@@ -61,7 +61,7 @@ export async function getIntegrationMerchant({
 
 export async function listIntegrationMerchants({
   storeId,
-  source = 'ifood',
+  source = 'external',
   enabledOnly = false,
 }: IntegrationMerchantListOptions): Promise<MerchantRecord[]> {
   const cacheKey = buildCacheKey(
@@ -105,8 +105,8 @@ export async function touchIntegrationMerchant({
     )
 
   await cacheInvalidate([
-    buildCacheKey('store', storeId, 'merchant', merchantId, 'ifood'),
-    buildCacheKey('store', storeId, 'merchants', 'ifood', 'all'),
-    buildCacheKey('store', storeId, 'merchants', 'ifood', 'active'),
+    buildCacheKey('store', storeId, 'merchant', merchantId, 'external'),
+    buildCacheKey('store', storeId, 'merchants', 'external', 'all'),
+    buildCacheKey('store', storeId, 'merchants', 'external', 'active'),
   ])
 }

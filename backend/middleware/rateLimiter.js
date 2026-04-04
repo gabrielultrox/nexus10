@@ -294,8 +294,8 @@ export const authenticatedApiRateLimiter = createRateLimitMiddleware({
   keyGenerator: (request) => request.authUser?.uid ?? normalizeIpAddress(request.ip),
 })
 
-export const ifoodWebhookRateLimiter = createRateLimitMiddleware({
-  name: 'ifood-webhook',
+export const merchantWebhookRateLimiter = createRateLimitMiddleware({
+  name: 'merchant-webhook',
   windowMs: 60 * 1000,
   max: 50,
   keyGenerator: (request) =>

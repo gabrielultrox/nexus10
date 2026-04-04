@@ -66,17 +66,6 @@ Obrigatórias para segurança e observabilidade:
 - `API_RATE_LIMIT_MAX`
 - `AUTH_RATE_LIMIT_MAX`
 
-Obrigatórias para iFood, se a integração estiver ativa:
-
-- `IFOOD_AUTH_BASE_URL`
-- `IFOOD_MERCHANT_BASE_URL`
-- `IFOOD_EVENTS_POLLING_PATH`
-- `IFOOD_EVENTS_ACK_PATH`
-- `IFOOD_ORDER_DETAILS_PATH`
-- `IFOOD_WEBHOOK_URL`
-- `IFOOD_WEBHOOK_SECRET`
-- `IFOOD_POLLING_INTERVAL_SECONDS`
-
 Opcional, mas recomendado:
 
 - `REDIS_URL`
@@ -257,7 +246,7 @@ Resposta esperada de `GET /api/health`:
 ```json
 {
   "status": "ok",
-  "service": "nexus-ifood-integration",
+  "service": "nexus10-backend",
   "timestamp": "2026-03-27T15:00:00.000Z"
 }
 ```
@@ -270,7 +259,6 @@ Depois do deploy:
 - [ ] login operacional funciona
 - [ ] pedidos podem ser criados
 - [ ] vendas podem ser criadas
-- [ ] webhook iFood não retorna erro
 - [ ] Sentry recebe evento de teste quando necessário
 - [ ] dashboard admin de monitoramento está acessível
 

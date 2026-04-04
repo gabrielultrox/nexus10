@@ -63,9 +63,9 @@ beforeAll(async () => {
   )
 
   app.post(
-    '/webhooks/ifood/:storeId/:merchantId',
+    '/webhooks/merchant/:storeId/:merchantId',
     createRateLimitMiddleware({
-      name: 'ifood-webhook-test',
+      name: 'merchant-webhook-test',
       windowMs: 60 * 1000,
       max: 2,
       useRedisStore: false,
@@ -174,17 +174,20 @@ describe('granular rate limiting', () => {
     expect(otherUserResponse.status).toBe(200)
   })
 
-  it('limita webhook do iFood por merchant', async () => {
-    const blockedResponses = await performRequests(`${baseUrl}/webhooks/ifood/store-1/merchant-1`, {
-      count: 3,
-      headers: {
-        'x-forwarded-for': '198.51.100.20',
+  it('limita webhook de merchant por merchant', async () => {
+    const blockedResponses = await performRequests(
+      `${baseUrl}/webhooks/merchant/store-1/merchant-1`,
+      {
+        count: 3,
+        headers: {
+          'x-forwarded-for': '198.51.100.20',
+        },
       },
-    })
+    )
 
     expect(blockedResponses[2].status).toBe(429)
 
-    const otherMerchantResponse = await fetch(`${baseUrl}/webhooks/ifood/store-1/merchant-2`, {
+    const otherMerchantResponse = await fetch(`${baseUrl}/webhooks/merchant/store-1/merchant-2`, {
       method: 'POST',
       headers: {
         'x-forwarded-for': '198.51.100.20',

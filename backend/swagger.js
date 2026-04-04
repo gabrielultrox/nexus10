@@ -47,13 +47,6 @@ export const swaggerSpec = {
         schema: { type: 'string' },
         example: 'sale_20260327_001',
       },
-      MerchantId: {
-        name: 'merchantId',
-        in: 'path',
-        required: true,
-        schema: { type: 'string' },
-        example: 'ifood-merchant-001',
-      },
     },
     schemas: {
       ErrorResponse: {
@@ -299,50 +292,6 @@ export const swaggerSpec = {
             },
           },
         },
-      },
-      IfoodMerchantListResponse: {
-        type: 'object',
-        properties: {
-          data: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                merchantId: { type: 'string', example: 'ifood-merchant-001' },
-                name: { type: 'string', example: 'Loja Centro' },
-                source: { type: 'string', example: 'ifood' },
-                tenantId: { type: 'string', example: 'tenant-demo' },
-                lastSyncAt: { type: 'string', format: 'date-time', nullable: true },
-              },
-              additionalProperties: true,
-            },
-          },
-        },
-      },
-      IfoodPollingRequest: {
-        type: 'object',
-        properties: {
-          storeId: { type: 'string', example: 'store-demo-001' },
-          merchantId: { type: 'string', example: 'ifood-merchant-001' },
-        },
-        required: ['storeId', 'merchantId'],
-      },
-      IfoodWebhookTextBody: {
-        type: 'string',
-        example:
-          '{"id":"evt-001","code":"PLACED","fullCode":"PLC","orderId":"ifood-order-001","createdAt":"2026-03-27T15:00:00.000Z"}',
-      },
-      IfoodProcessResponse: {
-        type: 'object',
-        properties: {
-          ok: { type: 'boolean', example: true },
-          data: {
-            type: 'object',
-            additionalProperties: true,
-            example: { processed: 4, events: [{ eventId: 'evt-001', orderId: 'ifood-order-001' }] },
-          },
-        },
-        required: ['ok'],
       },
       AssistantQueryRequest: {
         type: 'object',

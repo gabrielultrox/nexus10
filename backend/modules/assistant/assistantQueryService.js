@@ -72,10 +72,7 @@ function extractSearchTerm(text, removableTokens = []) {
     .reduce(
       (currentText, token) => currentText.replace(token, ' '),
       text
-        .replace(
-          /\b(mostrar|buscar|procurar|listar|abrir|ir para|de hoje|do ifood|da ifood|dos|das)\b/gi,
-          ' ',
-        )
+        .replace(/\b(mostrar|buscar|procurar|listar|abrir|ir para|de hoje|dos|das)\b/gi, ' ')
         .replace(/\s+/g, ' ')
         .trim(),
     )
@@ -171,10 +168,9 @@ export function createAssistantQueryService() {
   return {
     async searchOrders({ storeId, text }) {
       const records = await getCollectionDocuments(storeId, COLLECTIONS.orders)
-      const onlyIfood = normalizeText(text).includes('ifood')
       const filtered = buildFilteredRecords(records, text, buildOrderProjector, [
         /\bpedido[s]?\b/gi,
-      ]).filter((record) => !onlyIfood || normalizeText(record.source).includes('ifood'))
+      ])
 
       return buildOrderCards(filtered.slice(0, 6))
     },

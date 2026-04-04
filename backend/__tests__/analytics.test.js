@@ -6,7 +6,7 @@ describe('analytics builder', () => {
 
     const sales = Array.from({ length: 20000 }, (_, index) => ({
       id: `sale-${index}`,
-      channel: index % 5 === 0 ? 'IFOOD' : index % 7 === 0 ? 'ZE_DELIVERY' : 'PDV',
+      channel: index % 5 === 0 ? 'BALCAO' : index % 7 === 0 ? 'APP' : 'PDV',
       customerId: `customer-${index % 10000}`,
       createdAt: new Date(Date.UTC(2026, 2, (index % 30) + 1, index % 24, 0, 0)),
       total: 20 + (index % 17),
@@ -27,7 +27,7 @@ describe('analytics builder', () => {
 
     const orders = Array.from({ length: 20000 }, (_, index) => ({
       id: `order-${index}`,
-      channel: index % 4 === 0 ? 'IFOOD' : index % 6 === 0 ? 'ZE_DELIVERY' : 'PDV',
+      channel: index % 4 === 0 ? 'BALCAO' : index % 6 === 0 ? 'APP' : 'PDV',
       status: index % 9 === 0 ? 'CANCELLED' : 'DELIVERED',
       customerId: `customer-${index % 10000}`,
       courierName: `Entregador ${index % 80}`,

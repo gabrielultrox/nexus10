@@ -31,7 +31,6 @@ Exceções:
 
 - `GET /api/health`
 - `POST /api/auth/session`
-- `POST /webhooks/ifood/{storeId}/{merchantId}`
 - `GET /api-docs`
 - `GET /api-docs.json`
 
@@ -166,44 +165,6 @@ Exemplo:
 ```text
 /api/admin/audit-logs?page=1&limit=50&actor=Gabriel&action=CREATE&resource=orders
 ```
-
-## Integração iFood
-
-### `GET /api/integrations/ifood/merchants/{storeId}`
-
-Lista merchants iFood mapeados para a loja.
-
-### `POST /api/integrations/ifood/polling/run`
-
-Dispara polling manual de eventos iFood.
-
-Request:
-
-```json
-{
-  "storeId": "loja-centro",
-  "merchantId": "ifood-merchant-001"
-}
-```
-
-### `POST /api/integrations/ifood/orders/{storeId}/{merchantId}/{orderId}/sync`
-
-Sincroniza uma ordem específica do iFood.
-
-## Webhooks
-
-### `POST /webhooks/ifood/{storeId}/{merchantId}`
-
-Recebe eventos externos do iFood.
-
-Headers relevantes:
-
-- `x-ifood-signature`
-- `content-type`
-
-Body:
-
-- texto bruto recebido do provedor
 
 ## Padrão de Resposta
 

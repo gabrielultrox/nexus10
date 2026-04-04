@@ -33,20 +33,6 @@ vi.mock('./sentry.js', () => ({
   captureMessage: vi.fn(),
 }))
 
-vi.mock('../middleware/health-check.js', () => ({
-  readZeDeliverySchedulerStates: vi.fn(() => []),
-  summarizeZeDeliverySchedulerStates: vi.fn(() => ({
-    status: 'idle',
-    lastSync: null,
-    nextSync: null,
-    errorCount: 0,
-    successRate: null,
-    staleWorkerCount: 0,
-    staleWorkers: [],
-    workers: [],
-  })),
-}))
-
 describe('monitoring metrics and alerts', () => {
   beforeEach(async () => {
     vi.resetModules()
@@ -65,7 +51,6 @@ describe('monitoring metrics and alerts', () => {
       path: '/api/stores/loja-centro/sales',
       statusCode: 200,
       durationMs: 120,
-      isIfoodWebhook: false,
     })
     recordRequestMetric({
       method: 'POST',
@@ -73,7 +58,6 @@ describe('monitoring metrics and alerts', () => {
       path: '/api/stores/loja-centro/orders',
       statusCode: 500,
       durationMs: 1600,
-      isIfoodWebhook: false,
     })
 
     const snapshot = getMonitoringSnapshot()

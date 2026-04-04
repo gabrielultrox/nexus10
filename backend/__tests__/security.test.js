@@ -71,7 +71,7 @@ vi.mock('../middleware/rateLimiter.js', () => ({
   authenticatedApiRateLimiter: (_request, _response, next) => next(),
   createRateLimitMiddleware: () => (_request, _response, next) => next(),
   fileUploadRateLimiter: (_request, _response, next) => next(),
-  ifoodWebhookRateLimiter: (_request, _response, next) => next(),
+  merchantWebhookRateLimiter: (_request, _response, next) => next(),
   loginRateLimiter: (_request, _response, next) => next(),
   publicRateLimiter: (_request, _response, next) => next(),
 }))

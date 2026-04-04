@@ -32,9 +32,9 @@ Chave:
 - `request.authUser.uid`
 - fallback para IP se o contexto autenticado nao existir
 
-### Webhook iFood
+### Webhook de merchant
 
-- `POST /webhooks/ifood/:storeId/:merchantId`
+- `POST /webhooks/merchant/:storeId/:merchantId`
 
 Regra:
 

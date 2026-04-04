@@ -33,7 +33,7 @@ Migrate the backend incrementally without blocking delivery or forcing a full re
 
 ## Phase 4
 
-- convert integrations (`ifood`, assistant, admin)
+- convert remaining feature modules (`assistant`, `admin`)
 - add runtime-safe DTO mapping layers
 - make `strict` errors blocking in CI
 

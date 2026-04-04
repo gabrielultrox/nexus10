@@ -103,20 +103,20 @@ describe('backend validation schemas', () => {
   it('aceita criacao de ordem com merchant string', () => {
     const result = createOrderSchema.parse({
       orderId: 'ORDER-1',
-      merchant: 'ifood',
+      merchant: 'external',
       date: '2026-03-27T10:00:00.000Z',
       items: [{ productId: 'p1', quantity: 2, price: 25 }],
     })
 
     expect(result.orderId).toBe('ORDER-1')
-    expect(result.merchant).toBe('ifood')
+    expect(result.merchant).toBe('external')
     expect(result.items).toHaveLength(1)
   })
 
   it('aceita criacao de ordem com merchant objeto e code/source', () => {
     const result = createOrderSchema.parse({
       code: 'ORDER-2',
-      source: 'ifood',
+      source: 'external',
       merchant: { id: 'merchant-1', name: 'Loja Centro' },
       date: '2026-03-27T10:00:00.000Z',
       items: [{ productId: 'p1', quantity: 1, unitPrice: 30 }],
@@ -129,7 +129,7 @@ describe('backend validation schemas', () => {
 
   it('rejeita ordem sem identificador', () => {
     const result = createOrderSchema.safeParse({
-      merchant: 'ifood',
+      merchant: 'external',
       date: '2026-03-27T10:00:00.000Z',
       items: [{ productId: 'p1', quantity: 2, price: 25 }],
     })
@@ -152,7 +152,7 @@ describe('backend validation schemas', () => {
   it('rejeita ordem sem itens', () => {
     const result = createOrderSchema.safeParse({
       orderId: 'ORDER-4',
-      merchant: 'ifood',
+      merchant: 'external',
       date: '2026-03-27T10:00:00.000Z',
       items: [],
     })
@@ -164,7 +164,7 @@ describe('backend validation schemas', () => {
   it('rejeita item sem price ou unitPrice', () => {
     const result = createOrderSchema.safeParse({
       orderId: 'ORDER-5',
-      merchant: 'ifood',
+      merchant: 'external',
       date: '2026-03-27T10:00:00.000Z',
       items: [{ productId: 'p1', quantity: 1 }],
     })

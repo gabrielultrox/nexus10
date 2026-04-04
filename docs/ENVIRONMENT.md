@@ -34,17 +34,11 @@ Variaveis obrigatorias:
 - `FIREBASE_ADMIN_PROJECT_ID`
 - `FIREBASE_ADMIN_CLIENT_EMAIL`
 - `FIREBASE_ADMIN_PRIVATE_KEY`
-- `IFOOD_WEBHOOK_SECRET`
 
 Obrigatorias em producao:
 
 - `FRONTEND_ORIGIN`
 - `LOCAL_OPERATOR_PASSWORD`
-
-Obrigatorias quando `IFOOD_ENABLED=true`:
-
-- `IFOOD_CLIENT_ID`
-- `IFOOD_CLIENT_SECRET`
 
 Defaults relevantes:
 
@@ -78,7 +72,6 @@ Exemplo de erro:
 ```text
 Falha ao validar variaveis de ambiente do backend.
 - FIREBASE_ADMIN_PROJECT_ID: FIREBASE_ADMIN_PROJECT_ID e obrigatoria.
-- IFOOD_WEBHOOK_SECRET: IFOOD_WEBHOOK_SECRET e obrigatoria.
 ```
 
 ## Arquivos de exemplo

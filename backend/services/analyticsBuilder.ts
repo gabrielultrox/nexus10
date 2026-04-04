@@ -330,7 +330,7 @@ function matchesModule(channel: string, moduleFilter: AnalyticsModuleFilter): bo
     return true
   }
 
-  return channel !== 'IFOOD' && channel !== 'ZE_DELIVERY'
+  return channel === 'PDV' || channel === 'BALCAO'
 }
 
 function isWithinRange(date: Date | null, range: QueryRange): boolean {

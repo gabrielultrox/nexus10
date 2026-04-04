@@ -41,11 +41,6 @@ Arquivos centrais:
 - `createFinancialClosureSchema`
   - `POST /api/finance/closures`
 
-### iFood
-
-- `ifoodWebhookSchema`
-  - `POST /webhooks/ifood/:storeId/:merchantId`
-
 ## Middleware
 
 ### `validateRequest(schema, options?)`
@@ -70,29 +65,6 @@ app.post('/api/auth/login', validateRequest(authLoginSchema), async (request, re
 ### `validateRequestSources(config)`
 
 Valida multiplas fontes no mesmo middleware.
-
-Exemplo:
-
-```js
-app.post(
-  '/webhooks/ifood/:storeId/:merchantId',
-  validateRequestSources({
-    params: {
-      schema: ifoodOrderSyncParamsSchema,
-      source: 'params',
-    },
-    webhook: {
-      schema: ifoodWebhookSchema,
-      source: 'webhook',
-      mapRequest: (request) => ({
-        signature: request.header('X-IFood-Signature'),
-        body: String(request.body ?? ''),
-      }),
-    },
-  }),
-  handler,
-)
-```
 
 ## Erro padrao
 
@@ -124,8 +96,6 @@ Exemplos reais no backend atual:
 - `backend/modules/finance/financeController.js`
   - `POST /api/finance/entries`
   - `POST /api/finance/closures`
-- `backend/app.ts`
-  - `POST /webhooks/ifood/:storeId/:merchantId`
 
 ## Regra operacional
 

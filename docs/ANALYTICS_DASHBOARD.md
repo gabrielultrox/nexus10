@@ -33,7 +33,7 @@
 
 - loja
 - periodo
-- modulo: `all`, `pdv`, `ifood`, `ze_delivery`
+- modulo: `all`, `pdv`
 - comparativo: `periodo anterior`, `semana`, `mes`, `ano`
 
 ## Racional de performance

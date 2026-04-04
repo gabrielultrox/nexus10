@@ -88,7 +88,7 @@ export function resolveAssistantIntent(message) {
       normalizedText,
     )
   const isSearchIntent =
-    /\b(buscar|buscar pedido|buscar cliente|buscar produto|mostrar|procurar|listar|vendas de hoje|pedidos de hoje|ifood)\b/i.test(
+    /\b(buscar|buscar pedido|buscar cliente|buscar produto|mostrar|procurar|listar|vendas de hoje|pedidos de hoje)\b/i.test(
       normalizedText,
     )
 

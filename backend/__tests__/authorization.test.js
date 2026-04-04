@@ -36,17 +36,6 @@ vi.mock('../config/env.js', () => ({
     apiRateLimitWindowMs: 60000,
     apiRateLimitMax: 100,
     authRateLimitMax: 20,
-    ifoodEnabled: true,
-    ifoodClientId: 'ifood-client',
-    ifoodClientSecret: 'ifood-secret',
-    ifoodAuthBaseUrl: 'https://merchant-api.ifood.com.br/authentication/v1.0',
-    ifoodMerchantBaseUrl: 'https://merchant-api.ifood.com.br',
-    ifoodEventsPollingPath: '/events/v1.0/events:polling',
-    ifoodEventsAckPath: '/events/v1.0/events/acknowledgment',
-    ifoodOrderDetailsPath: '/order/v1.0/orders',
-    ifoodWebhookUrl: '',
-    ifoodWebhookSecret: 'ifood-webhook-secret',
-    ifoodPollingIntervalSeconds: 30,
     sentryDsn: '',
     sentryRelease: '',
     sentryTracesSampleRate: 0,
@@ -55,7 +44,6 @@ vi.mock('../config/env.js', () => ({
     alertDiscordWebhookUrl: '',
     alertErrorRateThresholdPercent: 5,
     alertLatencyP95ThresholdMs: 1000,
-    alertIfoodWebhookFailureThreshold: 3,
     firebaseProjectId: 'test-project',
     firebaseClientEmail: 'firebase-adminsdk@test-project.iam.gserviceaccount.com',
     firebasePrivateKey: 'test-key',
@@ -111,7 +99,7 @@ vi.mock('../middleware/rateLimiter.js', () => ({
   authenticatedApiRateLimiter: (_request, _response, next) => next(),
   createRateLimitMiddleware: () => (_request, _response, next) => next(),
   fileUploadRateLimiter: (_request, _response, next) => next(),
-  ifoodWebhookRateLimiter: (_request, _response, next) => next(),
+  merchantWebhookRateLimiter: (_request, _response, next) => next(),
   loginRateLimiter: (_request, _response, next) => next(),
   publicRateLimiter: (_request, _response, next) => next(),
 }))
@@ -140,36 +128,12 @@ vi.mock('../modules/admin/monitoringController.js', () => ({
   registerMonitoringRoutes: () => {},
 }))
 
-vi.mock('../routes/ze-delivery.js', () => ({
-  registerZeDeliveryRoutes: () => {},
-}))
-
 vi.mock('../monitoring/sentry.js', () => ({
   initializeSentry: vi.fn(),
   sentryRequestContextMiddleware: (_request, _response, next) => next(),
   setupExpressSentry: vi.fn(),
   captureError: vi.fn(),
   buildMonitoredErrorPayload: (_error, context) => context,
-}))
-
-vi.mock('../integrations/ifood/ifoodFirestoreRepository.js', () => ({
-  createIfoodFirestoreRepository: () => ({}),
-}))
-
-vi.mock('../integrations/ifood/ifoodIntegrationRuntime.js', () => ({
-  createIfoodIntegrationRuntime: () => ({
-    adapter: {
-      getAccessToken: vi.fn(),
-      getOrderDetails: vi.fn(),
-    },
-    eventService: {
-      processPolling: vi.fn(),
-      processWebhook: vi.fn(),
-    },
-    orderService: {
-      upsertOrderFromDetails: vi.fn(),
-    },
-  }),
 }))
 
 vi.mock('../repositories/integrationMerchantRepository.js', () => ({

@@ -41,7 +41,7 @@ Cobertura:
 - runtime env
 - auth
 - user/profile
-- merchant iFood
+- merchant integration
 - order e order items
 - financial entries e closures
 - repository generics
@@ -87,6 +87,6 @@ Migrar na ordem:
 2. `repositories/*`
 3. `modules/orders`
 4. `modules/sales`
-5. `integrations/ifood`
+5. `modules/admin`
 
 So depois disso vale remover os shims JS de `config/`.
