@@ -12,7 +12,7 @@ import {
 } from '../../../services/commerce'
 import { subscribeToCustomers } from '../../../services/customerService'
 import { getFriendlyErrorMessage } from '../../../services/errorMessages'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   convertOrderToSale,
   createOrder,

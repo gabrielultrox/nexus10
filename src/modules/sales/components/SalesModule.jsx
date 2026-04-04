@@ -7,7 +7,7 @@ import { useStore } from '../../../contexts/StoreContext'
 import { formatCurrencyBRL, getPaymentMethodLabel } from '../../../services/commerce'
 import { subscribeToCustomers } from '../../../services/customerService'
 import { getFriendlyErrorMessage } from '../../../services/errorMessages'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import { subscribeToProducts } from '../../../services/productService'
 import {
   createDirectSale,

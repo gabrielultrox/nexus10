@@ -4,7 +4,7 @@ import SurfaceCard from '../../../components/common/SurfaceCard'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   createFinancialClosure,
   createManualExpense,

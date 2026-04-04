@@ -5,29 +5,27 @@ import {
   signInWithCustomToken,
   signOut,
 } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
 
-import { assertFirebaseReady, firebaseAuth, firebaseDb } from './firebase'
-import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
+import { assertFirebaseAuthReady, firebaseAuth } from './firebaseAuthRuntime'
 import { buildRolePermissionFlags, hasRoleAccess, normalizeRole } from './permissions'
 
 export async function loginWithEmail(email, password) {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
   return signInWithEmailAndPassword(firebaseAuth, email, password)
 }
 
 export async function loginAnonymously() {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
   return signInAnonymously(firebaseAuth)
 }
 
 export async function loginWithCustomToken(token) {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
   return signInWithCustomToken(firebaseAuth, token)
 }
 
 export async function logout() {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
   return signOut(firebaseAuth)
 }
 
@@ -38,18 +36,9 @@ export async function getUserSession(user) {
 
   const tokenResult = await user.getIdTokenResult()
   const role = normalizeRole(tokenResult.claims?.role)
-  let profileData = null
-
-  if (firebaseDb) {
-    const userRef = doc(firebaseDb, FIRESTORE_COLLECTIONS.users, user.uid)
-    const userSnapshot = await getDoc(userRef)
-    profileData = userSnapshot.exists() ? userSnapshot.data() : null
-  }
-
-  const storeIds = profileData?.storeIds ?? tokenResult.claims?.storeIds ?? []
-  const defaultStoreId =
-    profileData?.defaultStoreId ?? tokenResult.claims?.defaultStoreId ?? storeIds[0] ?? null
-  const tenantId = profileData?.tenantId ?? tokenResult.claims?.tenantId ?? null
+  const storeIds = tokenResult.claims?.storeIds ?? []
+  const defaultStoreId = tokenResult.claims?.defaultStoreId ?? storeIds[0] ?? null
+  const tenantId = tokenResult.claims?.tenantId ?? null
 
   return {
     uid: user.uid,
@@ -66,7 +55,7 @@ export async function getUserSession(user) {
 }
 
 export function subscribeToAuthChanges(callback) {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
 
   return onIdTokenChanged(firebaseAuth, async (user) => {
     const session = await getUserSession(user)
@@ -75,7 +64,7 @@ export function subscribeToAuthChanges(callback) {
 }
 
 export function getCurrentUser() {
-  assertFirebaseReady()
+  assertFirebaseAuthReady()
   return firebaseAuth.currentUser
 }
 

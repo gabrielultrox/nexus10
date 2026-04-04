@@ -7,7 +7,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
 import { seedBaseCustomers } from '../../../services/baseDataSeed'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   createCustomer,
   deleteCustomer,

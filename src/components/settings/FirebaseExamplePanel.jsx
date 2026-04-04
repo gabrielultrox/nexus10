@@ -8,7 +8,7 @@ import {
   subscribeToAuthChanges,
 } from '../../services/auth'
 import { FIRESTORE_COLLECTIONS } from '../../services/firestoreCollections'
-import { firebaseReady } from '../../services/firebase'
+import { firebaseReady } from '../../services/firebaseAuthRuntime'
 import { getStoreDocument, setStoreDocument } from '../../services/firestore'
 
 function FirebaseExamplePanel() {

@@ -1,4 +1,4 @@
-import { ensureRemoteSession, firebaseReady } from './firebase'
+import { ensureRemoteSession, firebaseReady } from './firebaseAuthRuntime'
 import { requestBackend } from './backendApi'
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '')

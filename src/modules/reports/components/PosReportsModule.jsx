@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import MetricCard from '../../../components/common/MetricCard'
 import SurfaceCard from '../../../components/common/SurfaceCard'
 import { useStore } from '../../../contexts/StoreContext'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   buildPdvReportCsv,
   buildPdvReportData,

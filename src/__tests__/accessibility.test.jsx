@@ -66,6 +66,12 @@ vi.mock('../services/firebase', () => ({
   canUseRemoteSync: () => false,
 }))
 
+vi.mock('../services/firebaseAuthRuntime', () => ({
+  firebaseReady: true,
+  ensureRemoteSession: vi.fn(async () => null),
+  clearRemoteSession: vi.fn(async () => {}),
+}))
+
 vi.mock('../services/dashboard', () => ({
   getDefaultDashboardPeriod: () => ({ startDate: '2026-03-20', endDate: '2026-03-27' }),
   loadDashboardOperationalSources: () => mockLoadDashboardOperationalSources(),

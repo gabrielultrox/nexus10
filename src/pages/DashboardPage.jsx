@@ -17,7 +17,7 @@ import {
   loadDashboardOperationalSources,
   subscribeToDashboardSources,
 } from '../services/dashboard'
-import { firebaseReady } from '../services/firebase'
+import { firebaseReady } from '../services/firebaseAuthRuntime'
 import { LOCAL_RECORDS_EVENT } from '../services/localAccess'
 
 const DashboardCharts = lazy(() => import('../components/dashboard/DashboardCharts'))

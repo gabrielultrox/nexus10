@@ -9,7 +9,8 @@ import { useToast } from '../../../hooks/useToast'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../services/courierService'
-import { canUseRemoteSync, firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
+import { canUseRemoteSync } from '../../../services/firebaseFirestoreRuntime'
 import {
   AUDIT_LOG_STORAGE_KEY,
   appendAuditEvent,

@@ -7,7 +7,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
 import { seedBaseProducts } from '../../../services/baseDataSeed'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import { analyzeProductCatalog } from '../../../services/productCatalogAudit'
 import {
   applyMinimumStockDefaults,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ensureRemoteSession, firebaseReady } from '../services/firebase'
+import { ensureRemoteSession, firebaseReady } from '../services/firebaseAuthRuntime'
 import { isE2eMode } from '../services/e2eRuntime'
 import { E2E_LIVE_NOTIFICATION_EVENT } from '../services/notificationService'
 

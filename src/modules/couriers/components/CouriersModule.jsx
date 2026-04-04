@@ -6,7 +6,7 @@ import { useConfirm } from '../../../hooks/useConfirm'
 import { useToast } from '../../../hooks/useToast'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
-import { firebaseReady } from '../../../services/firebase'
+import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   deleteCourierRecord,
   MANUAL_COURIER_STORAGE_KEY,

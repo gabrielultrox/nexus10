@@ -9,7 +9,7 @@ import {
   getOfflineQueueCount,
   retryWithBackoff,
 } from './apiErrorHandler'
-import { ensureRemoteSession, firebaseReady } from './firebase'
+import { ensureRemoteSession, firebaseReady } from './firebaseAuthRuntime'
 import { recordApiLatencyMetric } from './frontendMetrics'
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '')

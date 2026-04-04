@@ -7,7 +7,11 @@ import {
   userHasRequiredRole,
 } from '../services/auth'
 import { requestBackend } from '../services/backendApi'
-import { clearRemoteSession, ensureRemoteSession, firebaseReady } from '../services/firebase'
+import {
+  clearRemoteSession,
+  ensureRemoteSession,
+  firebaseReady,
+} from '../services/firebaseAuthRuntime'
 import { buildRolePermissionFlags, getRoleLabel, hasPermission } from '../services/permissions'
 import {
   getDefaultUserProfile,

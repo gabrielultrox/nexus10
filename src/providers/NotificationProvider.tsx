@@ -15,7 +15,8 @@ import { useToast } from '../hooks/useToast'
 import { useLiveNotifications } from '../hooks/useLiveNotifications'
 import { buildAuditActor, recordAuditLog } from '../services/auditLog'
 import { isOrderClosedStatus, isSalePosted, normalizeOrderDomainStatus } from '../services/commerce'
-import { canUseRemoteSync, firebaseReady } from '../services/firebase'
+import { firebaseReady } from '../services/firebaseAuthRuntime'
+import { canUseRemoteSync } from '../services/firebaseFirestoreRuntime'
 import { manualModuleConfigs } from '../services/manualModuleConfig'
 import {
   ADVANCES_REMINDER_STORAGE_KEY,
