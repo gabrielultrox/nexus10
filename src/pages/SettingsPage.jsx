@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import PageIntro from '../components/common/PageIntro'
 import SurfaceCard from '../components/common/SurfaceCard'
@@ -15,6 +15,12 @@ import {
   hasStoredPin,
   setStoredPin,
 } from '../services/localAccess'
+import {
+  clearOperatorPassword,
+  DEFAULT_OPERATOR_PASSWORD,
+  getOperatorPasswordSummary,
+  setOperatorPassword,
+} from '../services/localOperatorPasswords'
 import {
   getSoundProfile,
   getSoundProfiles,
@@ -54,7 +60,7 @@ function SettingsSection({ eyebrow, title, description, children }) {
 }
 
 function SettingsPage() {
-  const { session, can } = useAuth()
+  const { session, can, operatorOptions } = useAuth()
   const confirm = useConfirm()
   const [masterPassword, setMasterPassword] = useState('')
   const [settingsUnlocked, setSettingsUnlocked] = useState(() => isSettingsUnlocked())
@@ -68,15 +74,40 @@ function SettingsPage() {
   )
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled())
   const [soundProfile, setSoundProfileState] = useState(() => getSoundProfile())
+  const [selectedOperator, setSelectedOperator] = useState(() => session?.operatorName ?? '')
+  const [operatorPasswordDraft, setOperatorPasswordDraft] = useState('')
+  const [operatorPasswordConfirm, setOperatorPasswordConfirm] = useState('')
   const soundProfiles = getSoundProfiles()
   const activeSoundProfile =
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
+  const canManageOperatorPasswords = session?.role === 'admin'
+  const operatorPasswordRows = operatorOptions.map((operatorName) =>
+    getOperatorPasswordSummary(operatorName),
+  )
+  const selectedOperatorSummary = getOperatorPasswordSummary(selectedOperator)
+
+  useEffect(() => {
+    if (!selectedOperator && operatorOptions.length > 0) {
+      setSelectedOperator(operatorOptions[0])
+    }
+  }, [operatorOptions, selectedOperator])
+
+  function resetMessages() {
+    setFeedback('')
+    setErrorMessage('')
+  }
+
+  function handleSelectOperator(operatorName) {
+    setSelectedOperator(operatorName)
+    setOperatorPasswordDraft('')
+    setOperatorPasswordConfirm('')
+    resetMessages()
+  }
 
   function handleUnlockSettings(event) {
     event.preventDefault()
-    setFeedback('')
-    setErrorMessage('')
+    resetMessages()
 
     try {
       unlockSettings(masterPassword)
@@ -94,8 +125,7 @@ function SettingsPage() {
     lockSettings()
     setSettingsUnlocked(false)
     setMasterPassword('')
-    setFeedback('')
-    setErrorMessage('')
+    resetMessages()
     playNotification()
   }
 
@@ -155,6 +185,75 @@ function SettingsPage() {
     setPinDraft('')
     setPinConfirm('')
     setFeedback(`PIN customizado removido. O acesso volta para o PIN padrao ${DEFAULT_ACCESS_PIN}.`)
+    setErrorMessage('')
+    playNotification()
+  }
+
+  function handleSaveOperatorPassword(event) {
+    event.preventDefault()
+
+    if (!canManageOperatorPasswords) {
+      setErrorMessage('Apenas admin pode alterar a senha dos operadores.')
+      playError()
+      return
+    }
+
+    resetMessages()
+
+    if (!selectedOperator) {
+      setErrorMessage('Selecione um operador.')
+      playError()
+      return
+    }
+
+    if (operatorPasswordDraft !== operatorPasswordConfirm) {
+      setErrorMessage('Os campos de senha do operador precisam ser iguais.')
+      playError()
+      return
+    }
+
+    try {
+      setOperatorPassword(selectedOperator, operatorPasswordDraft)
+      setOperatorPasswordDraft('')
+      setOperatorPasswordConfirm('')
+      setFeedback(`Senha do operador ${selectedOperator} atualizada com sucesso.`)
+      playSuccess()
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel salvar a senha do operador.')
+      playError()
+    }
+  }
+
+  async function handleResetOperatorPassword() {
+    if (!canManageOperatorPasswords) {
+      setErrorMessage('Apenas admin pode alterar a senha dos operadores.')
+      playError()
+      return
+    }
+
+    if (!selectedOperator) {
+      setErrorMessage('Selecione um operador.')
+      playError()
+      return
+    }
+
+    const confirmed = await confirm.ask({
+      title: 'Restaurar senha do operador',
+      message: `Confirma restaurar a senha de ${selectedOperator} para ${DEFAULT_OPERATOR_PASSWORD}?`,
+      confirmLabel: 'Restaurar senha',
+      tone: 'danger',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    clearOperatorPassword(selectedOperator)
+    setOperatorPasswordDraft('')
+    setOperatorPasswordConfirm('')
+    setFeedback(
+      `Senha do operador ${selectedOperator} restaurada para o padrao ${DEFAULT_OPERATOR_PASSWORD}.`,
+    )
     setErrorMessage('')
     playNotification()
   }
@@ -507,6 +606,121 @@ function SettingsPage() {
           <PwaStatusCard />
         </div>
       </SettingsSection>
+
+      {canManageOperatorPasswords ? (
+        <SettingsSection
+          eyebrow="Admin"
+          title="Senha dos operadores"
+          description="Defina uma senha local por operador. Se nao houver senha customizada, o app usa a senha padrao."
+        >
+          <div className="settings-grid settings-grid--duo">
+            <SurfaceCard title="Alterar senha do operador">
+              <form className="settings-pin-form" onSubmit={handleSaveOperatorPassword}>
+                <div className="settings-summary settings-summary--dense">
+                  <div className="settings-summary__row">
+                    <span>Operador selecionado</span>
+                    <strong>{selectedOperator || 'Nao selecionado'}</strong>
+                  </div>
+                  <div className="settings-summary__row">
+                    <span>Senha atual</span>
+                    <strong>{selectedOperatorSummary.maskedPassword}</strong>
+                  </div>
+                  <div className="settings-summary__row">
+                    <span>Origem</span>
+                    <strong>
+                      {selectedOperatorSummary.hasCustomPassword ? 'Customizada' : 'Padrao local'}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="ui-field">
+                  <label className="ui-label" htmlFor="settings-operator-password-operator">
+                    Operador
+                  </label>
+                  <Select
+                    id="settings-operator-password-operator"
+                    className="ui-select"
+                    value={selectedOperator}
+                    onChange={(event) => handleSelectOperator(event.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {operatorOptions.map((operatorName) => (
+                      <option key={operatorName} value={operatorName}>
+                        {operatorName}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="settings-form-grid">
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="settings-operator-password">
+                      Nova senha
+                    </label>
+                    <input
+                      id="settings-operator-password"
+                      className="ui-input"
+                      type="password"
+                      value={operatorPasswordDraft}
+                      onChange={(event) => setOperatorPasswordDraft(event.target.value)}
+                      placeholder="Digite a nova senha"
+                      autoComplete="new-password"
+                    />
+                  </div>
+
+                  <div className="ui-field">
+                    <label className="ui-label" htmlFor="settings-operator-password-confirm">
+                      Confirmar senha
+                    </label>
+                    <input
+                      id="settings-operator-password-confirm"
+                      className="ui-input"
+                      type="password"
+                      value={operatorPasswordConfirm}
+                      onChange={(event) => setOperatorPasswordConfirm(event.target.value)}
+                      placeholder="Repita a nova senha"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+
+                <p className="text-caption">
+                  Operadores sem senha customizada continuam usando{' '}
+                  <strong>{DEFAULT_OPERATOR_PASSWORD}</strong>.
+                </p>
+
+                <div className="settings-pin-form__actions">
+                  <button type="submit" className="ui-button ui-button--secondary">
+                    Salvar senha
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={handleResetOperatorPassword}
+                  >
+                    Restaurar padrao
+                  </button>
+                </div>
+              </form>
+            </SurfaceCard>
+
+            <SurfaceCard title="Status por operador">
+              <div className="settings-summary settings-summary--dense">
+                {operatorPasswordRows.map((row) => (
+                  <div key={row.operatorName} className="settings-summary__row">
+                    <span>{row.operatorName}</span>
+                    <strong>
+                      {row.hasCustomPassword
+                        ? `${row.maskedPassword} customizada`
+                        : `${DEFAULT_OPERATOR_PASSWORD} padrao`}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            </SurfaceCard>
+          </div>
+        </SettingsSection>
+      ) : null}
 
       <KeyboardSettings canWriteSettings={canWriteSettings} />
     </div>

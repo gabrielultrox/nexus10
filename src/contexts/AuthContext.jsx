@@ -13,6 +13,7 @@ import {
   firebaseReady,
 } from '../services/firebaseAuthRuntime'
 import { buildRolePermissionFlags, getRoleLabel, hasPermission } from '../services/permissions'
+import { verifyOperatorPassword } from '../services/localOperatorPasswords'
 import {
   getDefaultUserProfile,
   getOperatorOptions,
@@ -198,7 +199,7 @@ export function AuthProvider({ children }) {
           const remoteSession = await getUserSession(currentUser)
           nextSession = buildRemoteSession(remoteSession, authResponse.profile)
         } else {
-          if (credentials.password !== '01') {
+          if (!verifyOperatorPassword(operatorName, credentials.password)) {
             throw new Error('Senha incorreta.')
           }
 

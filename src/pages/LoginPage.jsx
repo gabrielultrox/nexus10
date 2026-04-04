@@ -7,6 +7,7 @@ import ErrorDisplay from '../components/ui/ErrorDisplay'
 import { useError } from '../hooks'
 import { useAuth } from '../contexts/AuthContext'
 import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess'
+import { DEFAULT_OPERATOR_PASSWORD } from '../services/localOperatorPasswords'
 import { playError, playSuccess } from '../services/soundManager'
 import Select from '../components/ui/Select'
 
@@ -301,7 +302,8 @@ function LoginPage() {
                 <p className="text-overline">Login do operador</p>
                 <h2 className="text-display">Entrar no ERP</h2>
                 <p className="text-body">
-                  Entre com o operador local usando a senha operacional configurada no backend.
+                  Entre com o operador local usando a senha operacional configurada para esse
+                  operador.
                 </p>
               </div>
 
@@ -384,6 +386,11 @@ function LoginPage() {
               >
                 Entrar
               </Button>
+
+              <p className="text-caption">
+                Operadores sem senha customizada usam a senha padrao{' '}
+                <strong>{DEFAULT_OPERATOR_PASSWORD}</strong>.
+              </p>
             </form>
           </div>
         </section>
