@@ -9,6 +9,13 @@ import {
   guardRemoteSubscription,
 } from './firebase'
 import {
+  createE2eSale,
+  getE2eSaleById,
+  isE2eMode,
+  subscribeE2eSales,
+  updateE2eSaleStatus,
+} from './e2eRuntime'
+import {
   buildStoreQueryCacheKey,
   getPaginatedStoreCollectionDocuments,
   invalidateQueryCache,
@@ -295,6 +302,10 @@ export function validateSaleInput(values) {
 }
 
 export function subscribeToSales(storeId, onData, onError) {
+  if (isE2eMode()) {
+    return subscribeE2eSales(storeId, onData)
+  }
+
   if (!storeId || !canUseRemoteSync()) {
     onData([])
     return () => {}
@@ -321,6 +332,10 @@ export function subscribeToSales(storeId, onData, onError) {
 }
 
 export async function getSaleById({ storeId, saleId }) {
+  if (isE2eMode()) {
+    return getE2eSaleById({ storeId, saleId })
+  }
+
   if (!canUseRemoteSync()) {
     throw createRemoteSyncError()
   }
@@ -359,6 +374,10 @@ export async function createSale({ storeId, tenantId, values, createdBy = null }
 }
 
 export async function createDirectSale({ storeId, tenantId, values, createdBy = null }) {
+  if (isE2eMode()) {
+    return createE2eSale({ storeId, tenantId, values, createdBy })
+  }
+
   return createSale({
     storeId,
     tenantId,
@@ -418,6 +437,10 @@ export async function deleteSale({ storeId, saleId }) {
 }
 
 export async function updateSaleStatus({ storeId, saleId, status, actor = null }) {
+  if (isE2eMode()) {
+    return updateE2eSaleStatus({ storeId, saleId, status, actor })
+  }
+
   const data = await requestBackend(`/stores/${storeId}/sales/${saleId}/status`, {
     method: 'PATCH',
     body: {

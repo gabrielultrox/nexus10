@@ -17,6 +17,7 @@ import {
   firebaseDb,
   guardRemoteSubscription,
 } from './firebase'
+import { createE2eOrder, getE2eOrderById, isE2eMode, subscribeE2eOrders } from './e2eRuntime'
 import { subscribeToExternalOrders } from './externalOrders'
 import {
   buildStoreQueryCacheKey,
@@ -370,6 +371,10 @@ function normalizeExternalOrder(order) {
 }
 
 export function subscribeToOrders(storeId, onData, onError) {
+  if (isE2eMode()) {
+    return subscribeE2eOrders(storeId, onData)
+  }
+
   if (!storeId || !canUseRemoteSync()) {
     onData([])
     return () => {}
@@ -429,6 +434,10 @@ export function getNextOrderStatus(currentStatus) {
 }
 
 export async function getOrderById({ storeId, orderId }) {
+  if (isE2eMode()) {
+    return getE2eOrderById({ storeId, orderId })
+  }
+
   if (!canUseRemoteSync()) {
     throw createRemoteSyncError()
   }
@@ -452,6 +461,10 @@ export async function getOrderById({ storeId, orderId }) {
 }
 
 export async function createOrder({ storeId, tenantId, values, createdBy = null }) {
+  if (isE2eMode()) {
+    return createE2eOrder({ storeId, tenantId, values, createdBy })
+  }
+
   const data = await requestBackend(`/stores/${storeId}/orders`, {
     method: 'POST',
     body: {

@@ -17,6 +17,7 @@ import {
   firebaseDb,
   guardRemoteSubscription,
 } from './firebase'
+import { isE2eMode, subscribeE2eCustomers } from './e2eRuntime'
 import { parseCustomerCsv, mapCustomerCsvRow, resolveCustomerFromImport } from './customerCsv'
 import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
 
@@ -60,6 +61,10 @@ function getCustomersCollectionRef(storeId) {
 }
 
 export function subscribeToCustomers(storeId, onData, onError) {
+  if (isE2eMode()) {
+    return subscribeE2eCustomers(storeId, onData)
+  }
+
   if (!storeId || !canUseRemoteSync()) {
     onData([])
     return () => {}

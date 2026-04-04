@@ -1,4 +1,10 @@
 import { requestBackend } from './backendApi'
+import {
+  getE2eZeDeliveryDashboard,
+  isE2eMode,
+  triggerE2eZeDeliverySync,
+  updateE2eZeDeliverySettings,
+} from './e2eRuntime'
 
 export interface IZeDeliverySerializedError {
   name?: string | null
@@ -104,6 +110,10 @@ export async function getZeDeliveryDashboard({
 }: {
   storeId?: string | null
 }): Promise<IZeDeliveryDashboard> {
+  if (isE2eMode()) {
+    return getE2eZeDeliveryDashboard({ storeId })
+  }
+
   const query = storeId ? `?storeId=${encodeURIComponent(storeId)}` : ''
   return requestBackend(`/integrations/ze-delivery/dashboard${query}`)
 }
@@ -119,6 +129,17 @@ export async function getZeDeliverySettings({
 export async function updateZeDeliverySettings(
   payload: IUpdateZeDeliverySettingsPayload,
 ): Promise<IZeDeliveryStoreSettings> {
+  if (isE2eMode()) {
+    return (
+      (await updateE2eZeDeliverySettings(payload)) ?? {
+        enabled: payload.enabled,
+        intervalMinutes: payload.intervalMinutes,
+        notificationsEnabled: payload.notificationsEnabled,
+        notificationWebhookUrl: payload.notificationWebhookUrl,
+      }
+    )
+  }
+
   return requestBackend('/integrations/ze-delivery/settings', {
     method: 'PATCH',
     body: payload,
@@ -128,6 +149,10 @@ export async function updateZeDeliverySettings(
 export async function triggerZeDeliverySync(
   payload: ITriggerZeDeliverySyncPayload,
 ): Promise<Record<string, unknown>> {
+  if (isE2eMode()) {
+    return triggerE2eZeDeliverySync(payload)
+  }
+
   return requestBackend('/integrations/ze-delivery/sync', {
     method: 'POST',
     body: payload,

@@ -15,6 +15,7 @@ import {
   refreshSessionProfile,
   resolveUserProfileByOperator,
 } from '../services/userProfiles'
+import { isE2eMode } from '../services/e2eRuntime'
 
 const AuthContext = createContext(null)
 
@@ -86,6 +87,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
       try {
+        const e2eMode = isE2eMode()
+
         if (typeof window === 'undefined') {
           setSession(await buildTemporarySession())
           return
@@ -93,6 +96,11 @@ export function AuthProvider({ children }) {
 
         const savedSession = window.localStorage.getItem(AUTH_STORAGE_KEY)
         const parsedSavedSession = savedSession ? JSON.parse(savedSession) : null
+
+        if (e2eMode) {
+          setSession(parsedSavedSession)
+          return
+        }
 
         if (firebaseReady) {
           const remoteUser = await ensureRemoteSession().catch(() => null)
@@ -157,6 +165,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(session),
       async signIn(credentials) {
         const operatorName = credentials.operatorName?.trim()
+        const e2eMode = isE2eMode()
 
         setAuthError('')
 
@@ -166,7 +175,7 @@ export function AuthProvider({ children }) {
 
         let nextSession = null
 
-        if (firebaseReady) {
+        if (firebaseReady && !e2eMode) {
           const authResponse = await requestBackend('/auth/session', {
             method: 'POST',
             skipAuth: true,
@@ -201,7 +210,7 @@ export function AuthProvider({ children }) {
       },
       async signOut() {
         window.localStorage.removeItem(AUTH_STORAGE_KEY)
-        if (firebaseReady) {
+        if (firebaseReady && !isE2eMode()) {
           await clearRemoteSession().catch(() => null)
           setSession(null)
           return

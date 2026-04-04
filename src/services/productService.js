@@ -17,6 +17,7 @@ import {
   firebaseDb,
   guardRemoteSubscription,
 } from './firebase'
+import { isE2eMode, subscribeE2eProducts } from './e2eRuntime'
 import {
   buildStoreQueryCacheKey,
   getPaginatedStoreCollectionDocuments,
@@ -120,6 +121,10 @@ function getProductsCollectionRef(storeId) {
 }
 
 export function subscribeToProducts(storeId, onData, onError) {
+  if (isE2eMode()) {
+    return subscribeE2eProducts(storeId, onData)
+  }
+
   if (!storeId || !canUseRemoteSync()) {
     onData([])
     return () => {}
