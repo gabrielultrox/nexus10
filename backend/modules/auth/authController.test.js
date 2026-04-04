@@ -418,6 +418,7 @@ describe('registerAuthRoutes', () => {
         hasCustomPin: true,
         updatedAt: '2026-04-04T18:00:00.000Z',
         maskedPin: '****',
+        storageMode: 'firestore',
       },
     })
   })

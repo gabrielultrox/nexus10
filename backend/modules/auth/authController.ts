@@ -81,15 +81,22 @@ async function readConfiguredAccessPin(): Promise<string> {
     }
   }
 
-  const snapshot = await getAdminFirestore()
-    .collection(ACCESS_PIN_DOC_COLLECTION)
-    .doc(ACCESS_PIN_DOC_ID)
-    .get()
-  const data = snapshot.data() ?? {}
-  const configuredPin =
-    typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
-      ? data[ACCESS_PIN_KEY]
-      : DEFAULT_ACCESS_PIN
+  let configuredPin = DEFAULT_ACCESS_PIN
+
+  try {
+    const snapshot = await getAdminFirestore()
+      .collection(ACCESS_PIN_DOC_COLLECTION)
+      .doc(ACCESS_PIN_DOC_ID)
+      .get()
+    const data = snapshot.data() ?? {}
+
+    configuredPin =
+      typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
+        ? data[ACCESS_PIN_KEY]
+        : DEFAULT_ACCESS_PIN
+  } catch {
+    configuredPin = DEFAULT_ACCESS_PIN
+  }
 
   await cacheSet(
     buildAccessPinCacheKey(),
@@ -106,18 +113,28 @@ async function isValidAccessPin(pin: string): Promise<boolean> {
 }
 
 async function readAccessPinSummary() {
-  const snapshot = await getAdminFirestore()
-    .collection(ACCESS_PIN_DOC_COLLECTION)
-    .doc(ACCESS_PIN_DOC_ID)
-    .get()
-  const data = snapshot.data() ?? {}
-  const hasCustomPin =
-    typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
+  try {
+    const snapshot = await getAdminFirestore()
+      .collection(ACCESS_PIN_DOC_COLLECTION)
+      .doc(ACCESS_PIN_DOC_ID)
+      .get()
+    const data = snapshot.data() ?? {}
+    const hasCustomPin =
+      typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
 
-  return {
-    hasCustomPin,
-    updatedAt: data[ACCESS_PIN_UPDATED_AT_KEY] ?? null,
-    maskedPin: hasCustomPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+    return {
+      hasCustomPin,
+      updatedAt: data[ACCESS_PIN_UPDATED_AT_KEY] ?? null,
+      maskedPin: hasCustomPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+      storageMode: 'firestore',
+    }
+  } catch {
+    return {
+      hasCustomPin: false,
+      updatedAt: null,
+      maskedPin: `${DEFAULT_ACCESS_PIN} padrao`,
+      storageMode: 'default-fallback',
+    }
   }
 }
 

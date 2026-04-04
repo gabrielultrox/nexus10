@@ -333,4 +333,32 @@ describe('backend auth session route', () => {
       },
     })
   })
+
+  it('aceita o PIN padrao quando o Firestore Admin esta indisponivel', async () => {
+    const { registerAuthRoutes } = await loadAuthController()
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
+
+    firestoreGetMock.mockRejectedValueOnce(new Error('Firestore indisponivel'))
+
+    registerAuthRoutes(app)
+
+    const verifyResponse = await runRegisteredRoute(app, '/api/auth/access-pin/verify', {
+      body: { pin: '0101' },
+      log: authLoggerMock,
+    })
+
+    const sessionResponse = await runRegisteredRoute(app, '/api/auth/session', {
+      body: { operator: 'Gabriel', pin: '0101' },
+      log: authLoggerMock,
+    })
+
+    expect(verifyResponse.statusCode).toBe(200)
+    expect(verifyResponse.payload).toEqual({
+      data: {
+        valid: true,
+      },
+    })
+    expect(sessionResponse.statusCode).toBe(200)
+    expect(sessionResponse.payload?.data?.customToken).toBe('custom-token-123')
+  })
 })
