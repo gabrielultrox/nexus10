@@ -9,6 +9,7 @@ function resolveStoreId(request) {
   return (
     request?.params?.storeId ??
     request?.body?.storeId ??
+    request?.query?.storeId ??
     request?.authUser?.defaultStoreId ??
     request?.authUser?.storeIds?.[0] ??
     null
@@ -16,11 +17,27 @@ function resolveStoreId(request) {
 }
 
 function resolveMerchantId(request) {
-  return request?.params?.merchantId ?? request?.body?.merchantId ?? null
+  return (
+    request?.params?.merchantId ?? request?.body?.merchantId ?? request?.query?.merchantId ?? null
+  )
 }
 
 function resolveUserId(request) {
   return request?.authUser?.uid ?? null
+}
+
+function resolveIntegration(request) {
+  const path = String(request?.originalUrl ?? request?.path ?? '').toLowerCase()
+
+  if (path.includes('/webhooks/ifood') || path.includes('/integrations/ifood')) {
+    return 'ifood'
+  }
+
+  if (path.includes('/integrations/ze-delivery')) {
+    return 'ze-delivery'
+  }
+
+  return null
 }
 
 function applyRequestScope(scope, request) {
@@ -32,6 +49,7 @@ function applyRequestScope(scope, request) {
   const storeId = resolveStoreId(request)
   const merchantId = resolveMerchantId(request)
   const requestId = request.id ?? request.headers?.['x-request-id'] ?? null
+  const integration = resolveIntegration(request)
 
   if (requestId) {
     scope.setTag('request_id', String(requestId))
@@ -43,6 +61,10 @@ function applyRequestScope(scope, request) {
 
   if (merchantId) {
     scope.setTag('merchant_id', String(merchantId))
+  }
+
+  if (integration) {
+    scope.setTag('integration', integration)
   }
 
   if (userId) {
@@ -126,6 +148,7 @@ export function sentryRequestContextMiddleware(request, _response, next) {
   const storeId = resolveStoreId(request)
   const merchantId = resolveMerchantId(request)
   const userId = resolveUserId(request)
+  const integration = resolveIntegration(request)
 
   if (storeId) {
     Sentry.setTag('store_id', String(storeId))
@@ -133,6 +156,10 @@ export function sentryRequestContextMiddleware(request, _response, next) {
 
   if (merchantId) {
     Sentry.setTag('merchant_id', String(merchantId))
+  }
+
+  if (integration) {
+    Sentry.setTag('integration', integration)
   }
 
   if (userId) {

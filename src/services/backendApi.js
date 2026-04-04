@@ -31,12 +31,17 @@ async function resolveAuthorizationHeader(options = {}) {
 
 async function parseResponse(response, path, method) {
   const contentType = response.headers.get('content-type') ?? ''
+  const requestId = response.headers.get('x-request-id') ?? ''
   const payload = contentType.includes('application/json')
     ? await response.json().catch(() => ({}))
     : {}
 
   if (!response.ok) {
-    throw buildBackendResponseError(payload, response.status, { path, method })
+    throw buildBackendResponseError(payload, response.status, {
+      path,
+      method,
+      requestId,
+    })
   }
 
   return payload.data ?? payload

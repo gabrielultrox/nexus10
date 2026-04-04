@@ -2,138 +2,134 @@
 
 ## Objetivo
 
-Reduzir o custo do carregamento inicial do app React com Vite, mantendo:
+Reduzir custo do shell inicial do Nexus10 e empurrar dependencias raras para carregamento sob demanda.
 
-- split por rota
-- lazy loading para componentes pesados
-- vendor chunks mais previsiveis
-- analise de bundle reproduzivel com `npm run analyze:bundle`
+Escopo desta rodada:
 
-## O que ficou ativo
+- quebrar o `vendor` residual por dominio
+- tirar Sentry do caminho sincronico do bootstrap
+- adiar `html-to-image` ate a acao de exportacao
+- medir o resultado com `npm run analyze:bundle`
 
-### 1. Route-based splitting
+## O que mudou
 
-As rotas continuam em lazy loading em [src/routes/index.jsx](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\routes\index.jsx) com `React.lazy()` + `Suspense`.
+### 1. Split adicional por dominio
 
-Cada pagina principal sai em chunk proprio, por exemplo:
+Em [vite.config.js](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\vite.config.js) os chunks manuais agora separam:
 
-- `DashboardPage`
-- `OrdersPage`
-- `SalesPage`
-- `CashPage`
-- `FinancialPendingsPage`
+- `query-vendor`: `@tanstack/react-query` + `@tanstack/query-core`
+- `router-vendor`: `react-router-dom` + `react-router` + `@remix-run/router`
+- `validation-vendor`: `zod`
+- `sentry-vendor`: `@sentry/*` + `@sentry-internal/*`
 
-### 2. Lazy loading de componentes pesados
+### 2. Sentry fora do bootstrap sincronico
 
-Ja existente e mantido:
+O SDK do frontend em [src/config/sentry.ts](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\config\sentry.ts) saiu de `import * as Sentry from '@sentry/react'` e passou a usar `import('@sentry/react')` com cache interno.
 
-- `DashboardCharts` em [src/pages/DashboardPage.jsx](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\pages\DashboardPage.jsx)
-- `PosReportsModule` em [src/pages/PosReportsPage.jsx](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\pages\PosReportsPage.jsx)
+Impacto:
 
-### 3. Vendor splitting
+- o shell inicial nao faz preload do chunk de observabilidade
+- tags de `user_id` e `store_id` continuam sendo aplicadas depois da inicializacao
+- erros continuam capturados, mas a inicializacao ficou lazy
 
-Em [vite.config.js](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\vite.config.js) ficaram chunks manuais para:
+### 3. Exportacao de imagem sob demanda
 
-- `react-vendor`
-- `router-vendor`
-- `query-vendor`
-- `firebase-auth`
-- `firebase-data`
-- `ui-system`
-- `charts-and-reports`
-- `operations-workspace`
-- `export-utils`
+Os modulos abaixo nao importam mais `html-to-image` no topo:
 
-### 4. Module preload mais conservador
+- [src/modules/cash/components/CashModule.jsx](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\modules\cash\components\CashModule.jsx)
+- [src/modules/operations/components/NativeModuleWorkspace.jsx](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\modules\operations\components\NativeModuleWorkspace.jsx)
 
-Chunks pesados e claramente assincornos deixaram de ser preloaded no HTML inicial:
+Agora `html-to-image` so e carregado na hora do clique em exportacao.
 
-- `charts-and-reports`
-- `operations-workspace`
-- `export-utils`
-- `firebase-data`
+## Medicao before/after
 
-### 5. Monitoring fora do import sincronico
-
-O Sentry saiu do import estatico de [src/services/apiErrorHandler.ts](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\services\apiErrorHandler.ts) e passou para `import('@sentry/react')` sob demanda.
-
-Isso evita pagar esse custo no caminho normal de bootstrap quando nao ha erro para reportar.
-
-## Relatorio before/after
-
-Medicao de referencia antes desta rodada:
+Baseline desta rodada, antes dos ajustes:
 
 | Chunk           | Antes raw | Antes gzip |
 | --------------- | --------: | ---------: |
-| `index`         |  46.71 kB |   15.12 kB |
-| `firebase-auth` | 114.11 kB |   23.20 kB |
-| `firebase-data` | 281.76 kB |   63.64 kB |
-| `vendor`        | 280.34 kB |   89.33 kB |
+| `index`         |  32.64 kB |   10.82 kB |
+| `react-vendor`  | 142.27 kB |   45.61 kB |
+| `firebase-auth` | 114.11 kB |   23.19 kB |
+| `firebase-data` | 281.77 kB |   63.64 kB |
+| `vendor`        | 467.44 kB |  149.19 kB |
 
-Medicao final desta rodada:
+Depois desta rodada:
 
-| Chunk                  | Depois raw | Depois gzip |
-| ---------------------- | ---------: | ----------: |
-| `index`                |   33.38 kB |    11.12 kB |
-| `react-vendor`         |  142.22 kB |    45.57 kB |
-| `router-vendor`        |   13.14 kB |     4.83 kB |
-| `query-vendor`         |    2.46 kB |     1.19 kB |
-| `ui-system`            |   31.83 kB |    10.37 kB |
-| `firebase-auth`        |  114.05 kB |    23.15 kB |
-| `firebase-data`        |  281.71 kB |    63.60 kB |
-| `vendor`               |  654.33 kB |   212.04 kB |
-| `charts-and-reports`   |   44.11 kB |    13.12 kB |
-| `operations-workspace` |  157.99 kB |    40.23 kB |
+| Chunk               | Depois raw | Depois gzip |
+| ------------------- | ---------: | ----------: |
+| `index`             |   31.62 kB |    10.36 kB |
+| `react-vendor`      |  142.27 kB |    45.61 kB |
+| `router-vendor`     |   22.28 kB |     8.30 kB |
+| `query-vendor`      |   41.21 kB |    12.28 kB |
+| `validation-vendor` |   65.17 kB |    17.69 kB |
+| `ui-system`         |   42.23 kB |    13.71 kB |
+| `firebase-auth`     |  114.10 kB |    23.18 kB |
+| `vendor`            |   90.21 kB |    30.07 kB |
+| `sentry-vendor`     |  458.55 kB |   151.41 kB |
+| `export-utils`      |   13.80 kB |     5.45 kB |
 
 ## Leitura correta dos numeros
 
-- O `entry chunk` principal caiu de `15.12 kB gzip` para `11.12 kB gzip`.
-- O runtime principal agora fica mais legivel, com React, Router, Query e UI base em chunks separados.
-- Os blocos claramente pesados de relatorios e operacao saem do preload inicial.
-- O `vendor` residual ainda segue grande em bytes minificados. Ele nao impede a estrategia atual, mas continua sendo o principal candidato para uma proxima rodada de split por dominio.
+- O `vendor` residual caiu de `149.19 kB gzip` para `30.07 kB gzip`.
+- O chunk principal `index` caiu levemente de `10.82 kB gzip` para `10.36 kB gzip`.
+- O ganho real veio de tirar dependencias de observabilidade e utilitarios raros do shell inicial.
+- O `sentry-vendor` agora e maior que o `vendor` antigo, mas ficou assincorno e nao aparece no preload do HTML inicial.
 
-## Estado atual vs meta
+## Shell inicial real
 
-Meta solicitada:
+No `index.html` final, os preloads do shell ficam em:
 
-- bundle inicial abaixo de `500 kB gzip`
-- carregamento inicial mais leve em 4G
+- `index`
+- `react-vendor`
+- `router-vendor`
+- `query-vendor`
+- `validation-vendor`
+- `ui-system`
+- `vendor`
+- `firebase-auth`
 
-Com a configuracao final, o custo de bootstrap compartilhado mais provavel fica aproximadamente em:
+O chunk `sentry-vendor` nao e preloaded.
 
-- `index`: `11.12 kB gzip`
-- `react-vendor`: `45.57 kB gzip`
-- `router-vendor`: `4.83 kB gzip`
-- `query-vendor`: `1.19 kB gzip`
-- `ui-system`: `10.37 kB gzip`
-- `vendor`: `212.04 kB gzip`
+Estimativa de shell compartilhado nesta rodada:
 
-Total aproximado do shell compartilhado: `285.12 kB gzip`
+- `index`: `10.36 kB gzip`
+- `react-vendor`: `45.61 kB gzip`
+- `router-vendor`: `8.30 kB gzip`
+- `query-vendor`: `12.28 kB gzip`
+- `validation-vendor`: `17.69 kB gzip`
+- `ui-system`: `13.71 kB gzip`
+- `vendor`: `30.07 kB gzip`
+- `firebase-auth`: `23.18 kB gzip`
 
-Isso fica abaixo do alvo de `500 kB gzip`.
+Total aproximado do shell JS compartilhado: `161.20 kB gzip`
 
-## Limites conhecidos
+## Tradeoffs
 
-- Ainda existe aviso de chunk acima de `500 kB` em bytes minificados por causa do `vendor` residual.
-- Nao ha rich editor no app hoje, entao nao houve split especifico para esse caso.
-- O maior proximo ganho vem de quebrar o `vendor` residual por dominio funcional, por exemplo:
-  - observability
-  - utilitarios de parsing
-  - libs de import/export
-  - libs de cliente externo nao usadas no shell inicial
+### Mantidos de forma deliberada
 
-## Como analisar
+- `zod` continua no caminho inicial via [src/config/env.ts](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\src\config\env.ts), porque o app ainda precisa falhar rapido quando o ambiente esta invalido.
+- `firebase-auth` continua no shell, porque o bootstrap de autenticacao depende disso.
+
+### Custos novos
+
+- O primeiro erro capturado ou a primeira inicializacao de observabilidade agora paga o download de `sentry-vendor`.
+- A primeira exportacao de imagem agora paga o download de `export-utils`.
+
+Esses custos sao aceitaveis porque sairam do caminho de navegacao normal.
+
+## Proximos candidatos
+
+1. Revisar o que ainda sobra em `vendor-B-exkgfV.js`.
+2. Validar se parte de `firebase-auth` pode ser carregada depois do gate de login.
+3. Atacar CSS global, que ainda pesa `45.73 kB gzip`.
+4. Medir se ha listas que ainda causam custo perceptivel no `DashboardPage` e nos modulos operacionais.
+
+## Como medir
 
 ```bash
 npm run analyze:bundle
 ```
 
-O relatorio HTML sai em:
+Relatorio HTML:
 
 - [output/bundle-report.html](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\output\bundle-report.html)
-
-## Proxima rodada recomendada
-
-1. Isolar o `vendor` residual por familias de dependencia.
-2. Mover dependencias raras do shell para `import()` local.
-3. Revisar se alguns modulos do Firebase ainda podem sair do caminho inicial.

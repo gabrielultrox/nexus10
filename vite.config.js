@@ -17,17 +17,25 @@ function imageOptimizationPlugin() {
 
 export default defineConfig(({ mode }) => {
   const shouldAnalyze = mode === 'analyze'
+  const resolvedRelease =
+    process.env.VITE_SENTRY_RELEASE ||
+    process.env.SENTRY_RELEASE ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.GITHUB_SHA ||
+    process.env.npm_package_version ||
+    ''
   const shouldUploadSourcemaps = Boolean(
     process.env.SENTRY_AUTH_TOKEN &&
       process.env.SENTRY_ORG &&
       process.env.SENTRY_PROJECT &&
-      process.env.SENTRY_RELEASE,
+      resolvedRelease,
   )
   const featureChunkMatchers = [
     'charts-and-reports',
     'operations-workspace',
     'export-utils',
     'firebase-data',
+    'sentry-vendor',
   ]
 
   return {
@@ -120,7 +128,7 @@ export default defineConfig(({ mode }) => {
             org: process.env.SENTRY_ORG,
             project: process.env.SENTRY_PROJECT,
             release: {
-              name: process.env.SENTRY_RELEASE,
+              name: resolvedRelease,
             },
             sourcemaps: {
               assets: './dist/**',
@@ -134,6 +142,9 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': 'http://127.0.0.1:8787',
       },
+    },
+    define: {
+      __NEXUS10_RELEASE__: JSON.stringify(resolvedRelease),
     },
     build: {
       minify: 'esbuild',
@@ -192,7 +203,15 @@ export default defineConfig(({ mode }) => {
               return 'export-utils'
             }
 
-            if (id.includes('@tanstack/react-query')) {
+            if (id.includes('@sentry/') || id.includes('@sentry-internal/')) {
+              return 'sentry-vendor'
+            }
+
+            if (id.includes('/node_modules/zod/')) {
+              return 'validation-vendor'
+            }
+
+            if (id.includes('@tanstack/react-query') || id.includes('@tanstack/query-core')) {
               return 'query-vendor'
             }
 
@@ -204,7 +223,11 @@ export default defineConfig(({ mode }) => {
               return 'react-vendor'
             }
 
-            if (id.includes('react-router-dom') || id.includes('react-router')) {
+            if (
+              id.includes('react-router-dom') ||
+              id.includes('react-router') ||
+              id.includes('@remix-run/router')
+            ) {
               return 'router-vendor'
             }
 
