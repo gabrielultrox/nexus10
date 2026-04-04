@@ -113,8 +113,7 @@ function buildPrintHtml(entry) {
 
       .occurrence-print__subtitle,
       .occurrence-print__meta,
-      .occurrence-print__body-copy,
-      .occurrence-print__signature-note {
+      .occurrence-print__body-copy {
         font-size: 2.7mm;
         line-height: 1.4;
         color: #303030;
@@ -167,22 +166,10 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__body-copy {
-        min-height: 28mm;
+        min-height: 48mm;
         white-space: pre-wrap;
         word-break: break-word;
         overflow-wrap: anywhere;
-      }
-
-      .occurrence-print__signatures {
-        display: grid;
-        gap: 9mm;
-        padding-top: 5mm;
-      }
-
-      .occurrence-print__signature-line {
-        border-top: 0.24mm solid #111;
-        padding-top: 2mm;
-        text-align: center;
       }
 
       @media screen {
@@ -225,24 +212,13 @@ function buildPrintHtml(entry) {
         ${renderField('Titulo', entry.title)}
         ${renderField('Referencia', entry.reference)}
         ${renderField('Valor impactado', entry.amount)}
-        ${renderField('Caixa', entry.cashierName)}
         ${renderField('Operador responsavel', entry.operatorName)}
         ${renderField('Data informada', formatPrintableDate(entry.occurredAt))}
-        ${renderField('Impresso em', formatPrintableDate(entry.printedAt))}
       </section>
 
       <section class="occurrence-print__body occurrence-print__section">
         <span class="occurrence-print__body-title">Descricao detalhada</span>
         <div class="occurrence-print__body-copy">${escapeHtml(entry.description || 'Sem descricao adicional.')}</div>
-      </section>
-
-      <section class="occurrence-print__signatures occurrence-print__section">
-        <div class="occurrence-print__signature-line">
-          <div class="occurrence-print__signature-note">Responsavel pelo registro</div>
-        </div>
-        <div class="occurrence-print__signature-line">
-          <div class="occurrence-print__signature-note">Recebimento Financeiro / RH</div>
-        </div>
       </section>
 
       <section class="occurrence-print__footer occurrence-print__section">
