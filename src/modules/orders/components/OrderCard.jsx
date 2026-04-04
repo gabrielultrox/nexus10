@@ -61,7 +61,7 @@ function OrderCard({ order, onAdvanceOrder, onOpenDetails, updating = false }) {
             {updating
               ? 'Salvando...'
               : order.isExternal
-                ? 'Sync iFood'
+                ? 'Sincronizar'
                 : nextStatus
                   ? 'Avancar'
                   : 'Concluido'}

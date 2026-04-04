@@ -219,22 +219,6 @@ export const updateSaleStatusSchema = z.object({
   status: z.enum(['POSTED', 'CANCELLED', 'REVERSED'], 'status de venda invalido.'),
 })
 
-export const ifoodPollingSchema = z.object({
-  storeId: nonEmptyString('storeId'),
-  merchantId: nonEmptyString('merchantId'),
-})
-
-export const ifoodOrderSyncParamsSchema = z.object({
-  storeId: nonEmptyString('storeId'),
-  merchantId: nonEmptyString('merchantId'),
-  orderId: nonEmptyString('orderId'),
-})
-
-export const ifoodWebhookSchema = z.object({
-  signature: nonEmptyString('signature'),
-  body: z.string().min(1, 'body do webhook e obrigatorio.'),
-})
-
 export const adminAuditLogQuerySchema = z.object({
   page: z.coerce.number().int().min(1, 'page deve ser maior que zero.').default(1),
   limit: z.coerce
@@ -377,7 +361,7 @@ export const zeDeliverySettingsUpdateSchema = z.object({
 
 const reportTypeSchema = z.enum(['sales', 'cash', 'deliveries', 'operations', 'audit'])
 const reportFormatSchema = z.enum(['pdf', 'excel'])
-const analyticsModuleSchema = z.enum(['all', 'pdv', 'ifood', 'ze_delivery'])
+const analyticsModuleSchema = z.enum(['all', 'pdv'])
 const analyticsCompareSchema = z.enum(['previous_period', 'week', 'month', 'year'])
 
 export const generateReportSchema = z.object({

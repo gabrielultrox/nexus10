@@ -1,4 +1,4 @@
-export const CHANNELS = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD']
+export const CHANNELS = ['BALCAO', 'ANOTA_AI']
 export const PAYMENT_METHODS = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX']
 export const ORDER_DOMAIN_STATUSES = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']
 export const ORDER_SALE_STATUSES = ['NOT_LAUNCHED', 'LAUNCHED']
@@ -7,9 +7,7 @@ export const SALE_SOURCES = ['DIRECT', 'ORDER']
 
 const channelLabels = {
   BALCAO: 'Balcao',
-  ZE_DELIVERY: 'Ze Delivery',
   ANOTA_AI: 'Anota Ai',
-  IFOOD: 'iFood',
 }
 
 const paymentMethodLabels = {
@@ -39,15 +37,10 @@ const channelAliases = {
   presencial: 'BALCAO',
   telefone: 'BALCAO',
   retirada: 'BALCAO',
-  ze_delivery: 'ZE_DELIVERY',
-  zedelivery: 'ZE_DELIVERY',
-  'ze delivery': 'ZE_DELIVERY',
-  'zé delivery': 'ZE_DELIVERY',
   anotai: 'ANOTA_AI',
   'anota ai': 'ANOTA_AI',
   anota_ai: 'ANOTA_AI',
   whatsapp: 'ANOTA_AI',
-  ifood: 'IFOOD',
 }
 
 const paymentMethodAliases = {

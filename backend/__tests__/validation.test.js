@@ -9,7 +9,6 @@ import {
   createFinancialClosureSchema,
   createFinancialTransactionSchema,
   createOrderSchema,
-  ifoodWebhookSchema,
   updateOrderSchema,
 } from '../schemas/validation.js'
 
@@ -274,24 +273,6 @@ describe('backend validation schemas', () => {
       'A baixa financeira deve conter ao menos uma entrada.',
     )
   })
-
-  it('aceita webhook do iFood com assinatura e body', () => {
-    const result = ifoodWebhookSchema.parse({
-      signature: 'sha256=abc123',
-      body: '{"id":"evt-1"}',
-    })
-
-    expect(result.signature).toBe('sha256=abc123')
-  })
-
-  it('rejeita webhook do iFood sem assinatura', () => {
-    const result = ifoodWebhookSchema.safeParse({
-      body: '{"id":"evt-1"}',
-    })
-
-    expect(result.success).toBe(false)
-    expect(result.error.flatten().fieldErrors.signature).toContain('signature e obrigatorio.')
-  })
 })
 
 describe('backend validation middleware', () => {
@@ -384,10 +365,10 @@ describe('backend validation middleware', () => {
   it('interrompe em validateRequestSources quando qualquer source falha', () => {
     const middleware = validateRequestSources({
       body: createFinancialTransactionSchema,
-      webhook: {
-        schema: ifoodWebhookSchema,
-        source: 'webhook',
-        mapRequest: () => ({ signature: '', body: '' }),
+      params: {
+        schema: authSessionSchema,
+        source: 'params',
+        mapRequest: () => ({ token: '' }),
       },
     })
     const request = {
@@ -397,7 +378,7 @@ describe('backend validation middleware', () => {
         description: 'Recebimento em dinheiro',
         date: '2026-03-27T12:00:00.000Z',
       },
-      webhook: {},
+      params: {},
     }
     const { response, next } = createMiddlewareHarness()
 
@@ -405,7 +386,7 @@ describe('backend validation middleware', () => {
 
     const [error] = next.mock.calls[0]
     expect(error).toBeInstanceOf(RequestValidationError)
-    expect(error.source).toBe('webhook')
-    expect(error.details.signature).toContain('signature e obrigatorio.')
+    expect(error.source).toBe('params')
+    expect(error.details.token).toContain('token e obrigatorio.')
   })
 })

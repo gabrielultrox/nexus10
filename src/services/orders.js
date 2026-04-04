@@ -18,7 +18,6 @@ import {
   guardRemoteSubscription,
 } from './firebase'
 import { createE2eOrder, getE2eOrderById, isE2eMode, subscribeE2eOrders } from './e2eRuntime'
-import { subscribeToExternalOrders } from './externalOrders'
 import {
   buildStoreQueryCacheKey,
   getPaginatedStoreCollectionDocuments,
@@ -257,8 +256,8 @@ function buildItemsSummary(items) {
   return items.length > 3 ? `${summary} +${items.length - 3}` : summary
 }
 
-function mergeOrdersBySource(internalOrders, externalOrders) {
-  return [...internalOrders, ...externalOrders].sort((left, right) => {
+function sortOrders(records) {
+  return [...records].sort((left, right) => {
     const leftDate = left.updatedAt?.getTime?.() ?? left.createdAt?.getTime?.() ?? 0
     const rightDate = right.updatedAt?.getTime?.() ?? right.createdAt?.getTime?.() ?? 0
     return rightDate - leftDate
@@ -279,7 +278,7 @@ function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
     data.saleStatus,
     data.saleId ? 'LAUNCHED' : 'NOT_LAUNCHED',
   )
-  const channel = normalizeChannel(data.source ?? data.origin, isExternal ? 'IFOOD' : null)
+  const channel = normalizeChannel(data.source ?? data.origin, null)
   const paymentMethod = normalizePaymentMethod(
     data.paymentPreview?.method ?? data.paymentMethod ?? data.payment?.method,
     null,
@@ -304,7 +303,7 @@ function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
     domainStatus,
     saleStatus,
     sourceChannel: channel,
-    source: channel ? getChannelLabel(channel) : isExternal ? 'iFood' : 'Nao informado',
+    source: channel ? getChannelLabel(channel) : 'Nao informado',
     origin: channel ? getChannelLabel(channel) : (data.origin ?? 'Nao informado'),
     paymentMethod,
     paymentMethodLabel: paymentMethod ? getPaymentMethodLabel(paymentMethod) : 'Nao informado',
@@ -335,41 +334,6 @@ function normalizeOrder(documentSnapshot) {
   return normalizeOrderRecord(documentSnapshot.id, documentSnapshot.data())
 }
 
-function normalizeExternalOrder(order) {
-  const channel = normalizeChannel(order.source ?? 'IFOOD', 'IFOOD')
-  const paymentMethod = normalizePaymentMethod(order.paymentMethod, null)
-
-  return normalizeOrderRecord(
-    order.id,
-    {
-      ...order,
-      source: channel,
-      paymentMethod,
-      customerSnapshot: {
-        id: order.customer?.id ?? null,
-        name: order.customer?.name ?? 'Cliente iFood',
-        neighborhood: order.customer?.address?.neighborhood ?? '',
-        phone: order.customer?.phone ?? '',
-      },
-      address: {
-        neighborhood: order.customer?.address?.neighborhood ?? '',
-        addressLine: order.customer?.address?.streetName ?? '',
-        reference: order.customer?.address?.reference ?? '',
-        complement: order.customer?.address?.complement ?? '',
-      },
-      totals: {
-        subtotal: parseMoney(order.subtotal),
-        freight: parseMoney(order.shipping),
-        extraAmount: 0,
-        discountPercent: 0,
-        discountValue: parseMoney(order.discount),
-        total: parseMoney(order.total),
-      },
-    },
-    { isExternal: true },
-  )
-}
-
 export function subscribeToOrders(storeId, onData, onError) {
   if (isE2eMode()) {
     return subscribeE2eOrders(storeId, onData)
@@ -381,46 +345,23 @@ export function subscribeToOrders(storeId, onData, onError) {
   }
 
   const ordersQuery = query(getOrdersCollectionRef(storeId), orderBy('createdAt', 'desc'))
-  let internalOrders = []
-  let externalOrders = []
 
-  function emitMergedOrders() {
-    onData(mergeOrdersBySource(internalOrders, externalOrders))
-  }
-
-  const unsubscribeInternal = guardRemoteSubscription(
+  return guardRemoteSubscription(
     () =>
       onSnapshot(
         ordersQuery,
         (snapshot) => {
-          internalOrders = snapshot.docs.map(normalizeOrder)
-          emitMergedOrders()
+          onData(sortOrders(snapshot.docs.map(normalizeOrder)))
         },
         onError,
       ),
     {
       onFallback() {
-        internalOrders = []
-        externalOrders = []
-        emitMergedOrders()
+        onData([])
       },
       onError,
     },
   )
-
-  const unsubscribeExternal = subscribeToExternalOrders(
-    storeId,
-    (orders) => {
-      externalOrders = orders.map(normalizeExternalOrder)
-      emitMergedOrders()
-    },
-    onError,
-  )
-
-  return () => {
-    unsubscribeInternal?.()
-    unsubscribeExternal?.()
-  }
 }
 
 export function getNextOrderStatus(currentStatus) {

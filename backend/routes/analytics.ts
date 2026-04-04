@@ -20,7 +20,7 @@ export function registerAnalyticsRoutes(app: Express): void {
         storeId: string
         startDate: string
         endDate: string
-        module?: 'all' | 'pdv' | 'ifood' | 'ze_delivery'
+        module?: 'all' | 'pdv'
         compareBy?: 'previous_period' | 'week' | 'month' | 'year'
       }
 

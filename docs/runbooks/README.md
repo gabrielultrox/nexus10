@@ -6,8 +6,6 @@ Runbooks curtos para incidentes operacionais recorrentes do Nexus10.
 
 - [Falha de login](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\login-failure.md)
 - [Falha Firebase](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\firebase-failure.md)
-- [Falha scheduler Zé Delivery](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\ze-delivery-scheduler-failure.md)
-- [Falha webhook iFood](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\ifood-webhook-failure.md)
 - [Erro de deploy](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\deploy-failure.md)
 - [Erro de permissões](C:\Users\User\Downloads\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\nexus10-seguro-copia-2026-03-09_2036\docs\runbooks\permissions-failure.md)
 

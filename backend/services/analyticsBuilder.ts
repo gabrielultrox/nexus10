@@ -12,7 +12,7 @@ const ORDERS_COLLECTION = 'orders'
 const CUSTOMERS_COLLECTION = 'customers'
 const PRODUCTS_COLLECTION = 'products'
 
-type AnalyticsModuleFilter = 'all' | 'pdv' | 'ifood' | 'ze_delivery'
+type AnalyticsModuleFilter = 'all' | 'pdv'
 type AnalyticsCompareBy = 'previous_period' | 'week' | 'month' | 'year'
 
 interface AnalyticsQueryInput {
@@ -247,14 +247,6 @@ function normalizeModuleFilter(value: string | undefined): AnalyticsModuleFilter
     .trim()
     .toLowerCase()
 
-  if (normalized === 'ifood') {
-    return 'ifood'
-  }
-
-  if (normalized === 'ze_delivery') {
-    return 'ze_delivery'
-  }
-
   if (normalized === 'pdv') {
     return 'pdv'
   }
@@ -336,14 +328,6 @@ function assertValidRange(startDate: string, endDate: string): QueryRange {
 function matchesModule(channel: string, moduleFilter: AnalyticsModuleFilter): boolean {
   if (moduleFilter === 'all') {
     return true
-  }
-
-  if (moduleFilter === 'ifood') {
-    return channel === 'IFOOD'
-  }
-
-  if (moduleFilter === 'ze_delivery') {
-    return channel === 'ZE_DELIVERY'
   }
 
   return channel !== 'IFOOD' && channel !== 'ZE_DELIVERY'

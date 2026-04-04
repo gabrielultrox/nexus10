@@ -43,7 +43,7 @@ describe('orders service', () => {
 
     const result = validateOrderInput({
       code: 'PED-001',
-      source: 'IFOOD',
+      source: 'BALCAO',
       customerId: 'customer-1',
       customerSnapshot: { id: 'customer-1', name: 'Joao' },
       items: [
@@ -84,7 +84,7 @@ describe('orders service', () => {
 
     expect(() =>
       validateOrderInput({
-        source: 'IFOOD',
+        source: 'BALCAO',
         paymentPreview: { method: 'PIX' },
         items: [],
       }),

@@ -49,9 +49,7 @@ export const orderStatusOptions = [
 export const orderOriginOptions = [
   { value: 'all', label: 'Todas as origens' },
   { value: 'Balcao', label: 'Balcao' },
-  { value: 'Ze Delivery', label: 'Ze Delivery' },
   { value: 'Anota Ai', label: 'Anota Ai' },
-  { value: 'iFood', label: 'iFood' },
 ]
 
 export const orderColumns = ['received', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']

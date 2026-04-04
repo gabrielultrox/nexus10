@@ -21,7 +21,6 @@ const mockPlaySuccess = vi.fn()
 const mockSubscribeToDashboardSources = vi.fn()
 const mockLoadDashboardOperationalSources = vi.fn()
 const mockBuildDashboardData = vi.fn()
-const mockUseZeDeliverySyncStatus = vi.fn()
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -74,10 +73,6 @@ vi.mock('../services/dashboard', () => ({
   buildDashboardData: (...args) => mockBuildDashboardData(...args),
 }))
 
-vi.mock('../hooks/queries/useZeDeliverySyncStatus', () => ({
-  useZeDeliverySyncStatus: () => mockUseZeDeliverySyncStatus(),
-}))
-
 vi.mock('../components/dashboard/DashboardCharts', () => ({
   default: function DashboardChartsMock() {
     return <section aria-label="Graficos do dashboard">Graficos</section>
@@ -100,14 +95,6 @@ describe('Accessibility audit', () => {
     mockVerifyStoredPin.mockReturnValue(true)
     mockUseStore.mockReturnValue({
       currentStoreId: 'store-1',
-    })
-    mockUseZeDeliverySyncStatus.mockReturnValue({
-      data: {
-        summary: null,
-        stores: [],
-      },
-      error: null,
-      isFetching: false,
     })
     mockLoadDashboardOperationalSources.mockReturnValue({
       scheduleRecords: [],

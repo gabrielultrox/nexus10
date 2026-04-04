@@ -41,7 +41,7 @@ import { useConfirm } from '../../../hooks/useConfirm'
 import { useToast } from '../../../hooks/useToast'
 
 const statusOptions = ['OPEN', 'DISPATCHED', 'CONVERTED_TO_SALE', 'CANCELLED']
-const sourceOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD']
+const sourceOptions = ['BALCAO', 'ANOTA_AI']
 const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX']
 
 function createEmptyItem() {

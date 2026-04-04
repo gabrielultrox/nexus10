@@ -351,7 +351,7 @@ const moduleContentByPath = {
       {
         label: 'Bairros bloqueados',
         value: '03',
-        meta: 'Locais sem entrega monitorados no Ze Delivery',
+        meta: 'Locais sem entrega monitorados no mapa operacional',
         badgeText: 'mapa',
         badgeClass: 'ui-badge--info',
       },
@@ -388,7 +388,7 @@ const moduleContentByPath = {
           },
           {
             title: 'Bloqueio mantido no app',
-            meta: 'Ze Delivery segue sem entrega nos bairros marcados',
+            meta: 'Mapa operacional segue com os bairros marcados',
           },
           {
             title: 'Consulta rapida atualizada',

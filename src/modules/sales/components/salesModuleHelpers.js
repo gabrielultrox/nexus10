@@ -1,4 +1,4 @@
-export const channelOptions = ['BALCAO', 'ZE_DELIVERY', 'ANOTA_AI', 'IFOOD']
+export const channelOptions = ['BALCAO', 'ANOTA_AI']
 export const paymentOptions = ['DINHEIRO', 'ONLINE', 'CREDITO', 'DEBITO', 'PIX']
 
 export function createEmptyItem() {
