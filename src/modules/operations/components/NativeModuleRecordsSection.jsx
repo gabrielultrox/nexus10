@@ -892,6 +892,7 @@ function NativeModuleTable({
   onEditableRecordUpdate,
   onApplyAction,
   onMarkReturned,
+  onPrintOccurrence,
   onDelete,
   exitingIds,
   freshRecordId,
@@ -1005,6 +1006,16 @@ function NativeModuleTable({
                           </div>
                         ) : null}
                         <div className="native-module__action-group">
+                          {routePath === 'occurrences' ? (
+                            <button
+                              type="button"
+                              className="ui-button ui-button--ghost native-module__table-action"
+                              onClick={() => onPrintOccurrence(record.id)}
+                              disabled={exitingIds.has(record.id)}
+                            >
+                              Imprimir
+                            </button>
+                          ) : null}
                           {manager.actionLabel ? (
                             <button
                               type="button"
@@ -1122,6 +1133,7 @@ function NativeModuleRecordsSection(props) {
     handleClearAll,
     tableColumns,
     handleMarkReturned,
+    handlePrintOccurrence,
     freshRecordId,
     highlightedRecordId,
   } = props
@@ -1439,6 +1451,7 @@ function NativeModuleRecordsSection(props) {
           onEditableRecordUpdate={handleEditableRecordUpdate}
           onApplyAction={handleApplyAction}
           onMarkReturned={handleMarkReturned}
+          onPrintOccurrence={handlePrintOccurrence}
           onDelete={requestDelete}
           exitingIds={exitingIds}
           freshRecordId={freshRecordId}

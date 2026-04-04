@@ -50,6 +50,7 @@ import {
   playOperationalSuccess,
   playOperationalWarning,
 } from '../../../services/soundManager'
+import { printOccurrenceReport } from '../../../services/occurrencePrint'
 import NativeModuleFormCard from './NativeModuleFormCard'
 import NativeModuleStatusBar from './NativeModuleStatusBar'
 
@@ -432,6 +433,34 @@ function formatAuditText(record, fallback = 'Sem atualizacao') {
   return actorLabel || timeLabel || fallback
 }
 
+function formatOccurrenceDateTime(timestamp) {
+  const date = timestamp ? new Date(timestamp) : new Date()
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
+}
+
+function buildOccurrencePrintPayload(record, session) {
+  const code = String(record?.code ?? '').trim() || 'Sem codigo'
+  const type = String(record?.type ?? '').trim() || 'Ocorrencia operacional'
+  const owner = String(record?.owner ?? '').trim() || session?.operatorName || 'Operador local'
+  const status = String(record?.status ?? '').trim() || 'Em triagem'
+
+  return {
+    documentTitle: 'Ocorrencia para malote',
+    subtitle: 'Encaminhamento interno para Financeiro / RH',
+    meta: status,
+    destinationSector: 'Financeiro / RH',
+    category: 'Ocorrencia operacional',
+    title: `Ocorrencia ${code}`,
+    reference: code,
+    cashierName: owner,
+    operatorName: session?.operatorName ?? session?.displayName ?? owner,
+    occurredAt: formatOccurrenceDateTime(record?.createdAtClient ?? record?.updatedAtClient),
+    printedAt: new Date().toISOString(),
+    description: type,
+    footer: 'Documento para envio no malote interno.',
+  }
+}
+
 function resolveAuditEventDayKey(event) {
   if (typeof event?.operationalDay === 'string' && event.operationalDay.trim()) {
     return event.operationalDay.trim()
@@ -647,6 +676,7 @@ function NativeModuleWorkspace({ route }) {
   const [recentlyClosedRecordId, setRecentlyClosedRecordId] = useState(null)
   const [freshRecordId, setFreshRecordId] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isPrintingOccurrence, setIsPrintingOccurrence] = useState(false)
   const [isBulkConfirmingMachines, setIsBulkConfirmingMachines] = useState(false)
   const [bulkConfirmProgress, setBulkConfirmProgress] = useState({ processed: 0, total: 0 })
   const [focusFieldKey, setFocusFieldKey] = useState(0)
@@ -1866,12 +1896,10 @@ function NativeModuleWorkspace({ route }) {
     }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-
+  async function persistFormRecord() {
     if (!managerWithResolvedFields) {
       playError()
-      return
+      return null
     }
 
     if (route.path === 'delivery-reading' && !String(formValues.deliveryCode ?? '').trim()) {
@@ -1879,7 +1907,7 @@ function NativeModuleWorkspace({ route }) {
       markDeliveryCodeInvalid()
       toast.error('Informe o codigo da entrega.')
       playOperationalWarning()
-      return
+      return null
     }
 
     if (route.path === 'delivery-reading') {
@@ -1894,7 +1922,7 @@ function NativeModuleWorkspace({ route }) {
         markDeliveryCodeInvalid()
         toast.error('Selecione um entregador valido.')
         playOperationalWarning()
-        return
+        return null
       }
 
       if (alreadyRegistered) {
@@ -1902,7 +1930,7 @@ function NativeModuleWorkspace({ route }) {
         markDeliveryCodeInvalid()
         toast.error(`Codigo ${deliveryCode} ja registrado.`)
         playOperationalWarning()
-        return
+        return null
       }
     }
 
@@ -1910,14 +1938,14 @@ function NativeModuleWorkspace({ route }) {
       setErrorMessage('Selecione um entregador valido para liberar o troco.')
       toast.error('Selecione um entregador valido.')
       playOperationalWarning()
-      return
+      return null
     }
 
     if (route.path === 'schedule' && isPlaceholderOption(formValues.courier)) {
       setErrorMessage('Selecione um entregador valido para montar a escala.')
       toast.error('Selecione um entregador valido.')
       playOperationalWarning()
-      return
+      return null
     }
 
     const newRecord = {
@@ -1983,6 +2011,7 @@ function NativeModuleWorkspace({ route }) {
         value: operationsSummary?.value,
         courier: operationsSummary?.courier,
       })
+      return newRecord
     } catch (error) {
       setErrorMessage(error.message ?? 'Nao foi possivel salvar o registro.')
       if (route.path === 'delivery-reading') {
@@ -1990,8 +2019,81 @@ function NativeModuleWorkspace({ route }) {
         toast.error(error.message ?? 'Nao foi possivel registrar a leitura.')
       }
       playError()
+      return null
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    await persistFormRecord()
+  }
+
+  function handlePrintOccurrenceRecord(recordId) {
+    if (route.path !== 'occurrences') {
+      playError()
+      return
+    }
+
+    const occurrenceRecord = records.find((item) => item.id === recordId)
+
+    if (!occurrenceRecord) {
+      setErrorMessage('Nao foi possivel localizar a ocorrencia para impressao.')
+      playError()
+      return
+    }
+
+    try {
+      printOccurrenceReport(buildOccurrencePrintPayload(occurrenceRecord, session))
+      appendAuditEvent({
+        module: route.title,
+        modulePath: route.path,
+        recordId: occurrenceRecord.id,
+        actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+        action: 'Imprimiu ocorrencia',
+        target: occurrenceRecord.code ?? 'ocorrencia',
+        details: `Ocorrencia ${occurrenceRecord.code ?? ''} preparada para malote Financeiro / RH`,
+      })
+      setErrorMessage('')
+      playNotification()
+    } catch {
+      setErrorMessage('Nao foi possivel preparar a impressao da ocorrencia.')
+      playError()
+    }
+  }
+
+  async function handleRegisterAndPrintOccurrence() {
+    if (route.path !== 'occurrences') {
+      playError()
+      return
+    }
+
+    setIsPrintingOccurrence(true)
+
+    try {
+      const newRecord = await persistFormRecord()
+
+      if (!newRecord) {
+        return
+      }
+
+      printOccurrenceReport(buildOccurrencePrintPayload(newRecord, session))
+      appendAuditEvent({
+        module: route.title,
+        modulePath: route.path,
+        recordId: newRecord.id,
+        actor: session?.operatorName ?? session?.displayName ?? 'Operador local',
+        action: 'Imprimiu ocorrencia',
+        target: newRecord.code ?? 'ocorrencia',
+        details: `Ocorrencia ${newRecord.code ?? ''} registrada e impressa para malote Financeiro / RH`,
+      })
+      playNotification()
+    } catch {
+      setErrorMessage('Nao foi possivel preparar a impressao da ocorrencia.')
+      playError()
+    } finally {
+      setIsPrintingOccurrence(false)
     }
   }
 
@@ -3047,6 +3149,17 @@ function NativeModuleWorkspace({ route }) {
         invalidFieldName={invalidFieldName}
         noticeMessage={formNoticeMessage}
         submitDisabledReason={formNoticeMessage}
+        secondaryAction={
+          route.path === 'occurrences'
+            ? {
+                label: isPrintingOccurrence ? 'Registrando...' : 'Registrar e imprimir',
+                variant: 'ghost',
+                loading: isPrintingOccurrence,
+                disabledReason: formNoticeMessage,
+                onClick: handleRegisterAndPrintOccurrence,
+              }
+            : null
+        }
       />
 
       {!manager ? (
@@ -3119,6 +3232,7 @@ function NativeModuleWorkspace({ route }) {
           handleClearAll={handleClearAll}
           tableColumns={tableColumns}
           handleMarkReturned={handleMarkReturned}
+          handlePrintOccurrence={handlePrintOccurrenceRecord}
           freshRecordId={freshRecordId}
           highlightedRecordId={requestedRecordId || highlightedScheduleRecordId}
         />

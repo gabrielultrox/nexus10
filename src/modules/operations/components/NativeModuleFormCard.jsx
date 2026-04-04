@@ -122,6 +122,7 @@ function NativeModuleFormCard({
   invalidFieldName = '',
   noticeMessage = '',
   submitDisabledReason = '',
+  secondaryAction = null,
 }) {
   const formRef = useRef(null)
   const deliveryCodeInputRef = useRef(null)
@@ -299,6 +300,18 @@ function NativeModuleFormCard({
           <div
             className={`native-module__form-actions${routePath === 'delivery-reading' ? ' native-module__form-actions--inline' : ''}`}
           >
+            {secondaryAction ? (
+              <Button
+                type="button"
+                variant={secondaryAction.variant ?? 'ghost'}
+                disabled={Boolean(secondaryAction.disabledReason) || secondaryAction.loading}
+                loading={secondaryAction.loading}
+                title={secondaryAction.disabledReason || undefined}
+                onClick={secondaryAction.onClick}
+              >
+                {secondaryAction.label}
+              </Button>
+            ) : null}
             {routePath === 'advances' ? (
               <Button type="button" variant="ghost" onClick={onReset}>
                 Cancelar
