@@ -13,6 +13,7 @@ import {
   subscribeToFinancialClosures,
   subscribeToFinancialEntries,
 } from '../../../services/finance'
+import { printOccurrenceReport } from '../../../services/occurrencePrint'
 import { playError, playSuccess } from '../../../services/soundManager'
 import { storeUserOptions } from '../../../services/localUsers'
 import FinanceIndicators from './FinanceIndicators'
@@ -30,6 +31,17 @@ const initialExpenseForm = {
 
 const initialClosureForm = {
   cashierName: 'Geral',
+}
+
+const initialOccurrenceForm = {
+  destinationSector: 'Financeiro / RH',
+  category: 'Ocorrencia financeira',
+  title: '',
+  reference: '',
+  amount: '',
+  cashierName: 'Geral',
+  occurredAt: '',
+  description: '',
 }
 
 function getCurrentDateTimeLocal() {
@@ -104,6 +116,7 @@ function FinanceModule() {
   const [loading, setLoading] = useState(true)
   const [savingExpense, setSavingExpense] = useState(false)
   const [savingClosure, setSavingClosure] = useState(false)
+  const [printingOccurrence, setPrintingOccurrence] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -114,6 +127,21 @@ function FinanceModule() {
     occurredAt: getCurrentDateTimeLocal(),
   }))
   const [closureForm, setClosureForm] = useState(initialClosureForm)
+  const [occurrenceForm, setOccurrenceForm] = useState(() => ({
+    ...initialOccurrenceForm,
+    occurredAt: getCurrentDateTimeLocal(),
+    cashierName: session?.operatorName ?? initialOccurrenceForm.cashierName,
+  }))
+
+  useEffect(() => {
+    setOccurrenceForm((current) => ({
+      ...current,
+      cashierName:
+        current.cashierName && current.cashierName !== initialOccurrenceForm.cashierName
+          ? current.cashierName
+          : (session?.operatorName ?? initialOccurrenceForm.cashierName),
+    }))
+  }, [session?.operatorName])
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -453,6 +481,80 @@ function FinanceModule() {
     }))
   }
 
+  function updateOccurrenceField(field, value) {
+    setOccurrenceForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  async function handleOccurrencePrint(event) {
+    event.preventDefault()
+
+    if (!can('finance:write')) {
+      setErrorMessage('Seu perfil nao pode imprimir ocorrencias financeiras.')
+      playError()
+      return
+    }
+
+    if (!occurrenceForm.title.trim()) {
+      setErrorMessage('Informe um titulo para a ocorrencia.')
+      playError()
+      return
+    }
+
+    if (!occurrenceForm.description.trim()) {
+      setErrorMessage('Descreva a ocorrencia que sera enviada no malote.')
+      playError()
+      return
+    }
+
+    setPrintingOccurrence(true)
+    setErrorMessage('')
+    setFeedbackMessage('')
+
+    try {
+      const printedAt = new Date().toISOString()
+
+      printOccurrenceReport({
+        destinationSector: occurrenceForm.destinationSector,
+        category: occurrenceForm.category,
+        title: occurrenceForm.title.trim(),
+        reference: occurrenceForm.reference.trim(),
+        amount: occurrenceForm.amount.trim(),
+        cashierName: occurrenceForm.cashierName.trim() || 'Geral',
+        operatorName: session?.displayName ?? session?.operatorName ?? 'Operador',
+        occurredAt: occurrenceForm.occurredAt,
+        printedAt,
+        description: occurrenceForm.description.trim(),
+        meta: `Store ${currentStoreId ?? '--'} • ${session?.roleLabel ?? 'Operacao'}`,
+      })
+
+      await recordAuditLog({
+        storeId: currentStoreId,
+        tenantId,
+        actor: buildAuditActor(session),
+        action: 'financial.occurrence_printed',
+        entityType: 'financial_occurrence',
+        entityId: `occurrence-${printedAt}`,
+        description: `Ocorrencia impressa para ${occurrenceForm.destinationSector}: ${occurrenceForm.title.trim()}.`,
+      })
+
+      setOccurrenceForm({
+        ...initialOccurrenceForm,
+        occurredAt: getCurrentDateTimeLocal(),
+        cashierName: session?.operatorName ?? initialOccurrenceForm.cashierName,
+      })
+      setFeedbackMessage('Ocorrencia pronta para impressao no malote.')
+      playSuccess()
+    } catch (error) {
+      setErrorMessage(error.message)
+      playError()
+    } finally {
+      setPrintingOccurrence(false)
+    }
+  }
+
   if (!firebaseReady) {
     return (
       <SurfaceCard title="Financeiro">
@@ -667,6 +769,136 @@ function FinanceModule() {
           </form>
         </SurfaceCard>
       </div>
+
+      <SurfaceCard title="Ocorrencia para malote">
+        <form
+          className="finance-form-grid finance-form-grid--occurrence"
+          onSubmit={handleOccurrencePrint}
+        >
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-destination">
+              Destino
+            </label>
+            <Select
+              id="finance-occurrence-destination"
+              className="ui-select"
+              value={occurrenceForm.destinationSector}
+              onChange={(event) => updateOccurrenceField('destinationSector', event.target.value)}
+            >
+              <option value="Financeiro / RH">Financeiro / RH</option>
+              <option value="Financeiro">Financeiro</option>
+              <option value="RH">RH</option>
+            </Select>
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-category">
+              Classificacao
+            </label>
+            <Select
+              id="finance-occurrence-category"
+              className="ui-select"
+              value={occurrenceForm.category}
+              onChange={(event) => updateOccurrenceField('category', event.target.value)}
+            >
+              <option value="Ocorrencia financeira">Ocorrencia financeira</option>
+              <option value="Sangria / caixa">Sangria / caixa</option>
+              <option value="Divergencia operacional">Divergencia operacional</option>
+              <option value="Ajuste manual">Ajuste manual</option>
+            </Select>
+          </div>
+          <div className="ui-field finance-form-grid__wide">
+            <label className="ui-label" htmlFor="finance-occurrence-title">
+              Titulo
+            </label>
+            <input
+              id="finance-occurrence-title"
+              className="ui-input"
+              value={occurrenceForm.title}
+              onChange={(event) => updateOccurrenceField('title', event.target.value)}
+              placeholder="Ex: possivel sangria duplicada no fechamento do turno"
+            />
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-reference">
+              Referencia
+            </label>
+            <input
+              id="finance-occurrence-reference"
+              className="ui-input"
+              value={occurrenceForm.reference}
+              onChange={(event) => updateOccurrenceField('reference', event.target.value)}
+              placeholder="Venda, ajuste, turno, caixa"
+            />
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-amount">
+              Valor impactado
+            </label>
+            <input
+              id="finance-occurrence-amount"
+              className="ui-input"
+              value={occurrenceForm.amount}
+              onChange={(event) => updateOccurrenceField('amount', event.target.value)}
+              placeholder="Ex: R$ 120,00"
+            />
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-cashier">
+              Responsavel / caixa
+            </label>
+            <Select
+              id="finance-occurrence-cashier"
+              className="ui-select"
+              value={occurrenceForm.cashierName}
+              onChange={(event) => updateOccurrenceField('cashierName', event.target.value)}
+            >
+              <option value="Geral">Geral</option>
+              {storeUserOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="ui-field">
+            <label className="ui-label" htmlFor="finance-occurrence-date">
+              Data e hora
+            </label>
+            <input
+              id="finance-occurrence-date"
+              className="ui-input"
+              type="datetime-local"
+              value={occurrenceForm.occurredAt}
+              onChange={(event) => updateOccurrenceField('occurredAt', event.target.value)}
+            />
+          </div>
+          <div className="ui-field finance-form-grid__full">
+            <label className="ui-label" htmlFor="finance-occurrence-description">
+              Descricao da ocorrencia
+            </label>
+            <textarea
+              id="finance-occurrence-description"
+              className="finance-textarea"
+              rows="6"
+              value={occurrenceForm.description}
+              onChange={(event) => updateOccurrenceField('description', event.target.value)}
+              placeholder="Descreva o que aconteceu, o impacto e o que deve ser verificado pelo Financeiro / RH."
+            />
+          </div>
+          <div className="finance-form-actions finance-form-actions--split">
+            <span className="finance-help-copy">
+              Documento termico 80x297mm para seguir no malote com assinatura de recebimento.
+            </span>
+            <button
+              type="submit"
+              className="ui-button ui-button--primary"
+              disabled={printingOccurrence || !can('finance:write')}
+            >
+              {printingOccurrence ? 'Preparando...' : 'Imprimir ocorrencia'}
+            </button>
+          </div>
+        </form>
+      </SurfaceCard>
 
       <SurfaceCard title="Movimentacoes financeiras">
         <div className="finance-table-meta">

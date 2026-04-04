@@ -33,12 +33,39 @@
   grid-column: span 2;
 }
 
+.finance-form-grid__full {
+  grid-column: 1 / -1;
+}
+
+.finance-form-grid--occurrence {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .finance-form-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
   grid-column: 1 / -1;
+}
+
+.finance-textarea {
+  width: 100%;
+  min-height: 144px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  background: var(--surface-panel-soft-alt);
+  color: var(--color-text-primary);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.finance-help-copy {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .finance-form-actions--split {
