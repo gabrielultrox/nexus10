@@ -44,9 +44,6 @@ function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
-  const [isPageVisible, setIsPageVisible] = useState(
-    () => typeof document === 'undefined' || document.visibilityState === 'visible',
-  )
   const [showHeavyPanels, setShowHeavyPanels] = useState(false)
   const {
     data: zeDashboard,
@@ -54,17 +51,8 @@ function DashboardPage() {
     isFetching: isZeFetching,
   } = useZeDeliverySyncStatus({
     storeId: currentStoreId,
-    enabled: Boolean(currentStoreId && isPageVisible && showHeavyPanels),
+    enabled: Boolean(currentStoreId && showHeavyPanels),
   })
-
-  useEffect(() => {
-    function handleVisibilityChange() {
-      setIsPageVisible(document.visibilityState === 'visible')
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
 
   useEffect(() => {
     const relevantStorageKeys = new Set([
@@ -98,7 +86,7 @@ function DashboardPage() {
   useEffect(() => {
     setShowHeavyPanels(false)
 
-    if (isDashboardLoading || !isPageVisible) {
+    if (isDashboardLoading) {
       return undefined
     }
 
@@ -111,7 +99,7 @@ function DashboardPage() {
     })
 
     return () => cancel(handle)
-  }, [isDashboardLoading, isPageVisible, currentStoreId, period.endDate, period.startDate])
+  }, [isDashboardLoading, currentStoreId, period.endDate, period.startDate])
 
   useEffect(() => {
     if (!firebaseReady || !currentStoreId) {
@@ -171,7 +159,7 @@ function DashboardPage() {
   }, [currentStoreId])
 
   useEffect(() => {
-    if (!currentStoreId || !isPageVisible || !showHeavyPanels) {
+    if (!currentStoreId || !showHeavyPanels) {
       setIfoodMerchants([])
       return undefined
     }
@@ -182,7 +170,7 @@ function DashboardPage() {
       (nextMerchants) => setIfoodMerchants(nextMerchants),
       () => setIfoodMerchants([]),
     )
-  }, [currentStoreId, isPageVisible, showHeavyPanels])
+  }, [currentStoreId, showHeavyPanels])
 
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
   const currentStoreZeDashboard = useMemo(

@@ -777,7 +777,6 @@ function NativeModuleWorkspace({ route }) {
 
   useEffect(() => {
     let cancelled = false
-    let visibilityTimerId = null
 
     async function refreshSyncState() {
       if (currentStoreId && isOnline && !localOnlyMode && canUseRemoteSync()) {
@@ -803,36 +802,12 @@ function NativeModuleWorkspace({ route }) {
       }
     }
 
-    function handleVisibilityChange() {
-      if (document.visibilityState !== 'visible') {
-        if (visibilityTimerId) {
-          window.clearTimeout(visibilityTimerId)
-          visibilityTimerId = null
-        }
-        return
-      }
-
-      if (getManualModulePendingCount(syncModulePaths) === 0) {
-        return
-      }
-
-      visibilityTimerId = window.setTimeout(() => {
-        visibilityTimerId = null
-        refreshSyncState()
-      }, 1500)
-    }
-
     refreshSyncState()
     window.addEventListener('online', refreshSyncState)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       cancelled = true
-      if (visibilityTimerId) {
-        window.clearTimeout(visibilityTimerId)
-      }
       window.removeEventListener('online', refreshSyncState)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [currentStoreId, isOnline, localOnlyMode, syncModulePaths, tenantId])
 

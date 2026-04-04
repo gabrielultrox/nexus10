@@ -64,6 +64,7 @@ const NotificationLiveStatusContext = createContext<any>({
   connectionStatus: 'idle',
   lastConnectedAt: null,
 })
+const NotificationUnreadContext = createContext<number>(0)
 const delayedOrderThresholdMinutes = 35
 const advancesReminderHour = 23
 const advancesReminderMinute = 30
@@ -147,8 +148,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     enabled: deferredNotificationsEnabled,
     storeId: currentStoreId,
   })
+  const liveConnectionStatus = liveNotifications.connectionStatus
+  const liveLastConnectedAt = liveNotifications.lastConnectedAt
+  const subscribeToLiveNotifications = liveNotifications.subscribe
+  const reconnectLiveNotifications = liveNotifications.reconnect
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications],
+  )
   const shouldUseFirestoreNotificationFallback =
-    deferredNotificationsEnabled && liveNotifications.connectionStatus !== 'connected'
+    deferredNotificationsEnabled && liveConnectionStatus !== 'connected'
 
   useEffect(() => {
     if (!operationalNotificationsEnabled) {
@@ -265,7 +274,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return undefined
     }
 
-    const unsubscribeLive = liveNotifications.subscribe('notification', (event) => {
+    const unsubscribeLive = subscribeToLiveNotifications('notification', (event) => {
       const notification = createNotificationFromLiveEvent(event)
 
       if (!shouldPresentNotification(notification, preferences)) {
@@ -276,7 +285,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     })
 
     return () => unsubscribeLive()
-  }, [deferredNotificationsEnabled, liveNotifications, preferences])
+  }, [deferredNotificationsEnabled, preferences, subscribeToLiveNotifications])
 
   useEffect(() => {
     if (!deferredNotificationsEnabled || !currentStoreId) {
@@ -544,13 +553,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       notifications,
-      unreadCount: notifications.filter((notification) => !notification.read).length,
+      unreadCount,
       connectionStatus: deferredNotificationsEnabled
-        ? liveNotifications.connectionStatus
+        ? liveConnectionStatus
         : operationalNotificationsEnabled
           ? 'pending'
           : 'idle',
-      lastConnectedAt: liveNotifications.lastConnectedAt,
+      lastConnectedAt: liveLastConnectedAt,
       preferences,
       async updatePreferences(nextPreferences: PreferencesRecord) {
         const merged = await persistNotificationPreferences({
@@ -581,40 +590,45 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         dismissNotification(notificationId)
       },
       reconnect() {
-        liveNotifications.reconnect()
+        reconnectLiveNotifications()
       },
     }),
     [
       currentStoreId,
       deferredNotificationsEnabled,
-      liveNotifications,
+      liveConnectionStatus,
+      liveLastConnectedAt,
       notifications,
       operationalNotificationsEnabled,
       preferences,
+      reconnectLiveNotifications,
       session,
+      unreadCount,
     ],
   )
 
   const liveStatusValue = useMemo(
     () => ({
       connectionStatus: deferredNotificationsEnabled
-        ? liveNotifications.connectionStatus
+        ? liveConnectionStatus
         : operationalNotificationsEnabled
           ? 'pending'
           : 'idle',
-      lastConnectedAt: liveNotifications.lastConnectedAt,
+      lastConnectedAt: liveLastConnectedAt,
     }),
     [
       deferredNotificationsEnabled,
-      liveNotifications.connectionStatus,
-      liveNotifications.lastConnectedAt,
+      liveConnectionStatus,
+      liveLastConnectedAt,
       operationalNotificationsEnabled,
     ],
   )
 
   return (
     <NotificationLiveStatusContext.Provider value={liveStatusValue}>
-      <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>
+      <NotificationUnreadContext.Provider value={unreadCount}>
+        <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>
+      </NotificationUnreadContext.Provider>
     </NotificationLiveStatusContext.Provider>
   )
 }
@@ -631,4 +645,8 @@ export function useNotifications() {
 
 export function useNotificationLiveStatus() {
   return useContext(NotificationLiveStatusContext)
+}
+
+export function useNotificationUnreadCount() {
+  return useContext(NotificationUnreadContext)
 }

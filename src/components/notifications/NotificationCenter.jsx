@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useNotifications } from '../../contexts/NotificationsContext'
+import { useNotificationUnreadCount, useNotifications } from '../../contexts/NotificationsContext'
 import EmptyState from '../ui/EmptyState'
 
 function formatDateTime(value) {
@@ -15,11 +15,10 @@ function formatDateTime(value) {
   }).format(dateValue)
 }
 
-function NotificationCenter() {
+function NotificationCenterPanel({ onClose }) {
   const navigate = useNavigate()
   const {
     notifications,
-    unreadCount,
     markAsRead,
     markAllAsRead,
     dismiss,
@@ -27,16 +26,100 @@ function NotificationCenter() {
     updatePreferences,
     connectionStatus,
   } = useNotifications()
-  const [open, setOpen] = useState(false)
 
   function handleNotificationClick(notification) {
     markAsRead(notification.id)
 
     if (notification.metadata?.route) {
       navigate(notification.metadata.route)
-      setOpen(false)
+      onClose()
     }
   }
+
+  return (
+    <div className="notification-center__panel">
+      <div className="notification-center__panel-head">
+        <div>
+          <p className="text-overline">Notifications</p>
+          <h3 className="text-section-title">Centro operacional</h3>
+        </div>
+        <button type="button" className="ui-button ui-button--ghost" onClick={markAllAsRead}>
+          Marcar tudo
+        </button>
+      </div>
+
+      <div className="notification-center__preferences">
+        <span
+          className={`notification-center__live notification-center__live--${connectionStatus}`}
+        >
+          {connectionStatus === 'connected' ? 'Tempo real ativo' : 'Tempo real indisponivel'}
+        </span>
+        <button
+          type="button"
+          className="ui-button ui-button--ghost"
+          onClick={() =>
+            updatePreferences({
+              channels: {
+                sound: !(preferences?.channels?.sound !== false),
+              },
+            })
+          }
+        >
+          Som {preferences?.channels?.sound !== false ? 'ligado' : 'desligado'}
+        </button>
+        <button
+          type="button"
+          className="ui-button ui-button--ghost"
+          onClick={() =>
+            updatePreferences({
+              channels: {
+                vibration: !preferences?.channels?.vibration,
+              },
+            })
+          }
+        >
+          Vibracao {preferences?.channels?.vibration ? 'ligada' : 'desligada'}
+        </button>
+      </div>
+
+      {notifications.length === 0 ? (
+        <EmptyState message="Sem alertas no momento" />
+      ) : (
+        <div className="notification-center__list">
+          {notifications.map((notification) => (
+            <article
+              key={notification.id}
+              className={`notification-center__item notification-center__item--${notification.type}${notification.read ? ' is-read' : ''}`}
+            >
+              <button
+                type="button"
+                className="notification-center__item-main"
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className="notification-center__item-top">
+                  <strong>{notification.title}</strong>
+                  <span>{formatDateTime(notification.createdAt)}</span>
+                </div>
+                <p>{notification.message}</p>
+              </button>
+              <button
+                type="button"
+                className="notification-center__dismiss"
+                onClick={() => dismiss(notification.id)}
+              >
+                Fechar
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NotificationCenter() {
+  const unreadCount = useNotificationUnreadCount()
+  const [open, setOpen] = useState(false)
 
   return (
     <div className={`notification-center${open ? ' is-open' : ''}`}>
@@ -51,85 +134,7 @@ function NotificationCenter() {
         <span className="notification-center__count">{unreadCount}</span>
       </button>
 
-      {open ? (
-        <div className="notification-center__panel">
-          <div className="notification-center__panel-head">
-            <div>
-              <p className="text-overline">Notifications</p>
-              <h3 className="text-section-title">Centro operacional</h3>
-            </div>
-            <button type="button" className="ui-button ui-button--ghost" onClick={markAllAsRead}>
-              Marcar tudo
-            </button>
-          </div>
-
-          <div className="notification-center__preferences">
-            <span
-              className={`notification-center__live notification-center__live--${connectionStatus}`}
-            >
-              {connectionStatus === 'connected' ? 'Tempo real ativo' : 'Tempo real indisponivel'}
-            </span>
-            <button
-              type="button"
-              className="ui-button ui-button--ghost"
-              onClick={() =>
-                updatePreferences({
-                  channels: {
-                    sound: !(preferences?.channels?.sound !== false),
-                  },
-                })
-              }
-            >
-              Som {preferences?.channels?.sound !== false ? 'ligado' : 'desligado'}
-            </button>
-            <button
-              type="button"
-              className="ui-button ui-button--ghost"
-              onClick={() =>
-                updatePreferences({
-                  channels: {
-                    vibration: !preferences?.channels?.vibration,
-                  },
-                })
-              }
-            >
-              Vibracao {preferences?.channels?.vibration ? 'ligada' : 'desligada'}
-            </button>
-          </div>
-
-          {notifications.length === 0 ? (
-            <EmptyState message="Sem alertas no momento" />
-          ) : (
-            <div className="notification-center__list">
-              {notifications.map((notification) => (
-                <article
-                  key={notification.id}
-                  className={`notification-center__item notification-center__item--${notification.type}${notification.read ? ' is-read' : ''}`}
-                >
-                  <button
-                    type="button"
-                    className="notification-center__item-main"
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="notification-center__item-top">
-                      <strong>{notification.title}</strong>
-                      <span>{formatDateTime(notification.createdAt)}</span>
-                    </div>
-                    <p>{notification.message}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className="notification-center__dismiss"
-                    onClick={() => dismiss(notification.id)}
-                  >
-                    Fechar
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
+      {open ? <NotificationCenterPanel onClose={() => setOpen(false)} /> : null}
     </div>
   )
 }

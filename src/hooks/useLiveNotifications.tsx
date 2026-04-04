@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ensureRemoteSession, firebaseReady } from '../services/firebase'
 import { isE2eMode } from '../services/e2eRuntime'
@@ -23,20 +23,26 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
   const reconnectTimerRef = useRef<number | null>(null)
   const retryDelayRef = useRef(INITIAL_RETRY_DELAY)
   const unmountedRef = useRef(false)
+  const lastEventRef = useRef<LiveNotificationEvent | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<string>('idle')
-  const [lastEvent, setLastEvent] = useState<LiveNotificationEvent | null>(null)
   const [lastConnectedAt, setLastConnectedAt] = useState<string | null>(null)
 
-  function dispatchEvent(eventName: string, payload: LiveNotificationEvent) {
+  const updateConnectionStatus = useCallback((nextStatus: string) => {
+    setConnectionStatus((currentStatus) =>
+      currentStatus === nextStatus ? currentStatus : nextStatus,
+    )
+  }, [])
+
+  const dispatchEvent = useCallback((eventName: string, payload: LiveNotificationEvent) => {
     const exactSubscribers = subscribersRef.current.get(eventName) ?? new Set()
     const wildcardSubscribers = subscribersRef.current.get('*') ?? new Set()
 
     for (const handler of [...exactSubscribers, ...wildcardSubscribers]) {
       handler(payload)
     }
-  }
+  }, [])
 
-  function cleanupConnection() {
+  const cleanupConnection = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
@@ -46,37 +52,24 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
       window.clearTimeout(reconnectTimerRef.current)
       reconnectTimerRef.current = null
     }
-  }
+  }, [])
 
-  function scheduleReconnect() {
-    if (unmountedRef.current || reconnectTimerRef.current) {
-      return
-    }
-
-    setConnectionStatus('reconnecting')
-    reconnectTimerRef.current = window.setTimeout(() => {
-      reconnectTimerRef.current = null
-      void connect()
-    }, retryDelayRef.current)
-    retryDelayRef.current = Math.min(MAX_RETRY_DELAY, retryDelayRef.current * 2)
-  }
-
-  async function connect() {
+  const connect = useCallback(async () => {
     cleanupConnection()
 
     if (!enabled || !storeId || !firebaseReady || isE2eMode()) {
-      setConnectionStatus(enabled ? 'disconnected' : 'idle')
+      updateConnectionStatus(enabled ? 'disconnected' : 'idle')
       return
     }
 
-    setConnectionStatus('connecting')
+    updateConnectionStatus('connecting')
 
     try {
       const user = await ensureRemoteSession().catch(() => null)
       const idToken = user ? await user.getIdToken().catch(() => '') : ''
 
       if (!idToken) {
-        setConnectionStatus('disconnected')
+        updateConnectionStatus('disconnected')
         return
       }
 
@@ -86,19 +79,19 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
 
       source.addEventListener('connected', (rawEvent) => {
         retryDelayRef.current = INITIAL_RETRY_DELAY
-        setConnectionStatus('connected')
-        setLastConnectedAt(new Date().toISOString())
+        updateConnectionStatus('connected')
+        setLastConnectedAt((currentValue) => currentValue ?? new Date().toISOString())
         try {
-          setLastEvent(JSON.parse(rawEvent.data))
+          lastEventRef.current = JSON.parse(rawEvent.data)
         } catch {
-          setLastEvent(null)
+          lastEventRef.current = null
         }
       })
 
       source.addEventListener('notification', (rawEvent) => {
         try {
           const payload = JSON.parse(rawEvent.data)
-          setLastEvent(payload)
+          lastEventRef.current = payload
           dispatchEvent(String(payload.type ?? 'notification'), payload)
           dispatchEvent('notification', payload)
         } catch {
@@ -108,19 +101,46 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
 
       source.onerror = () => {
         cleanupConnection()
-        scheduleReconnect()
+        if (!unmountedRef.current) {
+          updateConnectionStatus('reconnecting')
+          reconnectTimerRef.current = window.setTimeout(() => {
+            reconnectTimerRef.current = null
+            void connect()
+          }, retryDelayRef.current)
+          retryDelayRef.current = Math.min(MAX_RETRY_DELAY, retryDelayRef.current * 2)
+        }
       }
     } catch {
-      scheduleReconnect()
+      if (!unmountedRef.current && !reconnectTimerRef.current) {
+        updateConnectionStatus('reconnecting')
+        reconnectTimerRef.current = window.setTimeout(() => {
+          reconnectTimerRef.current = null
+          void connect()
+        }, retryDelayRef.current)
+        retryDelayRef.current = Math.min(MAX_RETRY_DELAY, retryDelayRef.current * 2)
+      }
     }
-  }
+  }, [cleanupConnection, dispatchEvent, enabled, storeId, updateConnectionStatus])
+
+  const scheduleReconnect = useCallback(() => {
+    if (unmountedRef.current || reconnectTimerRef.current) {
+      return
+    }
+
+    updateConnectionStatus('reconnecting')
+    reconnectTimerRef.current = window.setTimeout(() => {
+      reconnectTimerRef.current = null
+      void connect()
+    }, retryDelayRef.current)
+    retryDelayRef.current = Math.min(MAX_RETRY_DELAY, retryDelayRef.current * 2)
+  }, [connect, updateConnectionStatus])
 
   useEffect(() => {
     unmountedRef.current = false
 
     if (isE2eMode()) {
-      setConnectionStatus('connected')
-      setLastConnectedAt(new Date().toISOString())
+      updateConnectionStatus('connected')
+      setLastConnectedAt((currentValue) => currentValue ?? new Date().toISOString())
 
       const handler = (event: Event) => {
         const payload = (event as CustomEvent).detail ?? null
@@ -129,7 +149,7 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
           return
         }
 
-        setLastEvent(payload)
+        lastEventRef.current = payload
         dispatchEvent(String(payload.type ?? 'notification'), payload)
         dispatchEvent('notification', payload)
       }
@@ -147,30 +167,37 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
       unmountedRef.current = true
       cleanupConnection()
     }
-  }, [enabled, storeId])
+  }, [cleanupConnection, connect, dispatchEvent, updateConnectionStatus])
 
-  return {
-    connectionStatus,
-    lastConnectedAt,
-    lastEvent,
-    subscribe(eventName: string, handler: LiveNotificationHandler) {
-      if (!subscribersRef.current.has(eventName)) {
-        subscribersRef.current.set(eventName, new Set())
+  const subscribe = useCallback((eventName: string, handler: LiveNotificationHandler) => {
+    if (!subscribersRef.current.has(eventName)) {
+      subscribersRef.current.set(eventName, new Set())
+    }
+
+    subscribersRef.current.get(eventName)?.add(handler)
+
+    return () => {
+      const handlers = subscribersRef.current.get(eventName)
+      handlers?.delete(handler)
+      if (handlers && handlers.size === 0) {
+        subscribersRef.current.delete(eventName)
       }
+    }
+  }, [])
 
-      subscribersRef.current.get(eventName)?.add(handler)
+  const reconnect = useCallback(() => {
+    retryDelayRef.current = INITIAL_RETRY_DELAY
+    void connect()
+  }, [connect])
 
-      return () => {
-        const handlers = subscribersRef.current.get(eventName)
-        handlers?.delete(handler)
-        if (handlers && handlers.size === 0) {
-          subscribersRef.current.delete(eventName)
-        }
-      }
-    },
-    reconnect() {
-      retryDelayRef.current = INITIAL_RETRY_DELAY
-      void connect()
-    },
-  }
+  return useMemo(
+    () => ({
+      connectionStatus,
+      lastConnectedAt,
+      lastEvent: lastEventRef.current,
+      subscribe,
+      reconnect,
+    }),
+    [connectionStatus, lastConnectedAt, reconnect, subscribe],
+  )
 }
