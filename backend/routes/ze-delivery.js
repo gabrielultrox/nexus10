@@ -1,5 +1,9 @@
 import { createRateLimitMiddleware } from '../middleware/rateLimiter.js'
-import { requireApiAuth, requirePermission } from '../middleware/requireAuth.js'
+import {
+  requireApiAuth,
+  requirePermission,
+  requireScopedStoreAccess,
+} from '../middleware/requireAuth.js'
 import { requireZeDeliverySyncAuth } from '../middleware/ze-delivery-auth.js'
 import { validateRequest } from '../middleware/validateRequest.js'
 import {
@@ -89,6 +93,7 @@ export function registerZeDeliveryRoutes(app) {
       source: 'query',
       mapRequest: (request) => request.query,
     }),
+    requireScopedStoreAccess({ source: 'query', field: 'storeId', required: false }),
     async (request, response) => {
       try {
         const query = request.validated?.query ?? request.query
@@ -121,6 +126,7 @@ export function registerZeDeliveryRoutes(app) {
     requirePermission('integrations:write'),
     zeDeliveryManualSyncLimiter,
     validateRequest(zeDeliveryManualSyncSchema),
+    requireScopedStoreAccess({ source: 'body', field: 'storeId' }),
     async (request, response) => {
       try {
         const payload = request.validated?.body ?? request.body
@@ -148,6 +154,7 @@ export function registerZeDeliveryRoutes(app) {
       source: 'params',
       mapRequest: (request) => request.params,
     }),
+    requireScopedStoreAccess({ source: 'params', field: 'storeId' }),
     async (request, response) => {
       try {
         const params = request.validated?.params ?? request.params
@@ -201,6 +208,7 @@ export function registerZeDeliveryRoutes(app) {
       source: 'query',
       mapRequest: (request) => request.query,
     }),
+    requireScopedStoreAccess({ source: 'query', field: 'storeId', required: false }),
     async (request, response) => {
       try {
         const query = request.validated?.query ?? request.query
@@ -235,6 +243,7 @@ export function registerZeDeliveryRoutes(app) {
       source: 'query',
       mapRequest: (request) => request.query,
     }),
+    requireScopedStoreAccess({ source: 'query', field: 'storeId' }),
     async (request, response) => {
       try {
         const query = request.validated?.query ?? request.query
@@ -263,6 +272,7 @@ export function registerZeDeliveryRoutes(app) {
     requirePermission('integrations:write'),
     zeDeliveryManualSyncLimiter,
     validateRequest(zeDeliverySettingsUpdateSchema),
+    requireScopedStoreAccess({ source: 'body', field: 'storeId' }),
     async (request, response) => {
       try {
         const payload = request.validated?.body ?? request.body
