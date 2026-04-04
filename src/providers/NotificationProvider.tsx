@@ -132,9 +132,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     currentStoreId && session?.uid && location.pathname !== '/login',
   )
   const [deferredNotificationsEnabled, setDeferredNotificationsEnabled] = useState(false)
-  const [isPageVisible, setIsPageVisible] = useState(
-    () => typeof document === 'undefined' || document.visibilityState === 'visible',
-  )
   const ordersInitializedRef = useRef(false)
   const salesInitializedRef = useRef(false)
   const inventoryInitializedRef = useRef(false)
@@ -143,22 +140,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const advancesReminderTimeoutRef = useRef<number | null>(null)
   const presentationWindowRef = useRef<number[]>([])
   const liveNotifications = useLiveNotifications({
-    enabled: deferredNotificationsEnabled && isPageVisible,
+    enabled: deferredNotificationsEnabled,
     storeId: currentStoreId,
   })
   const shouldUseFirestoreNotificationFallback =
-    deferredNotificationsEnabled &&
-    isPageVisible &&
-    liveNotifications.connectionStatus !== 'connected'
-
-  useEffect(() => {
-    function handleVisibilityChange() {
-      setIsPageVisible(document.visibilityState === 'visible')
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
+    deferredNotificationsEnabled && liveNotifications.connectionStatus !== 'connected'
 
   useEffect(() => {
     if (!operationalNotificationsEnabled) {
@@ -294,11 +280,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return undefined
     }
 
-    if (!isPageVisible) {
-      setAdvanceRecords([])
-      return undefined
-    }
-
     const advancesConfig = manualModuleConfigs.advances
     return subscribeToManualModuleRecords({
       storeId: currentStoreId,
@@ -310,15 +291,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       onError: (error: any) =>
         notifyImportantError(error.message ?? 'Nao foi possivel acompanhar os vales.'),
     })
-  }, [currentStoreId, deferredNotificationsEnabled, isPageVisible])
+  }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
     if (!deferredNotificationsEnabled || !currentStoreId) {
-      machineStatusRef.current = new Map()
-      return undefined
-    }
-
-    if (!isPageVisible) {
       machineStatusRef.current = new Map()
       return undefined
     }
@@ -348,7 +324,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           error.message ?? 'Nao foi possivel acompanhar o checklist de maquininhas.',
         ),
     })
-  }, [currentStoreId, deferredNotificationsEnabled, isPageVisible])
+  }, [currentStoreId, deferredNotificationsEnabled])
 
   useEffect(() => {
     if (!deferredNotificationsEnabled) {

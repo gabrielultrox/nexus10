@@ -58,7 +58,6 @@ export function useBackupSync(): BackupSyncState & {
       return undefined
     }
 
-    let visibilityTimerId: number | null = null
     let foregroundSyncRunning = false
 
     function handleLocalRecords(event: Event) {
@@ -100,21 +99,6 @@ export function useBackupSync(): BackupSyncState & {
       void flushForegroundBackup('reconnect-sync')
     }
 
-    function handleVisibilityChange() {
-      if (document.visibilityState !== 'visible') {
-        if (visibilityTimerId) {
-          window.clearTimeout(visibilityTimerId)
-          visibilityTimerId = null
-        }
-        return
-      }
-
-      visibilityTimerId = window.setTimeout(() => {
-        visibilityTimerId = null
-        void flushForegroundBackup('foreground-sync')
-      }, 1500)
-    }
-
     function handleBackgroundEvent(event: Event) {
       const customEvent = event as CustomEvent
 
@@ -125,16 +109,11 @@ export function useBackupSync(): BackupSyncState & {
 
     window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords as EventListener)
     window.addEventListener('online', handleReconnect)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
 
     return () => {
-      if (visibilityTimerId) {
-        window.clearTimeout(visibilityTimerId)
-      }
       window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords as EventListener)
       window.removeEventListener('online', handleReconnect)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
     }
   }, [currentStoreId, isAuthenticated])
