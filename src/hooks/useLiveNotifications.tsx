@@ -80,7 +80,7 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
       source.addEventListener('connected', (rawEvent) => {
         retryDelayRef.current = INITIAL_RETRY_DELAY
         updateConnectionStatus('connected')
-        setLastConnectedAt((currentValue) => currentValue ?? new Date().toISOString())
+        setLastConnectedAt(new Date().toISOString())
         try {
           lastEventRef.current = JSON.parse(rawEvent.data)
         } catch {
@@ -140,7 +140,7 @@ export function useLiveNotifications(options: UseLiveNotificationsOptions = {}) 
 
     if (isE2eMode()) {
       updateConnectionStatus('connected')
-      setLastConnectedAt((currentValue) => currentValue ?? new Date().toISOString())
+      setLastConnectedAt(new Date().toISOString())
 
       const handler = (event: Event) => {
         const payload = (event as CustomEvent).detail ?? null

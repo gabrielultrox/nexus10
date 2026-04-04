@@ -69,6 +69,17 @@ const delayedOrderThresholdMinutes = 35
 const advancesReminderHour = 23
 const advancesReminderMinute = 30
 const MAX_PRESENTED_PER_MINUTE = 5
+const OPERATIONAL_ERROR_PATTERNS = [
+  /firebase/i,
+  /firestore/i,
+  /network/i,
+  /websocket/i,
+  /eventsource/i,
+  /timeout/i,
+  /integrat/i,
+  /auth/i,
+  /api\//i,
+]
 
 function asDate(value: any) {
   if (!value) {
@@ -118,6 +129,14 @@ function supportsVibration() {
   return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
 }
 
+function shouldReportOperationalClientError(message: string) {
+  if (!message) {
+    return false
+  }
+
+  return OPERATIONAL_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+}
+
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { currentStoreId, tenantId } = useStore() as {
@@ -157,7 +176,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     [notifications],
   )
   const shouldUseFirestoreNotificationFallback =
-    deferredNotificationsEnabled && liveConnectionStatus !== 'connected'
+    deferredNotificationsEnabled && liveConnectionStatus === 'disconnected'
 
   useEffect(() => {
     if (!operationalNotificationsEnabled) {
@@ -409,7 +428,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     function handleWindowError(event: ErrorEvent) {
-      if (event.message) {
+      if (shouldReportOperationalClientError(event.message ?? '')) {
         notifyImportantError(event.message)
       }
     }
@@ -417,7 +436,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     function handleUnhandledRejection(event: PromiseRejectionEvent) {
       const reason =
         event.reason?.message ?? String(event.reason ?? 'Falha inesperada de execucao.')
-      notifyImportantError(reason)
+      if (shouldReportOperationalClientError(reason)) {
+        notifyImportantError(reason)
+      }
     }
 
     window.addEventListener('error', handleWindowError)

@@ -59,6 +59,8 @@ export function useBackupSync(): BackupSyncState & {
     }
 
     let foregroundSyncRunning = false
+    let backgroundRetryTimer: number | null = null
+    let lastBackgroundRetryAt = 0
 
     function handleLocalRecords(event: Event) {
       const customEvent = event as CustomEvent<{ storageKey?: string }>
@@ -95,6 +97,30 @@ export function useBackupSync(): BackupSyncState & {
       }
     }
 
+    function scheduleBackgroundRetry() {
+      if (foregroundSyncRunning || backgroundRetryTimer || !navigator.onLine) {
+        return
+      }
+
+      const currentState = getBackupSyncState()
+
+      if (currentState.pendingScopes.length === 0) {
+        return
+      }
+
+      const now = Date.now()
+
+      if (now - lastBackgroundRetryAt < 15_000) {
+        return
+      }
+
+      backgroundRetryTimer = window.setTimeout(() => {
+        backgroundRetryTimer = null
+        lastBackgroundRetryAt = Date.now()
+        void flushForegroundBackup('retry-after-error')
+      }, 15_000)
+    }
+
     function handleReconnect() {
       void flushForegroundBackup('reconnect-sync')
     }
@@ -103,7 +129,7 @@ export function useBackupSync(): BackupSyncState & {
       const customEvent = event as CustomEvent
 
       if (customEvent.detail?.status === 'error' && navigator.onLine) {
-        flushBackupNow({ reason: 'retry-after-error' }).catch(() => {})
+        scheduleBackgroundRetry()
       }
     }
 
@@ -112,6 +138,9 @@ export function useBackupSync(): BackupSyncState & {
     window.addEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
 
     return () => {
+      if (backgroundRetryTimer) {
+        window.clearTimeout(backgroundRetryTimer)
+      }
       window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords as EventListener)
       window.removeEventListener('online', handleReconnect)
       window.removeEventListener(BACKUP_SYNC_EVENT, handleBackgroundEvent as EventListener)
