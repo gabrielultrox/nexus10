@@ -20,7 +20,6 @@ Backend:
 
 - Express 4
 - Firebase Admin
-- Integração iFood
 
 Infraestrutura:
 
@@ -165,6 +164,29 @@ EmptyState.jsx
 - Usar em toda lista ou tabela vazia
 
 ## Padrões Obrigatórios
+
+## Regras de Execução
+
+Toda alteração deve seguir esta ordem:
+
+1. Analisar primeiro e identificar a causa raiz
+2. Implementar a correção com o menor risco possível
+3. Preservar compatibilidade com o restante do sistema
+4. Validar com `npm run type-check`, testes e `npm run build`
+5. Fazer commit e push automáticos ao final
+
+Restrições permanentes:
+
+- Nunca incluir `.env.local` ou arquivos locais de ambiente em commit
+- Não alterar runtime fora do escopo sem necessidade
+- Preferir correção pontual antes de refatorar estruturas amplas
+
+Formato padrão de entrega:
+
+- o que foi alterado
+- validação executada
+- riscos residuais
+- próximo passo recomendado
 
 Formulários de alta frequência (Leitura, Trocos, Vales):
 
