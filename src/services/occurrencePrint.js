@@ -46,9 +46,9 @@ function buildPrintHtml(entry) {
     <style>
       :root {
         --paper-width: 80mm;
-        --safe-width: 68mm;
-        --safe-top: 2mm;
-        --safe-bottom: 4mm;
+        --safe-width: 70mm;
+        --safe-top: 1.5mm;
+        --safe-bottom: 3mm;
       }
 
       @page {
@@ -84,13 +84,13 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__section + .occurrence-print__section {
-        margin-top: 2mm;
+        margin-top: 1.4mm;
       }
 
       .occurrence-print__header,
       .occurrence-print__footer {
         display: grid;
-        gap: 0.8mm;
+        gap: 0.45mm;
         text-align: center;
       }
 
@@ -98,24 +98,23 @@ function buildPrintHtml(entry) {
       .occurrence-print__field-label,
       .occurrence-print__summary-label,
       .occurrence-print__body-title {
-        font-size: 2.4mm;
+        font-size: 2.2mm;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         color: #2f2f2f;
       }
 
       .occurrence-print__title {
-        font-size: 3.6mm;
+        font-size: 3.3mm;
         font-weight: 700;
         line-height: 1.15;
       }
 
       .occurrence-print__subtitle,
-      .occurrence-print__meta,
-      .occurrence-print__body-copy {
-        font-size: 2.7mm;
-        line-height: 1.4;
+      .occurrence-print__meta {
+        font-size: 2.45mm;
+        line-height: 1.25;
         color: #303030;
       }
 
@@ -127,8 +126,8 @@ function buildPrintHtml(entry) {
       .occurrence-print__summary {
         display: flex;
         justify-content: space-between;
-        gap: 2.5mm;
-        padding: 1.4mm 0;
+        gap: 1.8mm;
+        padding: 0.9mm 0;
         border-top: 0.24mm solid #111;
         border-bottom: 0.24mm solid #111;
       }
@@ -141,32 +140,34 @@ function buildPrintHtml(entry) {
 
       .occurrence-print__summary-value,
       .occurrence-print__field-value {
-        font-size: 2.9mm;
-        line-height: 1.35;
+        font-size: 2.7mm;
+        line-height: 1.2;
       }
 
       .occurrence-print__details {
         display: grid;
-        gap: 0.8mm;
+        gap: 0.55mm;
       }
 
       .occurrence-print__field {
         display: grid;
-        gap: 0.45mm;
-        padding-bottom: 1.1mm;
+        gap: 0.3mm;
+        padding-bottom: 0.8mm;
         border-bottom: 0.2mm dashed #a6a6a6;
       }
 
       .occurrence-print__body {
         display: grid;
-        gap: 1mm;
-        padding: 1.6mm 0;
+        gap: 0.8mm;
+        padding: 1.2mm 0;
         border-top: 0.24mm solid #111;
         border-bottom: 0.24mm solid #111;
       }
 
       .occurrence-print__body-copy {
-        min-height: 48mm;
+        min-height: 86mm;
+        font-size: 3.15mm;
+        line-height: 1.55;
         white-space: pre-wrap;
         word-break: break-word;
         overflow-wrap: anywhere;
