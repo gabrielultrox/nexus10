@@ -125,8 +125,88 @@ async function runRegisteredRoute(app, request) {
   return response
 }
 
+async function runRegisteredPostRoute(app, path, request) {
+  const routeCall = app.post.mock.calls.find(([registeredPath]) => registeredPath === path)
+  const [, ...handlers] = routeCall
+  const response = createResponseMock()
+
+  async function dispatch(index, error) {
+    if (error instanceof RequestValidationError) {
+      response.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        source: error.source,
+        details: error.details,
+      })
+      return
+    }
+
+    const handler = handlers[index]
+
+    if (!handler) {
+      return
+    }
+
+    let nextPromise = null
+
+    const next = (nextError) => {
+      nextPromise = dispatch(index + 1, nextError)
+      return nextPromise
+    }
+
+    await handler(request, response, next)
+
+    if (nextPromise) {
+      await nextPromise
+    }
+  }
+
+  await dispatch(0)
+  return response
+}
+
 async function runRegisteredPutRoute(app, path, request) {
   const routeCall = app.put.mock.calls.find(([registeredPath]) => registeredPath === path)
+  const [, ...handlers] = routeCall
+  const response = createResponseMock()
+
+  async function dispatch(index, error) {
+    if (error instanceof RequestValidationError) {
+      response.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        source: error.source,
+        details: error.details,
+      })
+      return
+    }
+
+    const handler = handlers[index]
+
+    if (!handler) {
+      return
+    }
+
+    let nextPromise = null
+
+    const next = (nextError) => {
+      nextPromise = dispatch(index + 1, nextError)
+      return nextPromise
+    }
+
+    await handler(request, response, next)
+
+    if (nextPromise) {
+      await nextPromise
+    }
+  }
+
+  await dispatch(0)
+  return response
+}
+
+async function runRegisteredGetRoute(app, path, request) {
+  const routeCall = app.get.mock.calls.find(([registeredPath]) => registeredPath === path)
   const [, ...handlers] = routeCall
   const response = createResponseMock()
 
@@ -211,7 +291,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '4321' } })
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '0101' } })
 
     expect(getLocalOperatorProfileMock).toHaveBeenCalledWith('Gabriel')
     expect(firestoreSetMock).toHaveBeenCalledTimes(1)
@@ -223,7 +303,7 @@ describe('registerAuthRoutes', () => {
       operatorName: 'Gabriel',
       displayName: 'Gabriel',
     })
-    expect(cacheSetMock).toHaveBeenCalledTimes(1)
+    expect(cacheSetMock).toHaveBeenCalledTimes(2)
     expect(response.statusCode).toBe(200)
     expect(response.payload).toEqual({
       data: {
@@ -243,7 +323,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '4321' } })
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '0101' } })
 
     expect(response.statusCode).toBe(500)
     expect(response.payload).toEqual({
@@ -289,5 +369,56 @@ describe('registerAuthRoutes', () => {
     expect(response.payload.data.operatorName).toBe('Gabriel')
     expect(response.payload.data.hasCustomPassword).toBe(true)
     expect(typeof response.payload.data.updatedAt).toBe('string')
+  })
+
+  it('valida o PIN remoto padrao no endpoint dedicado', async () => {
+    const { registerAuthRoutes } = await import('./authController.ts')
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
+
+    registerAuthRoutes(app)
+
+    const response = await runRegisteredPostRoute(app, '/api/auth/access-pin/verify', {
+      body: { pin: '0101' },
+      validated: {
+        body: {
+          pin: '0101',
+        },
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.payload).toEqual({
+      data: {
+        valid: true,
+      },
+    })
+  })
+
+  it('retorna o resumo do PIN remoto para admin', async () => {
+    firestoreGetMock.mockResolvedValue(
+      createSnapshot({
+        accessPin: '2468',
+        accessPinUpdatedAt: '2026-04-04T18:00:00.000Z',
+      }),
+    )
+    const { registerAuthRoutes } = await import('./authController.ts')
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
+
+    registerAuthRoutes(app)
+
+    const response = await runRegisteredGetRoute(app, '/api/auth/access-pin', {
+      authUser: {
+        role: 'admin',
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.payload).toEqual({
+      data: {
+        hasCustomPin: true,
+        updatedAt: '2026-04-04T18:00:00.000Z',
+        maskedPin: '****',
+      },
+    })
   })
 })

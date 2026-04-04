@@ -9,6 +9,8 @@ import { createLoggerContext, serializeError, withMethodLogging } from '../../lo
 import { requireApiAuth, requireRole } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
 import {
+  authAccessPinUpdateSchema,
+  authAccessPinVerifySchema,
   authLoginSchema,
   authOperatorPasswordSchema,
   authSessionRouteSchema,
@@ -25,6 +27,11 @@ import type {
 import type { ApiSuccessResponseBody } from '../../types/index.js'
 
 const authLogger = createLoggerContext({ module: 'auth' })
+const DEFAULT_ACCESS_PIN = '0101'
+const ACCESS_PIN_KEY = 'accessPin'
+const ACCESS_PIN_UPDATED_AT_KEY = 'accessPinUpdatedAt'
+const ACCESS_PIN_DOC_COLLECTION = 'settings'
+const ACCESS_PIN_DOC_ID = 'access-control'
 const OPERATOR_PASSWORD_HASH_KEY = 'operatorPasswordHash'
 const OPERATOR_PASSWORD_UPDATED_AT_KEY = 'operatorPasswordUpdatedAt'
 const PASSWORD_HASH_PREFIX = 'scrypt'
@@ -33,9 +40,19 @@ function buildOperatorPasswordCacheKey(operatorName: string) {
   return buildCacheKey('auth', 'operator-password', operatorName)
 }
 
+function buildAccessPinCacheKey() {
+  return buildCacheKey('auth', 'access-pin', 'global')
+}
+
 function buildOperatorPasswordCacheValue(passwordHash: string | null) {
   return {
     passwordHash: passwordHash ?? '',
+  }
+}
+
+function buildAccessPinCacheValue(pin: string) {
+  return {
+    pin,
   }
 }
 
@@ -48,6 +65,85 @@ function isTokenSessionPayload(
   payload: AuthSessionRequestBody | AuthTokenSessionRequestBody,
 ): payload is AuthTokenSessionRequestBody {
   return 'token' in payload
+}
+
+async function readConfiguredAccessPin(): Promise<string> {
+  const cachedPin = await cacheGet(buildAccessPinCacheKey())
+
+  if (cachedPin && typeof cachedPin === 'object' && 'pin' in cachedPin) {
+    const pinValue =
+      typeof (cachedPin as { pin?: unknown }).pin === 'string'
+        ? (cachedPin as { pin: string }).pin
+        : ''
+
+    if (/^\d{4}$/.test(pinValue)) {
+      return pinValue
+    }
+  }
+
+  const snapshot = await getAdminFirestore()
+    .collection(ACCESS_PIN_DOC_COLLECTION)
+    .doc(ACCESS_PIN_DOC_ID)
+    .get()
+  const data = snapshot.data() ?? {}
+  const configuredPin =
+    typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
+      ? data[ACCESS_PIN_KEY]
+      : DEFAULT_ACCESS_PIN
+
+  await cacheSet(
+    buildAccessPinCacheKey(),
+    buildAccessPinCacheValue(configuredPin),
+    backendEnv.redisSessionTtlSeconds,
+  )
+
+  return configuredPin
+}
+
+async function isValidAccessPin(pin: string): Promise<boolean> {
+  const configuredPin = await readConfiguredAccessPin()
+  return configuredPin === String(pin ?? '')
+}
+
+async function readAccessPinSummary() {
+  const snapshot = await getAdminFirestore()
+    .collection(ACCESS_PIN_DOC_COLLECTION)
+    .doc(ACCESS_PIN_DOC_ID)
+    .get()
+  const data = snapshot.data() ?? {}
+  const hasCustomPin =
+    typeof data?.[ACCESS_PIN_KEY] === 'string' && /^\d{4}$/.test(data[ACCESS_PIN_KEY])
+
+  return {
+    hasCustomPin,
+    updatedAt: data[ACCESS_PIN_UPDATED_AT_KEY] ?? null,
+    maskedPin: hasCustomPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+  }
+}
+
+async function updateAccessPin(pin: string | null) {
+  const nextPin = pin && /^\d{4}$/.test(pin) ? pin : null
+  const payload = {
+    [ACCESS_PIN_KEY]: nextPin,
+    [ACCESS_PIN_UPDATED_AT_KEY]: new Date().toISOString(),
+  }
+
+  await cacheSet(
+    buildAccessPinCacheKey(),
+    buildAccessPinCacheValue(nextPin ?? DEFAULT_ACCESS_PIN),
+    backendEnv.redisSessionTtlSeconds,
+  )
+
+  await getAdminFirestore()
+    .collection(ACCESS_PIN_DOC_COLLECTION)
+    .doc(ACCESS_PIN_DOC_ID)
+    .set(payload, { merge: true })
+
+  return {
+    hasCustomPin: Boolean(nextPin),
+    updatedAt: payload[ACCESS_PIN_UPDATED_AT_KEY],
+    maskedPin: nextPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+  }
 }
 
 async function createLoginSession(payload: AuthSessionRequestBody) {
@@ -172,6 +268,7 @@ async function handleCreateLoginSession(
   const operatorName = String(
     (payload as any).operator ?? (payload as any).operatorName ?? '',
   ).trim()
+  const pin = String((payload as any).pin ?? (payload as any).password ?? '')
   const log = request.log ?? authLogger
   const createSession = withMethodLogging(
     {
@@ -203,6 +300,20 @@ async function handleCreateLoginSession(
   }
 
   try {
+    if (!(await isValidAccessPin(pin))) {
+      log.warn(
+        {
+          context: 'auth.session.create',
+          request_id: request.id,
+          operatorName,
+          reason: 'invalid_access_pin',
+        },
+        'Auth session rejected',
+      )
+      response.status(401).json({ error: 'PIN incorreto.' })
+      return
+    }
+
     const session = await createSession()
 
     response.json({
@@ -320,6 +431,90 @@ export function registerAuthRoutes(app: Express): void {
   })
 
   app.post('/api/auth/login', validateRequest(authLoginSchema), handleCreateLoginSession)
+
+  app.post(
+    '/api/auth/access-pin/verify',
+    validateRequest(authAccessPinVerifySchema),
+    async (request: Request, response: Response) => {
+      const payload = request.validated?.body as { pin: string }
+      const log = request.log ?? authLogger
+
+      try {
+        const isValid = await isValidAccessPin(payload.pin)
+
+        if (!isValid) {
+          response.status(401).json({ error: 'PIN incorreto.' })
+          return
+        }
+
+        response.json({
+          data: {
+            valid: true,
+          },
+        })
+      } catch (error) {
+        log.error(
+          {
+            context: 'auth.access-pin.verify',
+            request_id: request.id,
+            error: serializeError(error),
+          },
+          'Failed to verify access pin',
+        )
+        response.status(500).json({ error: 'Nao foi possivel validar o PIN.' })
+      }
+    },
+  )
+
+  app.get(
+    '/api/auth/access-pin',
+    requireApiAuth,
+    requireRole('admin'),
+    async (request: Request, response: Response) => {
+      const log = request.log ?? authLogger
+
+      try {
+        const summary = await readAccessPinSummary()
+        response.json({ data: summary })
+      } catch (error) {
+        log.error(
+          {
+            context: 'auth.access-pin.read',
+            request_id: request.id,
+            error: serializeError(error),
+          },
+          'Failed to read access pin summary',
+        )
+        response.status(500).json({ error: 'Nao foi possivel carregar o PIN do terminal.' })
+      }
+    },
+  )
+
+  app.put(
+    '/api/auth/access-pin',
+    requireApiAuth,
+    requireRole('admin'),
+    validateRequest(authAccessPinUpdateSchema),
+    async (request: Request, response: Response) => {
+      const payload = request.validated?.body as { pin: string | null }
+      const log = request.log ?? authLogger
+
+      try {
+        const result = await updateAccessPin(payload.pin || null)
+        response.json({ data: result })
+      } catch (error) {
+        log.error(
+          {
+            context: 'auth.access-pin.update',
+            request_id: request.id,
+            error: serializeError(error),
+          },
+          'Failed to update access pin',
+        )
+        response.status(500).json({ error: 'Nao foi possivel atualizar o PIN do terminal.' })
+      }
+    },
+  )
 
   app.get(
     '/api/auth/operator-passwords',

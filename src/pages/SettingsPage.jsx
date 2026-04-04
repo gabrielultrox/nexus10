@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import PageIntro from '../components/common/PageIntro'
 import SurfaceCard from '../components/common/SurfaceCard'
@@ -9,12 +9,10 @@ import Select from '../components/ui/Select'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  DEFAULT_ACCESS_PIN,
-  clearStoredPin,
-  getStoredPin,
-  hasStoredPin,
-  setStoredPin,
-} from '../services/localAccess'
+  DEFAULT_REMOTE_ACCESS_PIN,
+  getRemoteAccessPinStatus,
+  updateRemoteAccessPin,
+} from '../services/accessPinService'
 import {
   getSoundProfile,
   getSoundProfiles,
@@ -62,16 +60,43 @@ function SettingsPage() {
   const [pinConfirm, setPinConfirm] = useState('')
   const [feedback, setFeedback] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [pinEnabled, setPinEnabled] = useState(() => hasStoredPin())
-  const [currentPinMask, setCurrentPinMask] = useState(() =>
-    hasStoredPin() ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
-  )
+  const [pinEnabled, setPinEnabled] = useState(false)
+  const [currentPinMask, setCurrentPinMask] = useState(`${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled())
   const [soundProfile, setSoundProfileState] = useState(() => getSoundProfile())
   const soundProfiles = getSoundProfiles()
   const activeSoundProfile =
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
+
+  useEffect(() => {
+    let active = true
+
+    async function loadAccessPinStatus() {
+      try {
+        const status = await getRemoteAccessPinStatus()
+
+        if (!active) {
+          return
+        }
+
+        setPinEnabled(Boolean(status.hasCustomPin))
+        setCurrentPinMask(status.maskedPin ?? `${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
+      } catch (error) {
+        if (!active) {
+          return
+        }
+
+        setErrorMessage(error.message ?? 'Nao foi possivel carregar o PIN remoto do terminal.')
+      }
+    }
+
+    loadAccessPinStatus()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   function resetMessages() {
     setFeedback('')
@@ -102,7 +127,7 @@ function SettingsPage() {
     playNotification()
   }
 
-  function handleSavePin(event) {
+  async function handleSavePin(event) {
     event.preventDefault()
 
     if (!canWriteSettings) {
@@ -121,12 +146,12 @@ function SettingsPage() {
     }
 
     try {
-      setStoredPin(pinDraft)
-      setPinEnabled(true)
-      setCurrentPinMask(getStoredPin().replace(/\d/g, '*'))
+      const result = await updateRemoteAccessPin(pinDraft)
+      setPinEnabled(Boolean(result.hasCustomPin))
+      setCurrentPinMask(result.maskedPin ?? '****')
       setPinDraft('')
       setPinConfirm('')
-      setFeedback('PIN local atualizado com sucesso.')
+      setFeedback('PIN remoto atualizado com sucesso.')
       playSuccess()
     } catch (error) {
       setErrorMessage(error.message)
@@ -152,14 +177,21 @@ function SettingsPage() {
       return
     }
 
-    clearStoredPin()
-    setPinEnabled(false)
-    setCurrentPinMask(`${DEFAULT_ACCESS_PIN} padrao`)
-    setPinDraft('')
-    setPinConfirm('')
-    setFeedback(`PIN customizado removido. O acesso volta para o PIN padrao ${DEFAULT_ACCESS_PIN}.`)
-    setErrorMessage('')
-    playNotification()
+    try {
+      const result = await updateRemoteAccessPin(null)
+      setPinEnabled(Boolean(result.hasCustomPin))
+      setCurrentPinMask(result.maskedPin ?? `${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
+      setPinDraft('')
+      setPinConfirm('')
+      setFeedback(
+        `PIN remoto restaurado. O acesso volta para o PIN padrao ${DEFAULT_REMOTE_ACCESS_PIN}.`,
+      )
+      setErrorMessage('')
+      playNotification()
+    } catch (error) {
+      setErrorMessage(error.message ?? 'Nao foi possivel restaurar o PIN remoto.')
+      playError()
+    }
   }
 
   function handleToggleSoundEffects() {
@@ -232,10 +264,10 @@ function SettingsPage() {
 
               <div className="settings-lock-notes">
                 <p className="text-caption">
-                  Esta tela controla PIN local, perfil sonoro, tema e instalacao do terminal.
+                  Esta tela controla PIN remoto do terminal, perfil sonoro, tema e instalacao.
                 </p>
                 <div className="settings-lock-highlights">
-                  <span>PIN local</span>
+                  <span>PIN remoto</span>
                   <span>Sons</span>
                   <span>Tema</span>
                   <span>PWA</span>
@@ -262,7 +294,7 @@ function SettingsPage() {
       <PageIntro
         eyebrow="Sistema"
         title="Configuracoes"
-        description="Centro de controle local para acesso, tema, som e instalacao do terminal operacional."
+        description="Centro de controle do terminal para acesso, tema, som e instalacao operacional."
       />
 
       {feedback ? <div className="auth-error auth-error--success">{feedback}</div> : null}
@@ -294,9 +326,9 @@ function SettingsPage() {
               tone={settingsUnlocked ? 'success' : 'warning'}
             />
             <SettingsStatusTile
-              eyebrow="PIN local"
+              eyebrow="PIN remoto"
               value={pinEnabled ? currentPinMask : 'Padrao'}
-              meta={pinEnabled ? 'Customizado' : `${DEFAULT_ACCESS_PIN} ativo`}
+              meta={pinEnabled ? 'Customizado' : `${DEFAULT_REMOTE_ACCESS_PIN} ativo`}
               tone={pinEnabled ? 'warning' : 'neutral'}
             />
             <SettingsStatusTile
@@ -445,7 +477,7 @@ function SettingsPage() {
                 </div>
                 <div className="settings-summary__row">
                   <span>Camada</span>
-                  <strong>{pinEnabled ? 'Customizada' : 'Padrao local'}</strong>
+                  <strong>{pinEnabled ? 'Customizada' : 'Padrao remoto'}</strong>
                 </div>
               </div>
 
@@ -488,8 +520,8 @@ function SettingsPage() {
               </div>
 
               <p className="text-caption">
-                Se nao houver PIN customizado salvo, o sistema usa o PIN padrao{' '}
-                <strong>{DEFAULT_ACCESS_PIN}</strong>.
+                Se nao houver PIN remoto customizado salvo, o sistema usa o PIN padrao{' '}
+                <strong>{DEFAULT_REMOTE_ACCESS_PIN}</strong>.
               </p>
 
               <div className="settings-pin-form__actions">

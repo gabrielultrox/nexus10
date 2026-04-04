@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import ErrorDisplay from '../components/ui/ErrorDisplay'
 import { useError } from '../hooks'
 import { useAuth } from '../contexts/AuthContext'
-import { DEFAULT_ACCESS_PIN, hasStoredPin, verifyStoredPin } from '../services/localAccess'
+import { DEFAULT_REMOTE_ACCESS_PIN, verifyRemoteAccessPin } from '../services/accessPinService'
 import { playError, playSuccess } from '../services/soundManager'
 import Select from '../components/ui/Select'
 
@@ -29,7 +29,7 @@ function LoginPage() {
   const [pinValue, setPinValue] = useState('')
   const [pinError, setPinError] = useState('')
   const [pinUnlocked, setPinUnlocked] = useState(false)
-  const [customPinEnabled, setCustomPinEnabled] = useState(false)
+  const [verifyingPin, setVerifyingPin] = useState(false)
   const pinErrorId = 'login-pin-error'
   const authErrorId = 'login-auth-error'
   const operatorErrorId = 'login-operator-error'
@@ -48,7 +48,6 @@ function LoginPage() {
       ...current,
       operatorName: getLastOperator(),
     }))
-    setCustomPinEnabled(hasStoredPin())
   }, [getLastOperator])
 
   useEffect(() => {
@@ -80,19 +79,25 @@ function LoginPage() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      if (verifyStoredPin(pinValue)) {
-        setPinUnlocked(true)
-        setPinError('')
-        playSuccess()
-        window.setTimeout(() => {
-          setStage('login')
-        }, PIN_UNLOCK_DELAY_MS)
-        return
-      }
+      setVerifyingPin(true)
 
-      setPinError('PIN invalido. Tente novamente.')
-      playError()
-      setPinValue('')
+      verifyRemoteAccessPin(pinValue)
+        .then(() => {
+          setPinUnlocked(true)
+          setPinError('')
+          playSuccess()
+          window.setTimeout(() => {
+            setStage('login')
+          }, PIN_UNLOCK_DELAY_MS)
+        })
+        .catch((error) => {
+          setPinError(error?.message ?? 'PIN invalido. Tente novamente.')
+          playError()
+          setPinValue('')
+        })
+        .finally(() => {
+          setVerifyingPin(false)
+        })
     }, PIN_VERIFY_DELAY_MS)
 
     return () => {
@@ -200,21 +205,19 @@ function LoginPage() {
               <div className="auth-pin__intel-grid">
                 <div className="auth-pin__intel-card">
                   <span>Modo de acesso</span>
-                  <strong>{customPinEnabled ? 'PIN personalizado' : 'PIN padrao'}</strong>
+                  <strong>PIN remoto</strong>
                 </div>
                 <div className="auth-pin__intel-card">
                   <span>Proxima etapa</span>
-                  <strong>Aguardando validacao</strong>
+                  <strong>{verifyingPin ? 'Validando PIN' : 'Aguardando validacao'}</strong>
                 </div>
               </div>
 
-              {!customPinEnabled ? (
-                <div className="auth-pin__fallback">
-                  <span>PIN padrao ativo</span>
-                  <strong>{DEFAULT_ACCESS_PIN}</strong>
-                  <p>Troque este codigo em Configuracoes para reforcar a seguranca local.</p>
-                </div>
-              ) : null}
+              <div className="auth-pin__fallback">
+                <span>PIN padrao remoto</span>
+                <strong>{DEFAULT_REMOTE_ACCESS_PIN}</strong>
+                <p>Se a loja tiver PIN customizado, o backend valida automaticamente.</p>
+              </div>
             </div>
 
             <div className="auth-pin__panel">
@@ -250,7 +253,7 @@ function LoginPage() {
                     type="button"
                     className="auth-pin__key"
                     onClick={() => handlePinDigit(digit)}
-                    disabled={pinValue.length >= 4}
+                    disabled={pinValue.length >= 4 || verifyingPin}
                     aria-label={`Digito ${digit}`}
                     aria-describedby={pinError ? pinErrorId : undefined}
                   >
@@ -261,6 +264,7 @@ function LoginPage() {
                   type="button"
                   className="auth-pin__key auth-pin__key--wide"
                   onClick={handlePinBackspace}
+                  disabled={verifyingPin}
                   aria-label="Apagar ultimo digito"
                   aria-describedby={pinError ? pinErrorId : undefined}
                 >

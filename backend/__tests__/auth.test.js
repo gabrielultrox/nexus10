@@ -186,16 +186,21 @@ describe('backend auth session route', () => {
 
     registerAuthRoutes(app)
 
-    expect(app.post).toHaveBeenCalledTimes(2)
+    expect(app.post).toHaveBeenCalledTimes(3)
     expect(app.post.mock.calls.map(([path]) => path)).toEqual([
       '/api/auth/login',
+      '/api/auth/access-pin/verify',
       '/api/auth/session',
     ])
     expect(app.get.mock.calls.map(([path]) => path)).toEqual([
       '/api/auth/operators',
+      '/api/auth/access-pin',
       '/api/auth/operator-passwords',
     ])
-    expect(app.put.mock.calls.map(([path]) => path)).toEqual(['/api/auth/operator-passwords'])
+    expect(app.put.mock.calls.map(([path]) => path)).toEqual([
+      '/api/auth/access-pin',
+      '/api/auth/operator-passwords',
+    ])
   })
 
   it('retorna 400 quando o payload falha na validacao', async () => {
@@ -237,7 +242,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '4321' },
+      body: { operator: 'Gabriel', pin: '0101' },
       log: authLoggerMock,
     })
 
@@ -284,7 +289,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '4321' },
+      body: { operator: 'Gabriel', pin: '0101' },
       log: authLoggerMock,
     })
 
@@ -302,11 +307,30 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/login', {
-      body: { operator: 'Gabriel', pin: '4321' },
+      body: { operator: 'Gabriel', pin: '0101' },
       log: authLoggerMock,
     })
 
     expect(response.statusCode).toBe(200)
     expect(response.payload.data.customToken).toBe('custom-token-123')
+  })
+
+  it('valida o PIN remoto padrao pelo endpoint dedicado', async () => {
+    const { registerAuthRoutes } = await loadAuthController()
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
+
+    registerAuthRoutes(app)
+
+    const response = await runRegisteredRoute(app, '/api/auth/access-pin/verify', {
+      body: { pin: '0101' },
+      log: authLoggerMock,
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.payload).toEqual({
+      data: {
+        valid: true,
+      },
+    })
   })
 })

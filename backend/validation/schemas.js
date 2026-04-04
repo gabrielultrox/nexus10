@@ -1,5 +1,7 @@
 export {
   adminAuditLogQuerySchema,
+  authAccessPinUpdateSchema,
+  authAccessPinVerifySchema,
   authLoginSchema,
   authOperatorPasswordSchema,
   authSessionRouteSchema,

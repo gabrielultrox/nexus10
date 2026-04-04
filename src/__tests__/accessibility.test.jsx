@@ -14,8 +14,7 @@ import { ToastProvider } from '../hooks'
 const mockNavigate = vi.fn()
 const mockUseAuth = vi.fn()
 const mockUseStore = vi.fn()
-const mockHasStoredPin = vi.fn()
-const mockVerifyStoredPin = vi.fn()
+const mockVerifyRemoteAccessPin = vi.fn()
 const mockPlayError = vi.fn()
 const mockPlaySuccess = vi.fn()
 const mockSubscribeToDashboardSources = vi.fn()
@@ -39,11 +38,14 @@ vi.mock('../contexts/StoreContext', () => ({
   useStore: () => mockUseStore(),
 }))
 
-vi.mock('../services/localAccess', () => ({
-  DEFAULT_ACCESS_PIN: '0101',
-  LOCAL_RECORDS_EVENT: 'nexus10:local-records',
-  hasStoredPin: () => mockHasStoredPin(),
-  verifyStoredPin: (value) => mockVerifyStoredPin(value),
+vi.mock('../services/accessPinService', () => ({
+  DEFAULT_REMOTE_ACCESS_PIN: '0101',
+  verifyRemoteAccessPin: (value) => mockVerifyRemoteAccessPin(value),
+  getRemoteAccessPinStatus: vi.fn(async () => ({
+    hasCustomPin: false,
+    maskedPin: '0101 padrao',
+  })),
+  updateRemoteAccessPin: vi.fn(),
 }))
 
 vi.mock('../services/soundManager', () => ({
@@ -97,8 +99,7 @@ describe('Accessibility audit', () => {
       operatorOptions: ['Gabriel', 'Tito'],
       getLastOperator: () => 'Gabriel',
     })
-    mockHasStoredPin.mockReturnValue(false)
-    mockVerifyStoredPin.mockReturnValue(true)
+    mockVerifyRemoteAccessPin.mockResolvedValue({ valid: true })
     mockUseStore.mockReturnValue({
       currentStoreId: 'store-1',
     })

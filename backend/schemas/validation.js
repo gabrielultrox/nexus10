@@ -172,6 +172,27 @@ export const authOperatorPasswordSchema = z.object({
     .default(null),
 })
 
+export const authAccessPinVerifySchema = z.object({
+  pin: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, 'O PIN deve conter 4 digitos.'),
+})
+
+export const authAccessPinUpdateSchema = z.object({
+  pin: z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .trim()
+        .regex(/^\d{4}$/, 'O PIN deve conter 4 digitos.'),
+    ])
+    .nullable()
+    .optional()
+    .default(null),
+})
+
 export const updateOrderSchema = z
   .object({
     status: orderStatusSchema.optional(),
@@ -423,5 +444,7 @@ export {
   orderItemSchema,
   orderStatusSchema,
   authLoginSchema as loginSchema,
+  authAccessPinUpdateSchema,
+  authAccessPinVerifySchema,
   authOperatorPasswordSchema,
 }
