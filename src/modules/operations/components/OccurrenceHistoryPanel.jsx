@@ -224,7 +224,7 @@ function OccurrenceHistoryPanel({ storeId, session }) {
                   {entry.type || entry.description || 'Ocorrencia operacional'}
                 </p>
                 <div className="occurrence-history-panel__meta">
-                  <span>Responsavel: {entry.owner || '--'}</span>
+                  <span>Operador responsavel: {entry.owner || '--'}</span>
                   <span>
                     Impresso:{' '}
                     {entry.printedAt ? new Date(entry.printedAt).toLocaleString('pt-BR') : '--'}

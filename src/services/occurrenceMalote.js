@@ -112,12 +112,10 @@ export function buildOccurrenceMalotePrintPayload(entry, session) {
     title: entry?.title ?? `Ocorrencia ${entry?.reference ?? entry?.code ?? 'Sem codigo'}`,
     reference: entry?.reference ?? entry?.code ?? '',
     amount: entry?.amount ?? '',
-    cashierName: entry?.cashierName ?? entry?.owner ?? getActorName(session),
     operatorName: entry?.operatorName ?? getActorName(session),
     occurredAt: toIsoDateTime(
       entry?.occurredAt ?? entry?.createdAtClient ?? entry?.updatedAtClient,
     ),
-    printedAt: toIsoDateTime(entry?.printedAt ?? new Date().toISOString()),
     description: entry?.description ?? entry?.type ?? 'Ocorrencia operacional',
     footer:
       entry?.protocolCode && entry?.receivedBy
@@ -242,7 +240,7 @@ export function buildOccurrenceMaloteExcel(items = []) {
     'Codigo',
     'Titulo',
     'Tipo',
-    'Responsavel',
+    'Operador responsavel',
     'Status',
     'Destino',
     'Impresso em',
@@ -280,7 +278,7 @@ export function buildOccurrenceMaloteCsv(items = []) {
       'Codigo',
       'Titulo',
       'Tipo',
-      'Responsavel',
+      'Operador responsavel',
       'Status',
       'Destino',
       'Impresso em',
@@ -343,13 +341,13 @@ export function buildOccurrenceMalotePdfHtml(items = []) {
     </head>
     <body>
       <h1>Historico de ocorrencias</h1>
-      <p>Relatorio para Financeiro / RH com protocolo de recebimento.</p>
+      <p>Relatorio de ocorrencias encaminhadas no malote interno.</p>
       <table>
         <thead>
           <tr>
             <th>Codigo</th>
             <th>Titulo</th>
-            <th>Responsavel</th>
+            <th>Operador responsavel</th>
             <th>Status</th>
             <th>Protocolo</th>
             <th>Recebido por</th>
