@@ -9,7 +9,7 @@ import Select from '../components/ui/Select'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  DEFAULT_REMOTE_ACCESS_PIN,
+  DEFAULT_REMOTE_ACCESS_PIN_MASK,
   getRemoteAccessPinStatus,
   updateRemoteAccessPin,
 } from '../services/accessPinService'
@@ -61,7 +61,7 @@ function SettingsPage() {
   const [feedback, setFeedback] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [pinEnabled, setPinEnabled] = useState(false)
-  const [currentPinMask, setCurrentPinMask] = useState(`${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
+  const [currentPinMask, setCurrentPinMask] = useState(DEFAULT_REMOTE_ACCESS_PIN_MASK)
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(() => isSoundEnabled())
   const [soundProfile, setSoundProfileState] = useState(() => getSoundProfile())
   const soundProfiles = getSoundProfiles()
@@ -81,7 +81,7 @@ function SettingsPage() {
         }
 
         setPinEnabled(Boolean(status.hasCustomPin))
-        setCurrentPinMask(status.maskedPin ?? `${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
+        setCurrentPinMask(status.maskedPin ?? DEFAULT_REMOTE_ACCESS_PIN_MASK)
       } catch (error) {
         if (!active) {
           return
@@ -180,12 +180,10 @@ function SettingsPage() {
     try {
       const result = await updateRemoteAccessPin(null)
       setPinEnabled(Boolean(result.hasCustomPin))
-      setCurrentPinMask(result.maskedPin ?? `${DEFAULT_REMOTE_ACCESS_PIN} padrao`)
+      setCurrentPinMask(result.maskedPin ?? DEFAULT_REMOTE_ACCESS_PIN_MASK)
       setPinDraft('')
       setPinConfirm('')
-      setFeedback(
-        `PIN remoto restaurado. O acesso volta para o PIN padrao ${DEFAULT_REMOTE_ACCESS_PIN}.`,
-      )
+      setFeedback('PIN remoto restaurado para a configuracao padrao compartilhada.')
       setErrorMessage('')
       playNotification()
     } catch (error) {
@@ -328,7 +326,7 @@ function SettingsPage() {
             <SettingsStatusTile
               eyebrow="PIN remoto"
               value={pinEnabled ? currentPinMask : 'Padrao'}
-              meta={pinEnabled ? 'Customizado' : `${DEFAULT_REMOTE_ACCESS_PIN} ativo`}
+              meta={pinEnabled ? 'Customizado' : 'Configuracao padrao ativa'}
               tone={pinEnabled ? 'warning' : 'neutral'}
             />
             <SettingsStatusTile
@@ -520,8 +518,8 @@ function SettingsPage() {
               </div>
 
               <p className="text-caption">
-                Se nao houver PIN remoto customizado salvo, o sistema usa o PIN padrao{' '}
-                <strong>{DEFAULT_REMOTE_ACCESS_PIN}</strong>.
+                Se nao houver PIN remoto customizado salvo, o sistema usa a configuracao padrao
+                compartilhada.
               </p>
 
               <div className="settings-pin-form__actions">

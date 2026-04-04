@@ -242,7 +242,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '0101' },
+      body: { operator: 'Gabriel', pin: '1664' },
       log: authLoggerMock,
     })
 
@@ -289,7 +289,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '0101' },
+      body: { operator: 'Gabriel', pin: '1664' },
       log: authLoggerMock,
     })
 
@@ -307,7 +307,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/login', {
-      body: { operator: 'Gabriel', pin: '0101' },
+      body: { operator: 'Gabriel', pin: '1664' },
       log: authLoggerMock,
     })
 
@@ -322,7 +322,7 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredRoute(app, '/api/auth/access-pin/verify', {
-      body: { pin: '0101' },
+      body: { pin: '1664' },
       log: authLoggerMock,
     })
 
@@ -334,7 +334,7 @@ describe('backend auth session route', () => {
     })
   })
 
-  it('aceita o PIN padrao quando o Firestore Admin esta indisponivel', async () => {
+  it('aceita o PIN padrao compartilhado quando o Firestore Admin esta indisponivel', async () => {
     const { registerAuthRoutes } = await loadAuthController()
     const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
@@ -343,12 +343,12 @@ describe('backend auth session route', () => {
     registerAuthRoutes(app)
 
     const verifyResponse = await runRegisteredRoute(app, '/api/auth/access-pin/verify', {
-      body: { pin: '0101' },
+      body: { pin: '1664' },
       log: authLoggerMock,
     })
 
     const sessionResponse = await runRegisteredRoute(app, '/api/auth/session', {
-      body: { operator: 'Gabriel', pin: '0101' },
+      body: { operator: 'Gabriel', pin: '1664' },
       log: authLoggerMock,
     })
 

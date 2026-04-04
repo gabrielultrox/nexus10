@@ -291,7 +291,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '0101' } })
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '1664' } })
 
     expect(getLocalOperatorProfileMock).toHaveBeenCalledWith('Gabriel')
     expect(firestoreSetMock).toHaveBeenCalledTimes(1)
@@ -323,7 +323,7 @@ describe('registerAuthRoutes', () => {
 
     registerAuthRoutes(app)
 
-    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '0101' } })
+    const response = await runRegisteredRoute(app, { body: { operator: 'Gabriel', pin: '1664' } })
 
     expect(response.statusCode).toBe(500)
     expect(response.payload).toEqual({
@@ -378,10 +378,10 @@ describe('registerAuthRoutes', () => {
     registerAuthRoutes(app)
 
     const response = await runRegisteredPostRoute(app, '/api/auth/access-pin/verify', {
-      body: { pin: '0101' },
+      body: { pin: '1664' },
       validated: {
         body: {
-          pin: '0101',
+          pin: '1664',
         },
       },
     })

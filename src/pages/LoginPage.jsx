@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import ErrorDisplay from '../components/ui/ErrorDisplay'
 import { useError } from '../hooks'
 import { useAuth } from '../contexts/AuthContext'
-import { DEFAULT_REMOTE_ACCESS_PIN, verifyRemoteAccessPin } from '../services/accessPinService'
+import { DEFAULT_REMOTE_ACCESS_PIN_MASK, verifyRemoteAccessPin } from '../services/accessPinService'
 import { playError, playSuccess } from '../services/soundManager'
 import Select from '../components/ui/Select'
 
@@ -214,8 +214,8 @@ function LoginPage() {
               </div>
 
               <div className="auth-pin__fallback">
-                <span>PIN padrao remoto</span>
-                <strong>{DEFAULT_REMOTE_ACCESS_PIN}</strong>
+                <span>PIN remoto compartilhado</span>
+                <strong>{DEFAULT_REMOTE_ACCESS_PIN_MASK}</strong>
                 <p>Se a loja tiver PIN customizado, o backend valida automaticamente.</p>
               </div>
             </div>

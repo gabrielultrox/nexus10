@@ -84,13 +84,13 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__section + .occurrence-print__section {
-        margin-top: 2.8mm;
+        margin-top: 2mm;
       }
 
       .occurrence-print__header,
       .occurrence-print__footer {
         display: grid;
-        gap: 1.2mm;
+        gap: 0.8mm;
         text-align: center;
       }
 
@@ -106,7 +106,7 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__title {
-        font-size: 4mm;
+        font-size: 3.6mm;
         font-weight: 700;
         line-height: 1.15;
       }
@@ -125,18 +125,18 @@ function buildPrintHtml(entry) {
       }
 
       .occurrence-print__summary {
-        display: grid;
-        gap: 1.2mm;
-        padding: 2mm 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 2.5mm;
+        padding: 1.4mm 0;
         border-top: 0.24mm solid #111;
         border-bottom: 0.24mm solid #111;
       }
 
       .occurrence-print__summary-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 2mm;
+        display: grid;
+        gap: 0.3mm;
+        flex: 1 1 0;
       }
 
       .occurrence-print__summary-value,
@@ -147,20 +147,20 @@ function buildPrintHtml(entry) {
 
       .occurrence-print__details {
         display: grid;
-        gap: 1.2mm;
+        gap: 0.8mm;
       }
 
       .occurrence-print__field {
         display: grid;
         gap: 0.45mm;
-        padding-bottom: 1.6mm;
+        padding-bottom: 1.1mm;
         border-bottom: 0.2mm dashed #a6a6a6;
       }
 
       .occurrence-print__body {
         display: grid;
-        gap: 1.4mm;
-        padding: 2mm 0;
+        gap: 1mm;
+        padding: 1.6mm 0;
         border-top: 0.24mm solid #111;
         border-bottom: 0.24mm solid #111;
       }

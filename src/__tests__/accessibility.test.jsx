@@ -39,11 +39,12 @@ vi.mock('../contexts/StoreContext', () => ({
 }))
 
 vi.mock('../services/accessPinService', () => ({
-  DEFAULT_REMOTE_ACCESS_PIN: '0101',
+  DEFAULT_REMOTE_ACCESS_PIN: '1664',
+  DEFAULT_REMOTE_ACCESS_PIN_MASK: 'PIN padrao configurado',
   verifyRemoteAccessPin: (value) => mockVerifyRemoteAccessPin(value),
   getRemoteAccessPinStatus: vi.fn(async () => ({
     hasCustomPin: false,
-    maskedPin: '0101 padrao',
+    maskedPin: 'PIN padrao configurado',
   })),
   updateRemoteAccessPin: vi.fn(),
 }))

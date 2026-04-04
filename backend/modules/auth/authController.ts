@@ -27,7 +27,7 @@ import type {
 import type { ApiSuccessResponseBody } from '../../types/index.js'
 
 const authLogger = createLoggerContext({ module: 'auth' })
-const DEFAULT_ACCESS_PIN = '0101'
+const DEFAULT_ACCESS_PIN = '1664'
 const ACCESS_PIN_KEY = 'accessPin'
 const ACCESS_PIN_UPDATED_AT_KEY = 'accessPinUpdatedAt'
 const ACCESS_PIN_DOC_COLLECTION = 'settings'
@@ -125,14 +125,14 @@ async function readAccessPinSummary() {
     return {
       hasCustomPin,
       updatedAt: data[ACCESS_PIN_UPDATED_AT_KEY] ?? null,
-      maskedPin: hasCustomPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+      maskedPin: hasCustomPin ? '****' : 'PIN padrao configurado',
       storageMode: 'firestore',
     }
   } catch {
     return {
       hasCustomPin: false,
       updatedAt: null,
-      maskedPin: `${DEFAULT_ACCESS_PIN} padrao`,
+      maskedPin: 'PIN padrao configurado',
       storageMode: 'default-fallback',
     }
   }
@@ -159,7 +159,7 @@ async function updateAccessPin(pin: string | null) {
   return {
     hasCustomPin: Boolean(nextPin),
     updatedAt: payload[ACCESS_PIN_UPDATED_AT_KEY],
-    maskedPin: nextPin ? '****' : `${DEFAULT_ACCESS_PIN} padrao`,
+    maskedPin: nextPin ? '****' : 'PIN padrao configurado',
   }
 }
 
