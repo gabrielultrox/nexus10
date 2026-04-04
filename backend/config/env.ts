@@ -180,16 +180,11 @@ function buildRawBackendEnv(): NodeJS.ProcessEnv {
     rawEnv.npm_package_version ??
     'development'
 
-  if (effectiveEnvironment !== 'production') {
-    rawEnv.IFOOD_WEBHOOK_SECRET ??= 'dev-ifood-webhook-secret'
-  }
-
   if (effectiveEnvironment === 'test' || process.env.VITEST) {
     rawEnv.FIREBASE_ADMIN_PROJECT_ID ??= 'test-project'
     rawEnv.FIREBASE_ADMIN_CLIENT_EMAIL ??= 'firebase-adminsdk@test-project.iam.gserviceaccount.com'
     rawEnv.FIREBASE_ADMIN_PRIVATE_KEY ??=
       '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n'
-    rawEnv.IFOOD_WEBHOOK_SECRET ??= 'test-ifood-webhook-secret'
     rawEnv.LOCAL_OPERATOR_PASSWORD ??= 'test-local-operator-password'
     rawEnv.FRONTEND_ORIGIN ??= 'http://localhost:5173'
   }
@@ -197,102 +192,61 @@ function buildRawBackendEnv(): NodeJS.ProcessEnv {
   return rawEnv
 }
 
-const backendEnvSchema = z
-  .object({
-    APP_ENV: z.preprocess(
-      (value) => normalizeRuntimeEnvironment(value, 'development'),
-      runtimeEnvironmentSchema.default('development'),
-    ),
-    NODE_ENV: z.preprocess(
-      (value) => normalizeRuntimeEnvironment(value, 'development'),
-      runtimeEnvironmentSchema.default('development'),
-    ),
-    PORT: createNumericSchema(3001),
-    TRUST_PROXY: z.preprocess(
-      (value) => normalizeTrustProxyValue(value),
-      z.union([
-        z.boolean(),
-        z.number().int().nonnegative(),
-        z.string().trim().min(1),
-        z.array(z.string().trim().min(1)).min(1),
-      ]),
-    ),
-    LOG_LEVEL: z.preprocess(
-      (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
-      logLevelSchema,
-    ),
-    SENTRY_DSN: z.string().trim().default(''),
-    SENTRY_RELEASE: z.string().trim().default(''),
-    SENTRY_TRACES_SAMPLE_RATE: createNumericSchema(0.2),
-    MONITORING_WINDOW_MS: createNumericSchema(15 * 60 * 1000),
-    ALERT_COOLDOWN_MS: createNumericSchema(10 * 60 * 1000),
-    ALERT_DISCORD_WEBHOOK_URL: z.string().trim().default(''),
-    ALERT_ERROR_RATE_THRESHOLD_PERCENT: createNumericSchema(5),
-    ALERT_LATENCY_P95_THRESHOLD_MS: createNumericSchema(1000),
-    ALERT_IFOOD_WEBHOOK_FAILURE_THRESHOLD: createNumericSchema(3),
-    LOCAL_OPERATOR_PASSWORD: z.string().trim().optional(),
-    REDIS_URL: z.string().trim().default(''),
-    REDIS_KEY_PREFIX: z.string().trim().default('nexus10'),
-    REDIS_SOCKET_TIMEOUT_MS: createNumericSchema(5000),
-    REDIS_SESSION_TTL_SECONDS: createNumericSchema(300),
-    REDIS_MERCHANT_TTL_SECONDS: createNumericSchema(180),
-    REDIS_PRODUCT_TTL_SECONDS: createNumericSchema(120),
-    OPENAI_API_KEY: z.string().trim().optional(),
-    FRONTEND_ORIGIN: z.string().trim().optional(),
-    CORS_PREFLIGHT_MAX_AGE_SECONDS: createNumericSchema(600),
-    SECURITY_USER_AGENT_BLOCKLIST: z.string().trim().default(''),
-    RATE_LIMIT_TRUSTED_IPS: z.string().trim().default(''),
-    API_RATE_LIMIT_WINDOW_MS: createNumericSchema(60000),
-    API_RATE_LIMIT_MAX: createNumericSchema(100),
-    AUTH_RATE_LIMIT_MAX: createNumericSchema(20),
-    IFOOD_ENABLED: booleanStringSchema.default(false),
-    IFOOD_CLIENT_ID: z.string().trim().optional(),
-    IFOOD_CLIENT_SECRET: z.string().trim().optional(),
-    IFOOD_AUTH_BASE_URL: z
-      .string()
-      .trim()
-      .default('https://merchant-api.ifood.com.br/authentication/v1.0'),
-    IFOOD_MERCHANT_BASE_URL: z.string().trim().default('https://merchant-api.ifood.com.br'),
-    IFOOD_EVENTS_POLLING_PATH: z.string().trim().default('/events/v1.0/events:polling'),
-    IFOOD_EVENTS_ACK_PATH: z.string().trim().default('/events/v1.0/events/acknowledgment'),
-    IFOOD_ORDER_DETAILS_PATH: z.string().trim().default('/order/v1.0/orders'),
-    IFOOD_WEBHOOK_URL: z.string().trim().default(''),
-    IFOOD_WEBHOOK_SECRET: z.string().trim().default(''),
-    IFOOD_POLLING_INTERVAL_SECONDS: createNumericSchema(30),
-    FIREBASE_ADMIN_PROJECT_ID: z.string().trim().default(''),
-    FIREBASE_ADMIN_CLIENT_EMAIL: z.string().trim().default(''),
-    FIREBASE_ADMIN_PRIVATE_KEY: z.string().trim().default(''),
-    FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
-    FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
-    FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
-    VITE_FIREBASE_PROJECT_ID: z.string().trim().optional(),
-    VITE_FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
-  })
-  .superRefine((data, context) => {
-    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_CLIENT_ID)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['IFOOD_CLIENT_ID'],
-        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
-      })
-    }
-
-    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_CLIENT_SECRET)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['IFOOD_CLIENT_SECRET'],
-        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
-      })
-    }
-
-    if (data.IFOOD_ENABLED && !asOptionalString(data.IFOOD_WEBHOOK_SECRET)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['IFOOD_WEBHOOK_SECRET'],
-        message: 'e obrigatoria quando IFOOD_ENABLED=true.',
-      })
-    }
-  })
+const backendEnvSchema = z.object({
+  APP_ENV: z.preprocess(
+    (value) => normalizeRuntimeEnvironment(value, 'development'),
+    runtimeEnvironmentSchema.default('development'),
+  ),
+  NODE_ENV: z.preprocess(
+    (value) => normalizeRuntimeEnvironment(value, 'development'),
+    runtimeEnvironmentSchema.default('development'),
+  ),
+  PORT: createNumericSchema(3001),
+  TRUST_PROXY: z.preprocess(
+    (value) => normalizeTrustProxyValue(value),
+    z.union([
+      z.boolean(),
+      z.number().int().nonnegative(),
+      z.string().trim().min(1),
+      z.array(z.string().trim().min(1)).min(1),
+    ]),
+  ),
+  LOG_LEVEL: z.preprocess(
+    (value) => (value == null || value === '' ? 'info' : String(value).trim().toLowerCase()),
+    logLevelSchema,
+  ),
+  SENTRY_DSN: z.string().trim().default(''),
+  SENTRY_RELEASE: z.string().trim().default(''),
+  SENTRY_TRACES_SAMPLE_RATE: createNumericSchema(0.2),
+  MONITORING_WINDOW_MS: createNumericSchema(15 * 60 * 1000),
+  ALERT_COOLDOWN_MS: createNumericSchema(10 * 60 * 1000),
+  ALERT_DISCORD_WEBHOOK_URL: z.string().trim().default(''),
+  ALERT_ERROR_RATE_THRESHOLD_PERCENT: createNumericSchema(5),
+  ALERT_LATENCY_P95_THRESHOLD_MS: createNumericSchema(1000),
+  LOCAL_OPERATOR_PASSWORD: z.string().trim().optional(),
+  REDIS_URL: z.string().trim().default(''),
+  REDIS_KEY_PREFIX: z.string().trim().default('nexus10'),
+  REDIS_SOCKET_TIMEOUT_MS: createNumericSchema(5000),
+  REDIS_SESSION_TTL_SECONDS: createNumericSchema(300),
+  REDIS_MERCHANT_TTL_SECONDS: createNumericSchema(180),
+  REDIS_PRODUCT_TTL_SECONDS: createNumericSchema(120),
+  OPENAI_API_KEY: z.string().trim().optional(),
+  FRONTEND_ORIGIN: z.string().trim().optional(),
+  CORS_PREFLIGHT_MAX_AGE_SECONDS: createNumericSchema(600),
+  SECURITY_USER_AGENT_BLOCKLIST: z.string().trim().default(''),
+  RATE_LIMIT_TRUSTED_IPS: z.string().trim().default(''),
+  API_RATE_LIMIT_WINDOW_MS: createNumericSchema(60000),
+  API_RATE_LIMIT_MAX: createNumericSchema(100),
+  AUTH_RATE_LIMIT_MAX: createNumericSchema(20),
+  FIREBASE_ADMIN_PROJECT_ID: z.string().trim().default(''),
+  FIREBASE_ADMIN_CLIENT_EMAIL: z.string().trim().default(''),
+  FIREBASE_ADMIN_PRIVATE_KEY: z.string().trim().default(''),
+  FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
+  FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
+  FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
+  VITE_FIREBASE_PROJECT_ID: z.string().trim().optional(),
+  VITE_FIREBASE_STORAGE_BUCKET: z.string().trim().optional(),
+})
 
 type RawBackendEnvironment = z.infer<typeof backendEnvSchema>
 
@@ -311,7 +265,6 @@ function normalizeBackendEnv(parsedEnv: RawBackendEnvironment): BackendEnvironme
     alertDiscordWebhookUrl: parsedEnv.ALERT_DISCORD_WEBHOOK_URL,
     alertErrorRateThresholdPercent: parsedEnv.ALERT_ERROR_RATE_THRESHOLD_PERCENT,
     alertLatencyP95ThresholdMs: parsedEnv.ALERT_LATENCY_P95_THRESHOLD_MS,
-    alertIfoodWebhookFailureThreshold: parsedEnv.ALERT_IFOOD_WEBHOOK_FAILURE_THRESHOLD,
     localOperatorPassword: parsedEnv.LOCAL_OPERATOR_PASSWORD || '01',
     redisUrl: parsedEnv.REDIS_URL,
     redisKeyPrefix: parsedEnv.REDIS_KEY_PREFIX,
@@ -334,17 +287,6 @@ function normalizeBackendEnv(parsedEnv: RawBackendEnvironment): BackendEnvironme
     apiRateLimitWindowMs: parsedEnv.API_RATE_LIMIT_WINDOW_MS,
     apiRateLimitMax: parsedEnv.API_RATE_LIMIT_MAX,
     authRateLimitMax: parsedEnv.AUTH_RATE_LIMIT_MAX,
-    ifoodEnabled: parsedEnv.IFOOD_ENABLED,
-    ifoodClientId: asOptionalString(parsedEnv.IFOOD_CLIENT_ID) ?? '',
-    ifoodClientSecret: asOptionalString(parsedEnv.IFOOD_CLIENT_SECRET) ?? '',
-    ifoodAuthBaseUrl: parsedEnv.IFOOD_AUTH_BASE_URL,
-    ifoodMerchantBaseUrl: parsedEnv.IFOOD_MERCHANT_BASE_URL,
-    ifoodEventsPollingPath: parsedEnv.IFOOD_EVENTS_POLLING_PATH,
-    ifoodEventsAckPath: parsedEnv.IFOOD_EVENTS_ACK_PATH,
-    ifoodOrderDetailsPath: parsedEnv.IFOOD_ORDER_DETAILS_PATH,
-    ifoodWebhookUrl: parsedEnv.IFOOD_WEBHOOK_URL,
-    ifoodWebhookSecret: parsedEnv.IFOOD_WEBHOOK_SECRET,
-    ifoodPollingIntervalSeconds: parsedEnv.IFOOD_POLLING_INTERVAL_SECONDS,
     firebaseProjectId:
       asOptionalString(parsedEnv.FIREBASE_ADMIN_PROJECT_ID) ??
       asOptionalString(parsedEnv.VITE_FIREBASE_PROJECT_ID) ??

@@ -2,13 +2,8 @@ import admin from 'firebase-admin'
 
 import { backendEnv, hasFirebaseAdminConfig } from '../config/env.js'
 import { isRedisConfigured, getRedisClient } from '../cache/redisClient.js'
-import {
-  readZeDeliverySchedulerStates,
-  summarizeZeDeliverySchedulerStates,
-} from '../middleware/health-check.js'
 
 const routeMetrics = new Map()
-const webhookEvents = []
 const orderCreatedEvents = []
 const saleCreatedEvents = []
 
@@ -138,7 +133,6 @@ function roundMegabytes(valueInBytes) {
 
 function getSystemSnapshot() {
   const memory = process.memoryUsage()
-  const schedulerSummary = summarizeZeDeliverySchedulerStates(readZeDeliverySchedulerStates())
 
   return {
     processUptimeSeconds: Number(process.uptime().toFixed(2)),
@@ -169,19 +163,6 @@ function getSystemSnapshot() {
             )
           : 0,
     },
-    scheduler: {
-      provider: 'node-cron-pm2',
-      status: schedulerSummary.status,
-      errorCount: schedulerSummary.errorCount,
-      staleWorkerCount: schedulerSummary.staleWorkerCount,
-      successRate:
-        schedulerSummary.successRate == null
-          ? null
-          : Number((schedulerSummary.successRate * 100).toFixed(2)),
-      workerCount: schedulerSummary.workers.length,
-      lastSyncAt: schedulerSummary.lastSync,
-      nextSyncAt: schedulerSummary.nextSync,
-    },
   }
 }
 
@@ -200,18 +181,6 @@ export function recordRequestMetric(metric) {
   })
 
   prune(bucket, getWindowMs())
-
-  if (metric.isIfoodWebhook) {
-    webhookEvents.push({
-      timestamp,
-      merchantId: metric.merchantId ?? null,
-      storeId: metric.storeId ?? null,
-      success: metric.statusCode < 400,
-      statusCode: metric.statusCode,
-      durationMs: metric.durationMs,
-    })
-    prune(webhookEvents, getWindowMs())
-  }
 }
 
 export function recordOrderCreatedMetric({ storeId }) {
@@ -243,12 +212,6 @@ export function getMonitoringSnapshot() {
   const routeEntries = collectWindowedRouteEvents()
   const allEvents = collectAllRouteEvents()
   const summary = summarizeEvents(allEvents)
-  const webhookMetricEvents = getWindowedEvents(webhookEvents).map((event) => ({
-    timestamp: event.timestamp,
-    durationMs: event.durationMs,
-    statusCode: event.success ? 200 : event.statusCode,
-  }))
-  const webhookSummary = summarizeEvents(webhookMetricEvents)
   const ordersLastHour = getWindowedEvents(orderCreatedEvents).length
   const salesWindow = getWindowedEvents(saleCreatedEvents)
   const totalSalesAmount = Number(
@@ -261,19 +224,8 @@ export function getMonitoringSnapshot() {
     thresholds: {
       errorRatePercent: backendEnv.alertErrorRateThresholdPercent,
       latencyP95Ms: backendEnv.alertLatencyP95ThresholdMs,
-      ifoodWebhookFailures: backendEnv.alertIfoodWebhookFailureThreshold,
     },
     summary,
-    webhooks: {
-      totalRequests: webhookEvents.length,
-      successRate: webhookSummary.totalRequests
-        ? Number(((webhookSummary.successCount / webhookSummary.totalRequests) * 100).toFixed(2))
-        : 0,
-      failureCount: webhookEvents.filter((event) => !event.success).length,
-      errorRate: webhookSummary.errorRate,
-      p95: webhookSummary.p95,
-      p99: webhookSummary.p99,
-    },
     business: {
       ordersCreatedLastHour: ordersLastHour,
       salesTotalAmount: totalSalesAmount,
@@ -307,7 +259,6 @@ export async function getObservabilitySnapshot() {
 
 export function resetMonitoringMetrics() {
   routeMetrics.clear()
-  webhookEvents.length = 0
   orderCreatedEvents.length = 0
   saleCreatedEvents.length = 0
   cacheCounters.hits = 0

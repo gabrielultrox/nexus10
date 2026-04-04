@@ -7,7 +7,6 @@ vi.mock('../config/env.js', () => ({
     alertDiscordWebhookUrl: '',
     alertErrorRateThresholdPercent: 5,
     alertLatencyP95ThresholdMs: 1000,
-    alertIfoodWebhookFailureThreshold: 3,
     sentryDsn: '',
     sentryRelease: '',
     sentryTracesSampleRate: 0.2,
@@ -94,66 +93,8 @@ describe('monitoring metrics and alerts', () => {
         errorRate: 7,
         p95: 1500,
       },
-      webhooks: {
-        failureCount: 4,
-        errorRate: 12,
-      },
     })
 
-    expect(captureMessage).toHaveBeenCalledTimes(3)
-  })
-
-  it('inclui o estado do scheduler no snapshot operacional', async () => {
-    const { summarizeZeDeliverySchedulerStates } = await import('../middleware/health-check.js')
-    const { getMonitoringSnapshot, resetMonitoringMetrics } = await import('./metrics.js')
-
-    summarizeZeDeliverySchedulerStates.mockReturnValue({
-      status: 'degraded',
-      lastSync: '2026-03-27T20:00:00.000Z',
-      nextSync: '2026-03-27T20:05:00.000Z',
-      errorCount: 2,
-      successRate: 0.75,
-      staleWorkerCount: 1,
-      staleWorkers: [{ id: 'worker-2' }],
-      workers: [{ id: 'worker-1' }, { id: 'worker-2' }],
-    })
-
-    resetMonitoringMetrics()
-    const snapshot = getMonitoringSnapshot()
-
-    expect(snapshot.system.scheduler.status).toBe('degraded')
-    expect(snapshot.system.scheduler.errorCount).toBe(2)
-    expect(snapshot.system.scheduler.staleWorkerCount).toBe(1)
-    expect(snapshot.system.scheduler.successRate).toBe(75)
-    expect(snapshot.system.scheduler.workerCount).toBe(2)
-  })
-
-  it('dispara alerta quando o scheduler entra em estado degradado', async () => {
-    const { evaluateMonitoringAlerts } = await import('./alerts.js')
-    const { captureMessage } = await import('./sentry.js')
-
-    await evaluateMonitoringAlerts({
-      summary: {
-        totalRequests: 10,
-        errorRate: 0,
-        p95: 100,
-      },
-      webhooks: {
-        failureCount: 0,
-        errorRate: 0,
-      },
-      system: {
-        scheduler: {
-          status: 'degraded',
-          errorCount: 3,
-          staleWorkerCount: 1,
-          successRate: 42,
-          lastSyncAt: '2026-03-27T20:00:00.000Z',
-          nextSyncAt: '2026-03-27T20:05:00.000Z',
-        },
-      },
-    })
-
-    expect(captureMessage).toHaveBeenCalledTimes(1)
+    expect(captureMessage).toHaveBeenCalledTimes(2)
   })
 })

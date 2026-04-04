@@ -17,14 +17,6 @@ vi.mock('../config/env.js', () => ({
     apiRateLimitWindowMs: 15 * 60 * 1000,
     apiRateLimitMax: 300,
     authRateLimitMax: 20,
-    ifoodAuthBaseUrl: 'https://merchant-api.ifood.com.br/authentication/v1.0',
-    ifoodMerchantBaseUrl: 'https://merchant-api.ifood.com.br',
-    ifoodEventsPollingPath: '/events/v1.0/events:polling',
-    ifoodEventsAckPath: '/events/v1.0/events/acknowledgment',
-    ifoodOrderDetailsPath: '/order/v1.0/orders',
-    ifoodWebhookUrl: '',
-    ifoodWebhookSecret: '',
-    ifoodPollingIntervalSeconds: 30,
     firebaseProjectId: 'test-project',
     firebaseClientEmail: 'test@example.com',
     firebasePrivateKey: 'test-key',
@@ -110,30 +102,6 @@ vi.mock('../modules/admin/monitoringController.js', () => ({
 
 vi.mock('../modules/finance/financeController.js', () => ({
   registerFinanceRoutes: () => {},
-}))
-
-vi.mock('../routes/ze-delivery.js', () => ({
-  registerZeDeliveryRoutes: () => {},
-}))
-
-vi.mock('../integrations/ifood/ifoodFirestoreRepository.js', () => ({
-  createIfoodFirestoreRepository: () => ({}),
-}))
-
-vi.mock('../integrations/ifood/ifoodIntegrationRuntime.js', () => ({
-  createIfoodIntegrationRuntime: () => ({
-    adapter: {
-      getAccessToken: vi.fn(),
-      getOrderDetails: vi.fn(),
-    },
-    eventService: {
-      processPolling: vi.fn(),
-      processWebhook: vi.fn(),
-    },
-    orderService: {
-      upsertOrderFromDetails: vi.fn(),
-    },
-  }),
 }))
 
 vi.mock('../monitoring/sentry.js', () => ({
@@ -249,7 +217,6 @@ describe('backend security', () => {
     expect(payload.service).toBe('nexus10-backend')
     expect(payload.checks.firestore.status).toBeDefined()
     expect(payload.checks.metrics.status).toBe('ok')
-    expect(payload.checks.scheduler.errorCount).toBeDefined()
   })
 
   it('rejeita origem CORS invalida', async () => {

@@ -118,46 +118,5 @@ export async function evaluateMonitoringAlerts(snapshot) {
     )
   }
 
-  if (snapshot.webhooks.failureCount >= backendEnv.alertIfoodWebhookFailureThreshold) {
-    tasks.push(
-      emitAlert(
-        'ifood-webhook-failures',
-        'Falhas de webhook iFood acima do limite',
-        `Foram detectadas ${snapshot.webhooks.failureCount} falhas de webhook iFood na janela monitorada.`,
-        {
-          failures: snapshot.webhooks.failureCount,
-          threshold: backendEnv.alertIfoodWebhookFailureThreshold,
-          errorRate: `${snapshot.webhooks.errorRate}%`,
-        },
-      ),
-    )
-  }
-
-  if (
-    snapshot.system?.scheduler?.status === 'degraded' ||
-    Number(snapshot.system?.scheduler?.errorCount ?? 0) > 0 ||
-    Number(snapshot.system?.scheduler?.staleWorkerCount ?? 0) > 0
-  ) {
-    tasks.push(
-      emitAlert(
-        'ze-delivery-scheduler',
-        'Scheduler do Ze Delivery em estado degradado',
-        `O scheduler do Ze Delivery reportou status ${snapshot.system.scheduler.status} com ${snapshot.system.scheduler.errorCount} erro(s).`,
-        {
-          integration: 'ze-delivery',
-          schedulerStatus: snapshot.system.scheduler.status,
-          errorCount: snapshot.system.scheduler.errorCount,
-          staleWorkers: snapshot.system.scheduler.staleWorkerCount ?? 0,
-          successRate:
-            snapshot.system.scheduler.successRate == null
-              ? 'n/a'
-              : `${snapshot.system.scheduler.successRate}%`,
-          lastSyncAt: snapshot.system.scheduler.lastSyncAt ?? 'n/a',
-          nextSyncAt: snapshot.system.scheduler.nextSyncAt ?? 'n/a',
-        },
-      ),
-    )
-  }
-
   await Promise.allSettled(tasks)
 }

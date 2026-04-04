@@ -7,7 +7,7 @@
 - Definir `SENTRY_RELEASE` ou garantir fallback por commit SHA.
 - Definir `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` e `SENTRY_PROJECT` para upload de sourcemaps.
 - Definir `ALERT_DISCORD_WEBHOOK_URL` se alertas externos forem necessarios.
-- Confirmar `MONITORING_WINDOW_MS`, `ALERT_ERROR_RATE_THRESHOLD_PERCENT`, `ALERT_LATENCY_P95_THRESHOLD_MS` e `ALERT_IFOOD_WEBHOOK_FAILURE_THRESHOLD`.
+- Confirmar `MONITORING_WINDOW_MS`, `ALERT_ERROR_RATE_THRESHOLD_PERCENT` e `ALERT_LATENCY_P95_THRESHOLD_MS`.
 
 ## Validacao de backend
 
@@ -27,8 +27,6 @@
   - `request_id`
   - `user_id`
   - `store_id`
-  - `merchant_id` quando existir
-  - `integration` para iFood ou Ze Delivery
 - Confirmar a release do evento.
 - Confirmar stack trace resolvido com sourcemaps.
 
@@ -36,22 +34,16 @@
 
 - Simular taxa de erro > 5%.
 - Simular p95 > 1s.
-- Simular falhas de webhook iFood acima do limiar.
-- Simular scheduler do Ze Delivery degradado ou stale.
 
 ## Operacao diaria
 
 - Rodar `npm run ops:smoke` apos deploys relevantes.
 - Revisar `/api/admin/monitoring/summary`.
 - Revisar issues novas no Sentry por release.
-- Revisar `nexus_scheduler_health` no scrape Prometheus.
 - Revisar taxa de hit/miss do cache.
-- Revisar `webhooks.failureCount` e `system.scheduler.errorCount`.
 
 ## Incidentes agora detectaveis
 
 - regressao global de performance do backend
 - pico de erros 5xx
-- falhas repetidas de webhook iFood
-- scheduler do Ze Delivery degradado, stale ou parado
 - erros frontend/backend correlacionados por release e tags operacionais

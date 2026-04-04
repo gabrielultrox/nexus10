@@ -58,7 +58,6 @@ interface ReadinessResponseBody {
     firestore: { status: 'ok' | 'degraded' }
     redis: { status: 'ok' | 'disabled' | 'degraded' }
     metrics: { status: 'ok' | 'degraded' }
-    scheduler: { status: 'ok' | 'degraded'; staleWorkerCount: number; errorCount: number }
   }
 }
 
@@ -126,15 +125,6 @@ export function createApp(): Express {
         } as const,
         metrics: {
           status: snapshot.routes.length >= 0 ? 'ok' : 'degraded',
-        } as const,
-        scheduler: {
-          status:
-            snapshot.system.scheduler.status === 'degraded' ||
-            snapshot.system.scheduler.staleWorkerCount > 0
-              ? 'degraded'
-              : 'ok',
-          staleWorkerCount: snapshot.system.scheduler.staleWorkerCount ?? 0,
-          errorCount: snapshot.system.scheduler.errorCount ?? 0,
         } as const,
       }
 

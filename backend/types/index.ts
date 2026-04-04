@@ -1,5 +1,5 @@
 export type RuntimeEnvironment = 'development' | 'staging' | 'production' | 'test'
-export type IntegrationSource = 'ifood'
+export type IntegrationSource = string
 export type UserRole = 'admin' | 'gerente' | 'operador' | 'atendente'
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 export type OrderStatus =
@@ -387,7 +387,6 @@ export interface BackendEnvironment {
   alertDiscordWebhookUrl: string
   alertErrorRateThresholdPercent: number
   alertLatencyP95ThresholdMs: number
-  alertIfoodWebhookFailureThreshold: number
   localOperatorPassword: string
   redisUrl: string
   redisKeyPrefix: string
@@ -403,17 +402,6 @@ export interface BackendEnvironment {
   apiRateLimitWindowMs: number
   apiRateLimitMax: number
   authRateLimitMax: number
-  ifoodEnabled: boolean
-  ifoodClientId: string
-  ifoodClientSecret: string
-  ifoodAuthBaseUrl: string
-  ifoodMerchantBaseUrl: string
-  ifoodEventsPollingPath: string
-  ifoodEventsAckPath: string
-  ifoodOrderDetailsPath: string
-  ifoodWebhookUrl: string
-  ifoodWebhookSecret: string
-  ifoodPollingIntervalSeconds: number
   firebaseProjectId: string
   firebaseClientEmail: string
   firebasePrivateKey: string

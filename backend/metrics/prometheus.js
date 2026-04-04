@@ -67,14 +67,6 @@ export async function buildPrometheusMetrics() {
     [{ value: snapshot.business.salesTotalAmount }],
   )
 
-  pushMetric(
-    lines,
-    'nexus_ifood_webhook_success_rate',
-    'iFood webhook success rate percentage.',
-    'gauge',
-    [{ value: snapshot.webhooks.successRate }],
-  )
-
   pushMetric(lines, 'nexus_cache_hits_total', 'Cache hits recorded by the backend.', 'counter', [
     { value: snapshot.system.cache.hits },
   ])
@@ -118,47 +110,6 @@ export async function buildPrometheusMetrics() {
     { labels: { state: 'configured' }, value: snapshot.system.cache.configured ? 1 : 0 },
     { labels: { state: 'connected' }, value: snapshot.system.cache.status === 'connected' ? 1 : 0 },
   ])
-
-  pushMetric(
-    lines,
-    'nexus_scheduler_health',
-    'Scheduler health and error counters for background integrations.',
-    'gauge',
-    [
-      {
-        labels: { integration: 'ze-delivery', state: 'healthy' },
-        value:
-          snapshot.system.scheduler.status === 'healthy' ||
-          snapshot.system.scheduler.status === 'idle'
-            ? 1
-            : 0,
-      },
-      {
-        labels: { integration: 'ze-delivery', state: 'degraded' },
-        value: snapshot.system.scheduler.status === 'degraded' ? 1 : 0,
-      },
-      {
-        labels: { integration: 'ze-delivery', state: 'running' },
-        value: snapshot.system.scheduler.status === 'running' ? 1 : 0,
-      },
-      {
-        labels: { integration: 'ze-delivery', state: 'stopped' },
-        value: snapshot.system.scheduler.status === 'stopped' ? 1 : 0,
-      },
-      {
-        labels: { integration: 'ze-delivery', metric: 'error_count' },
-        value: snapshot.system.scheduler.errorCount,
-      },
-      {
-        labels: { integration: 'ze-delivery', metric: 'success_rate_percent' },
-        value: snapshot.system.scheduler.successRate ?? 0,
-      },
-      {
-        labels: { integration: 'ze-delivery', metric: 'stale_workers' },
-        value: snapshot.system.scheduler.staleWorkerCount ?? 0,
-      },
-    ],
-  )
 
   return `${lines.join('\n')}\n`
 }
