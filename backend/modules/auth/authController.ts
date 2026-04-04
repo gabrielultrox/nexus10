@@ -4,7 +4,7 @@ import crypto from 'node:crypto'
 import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js'
 import { backendEnv } from '../../config/env.js'
 import { getLocalOperatorProfile, localOperatorProfiles } from '../../config/localOperators.js'
-import { buildCacheKey, cacheSet } from '../../cache/cacheService.js'
+import { buildCacheKey, cacheGet, cacheSet } from '../../cache/cacheService.js'
 import { createLoggerContext, serializeError, withMethodLogging } from '../../logging/logger.js'
 import { requireApiAuth, requireRole } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
@@ -29,6 +29,16 @@ const OPERATOR_PASSWORD_HASH_KEY = 'operatorPasswordHash'
 const OPERATOR_PASSWORD_UPDATED_AT_KEY = 'operatorPasswordUpdatedAt'
 const PASSWORD_HASH_PREFIX = 'scrypt'
 
+function buildOperatorPasswordCacheKey(operatorName: string) {
+  return buildCacheKey('auth', 'operator-password', operatorName)
+}
+
+function buildOperatorPasswordCacheValue(passwordHash: string | null) {
+  return {
+    passwordHash: passwordHash ?? '',
+  }
+}
+
 function hashOperatorPassword(password: string, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex')
   return `${PASSWORD_HASH_PREFIX}$${salt}$${hash}`
@@ -46,11 +56,32 @@ function verifyOperatorPasswordHash(password: string, passwordHash: string): boo
 }
 
 async function readOperatorPasswordHash(profile: LocalOperatorProfile): Promise<string> {
+  const cachedPasswordHash = await cacheGet(buildOperatorPasswordCacheKey(profile.operatorName))
+
+  if (
+    cachedPasswordHash &&
+    typeof cachedPasswordHash === 'object' &&
+    'passwordHash' in cachedPasswordHash
+  ) {
+    return typeof (cachedPasswordHash as { passwordHash?: unknown }).passwordHash === 'string'
+      ? (cachedPasswordHash as { passwordHash: string }).passwordHash
+      : ''
+  }
+
   const snapshot = await getAdminFirestore().collection('users').doc(profile.uid).get()
   const data = snapshot.data()
-  return typeof data?.[OPERATOR_PASSWORD_HASH_KEY] === 'string'
-    ? data[OPERATOR_PASSWORD_HASH_KEY]
-    : ''
+  const passwordHash =
+    typeof data?.[OPERATOR_PASSWORD_HASH_KEY] === 'string' ? data[OPERATOR_PASSWORD_HASH_KEY] : ''
+
+  if (passwordHash) {
+    await cacheSet(
+      buildOperatorPasswordCacheKey(profile.operatorName),
+      buildOperatorPasswordCacheValue(passwordHash),
+      backendEnv.redisSessionTtlSeconds,
+    )
+  }
+
+  return passwordHash
 }
 
 async function isValidPassword(password: string, profile: LocalOperatorProfile): Promise<boolean> {
@@ -138,19 +169,36 @@ async function updateOperatorPassword(operatorName: string, password: string | n
   const profile = getLocalOperatorProfile(operatorName) as LocalOperatorProfile
   const firestore = getAdminFirestore()
   const userRef = firestore.collection('users').doc(profile.uid)
+  const operatorPasswordHash = password ? hashOperatorPassword(password) : null
   const payload = {
     ...profile,
     updatedAt: new Date().toISOString(),
-    [OPERATOR_PASSWORD_HASH_KEY]: password ? hashOperatorPassword(password) : null,
+    [OPERATOR_PASSWORD_HASH_KEY]: operatorPasswordHash,
     [OPERATOR_PASSWORD_UPDATED_AT_KEY]: new Date().toISOString(),
   }
 
-  await userRef.set(payload, { merge: true })
+  const cacheStored = await cacheSet(
+    buildOperatorPasswordCacheKey(profile.operatorName),
+    buildOperatorPasswordCacheValue(operatorPasswordHash),
+    backendEnv.redisSessionTtlSeconds,
+  )
+
+  let firestoreStored = false
+
+  try {
+    await userRef.set(payload, { merge: true })
+    firestoreStored = true
+  } catch (error) {
+    if (!cacheStored) {
+      throw error
+    }
+  }
 
   return {
     operatorName: profile.operatorName,
     hasCustomPassword: Boolean(password),
     updatedAt: payload[OPERATOR_PASSWORD_UPDATED_AT_KEY],
+    storageMode: firestoreStored ? 'cache+firestore' : 'cache-only',
   }
 }
 
@@ -402,6 +450,7 @@ export function registerAuthRoutes(app: Express): void {
           operatorName: string
           hasCustomPassword: boolean
           updatedAt: string | null
+          storageMode?: string
         }>
       >,
     ) => {

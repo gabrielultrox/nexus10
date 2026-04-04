@@ -6,6 +6,7 @@ const firestoreSetMock = vi.fn()
 const firestoreGetMock = vi.fn()
 const createCustomTokenMock = vi.fn()
 const getLocalOperatorProfileMock = vi.fn()
+const cacheGetMock = vi.fn()
 const cacheSetMock = vi.fn()
 const authLoggerMock = {
   info: vi.fn(),
@@ -101,6 +102,7 @@ async function loadAuthController({
   createCustomTokenMock.mockReset()
   getLocalOperatorProfileMock.mockReset()
   cacheSetMock.mockReset()
+  cacheGetMock.mockReset()
   authLoggerMock.info.mockReset()
   authLoggerMock.warn.mockReset()
   authLoggerMock.error.mockReset()
@@ -117,6 +119,7 @@ async function loadAuthController({
 
   getLocalOperatorProfileMock.mockReturnValue(profileOverride ?? defaultProfile)
   cacheSetMock.mockResolvedValue(true)
+  cacheGetMock.mockResolvedValue(null)
   firestoreGetMock.mockResolvedValue(createSnapshot())
 
   if (createCustomTokenError) {
@@ -158,6 +161,7 @@ async function loadAuthController({
 
   vi.doMock('../cache/cacheService.js', () => ({
     buildCacheKey: vi.fn(() => 'nexus10:session:profile:local-gabriel'),
+    cacheGet: cacheGetMock,
     cacheSet: cacheSetMock,
   }))
 
