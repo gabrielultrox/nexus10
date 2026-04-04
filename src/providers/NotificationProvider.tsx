@@ -60,6 +60,10 @@ type NotificationRecord = Record<string, any>
 type PreferencesRecord = Record<string, any>
 
 const NotificationsContext = createContext<any>(null)
+const NotificationLiveStatusContext = createContext<any>({
+  connectionStatus: 'idle',
+  lastConnectedAt: null,
+})
 const delayedOrderThresholdMinutes = 35
 const advancesReminderHour = 23
 const advancesReminderMinute = 30
@@ -591,7 +595,28 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     ],
   )
 
-  return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>
+  const liveStatusValue = useMemo(
+    () => ({
+      connectionStatus: deferredNotificationsEnabled
+        ? liveNotifications.connectionStatus
+        : operationalNotificationsEnabled
+          ? 'pending'
+          : 'idle',
+      lastConnectedAt: liveNotifications.lastConnectedAt,
+    }),
+    [
+      deferredNotificationsEnabled,
+      liveNotifications.connectionStatus,
+      liveNotifications.lastConnectedAt,
+      operationalNotificationsEnabled,
+    ],
+  )
+
+  return (
+    <NotificationLiveStatusContext.Provider value={liveStatusValue}>
+      <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>
+    </NotificationLiveStatusContext.Provider>
+  )
 }
 
 export function useNotifications() {
@@ -602,4 +627,8 @@ export function useNotifications() {
   }
 
   return context
+}
+
+export function useNotificationLiveStatus() {
+  return useContext(NotificationLiveStatusContext)
 }

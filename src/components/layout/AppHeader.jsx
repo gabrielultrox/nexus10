@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
-import { useNotifications } from '../../contexts/NotificationsContext'
+import { useNotificationLiveStatus } from '../../contexts/NotificationsContext'
 import { getRouteByPathname } from '../../utils/routeCatalog'
 import NotificationCenter from '../notifications/NotificationCenter'
 import ThemeToggle from '../theme/ThemeToggle'
@@ -9,7 +9,7 @@ import ThemeToggle from '../theme/ThemeToggle'
 function AppHeader() {
   const location = useLocation()
   const { session, signOut } = useAuth()
-  const { connectionStatus } = useNotifications()
+  const { connectionStatus } = useNotificationLiveStatus()
   const route = getRouteByPathname(location.pathname)
   const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local'
   const liveStatusLabel =
