@@ -1,9 +1,61 @@
-import { LOCAL_RECORDS_EVENT, loadLocalRecords, saveLocalRecords } from './localAccess'
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore'
 
-const MALOTE_STORAGE_PREFIX = 'nexus-occurrence-malote'
+import {
+  assertRemoteSyncReady,
+  canUseRemoteSync,
+  firebaseDb,
+  guardRemoteSubscription,
+} from './firebase'
+import { FIRESTORE_COLLECTIONS } from './firestoreCollections'
 
-function getStorageKey(storeId) {
-  return `${MALOTE_STORAGE_PREFIX}:${storeId || 'local'}`
+const OCCURRENCE_MALOTE_FLOW = 'malote'
+
+function getOccurrenceMaloteCollectionRef(storeId) {
+  assertRemoteSyncReady()
+  return collection(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.financialOccurrences,
+  )
+}
+
+function getOccurrenceMaloteDocRef(storeId, entryId) {
+  assertRemoteSyncReady()
+  return doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.financialOccurrences,
+    entryId,
+  )
+}
+
+function buildOccurrenceMaloteDocId(sourceRecordId) {
+  const normalizedSourceRecordId = String(sourceRecordId ?? '').trim()
+
+  if (normalizedSourceRecordId) {
+    return `malote-${normalizedSourceRecordId}`
+  }
+
+  return `malote-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
+}
+
+function mapOccurrenceMaloteSnapshot(snapshot) {
+  return {
+    id: snapshot.id,
+    ...snapshot.data(),
+  }
 }
 
 function escapeHtml(value) {
@@ -43,16 +95,12 @@ function getActorName(session) {
   return session?.operatorName ?? session?.displayName ?? 'Operador local'
 }
 
-function normalizeItems(items = []) {
+function normalizeRemoteItems(items = []) {
   return [...items].sort((left, right) => {
     const leftTime = new Date(left.updatedAt ?? left.printedAt ?? left.createdAt ?? 0).getTime()
     const rightTime = new Date(right.updatedAt ?? right.printedAt ?? right.createdAt ?? 0).getTime()
     return rightTime - leftTime
   })
-}
-
-function buildEntryId() {
-  return `malote-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
 }
 
 function buildProtocolCode() {
@@ -66,6 +114,14 @@ function buildProtocolCode() {
   return `MAL-${stamp}`
 }
 
+function getOccurrenceDescription(record) {
+  return (
+    String(record?.description ?? '').trim() ||
+    String(record?.type ?? '').trim() ||
+    'Ocorrencia operacional'
+  )
+}
+
 export function getOccurrenceMaloteDefaultReceivedAt() {
   const now = new Date()
   const year = now.getFullYear()
@@ -76,30 +132,34 @@ export function getOccurrenceMaloteDefaultReceivedAt() {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-export function loadOccurrenceMaloteHistory(storeId) {
-  return normalizeItems(loadLocalRecords(getStorageKey(storeId), []))
-}
-
-export function subscribeToOccurrenceMaloteHistory(storeId, onData) {
-  const storageKey = getStorageKey(storeId)
-
-  function emit() {
-    onData(loadOccurrenceMaloteHistory(storeId))
+export function subscribeToOccurrenceMaloteHistory(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([])
+    return () => {}
   }
 
-  emit()
+  const maloteQuery = query(getOccurrenceMaloteCollectionRef(storeId), orderBy('updatedAt', 'desc'))
 
-  function handleChange(event) {
-    if (event.detail?.storageKey === storageKey) {
-      emit()
-    }
-  }
+  return guardRemoteSubscription(
+    () =>
+      onSnapshot(
+        maloteQuery,
+        (snapshot) => {
+          const nextItems = snapshot.docs
+            .map(mapOccurrenceMaloteSnapshot)
+            .filter((item) => item.flow === OCCURRENCE_MALOTE_FLOW)
 
-  window.addEventListener(LOCAL_RECORDS_EVENT, handleChange)
-
-  return () => {
-    window.removeEventListener(LOCAL_RECORDS_EVENT, handleChange)
-  }
+          onData(normalizeRemoteItems(nextItems))
+        },
+        onError,
+      ),
+    {
+      onFallback() {
+        onData([])
+      },
+      onError,
+    },
+  )
 }
 
 export function buildOccurrenceMalotePrintPayload(entry, session) {
@@ -112,11 +172,11 @@ export function buildOccurrenceMalotePrintPayload(entry, session) {
     title: entry?.title ?? `Ocorrencia ${entry?.reference ?? entry?.code ?? 'Sem codigo'}`,
     reference: entry?.reference ?? entry?.code ?? '',
     amount: entry?.amount ?? '',
-    operatorName: entry?.operatorName ?? getActorName(session),
+    operatorName: entry?.operatorName ?? entry?.owner ?? getActorName(session),
     occurredAt: toIsoDateTime(
       entry?.occurredAt ?? entry?.createdAtClient ?? entry?.updatedAtClient,
     ),
-    description: entry?.description ?? entry?.type ?? 'Ocorrencia operacional',
+    description: getOccurrenceDescription(entry),
     footer:
       entry?.protocolCode && entry?.receivedBy
         ? `Protocolo ${entry.protocolCode} - Recebido por ${entry.receivedBy}`
@@ -124,83 +184,82 @@ export function buildOccurrenceMalotePrintPayload(entry, session) {
   }
 }
 
-export function upsertOccurrenceMaloteEntry({ storeId, tenantId, record, session }) {
-  const items = loadOccurrenceMaloteHistory(storeId)
-  const actorName = getActorName(session)
-  const nowIso = new Date().toISOString()
-  const sourceRecordId = record?.id ?? ''
-  const existing = items.find((item) => item.sourceRecordId === sourceRecordId)
-
-  const baseEntry = {
-    storeId: storeId ?? null,
-    tenantId: tenantId ?? null,
-    sourceRecordId,
-    code: String(record?.code ?? '').trim(),
-    type: String(record?.type ?? '').trim(),
-    owner: String(record?.owner ?? '').trim() || actorName,
-    status: String(record?.status ?? '').trim() || 'Em triagem',
-    description: String(record?.type ?? '').trim(),
-    destinationSector: 'Financeiro / RH',
-    category: 'Ocorrencia operacional',
-    title: `Ocorrencia ${String(record?.code ?? '').trim() || 'sem codigo'}`,
-    reference: String(record?.code ?? '').trim(),
-    amount: '',
-    cashierName: String(record?.owner ?? '').trim() || actorName,
-    operatorName: actorName,
-    occurredAt: toIsoDateTime(record?.createdAtClient ?? record?.updatedAtClient ?? nowIso),
-    printedAt: nowIso,
-    updatedAt: nowIso,
+export async function upsertOccurrenceMaloteEntry({ storeId, tenantId, record, session }) {
+  if (!storeId) {
+    throw new Error('Nenhuma store ativa disponivel para registrar o malote.')
   }
 
-  const nextItems = existing
-    ? items.map((item) =>
-        item.id === existing.id
-          ? {
-              ...item,
-              ...baseEntry,
-              createdAt: item.createdAt ?? nowIso,
-              printCount: Number(item.printCount ?? 1) + 1,
-            }
-          : item,
-      )
-    : [
-        {
-          id: buildEntryId(),
-          ...baseEntry,
-          createdAt: nowIso,
-          printCount: 1,
-          protocolCode: '',
-          receivedBy: '',
-          receivedAt: '',
-          digitalSignature: '',
-          notes: '',
-        },
-        ...items,
-      ]
+  assertRemoteSyncReady()
 
-  saveLocalRecords(getStorageKey(storeId), normalizeItems(nextItems))
+  const sourceRecordId = String(record?.id ?? '').trim()
+  const entryId = buildOccurrenceMaloteDocId(sourceRecordId)
+  const entryRef = getOccurrenceMaloteDocRef(storeId, entryId)
+  const existingSnapshot = await getDoc(entryRef)
+  const existingData = existingSnapshot.data() ?? {}
+  const actorName = getActorName(session)
+  const nowIso = new Date().toISOString()
+
+  await setDoc(
+    entryRef,
+    {
+      flow: OCCURRENCE_MALOTE_FLOW,
+      storeId: storeId ?? null,
+      tenantId: tenantId ?? null,
+      sourceRecordId: sourceRecordId || null,
+      code: String(record?.code ?? '').trim(),
+      type: String(record?.type ?? '').trim(),
+      owner: String(record?.owner ?? '').trim() || actorName,
+      status: String(record?.status ?? '').trim() || 'Em triagem',
+      description: getOccurrenceDescription(record),
+      destinationSector: 'Financeiro / RH',
+      category: 'Ocorrencia operacional',
+      title: `Ocorrencia ${String(record?.code ?? '').trim() || 'sem codigo'}`,
+      reference: String(record?.code ?? '').trim(),
+      amount: '',
+      operatorName: actorName,
+      occurredAt: toIsoDateTime(
+        record?.createdAtClient ?? record?.updatedAtClient ?? record?.occurredAt ?? nowIso,
+      ),
+      printedAt: nowIso,
+      printCount: Number(existingData.printCount ?? 0) + 1,
+      protocolCode: existingData.protocolCode ?? '',
+      receivedBy: existingData.receivedBy ?? '',
+      receivedAt: existingData.receivedAt ?? '',
+      digitalSignature: existingData.digitalSignature ?? '',
+      notes: existingData.notes ?? '',
+      createdAt: existingData.createdAt ?? serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+
+  return entryId
 }
 
-export function syncOccurrenceMaloteStatus({ storeId, sourceRecordId, status }) {
-  if (!sourceRecordId) {
+export async function syncOccurrenceMaloteStatus({ storeId, sourceRecordId, status }) {
+  const normalizedSourceRecordId = String(sourceRecordId ?? '').trim()
+
+  if (!storeId || !normalizedSourceRecordId || !canUseRemoteSync()) {
     return
   }
 
-  const items = loadOccurrenceMaloteHistory(storeId)
-  const nextItems = items.map((item) =>
-    item.sourceRecordId === sourceRecordId
-      ? {
-          ...item,
-          status: String(status ?? '').trim() || item.status,
-          updatedAt: new Date().toISOString(),
-        }
-      : item,
+  const entryRef = getOccurrenceMaloteDocRef(
+    storeId,
+    buildOccurrenceMaloteDocId(normalizedSourceRecordId),
   )
+  const existingSnapshot = await getDoc(entryRef)
 
-  saveLocalRecords(getStorageKey(storeId), normalizeItems(nextItems))
+  if (!existingSnapshot.exists()) {
+    return
+  }
+
+  await updateDoc(entryRef, {
+    status: String(status ?? '').trim() || existingSnapshot.data()?.status || 'Em triagem',
+    updatedAt: serverTimestamp(),
+  })
 }
 
-export function attachOccurrenceMaloteReceipt({ storeId, entryId, values, session }) {
+export async function attachOccurrenceMaloteReceipt({ storeId, entryId, values, session }) {
   const protocolCode = String(values?.protocolCode ?? '').trim() || buildProtocolCode()
   const receivedBy = String(values?.receivedBy ?? '').trim()
   const digitalSignature = String(values?.digitalSignature ?? '').trim()
@@ -213,37 +272,41 @@ export function attachOccurrenceMaloteReceipt({ storeId, entryId, values, sessio
     throw new Error('Informe a assinatura digital ou identificacao do recebimento.')
   }
 
-  const items = loadOccurrenceMaloteHistory(storeId)
-  const actorName = getActorName(session)
-  const nowIso = new Date().toISOString()
+  if (!storeId || !entryId) {
+    throw new Error('Ocorrencia invalida para anexar protocolo.')
+  }
 
-  const nextItems = items.map((item) =>
-    item.id === entryId
-      ? {
-          ...item,
-          protocolCode,
-          receivedBy,
-          receivedAt: toIsoDateTime(values?.receivedAt || nowIso),
-          digitalSignature,
-          notes: String(values?.notes ?? '').trim(),
-          receiptActor: actorName,
-          updatedAt: nowIso,
-        }
-      : item,
-  )
+  assertRemoteSyncReady()
 
-  saveLocalRecords(getStorageKey(storeId), normalizeItems(nextItems))
+  const entryRef = getOccurrenceMaloteDocRef(storeId, entryId)
+  const existingSnapshot = await getDoc(entryRef)
+
+  if (!existingSnapshot.exists()) {
+    throw new Error('Nao foi possivel localizar a ocorrencia do malote.')
+  }
+
+  await updateDoc(entryRef, {
+    protocolCode,
+    receivedBy,
+    receivedAt: toIsoDateTime(values?.receivedAt || new Date().toISOString()),
+    digitalSignature,
+    notes: String(values?.notes ?? '').trim(),
+    receiptActor: getActorName(session),
+    updatedAt: serverTimestamp(),
+  })
 }
 
 export function buildOccurrenceMaloteExcel(items = []) {
   const header = [
-    'Codigo',
-    'Titulo',
-    'Tipo',
-    'Operador responsavel',
-    'Status',
     'Destino',
-    'Impresso em',
+    'Classificacao',
+    'Titulo',
+    'Referencia',
+    'Valor impactado',
+    'Operador responsavel',
+    'Data informada',
+    'Descricao detalhada',
+    'Status do malote',
     'Protocolo',
     'Recebido por',
     'Recebido em',
@@ -251,13 +314,15 @@ export function buildOccurrenceMaloteExcel(items = []) {
     'Observacoes',
   ]
   const rows = items.map((item) => [
-    item.code ?? '',
-    item.title ?? '',
-    item.type ?? '',
-    item.owner ?? '',
-    item.status ?? '',
     item.destinationSector ?? '',
-    formatDateTime(item.printedAt),
+    item.category ?? '',
+    item.title ?? '',
+    item.reference ?? item.code ?? '',
+    item.amount ?? '',
+    item.operatorName ?? item.owner ?? '',
+    formatDateTime(item.occurredAt),
+    getOccurrenceDescription(item),
+    item.status ?? '',
     item.protocolCode ?? '',
     item.receivedBy ?? '',
     formatDateTime(item.receivedAt),
@@ -275,13 +340,15 @@ export function buildOccurrenceMaloteExcel(items = []) {
 export function buildOccurrenceMaloteCsv(items = []) {
   const rows = [
     [
-      'Codigo',
-      'Titulo',
-      'Tipo',
-      'Operador responsavel',
-      'Status',
       'Destino',
-      'Impresso em',
+      'Classificacao',
+      'Titulo',
+      'Referencia',
+      'Valor impactado',
+      'Operador responsavel',
+      'Data informada',
+      'Descricao detalhada',
+      'Status do malote',
       'Protocolo',
       'Recebido por',
       'Recebido em',
@@ -289,13 +356,15 @@ export function buildOccurrenceMaloteCsv(items = []) {
       'Observacoes',
     ],
     ...items.map((item) => [
-      item.code ?? '',
-      item.title ?? '',
-      item.type ?? '',
-      item.owner ?? '',
-      item.status ?? '',
       item.destinationSector ?? '',
-      formatDateTime(item.printedAt),
+      item.category ?? '',
+      item.title ?? '',
+      item.reference ?? item.code ?? '',
+      item.amount ?? '',
+      item.operatorName ?? item.owner ?? '',
+      formatDateTime(item.occurredAt),
+      getOccurrenceDescription(item),
+      item.status ?? '',
       item.protocolCode ?? '',
       item.receivedBy ?? '',
       formatDateTime(item.receivedAt),
@@ -308,19 +377,39 @@ export function buildOccurrenceMaloteCsv(items = []) {
 }
 
 export function buildOccurrenceMalotePdfHtml(items = []) {
-  const rows = items
+  const cards = items
     .map(
       (item) => `
-        <tr>
-          <td>${escapeHtml(item.code ?? '')}</td>
-          <td>${escapeHtml(item.title ?? '')}</td>
-          <td>${escapeHtml(item.owner ?? '')}</td>
-          <td>${escapeHtml(item.status ?? '')}</td>
-          <td>${escapeHtml(item.protocolCode ?? '')}</td>
-          <td>${escapeHtml(item.receivedBy ?? '')}</td>
-          <td>${escapeHtml(formatDateTime(item.receivedAt))}</td>
-          <td>${escapeHtml(item.digitalSignature ?? '')}</td>
-        </tr>
+        <article class="malote-report__card">
+          <header class="malote-report__header">
+            <div>
+              <p class="malote-report__eyebrow">${escapeHtml(item.destinationSector ?? 'Financeiro / RH')}</p>
+              <h2 class="malote-report__title">${escapeHtml(item.title ?? 'Ocorrencia para malote')}</h2>
+            </div>
+            <span class="malote-report__status">${escapeHtml(item.status ?? 'Em triagem')}</span>
+          </header>
+
+          <section class="malote-report__summary">
+            <div><span>Classificacao</span><strong>${escapeHtml(item.category ?? 'Ocorrencia operacional')}</strong></div>
+            <div><span>Referencia</span><strong>${escapeHtml(item.reference ?? item.code ?? '--')}</strong></div>
+            <div><span>Valor impactado</span><strong>${escapeHtml(item.amount ?? '--')}</strong></div>
+            <div><span>Operador responsavel</span><strong>${escapeHtml(item.operatorName ?? item.owner ?? '--')}</strong></div>
+            <div><span>Data informada</span><strong>${escapeHtml(formatDateTime(item.occurredAt))}</strong></div>
+            <div><span>Protocolo</span><strong>${escapeHtml(item.protocolCode ?? 'Pendente')}</strong></div>
+          </section>
+
+          <section class="malote-report__description">
+            <p class="malote-report__section-title">Descricao detalhada</p>
+            <p>${escapeHtml(getOccurrenceDescription(item))}</p>
+          </section>
+
+          <footer class="malote-report__footer">
+            <div><span>Recebido por</span><strong>${escapeHtml(item.receivedBy ?? 'Nao informado')}</strong></div>
+            <div><span>Recebido em</span><strong>${escapeHtml(formatDateTime(item.receivedAt))}</strong></div>
+            <div><span>Assinatura digital</span><strong>${escapeHtml(item.digitalSignature ?? 'Nao informada')}</strong></div>
+            <div><span>Observacoes</span><strong>${escapeHtml(item.notes ?? '--')}</strong></div>
+          </footer>
+        </article>
       `,
     )
     .join('')
@@ -331,32 +420,32 @@ export function buildOccurrenceMalotePdfHtml(items = []) {
       <meta charset="utf-8" />
       <title>Historico de ocorrencias</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-        h1 { margin-bottom: 4px; }
-        p { color: #4b5563; margin-top: 0; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
-        th { background: #f3f4f6; }
+        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; background: #ffffff; }
+        h1 { margin: 0 0 4px; font-size: 22px; }
+        .malote-report__lead { color: #4b5563; margin: 0 0 20px; }
+        .malote-report__list { display: grid; gap: 16px; }
+        .malote-report__card { border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; display: grid; gap: 14px; }
+        .malote-report__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; }
+        .malote-report__eyebrow { margin: 0 0 4px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b7280; }
+        .malote-report__title { margin: 0; font-size: 18px; }
+        .malote-report__status { border: 1px solid #cbd5e1; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+        .malote-report__summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+        .malote-report__summary div,
+        .malote-report__footer div { display: grid; gap: 4px; }
+        .malote-report__summary span,
+        .malote-report__footer span,
+        .malote-report__section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; }
+        .malote-report__summary strong,
+        .malote-report__footer strong { font-size: 13px; }
+        .malote-report__description { border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 12px 0; }
+        .malote-report__description p:last-child { margin: 0; line-height: 1.55; white-space: pre-wrap; }
+        .malote-report__footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
       </style>
     </head>
     <body>
-      <h1>Historico de ocorrencias</h1>
-      <p>Relatorio de ocorrencias encaminhadas no malote interno.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Codigo</th>
-            <th>Titulo</th>
-            <th>Operador responsavel</th>
-            <th>Status</th>
-            <th>Protocolo</th>
-            <th>Recebido por</th>
-            <th>Recebido em</th>
-            <th>Assinatura digital</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <h1>Historico de ocorrencias para malote</h1>
+      <p class="malote-report__lead">Relatorio consolidado seguindo o mesmo modelo conceitual do papel operacional.</p>
+      <section class="malote-report__list">${cards}</section>
     </body>
   </html>`
 }

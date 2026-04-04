@@ -51,8 +51,10 @@ function OccurrenceHistoryPanel({ storeId, session }) {
   )
 
   useEffect(() => {
-    return subscribeToOccurrenceMaloteHistory(storeId, setItems)
-  }, [storeId])
+    return subscribeToOccurrenceMaloteHistory(storeId, setItems, (error) => {
+      toast.error(error?.message ?? 'Nao foi possivel carregar o historico remoto do malote.')
+    })
+  }, [storeId, toast])
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -131,7 +133,7 @@ function OccurrenceHistoryPanel({ storeId, session }) {
     }))
   }
 
-  function handleSaveReceipt(event) {
+  async function handleSaveReceipt(event) {
     event.preventDefault()
 
     if (!editingEntryId) {
@@ -139,7 +141,7 @@ function OccurrenceHistoryPanel({ storeId, session }) {
     }
 
     try {
-      attachOccurrenceMaloteReceipt({
+      await attachOccurrenceMaloteReceipt({
         storeId,
         entryId: editingEntryId,
         values: receiptForm,

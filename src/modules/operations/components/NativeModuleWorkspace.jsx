@@ -2008,7 +2008,7 @@ function NativeModuleWorkspace({ route }) {
     await persistFormRecord()
   }
 
-  function handlePrintOccurrenceRecord(recordId) {
+  async function handlePrintOccurrenceRecord(recordId) {
     if (route.path !== 'occurrences') {
       playError()
       return
@@ -2023,13 +2023,13 @@ function NativeModuleWorkspace({ route }) {
     }
 
     try {
-      printOccurrenceReport(buildOccurrenceMalotePrintPayload(occurrenceRecord, session))
-      upsertOccurrenceMaloteEntry({
+      await upsertOccurrenceMaloteEntry({
         storeId: currentStoreId,
         tenantId,
         record: occurrenceRecord,
         session,
       })
+      printOccurrenceReport(buildOccurrenceMalotePrintPayload(occurrenceRecord, session))
       appendAuditEvent({
         module: route.title,
         modulePath: route.path,
@@ -2062,7 +2062,7 @@ function NativeModuleWorkspace({ route }) {
         return
       }
 
-      upsertOccurrenceMaloteEntry({
+      await upsertOccurrenceMaloteEntry({
         storeId: currentStoreId,
         tenantId,
         record: newRecord,
@@ -2834,7 +2834,7 @@ function NativeModuleWorkspace({ route }) {
       })
 
       if (route.path === 'occurrences') {
-        syncOccurrenceMaloteStatus({
+        await syncOccurrenceMaloteStatus({
           storeId: currentStoreId,
           sourceRecordId: recordId,
           status: nextRecord.status,
