@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import MetricCard from '../../../components/common/MetricCard'
@@ -10,8 +10,13 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { useStore } from '../../../contexts/StoreContext'
 import { MANUAL_COURIER_STORAGE_KEY, subscribeToCouriers } from '../../../services/courierService'
 import { canUseRemoteSync, firebaseReady } from '../../../services/firebase'
-import { appendAuditEvent, loadAuditEvents } from '../../../services/localAudit'
 import {
+  AUDIT_LOG_STORAGE_KEY,
+  appendAuditEvent,
+  loadAuditEvents,
+} from '../../../services/localAudit'
+import {
+  LOCAL_RECORDS_EVENT,
   loadLocalRecords,
   loadResettableLocalRecords,
   resetLocalRecordsNow,
@@ -465,14 +470,12 @@ function getActiveScheduleCouriers() {
   )
 }
 
-function getPreferredDeliveryCourier(options) {
+function getPreferredDeliveryCourierWithSchedule(options, activeScheduleCouriers = []) {
   const validOptions = options.filter((option) => !isPlaceholderOption(option))
 
   if (validOptions.length === 0) {
     return ''
   }
-
-  const activeScheduleCouriers = getActiveScheduleCouriers()
 
   if (activeScheduleCouriers.length === 1 && validOptions.includes(activeScheduleCouriers[0])) {
     return activeScheduleCouriers[0]
@@ -623,6 +626,12 @@ function NativeModuleWorkspace({ route }) {
   const [machineChecklistState, setMachineChecklistState] = useState(() =>
     route.path === 'machines' ? loadMachineChecklistState() : [],
   )
+  const [auditEvents, setAuditEvents] = useState(() =>
+    route.path === 'machine-history' ? loadAuditEvents() : [],
+  )
+  const [activeScheduleCouriers, setActiveScheduleCouriers] = useState(() =>
+    route.path === 'delivery-reading' ? getActiveScheduleCouriers() : [],
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [errorMessage, setErrorMessage] = useState('')
@@ -644,6 +653,11 @@ function NativeModuleWorkspace({ route }) {
     remoteSyncReady ? 'Tempo real ativo' : 'Contingencia local pronta',
   )
   const requestedRecordId = searchParams.get('recordId') ?? ''
+  const deferredSearchTerm = useDeferredValue(searchTerm)
+  const normalizedSearchTerm = useMemo(
+    () => deferredSearchTerm.trim().toLowerCase(),
+    [deferredSearchTerm],
+  )
   const scheduleImageRef = useRef(null)
   const scheduleMachinesImageRef = useRef(null)
   const machineChecklistImageRef = useRef(null)
@@ -781,7 +795,10 @@ function NativeModuleWorkspace({ route }) {
       const courierField = managerWithResolvedFields.fields.find(
         (field) => field.name === 'courier',
       )
-      const preferredCourier = getPreferredDeliveryCourier(courierField?.options ?? [])
+      const preferredCourier = getPreferredDeliveryCourierWithSchedule(
+        courierField?.options ?? [],
+        activeScheduleCouriers,
+      )
       setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier))
     } else {
       setFormValues(buildInitialFormState(managerWithResolvedFields))
@@ -795,7 +812,57 @@ function NativeModuleWorkspace({ route }) {
     setRecentlyClosedRecordId(null)
     setFreshRecordId(null)
     setInvalidFieldName('')
-  }, [manager, resolvedFieldsKey, route.path])
+  }, [activeScheduleCouriers, manager, resolvedFieldsKey, route.path])
+
+  useEffect(() => {
+    if (route.path !== 'machine-history') {
+      setAuditEvents([])
+      return () => {}
+    }
+
+    const refreshAuditEvents = () => {
+      setAuditEvents(loadAuditEvents())
+    }
+
+    refreshAuditEvents()
+
+    function handleLocalRecords(event) {
+      if (event.detail?.storageKey === AUDIT_LOG_STORAGE_KEY) {
+        refreshAuditEvents()
+      }
+    }
+
+    window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
+
+    return () => {
+      window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
+    }
+  }, [route.path])
+
+  useEffect(() => {
+    if (route.path !== 'delivery-reading') {
+      setActiveScheduleCouriers([])
+      return () => {}
+    }
+
+    const refreshActiveScheduleCouriers = () => {
+      setActiveScheduleCouriers(getActiveScheduleCouriers())
+    }
+
+    refreshActiveScheduleCouriers()
+
+    function handleLocalRecords(event) {
+      if (event.detail?.storageKey === 'nexus-module-schedule') {
+        refreshActiveScheduleCouriers()
+      }
+    }
+
+    window.addEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
+
+    return () => {
+      window.removeEventListener(LOCAL_RECORDS_EVENT, handleLocalRecords)
+    }
+  }, [route.path])
 
   useEffect(
     () => () => {
@@ -995,7 +1062,7 @@ function NativeModuleWorkspace({ route }) {
     }
 
     if (route.path === 'machine-history') {
-      const historyEvents = loadAuditEvents().filter(
+      const historyEvents = auditEvents.filter(
         (event) =>
           event.modulePath === 'machines' && event.action.toLowerCase().includes('checklist'),
       )
@@ -1098,7 +1165,15 @@ function NativeModuleWorkspace({ route }) {
         badgeClass: canSyncModuleRecords ? 'ui-badge--success' : 'ui-badge--special',
       },
     ]
-  }, [canSyncModuleRecords, content.metrics, machineChecklistRecords, manager, records, route.path])
+  }, [
+    auditEvents,
+    canSyncModuleRecords,
+    content.metrics,
+    machineChecklistRecords,
+    manager,
+    records,
+    route.path,
+  ])
 
   const statusField = managerWithResolvedFields?.fields.find((field) => field.name === 'status')
   const scheduleMachineField = managerWithResolvedFields?.fields.find(
@@ -1106,18 +1181,19 @@ function NativeModuleWorkspace({ route }) {
   )
   const scheduleMachineOptions = scheduleMachineField?.options ?? ['Sem maquininha']
   const visibleMetrics = route.path === 'machines' ? metrics.slice(0, 2) : metrics
-  const visibleRecords = useMemo(() => {
+  const visibleRecordEntries = useMemo(() => {
     if (!manager) {
       return []
     }
 
-    const filteredRecords = records.filter((record) => {
+    const filteredRecords = records.flatMap((record) => {
+      const rowCells = manager.toRow(record)
       const matchesStatus = statusFilter === 'all' || record.status === statusFilter
       const matchesSearch =
-        searchTerm.trim().length === 0 ||
-        manager.toRow(record).join(' ').toLowerCase().includes(searchTerm.trim().toLowerCase())
+        normalizedSearchTerm.length === 0 ||
+        rowCells.join(' ').toLowerCase().includes(normalizedSearchTerm)
 
-      return matchesStatus && matchesSearch
+      return matchesStatus && matchesSearch ? [{ record, rowCells }] : []
     })
 
     if (route.path !== 'delivery-reading') {
@@ -1125,16 +1201,20 @@ function NativeModuleWorkspace({ route }) {
     }
 
     return [...filteredRecords].sort((left, right) => {
-      const leftTimestamp = new Date(left.createdAtClient ?? 0).getTime()
-      const rightTimestamp = new Date(right.createdAtClient ?? 0).getTime()
+      const leftTimestamp = new Date(left.record.createdAtClient ?? 0).getTime()
+      const rightTimestamp = new Date(right.record.createdAtClient ?? 0).getTime()
 
       return rightTimestamp - leftTimestamp
     })
-  }, [manager, records, route.path, searchTerm, statusFilter])
+  }, [manager, normalizedSearchTerm, records, route.path, statusFilter])
+  const visibleRecords = useMemo(
+    () => visibleRecordEntries.map((entry) => entry.record),
+    [visibleRecordEntries],
+  )
 
   const tableColumns = manager ? [...manager.columns, 'Acoes'] : content.table.columns
   const tableRows = manager
-    ? visibleRecords.map((record) => manager.toRow(record))
+    ? visibleRecordEntries.map((entry) => entry.rowCells)
     : content.table.rows
   const visibleMachineChecklistRecords = useMemo(() => {
     if (route.path !== 'machines') {
@@ -1153,10 +1233,10 @@ function NativeModuleWorkspace({ route }) {
         .join(' ')
         .toLowerCase()
       const matchesSearch =
-        searchTerm.trim().length === 0 || rawText.includes(searchTerm.trim().toLowerCase())
+        normalizedSearchTerm.length === 0 || rawText.includes(normalizedSearchTerm)
       return matchesStatus && matchesSearch
     })
-  }, [machineChecklistRecords, route.path, searchTerm, statusFilter])
+  }, [machineChecklistRecords, normalizedSearchTerm, route.path, statusFilter])
   const presentMachineChecklistRecords = useMemo(
     () => visibleMachineChecklistRecords.filter((record) => record.status === 'Presente'),
     [visibleMachineChecklistRecords],
@@ -1418,9 +1498,10 @@ function NativeModuleWorkspace({ route }) {
     if (route.path === 'delivery-reading') {
       const preferredCourier =
         formValues.courier?.trim() ||
-        getPreferredDeliveryCourier(
+        getPreferredDeliveryCourierWithSchedule(
           managerWithResolvedFields?.fields.find((field) => field.name === 'courier')?.options ??
             [],
+          activeScheduleCouriers,
         )
 
       setFormValues(buildDeliveryReadingFormState(managerWithResolvedFields, preferredCourier))
@@ -1853,9 +1934,10 @@ function NativeModuleWorkspace({ route }) {
       if (route.path === 'delivery-reading') {
         const preferredCourier =
           formValues.courier?.trim() ||
-          getPreferredDeliveryCourier(
+          getPreferredDeliveryCourierWithSchedule(
             managerWithResolvedFields.fields.find((field) => field.name === 'courier')?.options ??
               [],
+            activeScheduleCouriers,
           )
 
         if (preferredCourier) {
@@ -2849,55 +2931,62 @@ function NativeModuleWorkspace({ route }) {
     }
   }
 
-  const machineHistoryEvents =
-    route.path === 'machine-history'
-      ? loadAuditEvents()
-          .filter(
-            (event) =>
-              event.modulePath === 'machines' && event.action.toLowerCase().includes('checklist'),
-          )
-          .map((event) => {
-            const eventDate = new Date(event.timestamp)
-            return {
-              id: event.id,
-              dayKey: resolveAuditEventDayKey(event),
-              dayLabel: new Intl.DateTimeFormat('pt-BR', {
-                weekday: 'short',
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })
-                .format(eventDate)
-                .replace(/\./g, '')
-                .toUpperCase(),
-              device: event.target,
-              actor: event.actor,
-              action: event.action,
-              time: new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(
-                eventDate,
-              ),
-            }
-          })
-      : []
-
-  const machineHistoryGroups =
-    route.path === 'machine-history'
-      ? Array.from(
-          machineHistoryEvents
-            .reduce((accumulator, event) => {
-              const currentGroup = accumulator.get(event.dayKey) ?? {
-                dayKey: event.dayKey,
-                dayLabel: event.dayLabel,
-                entries: [],
+  const machineHistoryEvents = useMemo(
+    () =>
+      route.path === 'machine-history'
+        ? auditEvents
+            .filter(
+              (event) =>
+                event.modulePath === 'machines' && event.action.toLowerCase().includes('checklist'),
+            )
+            .map((event) => {
+              const eventDate = new Date(event.timestamp)
+              return {
+                id: event.id,
+                dayKey: resolveAuditEventDayKey(event),
+                dayLabel: new Intl.DateTimeFormat('pt-BR', {
+                  weekday: 'short',
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })
+                  .format(eventDate)
+                  .replace(/\./g, '')
+                  .toUpperCase(),
+                device: event.target,
+                actor: event.actor,
+                action: event.action,
+                time: new Intl.DateTimeFormat('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }).format(eventDate),
               }
+            })
+        : [],
+    [auditEvents, route.path],
+  )
 
-              currentGroup.entries.push(event)
-              accumulator.set(event.dayKey, currentGroup)
-              return accumulator
-            }, new Map())
-            .values(),
-        )
-      : []
+  const machineHistoryGroups = useMemo(
+    () =>
+      route.path === 'machine-history'
+        ? Array.from(
+            machineHistoryEvents
+              .reduce((accumulator, event) => {
+                const currentGroup = accumulator.get(event.dayKey) ?? {
+                  dayKey: event.dayKey,
+                  dayLabel: event.dayLabel,
+                  entries: [],
+                }
+
+                currentGroup.entries.push(event)
+                accumulator.set(event.dayKey, currentGroup)
+                return accumulator
+              }, new Map())
+              .values(),
+          )
+        : [],
+    [machineHistoryEvents, route.path],
+  )
 
   const isMachineChecklist = route.path === 'machines'
   const visibleCount = isMachineChecklist ? visibleMachineChecklistRecords.length : tableRows.length

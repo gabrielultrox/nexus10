@@ -8,6 +8,12 @@ import { canUseRemoteSync } from './firebase'
 const MANUAL_MODULE_SYNC_QUEUE_KEY = 'nexus-manual-module-sync-queue'
 const MANUAL_MODULE_SYNC_HISTORY_KEY = 'nexus-manual-module-sync-history'
 const MANUAL_MODULE_LOCAL_MODE_KEY = 'nexus-manual-module-local-only'
+const MANUAL_MODULE_MIN_FLUSH_INTERVAL_MS = 15000
+
+let activeFlushPromise = null
+let lastFlushFinishedAt = 0
+let lastFlushScopeKey = ''
+let lastFlushResult = null
 
 function getStorage() {
   if (typeof window === 'undefined') {
@@ -88,6 +94,10 @@ function createQueueId() {
 
 function normalizeModulePaths(modulePaths) {
   return Array.isArray(modulePaths) ? modulePaths.filter(Boolean) : []
+}
+
+function buildFlushScopeKey(storeId, modulePaths) {
+  return `${storeId ?? 'unknown-store'}::${normalizeModulePaths(modulePaths).sort().join(',')}`
 }
 
 function shouldKeepExistingOperation(existingOperation, nextOperation) {
@@ -215,63 +225,107 @@ export function setManualModuleLocalMode(enabled) {
 export async function flushManualModuleSyncQueue({ storeId, tenantId, modulePaths = [] }) {
   const normalizedModulePaths = normalizeModulePaths(modulePaths)
   const queue = loadQueue()
+  const scopeKey = buildFlushScopeKey(storeId, normalizedModulePaths)
+  const pendingCount = getManualModulePendingCount(normalizedModulePaths)
 
   if (!storeId || !canUseRemoteSync()) {
     return {
       flushedCount: 0,
-      pendingCount: getManualModulePendingCount(normalizedModulePaths),
+      pendingCount,
     }
   }
 
-  const remainingQueue = []
-  let flushedCount = 0
-
-  for (const operation of queue) {
-    if (normalizedModulePaths.length > 0 && !normalizedModulePaths.includes(operation.modulePath)) {
-      remainingQueue.push(operation)
-      continue
+  if (pendingCount === 0) {
+    return {
+      flushedCount: 0,
+      pendingCount: 0,
     }
+  }
 
-    try {
-      if (operation.type === 'save') {
-        await saveManualModuleRecord({
-          storeId,
-          tenantId,
-          modulePath: operation.modulePath,
-          dailyResetHour: operation.dailyResetHour ?? null,
-          record: operation.record,
-        })
-      } else if (operation.type === 'delete') {
-        await deleteManualModuleRecord({
-          storeId,
-          modulePath: operation.modulePath,
-          recordId: operation.recordId,
-        })
-      } else if (operation.type === 'clear') {
-        await clearManualModuleRecords({
-          storeId,
-          modulePath: operation.modulePath,
-          storageKey: operation.storageKey,
-          initialRecords: operation.initialRecords ?? [],
-          dailyResetHour: operation.dailyResetHour ?? null,
-        })
-      } else {
+  if (activeFlushPromise) {
+    return activeFlushPromise
+  }
+
+  if (
+    lastFlushResult &&
+    lastFlushScopeKey === scopeKey &&
+    Date.now() - lastFlushFinishedAt < MANUAL_MODULE_MIN_FLUSH_INTERVAL_MS
+  ) {
+    return {
+      ...lastFlushResult,
+      pendingCount,
+    }
+  }
+
+  activeFlushPromise = (async () => {
+    const remainingQueue = []
+    let flushedCount = 0
+
+    for (const operation of queue) {
+      if (
+        normalizedModulePaths.length > 0 &&
+        !normalizedModulePaths.includes(operation.modulePath)
+      ) {
         remainingQueue.push(operation)
         continue
       }
 
-      flushedCount += 1
-    } catch {
-      remainingQueue.push(operation)
+      try {
+        if (operation.type === 'save') {
+          await saveManualModuleRecord({
+            storeId,
+            tenantId,
+            modulePath: operation.modulePath,
+            dailyResetHour: operation.dailyResetHour ?? null,
+            record: operation.record,
+          })
+        } else if (operation.type === 'delete') {
+          await deleteManualModuleRecord({
+            storeId,
+            modulePath: operation.modulePath,
+            recordId: operation.recordId,
+          })
+        } else if (operation.type === 'clear') {
+          await clearManualModuleRecords({
+            storeId,
+            modulePath: operation.modulePath,
+            storageKey: operation.storageKey,
+            initialRecords: operation.initialRecords ?? [],
+            dailyResetHour: operation.dailyResetHour ?? null,
+          })
+        } else {
+          remainingQueue.push(operation)
+          continue
+        }
+
+        flushedCount += 1
+      } catch {
+        remainingQueue.push(operation)
+      }
     }
-  }
 
-  saveQueue(remainingQueue)
+    saveQueue(remainingQueue)
 
-  if (flushedCount > 0) {
-    recordManualModuleSyncHistory({
-      id: createQueueId(),
-      type: 'flush',
+    if (flushedCount > 0) {
+      recordManualModuleSyncHistory({
+        id: createQueueId(),
+        type: 'flush',
+        flushedCount,
+        pendingCount:
+          normalizedModulePaths.length > 0
+            ? remainingQueue.filter((operation) =>
+                normalizedModulePaths.includes(operation.modulePath),
+              ).length
+            : remainingQueue.length,
+        modulePaths:
+          normalizedModulePaths.length > 0
+            ? normalizedModulePaths
+            : Array.from(new Set(queue.map((operation) => operation.modulePath))),
+        createdAt: new Date().toISOString(),
+      })
+    }
+
+    const result = {
       flushedCount,
       pendingCount:
         normalizedModulePaths.length > 0
@@ -279,20 +333,18 @@ export async function flushManualModuleSyncQueue({ storeId, tenantId, modulePath
               normalizedModulePaths.includes(operation.modulePath),
             ).length
           : remainingQueue.length,
-      modulePaths:
-        normalizedModulePaths.length > 0
-          ? normalizedModulePaths
-          : Array.from(new Set(queue.map((operation) => operation.modulePath))),
-      createdAt: new Date().toISOString(),
-    })
-  }
+    }
 
-  return {
-    flushedCount,
-    pendingCount:
-      normalizedModulePaths.length > 0
-        ? remainingQueue.filter((operation) => normalizedModulePaths.includes(operation.modulePath))
-            .length
-        : remainingQueue.length,
+    lastFlushFinishedAt = Date.now()
+    lastFlushScopeKey = scopeKey
+    lastFlushResult = result
+
+    return result
+  })()
+
+  try {
+    return await activeFlushPromise
+  } finally {
+    activeFlushPromise = null
   }
 }
