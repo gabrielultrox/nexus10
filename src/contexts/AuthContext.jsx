@@ -13,11 +13,9 @@ import {
   firebaseReady,
 } from '../services/firebaseAuthRuntime'
 import { buildRolePermissionFlags, getRoleLabel, hasPermission } from '../services/permissions'
-import { verifyOperatorPassword } from '../services/localOperatorPasswords'
 import {
   getDefaultUserProfile,
   getOperatorOptions,
-  refreshSessionProfile,
   resolveUserProfileByOperator,
 } from '../services/userProfiles'
 import { isE2eMode } from '../services/e2eRuntime'
@@ -28,14 +26,6 @@ const AUTH_STORAGE_KEY = 'nexus10.localSession'
 const LAST_OPERATOR_STORAGE_KEY = 'nexus10.lastOperator'
 
 const operatorOptions = getOperatorOptions()
-
-function getTemporaryOperatorName() {
-  if (typeof window === 'undefined') {
-    return operatorOptions[0] ?? 'Gabriel'
-  }
-
-  return window.localStorage.getItem(LAST_OPERATOR_STORAGE_KEY) ?? operatorOptions[0] ?? 'Gabriel'
-}
 
 function buildLocalSession(profile) {
   return {
@@ -73,19 +63,6 @@ function buildRemoteSession(remoteSession, fallbackProfile = null) {
   }
 }
 
-async function buildTemporarySession() {
-  const operatorName = getTemporaryOperatorName()
-  const profile = await resolveUserProfileByOperator(operatorName).catch(() =>
-    getDefaultUserProfile(operatorName),
-  )
-
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, operatorName)
-  }
-
-  return buildLocalSession(profile)
-}
-
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -97,7 +74,7 @@ export function AuthProvider({ children }) {
         const e2eMode = isE2eMode()
 
         if (typeof window === 'undefined') {
-          setSession(await buildTemporarySession())
+          setSession(null)
           return
         }
 
@@ -109,52 +86,41 @@ export function AuthProvider({ children }) {
           return
         }
 
-        if (firebaseReady) {
-          const remoteUser = await ensureRemoteSession().catch(() => null)
+        if (!firebaseReady) {
+          window.localStorage.removeItem(AUTH_STORAGE_KEY)
+          setAuthError('Autenticacao remota indisponivel. Configure o Firebase para operar o app.')
+          setSession(null)
+          return
+        }
 
-          if (remoteUser) {
-            const remoteSession = await getUserSession(remoteUser)
-            const fallbackProfile = await resolveUserProfileByOperator(
-              remoteSession?.claims?.operatorName ??
-                remoteSession?.displayName ??
-                parsedSavedSession?.operatorName ??
-                '',
-            ).catch(() => null)
-            const nextSession = buildRemoteSession(remoteSession, fallbackProfile)
-            window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-            if (nextSession.operatorName) {
-              window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, nextSession.operatorName)
-            }
-            setSession(nextSession)
-            return
-          }
+        const remoteUser = await ensureRemoteSession().catch(() => null)
 
+        if (!remoteUser) {
           window.localStorage.removeItem(AUTH_STORAGE_KEY)
           setSession(null)
           return
         }
 
-        if (!savedSession) {
-          const nextSession = await buildTemporarySession()
-          window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-          setSession(nextSession)
-          return
-        }
-
-        const refreshedProfile = await refreshSessionProfile(parsedSavedSession).catch(() =>
-          getDefaultUserProfile(
-            parsedSavedSession.operatorName ?? parsedSavedSession.displayName ?? 'Operador local',
-          ),
-        )
-        const nextSession = buildLocalSession(refreshedProfile)
+        const remoteSession = await getUserSession(remoteUser)
+        const fallbackProfile = await resolveUserProfileByOperator(
+          remoteSession?.claims?.operatorName ??
+            remoteSession?.displayName ??
+            parsedSavedSession?.operatorName ??
+            '',
+        ).catch(() => null)
+        const nextSession = buildRemoteSession(remoteSession, fallbackProfile)
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
+        if (nextSession.operatorName) {
+          window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, nextSession.operatorName)
+        }
         setSession(nextSession)
       } catch (error) {
         console.error('Nao foi possivel restaurar a sessao local.', error)
-        const nextSession = await buildTemporarySession()
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-        setAuthError('')
-        setSession(nextSession)
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(AUTH_STORAGE_KEY)
+        }
+        setAuthError('Nao foi possivel restaurar a sessao remota.')
+        setSession(null)
       } finally {
         setLoading(false)
       }
@@ -180,6 +146,10 @@ export function AuthProvider({ children }) {
           throw new Error('Selecione um operador.')
         }
 
+        if (!firebaseReady && !e2eMode) {
+          throw new Error('Autenticacao remota indisponivel. Configure o Firebase deste terminal.')
+        }
+
         let nextSession = null
 
         if (firebaseReady && !e2eMode) {
@@ -202,10 +172,6 @@ export function AuthProvider({ children }) {
           const remoteSession = await getUserSession(currentUser)
           nextSession = buildRemoteSession(remoteSession, authResponse.profile)
         } else {
-          if (!verifyOperatorPassword(operatorName, credentials.password)) {
-            throw new Error('Senha incorreta.')
-          }
-
           const profile = await resolveUserProfileByOperator(operatorName).catch(() =>
             getDefaultUserProfile(operatorName),
           )
@@ -223,9 +189,7 @@ export function AuthProvider({ children }) {
           setSession(null)
           return
         }
-        const nextSession = await buildTemporarySession()
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-        setSession(nextSession)
+        setSession(null)
       },
       hasRole(requiredRoles = []) {
         return userHasRequiredRole(session, requiredRoles)

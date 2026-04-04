@@ -15,12 +15,7 @@ import {
   hasStoredPin,
   setStoredPin,
 } from '../services/localAccess'
-import {
-  clearOperatorPassword,
-  DEFAULT_OPERATOR_PASSWORD,
-  getOperatorPasswordSummary,
-  setOperatorPassword,
-} from '../services/localOperatorPasswords'
+import { DEFAULT_OPERATOR_PASSWORD } from '../services/localOperatorPasswords'
 import {
   listRemoteOperatorPasswords,
   updateRemoteOperatorPassword,
@@ -87,15 +82,16 @@ function SettingsPage() {
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
   const canManageOperatorPasswords = session?.role === 'admin'
-  const useRemoteOperatorPasswords = Boolean(
-    canManageOperatorPasswords && session?.authMode === 'remote',
-  )
-  const operatorPasswordRows = useRemoteOperatorPasswords
-    ? remoteOperatorPasswordRows
-    : operatorOptions.map((operatorName) => getOperatorPasswordSummary(operatorName))
-  const selectedOperatorSummary =
-    operatorPasswordRows.find((row) => row.operatorName === selectedOperator) ??
-    getOperatorPasswordSummary(selectedOperator)
+  const useRemoteOperatorPasswords = Boolean(canManageOperatorPasswords)
+  const operatorPasswordRows = remoteOperatorPasswordRows
+  const selectedOperatorSummary = operatorPasswordRows.find(
+    (row) => row.operatorName === selectedOperator,
+  ) ?? {
+    operatorName: selectedOperator,
+    hasCustomPassword: false,
+    maskedPassword: 'Nao carregada',
+    updatedAt: null,
+  }
 
   useEffect(() => {
     if (!selectedOperator && operatorOptions.length > 0) {
@@ -279,7 +275,7 @@ function SettingsPage() {
           ),
         )
       } else {
-        setOperatorPassword(selectedOperator, operatorPasswordDraft)
+        throw new Error('Gestao de senha disponivel apenas no modo remoto.')
       }
       setOperatorPasswordDraft('')
       setOperatorPasswordConfirm('')
@@ -333,7 +329,7 @@ function SettingsPage() {
         ),
       )
     } else {
-      clearOperatorPassword(selectedOperator)
+      throw new Error('Gestao de senha disponivel apenas no modo remoto.')
     }
     setOperatorPasswordDraft('')
     setOperatorPasswordConfirm('')
@@ -697,7 +693,7 @@ function SettingsPage() {
         <SettingsSection
           eyebrow="Admin"
           title="Senha dos operadores"
-          description="Defina uma senha local por operador. Se nao houver senha customizada, o app usa a senha padrao."
+          description={`Defina a senha remota de cada operador. Sem senha customizada, o acesso remoto usa o padrao ${DEFAULT_OPERATOR_PASSWORD}.`}
         >
           <div className="settings-grid settings-grid--duo">
             <SurfaceCard title="Alterar senha do operador">
@@ -714,7 +710,7 @@ function SettingsPage() {
                   <div className="settings-summary__row">
                     <span>Origem</span>
                     <strong>
-                      {selectedOperatorSummary.hasCustomPassword ? 'Customizada' : 'Padrao local'}
+                      {selectedOperatorSummary.hasCustomPassword ? 'Remota' : 'Sem senha remota'}
                     </strong>
                   </div>
                 </div>
@@ -781,8 +777,8 @@ function SettingsPage() {
                 </div>
 
                 <p className="text-caption">
-                  Operadores sem senha customizada continuam usando{' '}
-                  <strong>{DEFAULT_OPERATOR_PASSWORD}</strong>.
+                  O acesso operacional agora depende de autenticacao remota. Sem senha customizada,
+                  o backend usa o padrao <strong>{DEFAULT_OPERATOR_PASSWORD}</strong>.
                 </p>
 
                 <div className="settings-pin-form__actions">
@@ -806,9 +802,7 @@ function SettingsPage() {
                   <div key={row.operatorName} className="settings-summary__row">
                     <span>{row.operatorName}</span>
                     <strong>
-                      {row.hasCustomPassword
-                        ? `${row.maskedPassword} customizada`
-                        : `${DEFAULT_OPERATOR_PASSWORD} padrao`}
+                      {row.hasCustomPassword ? `${row.maskedPassword} remota` : 'sem senha remota'}
                     </strong>
                   </div>
                 ))}
