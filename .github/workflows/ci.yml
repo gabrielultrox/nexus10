@@ -15,6 +15,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  typecheck:
+    name: Type-check (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend type-check
+        run: npm run type-check
+
+      - name: Run backend type-check
+        run: npm run type-check:backend
+
   lint:
     name: Lint (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
@@ -187,6 +214,7 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs:
+      - typecheck
       - lint
       - backend_tests
       - frontend_tests
@@ -219,6 +247,7 @@ jobs:
 
             | Job | Result |
             | --- | --- |
+            | Type-check | ${resultIcon['${{ needs.typecheck.result }}']} ${{ needs.typecheck.result }} |
             | Lint (ESLint + Prettier) | ${resultIcon['${{ needs.lint.result }}']} ${{ needs.lint.result }} |
             | Backend tests | ${resultIcon['${{ needs.backend_tests.result }}']} ${{ needs.backend_tests.result }} |
             | Frontend tests | ${resultIcon['${{ needs.frontend_tests.result }}']} ${{ needs.frontend_tests.result }} |

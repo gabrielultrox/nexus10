@@ -1,2 +1,7 @@
 #!/usr/bin/env sh
+if git diff --cached --name-only | grep -E '^\.env\.local$|/\.env\.local$' >/dev/null 2>&1; then
+  echo ".env.local nao pode ser commitado."
+  exit 1
+fi
+
 npx lint-staged
