@@ -4,13 +4,35 @@ function toUniqueIds(ids: string[]) {
   return Array.from(new Set(ids.filter(Boolean)))
 }
 
+function areIdsEqual(left: string[], right: string[]) {
+  if (left === right) {
+    return true
+  }
+
+  if (left.length !== right.length) {
+    return false
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export function useMaquinihaSelection(visibleIds: string[] = []) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const normalizedVisibleIds = useMemo(() => toUniqueIds(visibleIds), [visibleIds])
+  const visibleIdsKey = useMemo(() => visibleIds.join('::'), [visibleIds])
+  const normalizedVisibleIds = useMemo(() => toUniqueIds(visibleIds), [visibleIdsKey])
 
   useEffect(() => {
-    setSelectedIds((current) => current.filter((id) => normalizedVisibleIds.includes(id)))
+    setSelectedIds((current) => {
+      const nextSelectedIds = current.filter((id) => normalizedVisibleIds.includes(id))
+      return areIdsEqual(current, nextSelectedIds) ? current : nextSelectedIds
+    })
   }, [normalizedVisibleIds])
 
   const selectedCount = selectedIds.length

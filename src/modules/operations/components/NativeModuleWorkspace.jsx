@@ -136,6 +136,63 @@ function normalizeManualRecords(records) {
   return dedupeRecordsById(sanitizeManualRecords(records))
 }
 
+function areStringArraysEqual(left = [], right = []) {
+  if (left === right) {
+    return true
+  }
+
+  if (left.length !== right.length) {
+    return false
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function getRecordSignature(record = {}) {
+  return [
+    record.id ?? '',
+    record.updatedAtClient ?? '',
+    record.createdAtClient ?? '',
+    record.updatedAt ?? '',
+    record.updatedBy ?? '',
+    record.status ?? '',
+    record.machineStatus ?? '',
+    record.device ?? '',
+    record.model ?? '',
+    record.holder ?? '',
+    record.courier ?? '',
+    record.destination ?? '',
+    record.recipient ?? '',
+    record.value ?? '',
+    record.order ?? '',
+    record.reason ?? '',
+  ].join('::')
+}
+
+function areRecordCollectionsEqual(left = [], right = []) {
+  if (left === right) {
+    return true
+  }
+
+  if (left.length !== right.length) {
+    return false
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (getRecordSignature(left[index]) !== getRecordSignature(right[index])) {
+      return false
+    }
+  }
+
+  return true
+}
+
 function buildRouteRecords(routePath, manager) {
   if (!manager) {
     return []
@@ -484,10 +541,19 @@ function NativeModuleWorkspace({ route }) {
   const manager = getManualModuleConfig(route.path)
   const [isOnline, setIsOnline] = useState(() => window.navigator.onLine)
   const [localOnlyMode, setLocalOnlyModeState] = useState(() => getManualModuleLocalMode())
+  const needsCourierRecords = useMemo(
+    () =>
+      ['change', 'schedule', 'delivery-reading', 'machines', 'occurrences', 'advances'].includes(
+        route.path,
+      ),
+    [route.path],
+  )
   const [availableCourierNames, setAvailableCourierNames] = useState(() =>
-    loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords)
-      .map((courier) => courier?.name?.trim())
-      .filter(Boolean),
+    needsCourierRecords
+      ? loadLocalRecords(MANUAL_COURIER_STORAGE_KEY, courierSeedRecords)
+          .map((courier) => courier?.name?.trim())
+          .filter(Boolean)
+      : [],
   )
   const needsMachineRecords =
     route.path === 'schedule' || route.path === 'machines' || route.path === 'machine-history'
@@ -527,6 +593,18 @@ function NativeModuleWorkspace({ route }) {
   const managerWithResolvedFields = useMemo(
     () => (manager ? { ...manager, fields: resolvedFields } : null),
     [manager, resolvedFields],
+  )
+  const resolvedFieldsKey = useMemo(
+    () =>
+      JSON.stringify(
+        resolvedFields.map((field) => ({
+          name: field.name ?? '',
+          type: field.type ?? '',
+          placeholder: field.placeholder ?? '',
+          options: field.options ?? [],
+        })),
+      ),
+    [resolvedFields],
   )
   const [formValues, setFormValues] = useState(() =>
     buildInitialFormState(managerWithResolvedFields),
@@ -611,19 +689,24 @@ function NativeModuleWorkspace({ route }) {
     }
   }, [])
 
-  useEffect(
-    () =>
-      subscribeToCouriers(
-        currentStoreId,
-        (couriers) => {
-          const nextCourierNames = couriers.map((courier) => courier?.name?.trim()).filter(Boolean)
+  useEffect(() => {
+    if (!needsCourierRecords) {
+      setAvailableCourierNames((current) => (current.length === 0 ? current : []))
+      return () => {}
+    }
 
-          setAvailableCourierNames(nextCourierNames)
-        },
-        undefined,
-      ),
-    [currentStoreId],
-  )
+    return subscribeToCouriers(
+      currentStoreId,
+      (couriers) => {
+        const nextCourierNames = couriers.map((courier) => courier?.name?.trim()).filter(Boolean)
+
+        setAvailableCourierNames((current) =>
+          areStringArraysEqual(current, nextCourierNames) ? current : nextCourierNames,
+        )
+      },
+      undefined,
+    )
+  }, [currentStoreId, needsCourierRecords])
 
   useEffect(() => {
     if (!needsMachineRecords) {
@@ -638,12 +721,16 @@ function NativeModuleWorkspace({ route }) {
       storageKey: 'nexus-module-machines',
       initialRecords: machineSeedRecords,
       onData: (machineRecords) => {
-        setAvailableMachineRecords(machineRecords)
+        setAvailableMachineRecords((current) =>
+          areRecordCollectionsEqual(current, machineRecords) ? current : machineRecords,
+        )
         const nextMachineOptions = Array.from(
           new Set(machineRecords.map((machine) => machine?.device?.trim()).filter(Boolean)),
         )
 
-        setAvailableMachineOptions(nextMachineOptions)
+        setAvailableMachineOptions((current) =>
+          areStringArraysEqual(current, nextMachineOptions) ? current : nextMachineOptions,
+        )
       },
     })
   }, [currentStoreId, needsMachineRecords])
@@ -661,7 +748,9 @@ function NativeModuleWorkspace({ route }) {
       initialRecords: [],
       dailyResetHour: 3,
       onData: (checklistRecords) => {
-        setMachineChecklistState(checklistRecords)
+        setMachineChecklistState((current) =>
+          areRecordCollectionsEqual(current, checklistRecords) ? current : checklistRecords,
+        )
       },
     })
   }, [currentStoreId, route.path])
@@ -706,7 +795,7 @@ function NativeModuleWorkspace({ route }) {
     setRecentlyClosedRecordId(null)
     setFreshRecordId(null)
     setInvalidFieldName('')
-  }, [manager, managerWithResolvedFields, route.path])
+  }, [manager, resolvedFieldsKey, route.path])
 
   useEffect(
     () => () => {
@@ -730,7 +819,10 @@ function NativeModuleWorkspace({ route }) {
       initialRecords: manager.initialRecords,
       dailyResetHour: manager.dailyResetHour ?? null,
       onData: (nextRecords) => {
-        setRecords(normalizeManualRecords(nextRecords))
+        const normalizedRecords = normalizeManualRecords(nextRecords)
+        setRecords((current) =>
+          areRecordCollectionsEqual(current, normalizedRecords) ? current : normalizedRecords,
+        )
         setErrorMessage('')
       },
       onError: () => {
