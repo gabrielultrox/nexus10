@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import MetricCard from '../../../components/common/MetricCard'
@@ -49,16 +49,21 @@ import {
   playOperationalSuccess,
   playOperationalWarning,
 } from '../../../services/soundManager'
-import NativeModuleExportCanvases from './NativeModuleExportCanvases'
 import NativeModuleFormCard from './NativeModuleFormCard'
-import NativeModulePanels from './NativeModulePanels'
-import NativeModuleRecordsSection from './NativeModuleRecordsSection'
 import NativeModuleStatusBar from './NativeModuleStatusBar'
 
 const legacySeedIdPattern = /^(schedule|machine|change|discount|occurrence|map)-\d+$/
 const DELIVERY_READING_LAST_COURIER_KEY = 'leitura_last_entregador'
 
 let htmlToImageModulePromise
+
+const NativeModulePanels = lazy(() => import('./NativeModulePanels'))
+const NativeModuleRecordsSection = lazy(() => import('./NativeModuleRecordsSection'))
+const NativeModuleExportCanvases = lazy(() => import('./NativeModuleExportCanvases'))
+
+function OperationsSectionFallback() {
+  return <div className="native-module__section-loading" aria-hidden="true" />
+}
 
 async function loadToPng() {
   if (!htmlToImageModulePromise) {
@@ -3044,100 +3049,106 @@ function NativeModuleWorkspace({ route }) {
       />
 
       {!manager ? (
-        <NativeModulePanels
-          routePath={route.path}
-          panels={content.panels}
-          renderPanel={renderPanel}
-        />
+        <Suspense fallback={<OperationsSectionFallback />}>
+          <NativeModulePanels
+            routePath={route.path}
+            panels={content.panels}
+            renderPanel={renderPanel}
+          />
+        </Suspense>
       ) : null}
 
-      <NativeModuleRecordsSection
-        route={route}
-        manager={manager}
-        tableTitle={tableTitle}
-        errorMessage={errorMessage}
-        records={records}
-        tableRows={tableRows}
-        machineHistoryGroups={machineHistoryGroups}
-        visibleOpenDeliveryRecords={visibleOpenDeliveryRecords}
-        visibleClosedDeliveryRecords={visibleClosedDeliveryRecords}
-        recentlyClosedRecordId={recentlyClosedRecordId}
-        visibleRecords={visibleRecords}
-        visibleMachineChecklistRecords={visibleMachineChecklistRecords}
-        machineConfirmedCount={presentMachineChecklistRecords.length}
-        machineSelectedCount={machineSelection.selectedCount}
-        machineSelectedIds={machineSelection.selectedIds}
-        machineAllVisibleSelected={machineSelection.allVisibleSelected}
-        machineSomeVisibleSelected={machineSelection.someVisibleSelected}
-        formatAuditText={formatAuditText}
-        handleApplyAction={handleApplyAction}
-        handleDelete={handleDelete}
-        handleMachineChecklistToggle={handleMachineChecklistToggle}
-        handleConfirmAllMachines={handleConfirmAllMachines}
-        handleToggleMachineSelection={machineSelection.toggle}
-        handleToggleAllMachineSelection={machineSelection.toggleAllVisible}
-        handleClearMachineSelection={machineSelection.clear}
-        isBulkConfirmingMachines={isBulkConfirmingMachines}
-        bulkConfirmProgress={bulkConfirmProgress}
-        scheduleMachineDrafts={scheduleMachineDrafts}
-        editableRecordDrafts={editableRecordDrafts}
-        editableRecordOptions={getEditableRecordOptions()}
-        scheduleMachineOptions={scheduleMachineOptions}
-        handleScheduleMachineDraftChange={handleScheduleMachineDraftChange}
-        handleEditableRecordDraftChange={handleEditableRecordDraftChange}
-        handleScheduleMachineUpdate={handleScheduleMachineUpdate}
-        handleEditableRecordUpdate={handleEditableRecordUpdate}
-        handleSchedulePrefill={handleSchedulePrefill}
-        handleScheduleHighlight={handleScheduleHighlight}
-        highlightedScheduleRecordId={highlightedScheduleRecordId}
-        statusField={statusField}
-        searchTerm={searchTerm}
-        statusFilter={statusFilter}
-        setSearchTerm={setSearchTerm}
-        setStatusFilter={setStatusFilter}
-        visibleCount={visibleCount}
-        handleExportScheduleImage={handleExportScheduleImage}
-        handleExportScheduleMachinesImage={handleExportScheduleMachinesImage}
-        handleExportMachineChecklistImage={handleExportMachineChecklistImage}
-        handleExportDeliveredChangesImage={handleExportDeliveredChangesImage}
-        handlePrintDeliveredChanges={handlePrintDeliveredChanges}
-        handleExportClosedDeliveriesImage={handleExportClosedDeliveriesImage}
-        handlePrintClosedDeliveries={handlePrintClosedDeliveries}
-        handleExportPaidAdvancesImage={handleExportPaidAdvancesImage}
-        handlePrintPaidAdvances={handlePrintPaidAdvances}
-        handleExportBackup={handleExportBackup}
-        handleManualReset={handleManualReset}
-        handleClearAll={handleClearAll}
-        tableColumns={tableColumns}
-        handleMarkReturned={handleMarkReturned}
-        freshRecordId={freshRecordId}
-        highlightedRecordId={requestedRecordId || highlightedScheduleRecordId}
-      />
+      <Suspense fallback={<OperationsSectionFallback />}>
+        <NativeModuleRecordsSection
+          route={route}
+          manager={manager}
+          tableTitle={tableTitle}
+          errorMessage={errorMessage}
+          records={records}
+          tableRows={tableRows}
+          machineHistoryGroups={machineHistoryGroups}
+          visibleOpenDeliveryRecords={visibleOpenDeliveryRecords}
+          visibleClosedDeliveryRecords={visibleClosedDeliveryRecords}
+          recentlyClosedRecordId={recentlyClosedRecordId}
+          visibleRecords={visibleRecords}
+          visibleMachineChecklistRecords={visibleMachineChecklistRecords}
+          machineConfirmedCount={presentMachineChecklistRecords.length}
+          machineSelectedCount={machineSelection.selectedCount}
+          machineSelectedIds={machineSelection.selectedIds}
+          machineAllVisibleSelected={machineSelection.allVisibleSelected}
+          machineSomeVisibleSelected={machineSelection.someVisibleSelected}
+          formatAuditText={formatAuditText}
+          handleApplyAction={handleApplyAction}
+          handleDelete={handleDelete}
+          handleMachineChecklistToggle={handleMachineChecklistToggle}
+          handleConfirmAllMachines={handleConfirmAllMachines}
+          handleToggleMachineSelection={machineSelection.toggle}
+          handleToggleAllMachineSelection={machineSelection.toggleAllVisible}
+          handleClearMachineSelection={machineSelection.clear}
+          isBulkConfirmingMachines={isBulkConfirmingMachines}
+          bulkConfirmProgress={bulkConfirmProgress}
+          scheduleMachineDrafts={scheduleMachineDrafts}
+          editableRecordDrafts={editableRecordDrafts}
+          editableRecordOptions={getEditableRecordOptions()}
+          scheduleMachineOptions={scheduleMachineOptions}
+          handleScheduleMachineDraftChange={handleScheduleMachineDraftChange}
+          handleEditableRecordDraftChange={handleEditableRecordDraftChange}
+          handleScheduleMachineUpdate={handleScheduleMachineUpdate}
+          handleEditableRecordUpdate={handleEditableRecordUpdate}
+          handleSchedulePrefill={handleSchedulePrefill}
+          handleScheduleHighlight={handleScheduleHighlight}
+          highlightedScheduleRecordId={highlightedScheduleRecordId}
+          statusField={statusField}
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          setSearchTerm={setSearchTerm}
+          setStatusFilter={setStatusFilter}
+          visibleCount={visibleCount}
+          handleExportScheduleImage={handleExportScheduleImage}
+          handleExportScheduleMachinesImage={handleExportScheduleMachinesImage}
+          handleExportMachineChecklistImage={handleExportMachineChecklistImage}
+          handleExportDeliveredChangesImage={handleExportDeliveredChangesImage}
+          handlePrintDeliveredChanges={handlePrintDeliveredChanges}
+          handleExportClosedDeliveriesImage={handleExportClosedDeliveriesImage}
+          handlePrintClosedDeliveries={handlePrintClosedDeliveries}
+          handleExportPaidAdvancesImage={handleExportPaidAdvancesImage}
+          handlePrintPaidAdvances={handlePrintPaidAdvances}
+          handleExportBackup={handleExportBackup}
+          handleManualReset={handleManualReset}
+          handleClearAll={handleClearAll}
+          tableColumns={tableColumns}
+          handleMarkReturned={handleMarkReturned}
+          freshRecordId={freshRecordId}
+          highlightedRecordId={requestedRecordId || highlightedScheduleRecordId}
+        />
+      </Suspense>
 
-      <NativeModuleExportCanvases
-        routePath={route.path}
-        scheduleImageRef={scheduleImageRef}
-        scheduleMachinesImageRef={scheduleMachinesImageRef}
-        machineChecklistImageRef={machineChecklistImageRef}
-        changeDeliveredImageRef={changeDeliveredImageRef}
-        deliveryReadingClosedImageRef={deliveryReadingClosedImageRef}
-        advancesPaidImageRef={advancesPaidImageRef}
-        visibleRecords={visibleRecords}
-        usedScheduleMachines={usedScheduleMachines}
-        metrics={metrics}
-        formatChecklistDate={formatChecklistDate}
-        formatCurrencyValue={formatCurrencyValue}
-        session={session}
-        presentMachineChecklistRecords={presentMachineChecklistRecords}
-        deliveredChangeRecords={deliveredChangeRecords}
-        deliveredChangeTotalValue={deliveredChangeTotalValue}
-        deliveredChangeCourierCount={deliveredChangeCourierCount}
-        closedDeliveryRecords={closedDeliveryRecords}
-        closedDeliveryCourierCount={closedDeliveryCourierCount}
-        paidAdvanceRecords={paidAdvanceRecords}
-        paidAdvanceTotalValue={paidAdvanceTotalValue}
-        paidAdvanceRecipientCount={paidAdvanceRecipientCount}
-      />
+      <Suspense fallback={null}>
+        <NativeModuleExportCanvases
+          routePath={route.path}
+          scheduleImageRef={scheduleImageRef}
+          scheduleMachinesImageRef={scheduleMachinesImageRef}
+          machineChecklistImageRef={machineChecklistImageRef}
+          changeDeliveredImageRef={changeDeliveredImageRef}
+          deliveryReadingClosedImageRef={deliveryReadingClosedImageRef}
+          advancesPaidImageRef={advancesPaidImageRef}
+          visibleRecords={visibleRecords}
+          usedScheduleMachines={usedScheduleMachines}
+          metrics={metrics}
+          formatChecklistDate={formatChecklistDate}
+          formatCurrencyValue={formatCurrencyValue}
+          session={session}
+          presentMachineChecklistRecords={presentMachineChecklistRecords}
+          deliveredChangeRecords={deliveredChangeRecords}
+          deliveredChangeTotalValue={deliveredChangeTotalValue}
+          deliveredChangeCourierCount={deliveredChangeCourierCount}
+          closedDeliveryRecords={closedDeliveryRecords}
+          closedDeliveryCourierCount={closedDeliveryCourierCount}
+          paidAdvanceRecords={paidAdvanceRecords}
+          paidAdvanceTotalValue={paidAdvanceTotalValue}
+          paidAdvanceRecipientCount={paidAdvanceRecipientCount}
+        />
+      </Suspense>
     </div>
   )
 }

@@ -183,6 +183,22 @@ export default defineConfig(({ mode }) => {
               return 'charts-and-reports'
             }
 
+            if (id.includes('/src/modules/operations/components/NativeModuleExportCanvases')) {
+              return 'operations-export'
+            }
+
+            if (id.includes('/src/modules/operations/components/NativeModuleRecordsSection')) {
+              return 'operations-records'
+            }
+
+            if (
+              id.includes('/src/modules/operations/components/NativeModulePanels') ||
+              id.includes('/src/modules/operations/components/NativeModuleFormCard') ||
+              id.includes('/src/modules/operations/components/NativeModuleStatusBar')
+            ) {
+              return 'operations-shell'
+            }
+
             if (id.includes('/src/modules/operations/components/')) {
               return 'operations-workspace'
             }
