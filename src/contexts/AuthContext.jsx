@@ -49,6 +49,7 @@ function buildLocalSession(profile) {
     tenantId: profile.tenantId,
     storeIds: profile.storeIds,
     defaultStoreId: profile.defaultStoreId,
+    authMode: 'local',
     claims: {},
     permissions: buildRolePermissionFlags(profile.role),
   }
@@ -66,6 +67,7 @@ function buildRemoteSession(remoteSession, fallbackProfile = null) {
     ...remoteSession,
     displayName: remoteSession.displayName ?? profile.displayName ?? operatorName,
     operatorName,
+    authMode: 'remote',
     roleLabel: getRoleLabel(remoteSession.role),
     permissions: remoteSession.permissions ?? buildRolePermissionFlags(remoteSession.role),
   }
@@ -185,8 +187,9 @@ export function AuthProvider({ children }) {
             method: 'POST',
             skipAuth: true,
             body: {
-              operatorName,
-              password: credentials.password,
+              operator: operatorName,
+              pin: credentials.password,
+              storeId: null,
             },
           })
           await loginWithCustomToken(authResponse.customToken)

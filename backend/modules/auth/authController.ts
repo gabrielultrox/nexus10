@@ -174,8 +174,10 @@ async function handleCreateLoginSession(
   response: Response<AuthSessionResponseBody | ErrorResponseBody>,
 ) {
   const payload = request.validated?.body as AuthSessionRequestBody
-  const operatorName = String(payload.operator ?? '').trim()
-  const password = String(payload.pin ?? '')
+  const operatorName = String(
+    (payload as any).operator ?? (payload as any).operatorName ?? '',
+  ).trim()
+  const password = String((payload as any).pin ?? (payload as any).password ?? '')
   const log = request.log ?? authLogger
   const createSession = withMethodLogging(
     {

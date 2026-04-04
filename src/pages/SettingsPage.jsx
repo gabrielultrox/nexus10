@@ -8,7 +8,6 @@ import KeyboardSettings from './Sistema/KeyboardSettings'
 import Select from '../components/ui/Select'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../contexts/AuthContext'
-import { firebaseReady } from '../services/firebaseAuthRuntime'
 import {
   DEFAULT_ACCESS_PIN,
   clearStoredPin,
@@ -88,7 +87,9 @@ function SettingsPage() {
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
   const canManageOperatorPasswords = session?.role === 'admin'
-  const useRemoteOperatorPasswords = Boolean(firebaseReady && canManageOperatorPasswords)
+  const useRemoteOperatorPasswords = Boolean(
+    canManageOperatorPasswords && session?.authMode === 'remote',
+  )
   const operatorPasswordRows = useRemoteOperatorPasswords
     ? remoteOperatorPasswordRows
     : operatorOptions.map((operatorName) => getOperatorPasswordSummary(operatorName))
