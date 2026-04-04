@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RequestValidationError } from '../../errors/RequestValidationError.js'
 
 const firestoreSetMock = vi.fn()
+const firestoreGetMock = vi.fn()
 const createCustomTokenMock = vi.fn()
 const getLocalOperatorProfileMock = vi.fn()
 const cacheSetMock = vi.fn()
@@ -12,6 +13,7 @@ vi.mock('../../firebaseAdmin.js', () => ({
     collection: vi.fn(() => ({
       doc: vi.fn(() => ({
         set: firestoreSetMock,
+        get: firestoreGetMock,
       })),
     })),
   })),
@@ -21,6 +23,12 @@ vi.mock('../../firebaseAdmin.js', () => ({
     })),
   })),
 }))
+
+function createSnapshot(data = {}) {
+  return {
+    data: () => data,
+  }
+}
 
 vi.mock('../../config/env.js', () => ({
   backendEnv: {
@@ -114,11 +122,12 @@ describe('registerAuthRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     cacheSetMock.mockResolvedValue(true)
+    firestoreGetMock.mockResolvedValue(createSnapshot())
   })
 
   it('retorna 400 quando o operador nao e informado', async () => {
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -137,7 +146,7 @@ describe('registerAuthRoutes', () => {
 
   it('retorna 401 quando a senha estiver incorreta', async () => {
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -162,7 +171,7 @@ describe('registerAuthRoutes', () => {
     createCustomTokenMock.mockResolvedValue('custom-token-123')
 
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -194,7 +203,7 @@ describe('registerAuthRoutes', () => {
     })
 
     const { registerAuthRoutes } = await import('./authController.ts')
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 

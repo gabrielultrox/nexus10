@@ -8,6 +8,7 @@ import KeyboardSettings from './Sistema/KeyboardSettings'
 import Select from '../components/ui/Select'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../contexts/AuthContext'
+import { firebaseReady } from '../services/firebaseAuthRuntime'
 import {
   DEFAULT_ACCESS_PIN,
   clearStoredPin,
@@ -21,6 +22,10 @@ import {
   getOperatorPasswordSummary,
   setOperatorPassword,
 } from '../services/localOperatorPasswords'
+import {
+  listRemoteOperatorPasswords,
+  updateRemoteOperatorPassword,
+} from '../services/operatorPasswordService'
 import {
   getSoundProfile,
   getSoundProfiles,
@@ -77,21 +82,63 @@ function SettingsPage() {
   const [selectedOperator, setSelectedOperator] = useState(() => session?.operatorName ?? '')
   const [operatorPasswordDraft, setOperatorPasswordDraft] = useState('')
   const [operatorPasswordConfirm, setOperatorPasswordConfirm] = useState('')
+  const [remoteOperatorPasswordRows, setRemoteOperatorPasswordRows] = useState([])
   const soundProfiles = getSoundProfiles()
   const activeSoundProfile =
     soundProfiles.find((profile) => profile.id === soundProfile)?.label ?? 'Padrao'
   const canWriteSettings = can('settings:write')
   const canManageOperatorPasswords = session?.role === 'admin'
-  const operatorPasswordRows = operatorOptions.map((operatorName) =>
-    getOperatorPasswordSummary(operatorName),
-  )
-  const selectedOperatorSummary = getOperatorPasswordSummary(selectedOperator)
+  const useRemoteOperatorPasswords = Boolean(firebaseReady && canManageOperatorPasswords)
+  const operatorPasswordRows = useRemoteOperatorPasswords
+    ? remoteOperatorPasswordRows
+    : operatorOptions.map((operatorName) => getOperatorPasswordSummary(operatorName))
+  const selectedOperatorSummary =
+    operatorPasswordRows.find((row) => row.operatorName === selectedOperator) ??
+    getOperatorPasswordSummary(selectedOperator)
 
   useEffect(() => {
     if (!selectedOperator && operatorOptions.length > 0) {
       setSelectedOperator(operatorOptions[0])
     }
   }, [operatorOptions, selectedOperator])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadOperatorPasswords() {
+      if (!useRemoteOperatorPasswords) {
+        if (active) {
+          setRemoteOperatorPasswordRows([])
+        }
+        return
+      }
+
+      try {
+        const response = await listRemoteOperatorPasswords()
+
+        if (active) {
+          setRemoteOperatorPasswordRows(
+            response.map((row) => ({
+              operatorName: row.operatorName,
+              hasCustomPassword: row.hasCustomPassword,
+              maskedPassword: row.hasCustomPassword ? '******' : DEFAULT_OPERATOR_PASSWORD,
+              updatedAt: row.updatedAt ?? null,
+            })),
+          )
+        }
+      } catch (error) {
+        if (active) {
+          setErrorMessage(error.message ?? 'Nao foi possivel carregar as senhas dos operadores.')
+        }
+      }
+    }
+
+    loadOperatorPasswords()
+
+    return () => {
+      active = false
+    }
+  }, [useRemoteOperatorPasswords])
 
   function resetMessages() {
     setFeedback('')
@@ -189,7 +236,7 @@ function SettingsPage() {
     playNotification()
   }
 
-  function handleSaveOperatorPassword(event) {
+  async function handleSaveOperatorPassword(event) {
     event.preventDefault()
 
     if (!canManageOperatorPasswords) {
@@ -213,7 +260,26 @@ function SettingsPage() {
     }
 
     try {
-      setOperatorPassword(selectedOperator, operatorPasswordDraft)
+      if (useRemoteOperatorPasswords) {
+        const result = await updateRemoteOperatorPassword({
+          operatorName: selectedOperator,
+          password: operatorPasswordDraft,
+        })
+        setRemoteOperatorPasswordRows((current) =>
+          current.map((row) =>
+            row.operatorName === selectedOperator
+              ? {
+                  ...row,
+                  hasCustomPassword: result.hasCustomPassword,
+                  maskedPassword: result.hasCustomPassword ? '******' : DEFAULT_OPERATOR_PASSWORD,
+                  updatedAt: result.updatedAt ?? null,
+                }
+              : row,
+          ),
+        )
+      } else {
+        setOperatorPassword(selectedOperator, operatorPasswordDraft)
+      }
       setOperatorPasswordDraft('')
       setOperatorPasswordConfirm('')
       setFeedback(`Senha do operador ${selectedOperator} atualizada com sucesso.`)
@@ -248,7 +314,26 @@ function SettingsPage() {
       return
     }
 
-    clearOperatorPassword(selectedOperator)
+    if (useRemoteOperatorPasswords) {
+      const result = await updateRemoteOperatorPassword({
+        operatorName: selectedOperator,
+        password: null,
+      })
+      setRemoteOperatorPasswordRows((current) =>
+        current.map((row) =>
+          row.operatorName === selectedOperator
+            ? {
+                ...row,
+                hasCustomPassword: result.hasCustomPassword,
+                maskedPassword: DEFAULT_OPERATOR_PASSWORD,
+                updatedAt: result.updatedAt ?? null,
+              }
+            : row,
+        ),
+      )
+    } else {
+      clearOperatorPassword(selectedOperator)
+    }
     setOperatorPasswordDraft('')
     setOperatorPasswordConfirm('')
     setFeedback(
@@ -661,9 +746,13 @@ function SettingsPage() {
                       id="settings-operator-password"
                       className="ui-input"
                       type="password"
+                      inputMode="numeric"
+                      maxLength={6}
                       value={operatorPasswordDraft}
-                      onChange={(event) => setOperatorPasswordDraft(event.target.value)}
-                      placeholder="Digite a nova senha"
+                      onChange={(event) =>
+                        setOperatorPasswordDraft(event.target.value.replace(/\D/g, '').slice(0, 6))
+                      }
+                      placeholder="Digite 4 a 6 digitos"
                       autoComplete="new-password"
                     />
                   </div>
@@ -676,9 +765,15 @@ function SettingsPage() {
                       id="settings-operator-password-confirm"
                       className="ui-input"
                       type="password"
+                      inputMode="numeric"
+                      maxLength={6}
                       value={operatorPasswordConfirm}
-                      onChange={(event) => setOperatorPasswordConfirm(event.target.value)}
-                      placeholder="Repita a nova senha"
+                      onChange={(event) =>
+                        setOperatorPasswordConfirm(
+                          event.target.value.replace(/\D/g, '').slice(0, 6),
+                        )
+                      }
+                      placeholder="Repita os 4 a 6 digitos"
                       autoComplete="new-password"
                     />
                   </div>

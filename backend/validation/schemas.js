@@ -1,6 +1,7 @@
 export {
   adminAuditLogQuerySchema,
   authLoginSchema,
+  authOperatorPasswordSchema,
   authSessionRouteSchema,
   authSessionSchema,
   createFinancialClosureSchema,

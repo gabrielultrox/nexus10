@@ -157,6 +157,21 @@ export const createOrderSchema = z
     raw: value,
   }))
 
+export const authOperatorPasswordSchema = z.object({
+  operatorName: nonEmptyString('operatorName'),
+  password: z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .trim()
+        .regex(/^\d{4,6}$/, 'A senha do operador deve conter entre 4 e 6 digitos.'),
+    ])
+    .nullable()
+    .optional()
+    .default(null),
+})
+
 export const updateOrderSchema = z
   .object({
     status: orderStatusSchema.optional(),
@@ -408,4 +423,5 @@ export {
   orderItemSchema,
   orderStatusSchema,
   authLoginSchema as loginSchema,
+  authOperatorPasswordSchema,
 }

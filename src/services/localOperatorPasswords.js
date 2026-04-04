@@ -78,8 +78,8 @@ export function setOperatorPassword(operatorName, password) {
     throw new Error('Selecione um operador valido.')
   }
 
-  if (normalizedPassword.length < 2) {
-    throw new Error('A senha do operador precisa ter pelo menos 2 caracteres.')
+  if (!/^\d{4,6}$/.test(normalizedPassword)) {
+    throw new Error('A senha do operador deve conter entre 4 e 6 digitos.')
   }
 
   const nextMap = loadPasswordMap()

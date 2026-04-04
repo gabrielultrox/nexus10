@@ -1,12 +1,18 @@
 import type { Express, Request, Response } from 'express'
+import crypto from 'node:crypto'
 
 import { getAdminFirestore, getAdminApp } from '../../firebaseAdmin.js'
 import { backendEnv } from '../../config/env.js'
 import { getLocalOperatorProfile, localOperatorProfiles } from '../../config/localOperators.js'
 import { buildCacheKey, cacheSet } from '../../cache/cacheService.js'
 import { createLoggerContext, serializeError, withMethodLogging } from '../../logging/logger.js'
+import { requireApiAuth, requireRole } from '../../middleware/requireAuth.js'
 import { validateRequest } from '../../middleware/validateRequest.js'
-import { authLoginSchema, authSessionRouteSchema } from '../../validation/schemas.js'
+import {
+  authLoginSchema,
+  authOperatorPasswordSchema,
+  authSessionRouteSchema,
+} from '../../validation/schemas.js'
 import type {
   AuthSessionClaims,
   AuthSessionRequestBody,
@@ -16,10 +22,44 @@ import type {
   ErrorResponseBody,
   LocalOperatorProfile,
 } from '../../types/auth.js'
+import type { ApiSuccessResponseBody } from '../../types/index.js'
 
 const authLogger = createLoggerContext({ module: 'auth' })
+const OPERATOR_PASSWORD_HASH_KEY = 'operatorPasswordHash'
+const OPERATOR_PASSWORD_UPDATED_AT_KEY = 'operatorPasswordUpdatedAt'
+const PASSWORD_HASH_PREFIX = 'scrypt'
 
-function isValidPassword(password: string): boolean {
+function hashOperatorPassword(password: string, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex')
+  return `${PASSWORD_HASH_PREFIX}$${salt}$${hash}`
+}
+
+function verifyOperatorPasswordHash(password: string, passwordHash: string): boolean {
+  const [prefix, salt, expectedHash] = String(passwordHash ?? '').split('$')
+
+  if (prefix !== PASSWORD_HASH_PREFIX || !salt || !expectedHash) {
+    return false
+  }
+
+  const candidateHash = crypto.scryptSync(password, salt, 64).toString('hex')
+  return crypto.timingSafeEqual(Buffer.from(candidateHash, 'hex'), Buffer.from(expectedHash, 'hex'))
+}
+
+async function readOperatorPasswordHash(profile: LocalOperatorProfile): Promise<string> {
+  const snapshot = await getAdminFirestore().collection('users').doc(profile.uid).get()
+  const data = snapshot.data()
+  return typeof data?.[OPERATOR_PASSWORD_HASH_KEY] === 'string'
+    ? data[OPERATOR_PASSWORD_HASH_KEY]
+    : ''
+}
+
+async function isValidPassword(password: string, profile: LocalOperatorProfile): Promise<boolean> {
+  const operatorPasswordHash = await readOperatorPasswordHash(profile).catch(() => '')
+
+  if (operatorPasswordHash) {
+    return verifyOperatorPasswordHash(String(password ?? ''), operatorPasswordHash)
+  }
+
   return (
     Boolean(backendEnv.localOperatorPassword) &&
     String(password ?? '') === String(backendEnv.localOperatorPassword)
@@ -71,6 +111,46 @@ async function createLoginSession(payload: AuthSessionRequestBody) {
   return {
     customToken,
     profile,
+  }
+}
+
+async function listOperatorPasswordSummaries() {
+  const firestore = getAdminFirestore()
+
+  return Promise.all(
+    localOperatorProfiles.map(async (operatorProfile) => {
+      const profile = getLocalOperatorProfile(operatorProfile.operatorName) as LocalOperatorProfile
+      const snapshot = await firestore.collection('users').doc(profile.uid).get()
+      const data = snapshot.data() ?? {}
+
+      return {
+        operatorName: profile.operatorName,
+        hasCustomPassword:
+          typeof data[OPERATOR_PASSWORD_HASH_KEY] === 'string' &&
+          data[OPERATOR_PASSWORD_HASH_KEY].length > 0,
+        updatedAt: data[OPERATOR_PASSWORD_UPDATED_AT_KEY] ?? null,
+      }
+    }),
+  )
+}
+
+async function updateOperatorPassword(operatorName: string, password: string | null) {
+  const profile = getLocalOperatorProfile(operatorName) as LocalOperatorProfile
+  const firestore = getAdminFirestore()
+  const userRef = firestore.collection('users').doc(profile.uid)
+  const payload = {
+    ...profile,
+    updatedAt: new Date().toISOString(),
+    [OPERATOR_PASSWORD_HASH_KEY]: password ? hashOperatorPassword(password) : null,
+    [OPERATOR_PASSWORD_UPDATED_AT_KEY]: new Date().toISOString(),
+  }
+
+  await userRef.set(payload, { merge: true })
+
+  return {
+    operatorName: profile.operatorName,
+    hasCustomPassword: Boolean(password),
+    updatedAt: payload[OPERATOR_PASSWORD_UPDATED_AT_KEY],
   }
 }
 
@@ -140,21 +220,23 @@ async function handleCreateLoginSession(
     return
   }
 
-  if (!isValidPassword(password)) {
-    log.warn(
-      {
-        context: 'auth.session.create',
-        request_id: request.id,
-        operatorName,
-        reason: 'invalid_password',
-      },
-      'Auth session rejected',
-    )
-    response.status(401).json({ error: 'Senha incorreta.' })
-    return
-  }
-
   try {
+    const profile = getLocalOperatorProfile(operatorName) as LocalOperatorProfile
+
+    if (!(await isValidPassword(password, profile))) {
+      log.warn(
+        {
+          context: 'auth.session.create',
+          request_id: request.id,
+          operatorName,
+          reason: 'invalid_password',
+        },
+        'Auth session rejected',
+      )
+      response.status(401).json({ error: 'Senha incorreta.' })
+      return
+    }
+
     const session = await createSession()
 
     response.json({
@@ -272,6 +354,77 @@ export function registerAuthRoutes(app: Express): void {
   })
 
   app.post('/api/auth/login', validateRequest(authLoginSchema), handleCreateLoginSession)
+
+  app.get(
+    '/api/auth/operator-passwords',
+    requireApiAuth,
+    requireRole('admin'),
+    async (
+      request: Request,
+      response: Response<
+        ApiSuccessResponseBody<
+          Array<{ operatorName: string; hasCustomPassword: boolean; updatedAt: string | null }>
+        >
+      >,
+    ) => {
+      const log = request.log ?? authLogger
+
+      try {
+        const summaries = await listOperatorPasswordSummaries()
+        response.json({ data: summaries })
+      } catch (error) {
+        log.error(
+          {
+            context: 'auth.operator-passwords.list',
+            request_id: request.id,
+            error: serializeError(error),
+          },
+          'Failed to list operator passwords',
+        )
+        response
+          .status(500)
+          .json({ error: 'Nao foi possivel listar as senhas dos operadores.' } as any)
+      }
+    },
+  )
+
+  app.put(
+    '/api/auth/operator-passwords',
+    requireApiAuth,
+    requireRole('admin'),
+    validateRequest(authOperatorPasswordSchema),
+    async (
+      request: Request,
+      response: Response<
+        ApiSuccessResponseBody<{
+          operatorName: string
+          hasCustomPassword: boolean
+          updatedAt: string | null
+        }>
+      >,
+    ) => {
+      const payload = request.validated?.body as { operatorName: string; password: string | null }
+      const log = request.log ?? authLogger
+
+      try {
+        const result = await updateOperatorPassword(payload.operatorName, payload.password || null)
+        response.json({ data: result })
+      } catch (error) {
+        log.error(
+          {
+            context: 'auth.operator-passwords.update',
+            request_id: request.id,
+            operatorName: payload?.operatorName ?? null,
+            error: serializeError(error),
+          },
+          'Failed to update operator password',
+        )
+        response
+          .status(500)
+          .json({ error: 'Nao foi possivel atualizar a senha do operador.' } as any)
+      }
+    },
+  )
 
   app.post(
     '/api/auth/session',

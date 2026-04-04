@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RequestValidationError } from '../errors/RequestValidationError.js'
 
 const firestoreSetMock = vi.fn()
+const firestoreGetMock = vi.fn()
 const createCustomTokenMock = vi.fn()
 const getLocalOperatorProfileMock = vi.fn()
 const cacheSetMock = vi.fn()
@@ -24,6 +25,12 @@ function createResponseMock() {
       this.payload = data
       return this
     },
+  }
+}
+
+function createSnapshot(data = {}) {
+  return {
+    data: () => data,
   }
 }
 
@@ -90,6 +97,7 @@ async function loadAuthController({
 } = {}) {
   vi.resetModules()
   firestoreSetMock.mockReset()
+  firestoreGetMock.mockReset()
   createCustomTokenMock.mockReset()
   getLocalOperatorProfileMock.mockReset()
   cacheSetMock.mockReset()
@@ -109,6 +117,7 @@ async function loadAuthController({
 
   getLocalOperatorProfileMock.mockReturnValue(profileOverride ?? defaultProfile)
   cacheSetMock.mockResolvedValue(true)
+  firestoreGetMock.mockResolvedValue(createSnapshot())
 
   if (createCustomTokenError) {
     createCustomTokenMock.mockRejectedValue(createCustomTokenError)
@@ -121,6 +130,7 @@ async function loadAuthController({
       collection: vi.fn(() => ({
         doc: vi.fn(() => ({
           set: firestoreSetMock,
+          get: firestoreGetMock,
         })),
       })),
     })),
@@ -170,7 +180,7 @@ describe('backend auth session route', () => {
 
   it('registra a rota POST /api/auth/session', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -179,13 +189,16 @@ describe('backend auth session route', () => {
       '/api/auth/login',
       '/api/auth/session',
     ])
-    expect(app.get).toHaveBeenCalledTimes(1)
-    expect(app.get.mock.calls[0][0]).toBe('/api/auth/operators')
+    expect(app.get.mock.calls.map(([path]) => path)).toEqual([
+      '/api/auth/operators',
+      '/api/auth/operator-passwords',
+    ])
+    expect(app.put.mock.calls.map(([path]) => path)).toEqual(['/api/auth/operator-passwords'])
   })
 
   it('retorna 400 quando o payload falha na validacao', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -204,7 +217,7 @@ describe('backend auth session route', () => {
 
   it('retorna 401 quando o PIN estiver incorreto', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -222,7 +235,7 @@ describe('backend auth session route', () => {
     const { registerAuthRoutes } = await loadAuthController({
       localOperatorPassword: '',
     })
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -253,7 +266,7 @@ describe('backend auth session route', () => {
       profileOverride: profile,
       createCustomTokenResult: 'signed-custom-token',
     })
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -300,7 +313,7 @@ describe('backend auth session route', () => {
     const { registerAuthRoutes } = await loadAuthController({
       createCustomTokenError: new Error('Falha ao assinar token'),
     })
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 
@@ -318,7 +331,7 @@ describe('backend auth session route', () => {
 
   it('aceita POST /api/auth/login com o mesmo fluxo de autenticacao', async () => {
     const { registerAuthRoutes } = await loadAuthController()
-    const app = { get: vi.fn(), post: vi.fn() }
+    const app = { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 
     registerAuthRoutes(app)
 

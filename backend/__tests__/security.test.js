@@ -58,6 +58,7 @@ vi.mock('../middleware/requestLogger.js', () => ({
 
 vi.mock('../middleware/requireAuth.js', () => ({
   requireApiAuth: (_request, _response, next) => next(),
+  requireRole: () => (_request, _response, next) => next(),
   requirePermission: () => (_request, _response, next) => next(),
   requireScopedStoreAccess: () => (_request, _response, next) => next(),
   requireStoreAccess: (_request, _response, next) => next(),
