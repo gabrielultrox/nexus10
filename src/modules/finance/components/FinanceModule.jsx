@@ -7,11 +7,13 @@ import { buildAuditActor, recordAuditLog } from '../../../services/auditLog'
 import { firebaseReady } from '../../../services/firebaseAuthRuntime'
 import {
   createFinancialClosure,
+  createFinancialOccurrence,
   createManualExpense,
   getFinanceEntryDirection,
   isFinanceEntryActive,
   subscribeToFinancialClosures,
   subscribeToFinancialEntries,
+  subscribeToFinancialOccurrences,
 } from '../../../services/finance'
 import { printOccurrenceReport } from '../../../services/occurrencePrint'
 import { playError, playSuccess } from '../../../services/soundManager'
@@ -113,6 +115,7 @@ function FinanceModule() {
   const { currentStoreId, tenantId } = useStore()
   const [entries, setEntries] = useState([])
   const [closures, setClosures] = useState([])
+  const [occurrences, setOccurrences] = useState([])
   const [loading, setLoading] = useState(true)
   const [savingExpense, setSavingExpense] = useState(false)
   const [savingClosure, setSavingClosure] = useState(false)
@@ -174,9 +177,20 @@ function FinanceModule() {
       },
     )
 
+    const unsubOccurrences = subscribeToFinancialOccurrences(
+      currentStoreId,
+      (nextOccurrences) => {
+        setOccurrences(nextOccurrences)
+      },
+      (error) => {
+        setErrorMessage(error.message)
+      },
+    )
+
     return () => {
       unsubEntries()
       unsubClosures()
+      unsubOccurrences()
     }
   }, [currentStoreId, tenantId])
 
@@ -366,6 +380,24 @@ function FinanceModule() {
     }))
   }, [filteredEntries])
 
+  const occurrenceRows = useMemo(() => {
+    return occurrences.map((entry) => ({
+      id: entry.id,
+      title: entry.title ?? 'Ocorrencia financeira',
+      destinationSector: entry.destinationSector ?? 'Financeiro / RH',
+      category: entry.category ?? 'Ocorrencia financeira',
+      cashierName: entry.cashierName ?? 'Geral',
+      operatorName: entry.operatorName ?? 'Operador',
+      amount: entry.amount?.trim() || '--',
+      reference: entry.reference?.trim() || '--',
+      occurredAt: formatDateTime(entry.occurredAt),
+      printedAt: formatDateTime(entry.printedAt || entry.createdAt),
+      description: entry.description ?? '',
+      rawOccurredAt: entry.occurredAt,
+      rawPrintedAt: entry.printedAt || entry.createdAt,
+    }))
+  }, [occurrences])
+
   async function handleManualExpenseSubmit(event) {
     event.preventDefault()
 
@@ -515,6 +547,18 @@ function FinanceModule() {
 
     try {
       const printedAt = new Date().toISOString()
+      const operatorName = session?.displayName ?? session?.operatorName ?? 'Operador'
+
+      const occurrenceId = await createFinancialOccurrence({
+        storeId: currentStoreId,
+        tenantId,
+        values: {
+          ...occurrenceForm,
+          cashierName: occurrenceForm.cashierName.trim() || 'Geral',
+          operatorName,
+          printedAt,
+        },
+      })
 
       printOccurrenceReport({
         destinationSector: occurrenceForm.destinationSector,
@@ -523,11 +567,11 @@ function FinanceModule() {
         reference: occurrenceForm.reference.trim(),
         amount: occurrenceForm.amount.trim(),
         cashierName: occurrenceForm.cashierName.trim() || 'Geral',
-        operatorName: session?.displayName ?? session?.operatorName ?? 'Operador',
+        operatorName,
         occurredAt: occurrenceForm.occurredAt,
         printedAt,
         description: occurrenceForm.description.trim(),
-        meta: `Store ${currentStoreId ?? '--'} • ${session?.roleLabel ?? 'Operacao'}`,
+        meta: `Store ${currentStoreId ?? '--'} - ${session?.roleLabel ?? 'Operacao'}`,
       })
 
       await recordAuditLog({
@@ -536,7 +580,7 @@ function FinanceModule() {
         actor: buildAuditActor(session),
         action: 'financial.occurrence_printed',
         entityType: 'financial_occurrence',
-        entityId: `occurrence-${printedAt}`,
+        entityId: occurrenceId,
         description: `Ocorrencia impressa para ${occurrenceForm.destinationSector}: ${occurrenceForm.title.trim()}.`,
       })
 
@@ -898,6 +942,73 @@ function FinanceModule() {
             </button>
           </div>
         </form>
+      </SurfaceCard>
+
+      <SurfaceCard title="Ocorrencias emitidas">
+        <div className="finance-table-meta">
+          <span className="ui-badge ui-badge--info">{occurrenceRows.length} ocorrencias</span>
+        </div>
+
+        {occurrenceRows.length === 0 ? (
+          <EmptyState message="Nenhuma ocorrencia emitida" />
+        ) : (
+          <div className="finance-occurrence-list">
+            {occurrenceRows.map((row) => (
+              <article key={row.id} className="finance-occurrence-card">
+                <div className="finance-occurrence-card__header">
+                  <div>
+                    <strong className="finance-occurrence-card__title">{row.title}</strong>
+                    <div className="finance-occurrence-card__meta">
+                      {row.category} - {row.destinationSector}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="ui-button ui-button--ghost"
+                    onClick={() =>
+                      printOccurrenceReport({
+                        destinationSector: row.destinationSector,
+                        category: row.category,
+                        title: row.title,
+                        reference: row.reference === '--' ? '' : row.reference,
+                        amount: row.amount === '--' ? '' : row.amount,
+                        cashierName: row.cashierName,
+                        operatorName: row.operatorName,
+                        occurredAt: row.rawOccurredAt,
+                        printedAt: row.rawPrintedAt,
+                        description: row.description,
+                        meta: `Store ${currentStoreId ?? '--'} - ${session?.roleLabel ?? 'Operacao'}`,
+                      })
+                    }
+                  >
+                    Reimprimir
+                  </button>
+                </div>
+                <div className="finance-occurrence-card__grid">
+                  <span>
+                    <strong>Referencia:</strong> {row.reference}
+                  </span>
+                  <span>
+                    <strong>Valor:</strong> {row.amount}
+                  </span>
+                  <span>
+                    <strong>Caixa:</strong> {row.cashierName}
+                  </span>
+                  <span>
+                    <strong>Operador:</strong> {row.operatorName}
+                  </span>
+                  <span>
+                    <strong>Ocorrencia:</strong> {row.occurredAt}
+                  </span>
+                  <span>
+                    <strong>Ultima impressao:</strong> {row.printedAt}
+                  </span>
+                </div>
+                <p className="finance-occurrence-card__description">{row.description}</p>
+              </article>
+            ))}
+          </div>
+        )}
       </SurfaceCard>
 
       <SurfaceCard title="Movimentacoes financeiras">

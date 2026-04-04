@@ -78,4 +78,36 @@ describe('finance service', () => {
     expect(onData).toHaveBeenCalledWith([])
     expect(typeof unsubscribe).toBe('function')
   })
+
+  it('validates and persists financial occurrences', async () => {
+    const { createFinancialOccurrence } = await import('../finance')
+
+    const occurrenceId = await createFinancialOccurrence({
+      storeId: 'store-1',
+      tenantId: 'tenant-1',
+      values: {
+        destinationSector: 'Financeiro / RH',
+        category: 'Sangria / caixa',
+        title: 'Possivel sangria duplicada',
+        reference: 'CX-13',
+        amount: 'R$ 120,00',
+        cashierName: 'Caixa central',
+        operatorName: 'Gabriel',
+        occurredAt: '2026-03-13T09:00',
+        description: 'Conferir se a sangria do turno foi registrada duas vezes.',
+        printedAt: '2026-03-13T10:00:00.000Z',
+      },
+    })
+
+    expect(occurrenceId).toBe('closure-1')
+    expect(addDoc).toHaveBeenCalledWith(
+      'collection-ref',
+      expect.objectContaining({
+        title: 'Possivel sangria duplicada',
+        destinationSector: 'Financeiro / RH',
+        category: 'Sangria / caixa',
+        operatorName: 'Gabriel',
+      }),
+    )
+  })
 })

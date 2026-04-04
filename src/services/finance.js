@@ -56,6 +56,16 @@ function getFinancialClosuresCollectionRef(storeId) {
   )
 }
 
+function getFinancialOccurrencesCollectionRef(storeId) {
+  assertFirebaseReady()
+  return collection(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.financialOccurrences,
+  )
+}
+
 export function subscribeToFinancialEntries(storeId, onData, onError) {
   if (!storeId || !canUseRemoteSync()) {
     onData([])
@@ -114,6 +124,35 @@ export function subscribeToFinancialClosures(storeId, onData, onError) {
   )
 }
 
+export function subscribeToFinancialOccurrences(storeId, onData, onError) {
+  if (!storeId || !canUseRemoteSync()) {
+    onData([])
+    return () => {}
+  }
+
+  const occurrencesQuery = query(
+    getFinancialOccurrencesCollectionRef(storeId),
+    orderBy('createdAt', 'desc'),
+  )
+
+  return guardRemoteSubscription(
+    () =>
+      onSnapshot(
+        occurrencesQuery,
+        (snapshot) => {
+          onData(snapshot.docs.map(mapSnapshot))
+        },
+        onError,
+      ),
+    {
+      onFallback() {
+        onData([])
+      },
+      onError,
+    },
+  )
+}
+
 export async function listFinancialClosuresPage({ storeId, pageSize = 50, cursor = null } = {}) {
   if (!storeId || !canUseRemoteSync()) {
     return {
@@ -158,6 +197,28 @@ export async function listFinancialEntriesPage({ storeId, pageSize = 50, cursor 
   })
 }
 
+export async function listFinancialOccurrencesPage({ storeId, pageSize = 50, cursor = null } = {}) {
+  if (!storeId || !canUseRemoteSync()) {
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    }
+  }
+
+  return getPaginatedStoreCollectionDocuments(storeId, FIRESTORE_COLLECTIONS.financialOccurrences, {
+    orderField: 'createdAt',
+    orderDirection: 'desc',
+    pageSize,
+    cursor,
+    cacheKey: buildStoreQueryCacheKey(
+      storeId,
+      FIRESTORE_COLLECTIONS.financialOccurrences,
+      'page-by-createdAt',
+    ),
+  })
+}
+
 export function validateManualExpenseInput(values) {
   const description = values.description?.trim()
   const cashierName = values.cashierName?.trim() || 'Geral'
@@ -180,6 +241,44 @@ export function validateManualExpenseInput(values) {
     cashierName,
     occurredAt,
     status: 'ativa',
+  }
+}
+
+export function validateFinancialOccurrenceInput(values) {
+  const destinationSector = values.destinationSector?.trim() || 'Financeiro / RH'
+  const category = values.category?.trim() || 'Ocorrencia financeira'
+  const title = values.title?.trim()
+  const reference = values.reference?.trim() || ''
+  const amount = values.amount?.trim() || ''
+  const cashierName = values.cashierName?.trim() || 'Geral'
+  const operatorName = values.operatorName?.trim() || 'Operador'
+  const occurredAt = values.occurredAt?.trim()
+  const description = values.description?.trim()
+  const printedAt = values.printedAt?.trim()
+
+  if (!title) {
+    throw new Error('Informe o titulo da ocorrencia.')
+  }
+
+  if (!occurredAt) {
+    throw new Error('Informe a data da ocorrencia.')
+  }
+
+  if (!description) {
+    throw new Error('Informe a descricao da ocorrencia.')
+  }
+
+  return {
+    destinationSector,
+    category,
+    title,
+    reference,
+    amount,
+    cashierName,
+    operatorName,
+    occurredAt,
+    description,
+    printedAt,
   }
 }
 
@@ -226,6 +325,21 @@ export async function createFinancialClosure({ storeId, tenantId, values }) {
 
   invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialClosures))
   return closureRef.id
+}
+
+export async function createFinancialOccurrence({ storeId, tenantId, values }) {
+  const payload = validateFinancialOccurrenceInput(values)
+
+  const occurrenceRef = await addDoc(getFinancialOccurrencesCollectionRef(storeId), {
+    ...payload,
+    storeId,
+    tenantId: tenantId ?? null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  invalidateQueryCache(buildStoreQueryCacheKey(storeId, FIRESTORE_COLLECTIONS.financialOccurrences))
+  return occurrenceRef.id
 }
 
 export function getFinanceEntryDirection(entry) {
