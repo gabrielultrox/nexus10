@@ -21,6 +21,7 @@ import { playDestructive, playError, playPdvSuccess } from '../../../services/so
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 import DestructiveIconButton from '../../../components/ui/DestructiveIconButton'
+import { Input, Table } from '../../../components/ui'
 import { useConfirm } from '../../../hooks/useConfirm'
 import { useToast } from '../../../hooks/useToast'
 import SalesDetailPanel from './SalesDetailPanel'
@@ -336,6 +337,82 @@ function SalesModule({ saleId, viewMode, formResetToken, onOpenDetail, onOpenLis
     ]
   }, [sales])
 
+  const salesTableRows = useMemo(
+    () =>
+      visibleSales.map((sale) => ({
+        id: sale.id,
+        number: sale.number,
+        sourceLabel: sale.source === 'ORDER' ? `Pedido ${sale.orderId ?? '-'}` : 'Venda direta',
+        customerName: sale.customerSnapshot?.name || 'Cliente avulso',
+        totalLabel: formatCurrencyBRL(sale.totals?.total ?? 0),
+        paymentMethodLabel: sale.paymentMethodLabel,
+        createdAtLabel: formatDateTime(sale.createdAtDate ?? sale.createdAt),
+        sale,
+        actionCell: '',
+      })),
+    [visibleSales],
+  )
+
+  const salesTableColumns = [
+    {
+      key: 'number',
+      label: 'Venda',
+      render: (row) => <span className="ui-table__cell--strong">{row.number}</span>,
+    },
+    {
+      key: 'sourceLabel',
+      label: 'Origem',
+      render: (row) => <span className="ui-table__cell--muted">{row.sourceLabel}</span>,
+    },
+    { key: 'customerName', label: 'Cliente' },
+    {
+      key: 'totalLabel',
+      label: 'Total',
+      render: (row) => <span className="ui-table__cell--numeric">{row.totalLabel}</span>,
+    },
+    {
+      key: 'paymentMethodLabel',
+      label: 'Pagamento',
+      render: (row) => <span className="ui-table__cell--muted">{row.paymentMethodLabel}</span>,
+    },
+    {
+      key: 'actionCell',
+      label: 'Status',
+      render: (row) => {
+        const statusMeta = getSaleStatusMeta(row.sale.domainStatus)
+        return <span className={`ui-badge ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
+      },
+    },
+    {
+      key: 'createdAtLabel',
+      label: 'Criada em',
+      render: (row) => <span className="ui-table__cell--muted">{row.createdAtLabel}</span>,
+    },
+    {
+      key: 'id',
+      label: 'Acao',
+      render: (row) => {
+        const canDeleteSale = can('sales:write')
+        const actionStateLabel = getSaleListActionStateLabel()
+
+        return (
+          <div className="orders-domain__row-actions orders-domain__row-actions--visible">
+            {canDeleteSale ? (
+              <DestructiveIconButton
+                className="orders-domain__delete-button"
+                label={`Excluir venda ${row.sale.number}`}
+                disabled={deletingSaleId === row.sale.id}
+                onClick={(event) => handleDeleteSale(row.sale, event)}
+              />
+            ) : actionStateLabel ? (
+              <span className="orders-domain__row-complete">{actionStateLabel}</span>
+            ) : null}
+          </div>
+        )
+      },
+    },
+  ]
+
   function getSaleListActionStateLabel() {
     if (!can('sales:write')) {
       return 'Somente leitura'
@@ -572,9 +649,8 @@ function SalesModule({ saleId, viewMode, formResetToken, onOpenDetail, onOpenLis
                 <label className="ui-label" htmlFor="sales-search">
                   Buscar
                 </label>
-                <input
+                <Input
                   id="sales-search"
-                  className="ui-input"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Venda, pedido, cliente, pagamento ou canal"
@@ -600,9 +676,8 @@ function SalesModule({ saleId, viewMode, formResetToken, onOpenDetail, onOpenLis
                 <label className="ui-label" htmlFor="sales-start-date">
                   Inicio
                 </label>
-                <input
+                <Input
                   id="sales-start-date"
-                  className="ui-input"
                   type="date"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
@@ -612,9 +687,8 @@ function SalesModule({ saleId, viewMode, formResetToken, onOpenDetail, onOpenLis
                 <label className="ui-label" htmlFor="sales-end-date">
                   Fim
                 </label>
-                <input
+                <Input
                   id="sales-end-date"
-                  className="ui-input"
                   type="date"
                   value={endDate}
                   onChange={(event) => setEndDate(event.target.value)}
@@ -629,71 +703,20 @@ function SalesModule({ saleId, viewMode, formResetToken, onOpenDetail, onOpenLis
                 <EmptyState message="Nenhuma venda encontrada" />
               ) : (
                 <div className="entity-table-wrap">
-                  <table className="ui-table">
-                    <thead>
-                      <tr>
-                        <th>Venda</th>
-                        <th>Origem</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Pagamento</th>
-                        <th>Status</th>
-                        <th>Criada em</th>
-                        <th>Acao</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleSales.map((sale, index) => {
-                        const statusMeta = getSaleStatusMeta(sale.domainStatus)
-                        const canDeleteSale = can('sales:write')
-                        const actionStateLabel = getSaleListActionStateLabel()
-                        return (
-                          <tr
-                            key={sale.id}
-                            className={`${freshSaleIds.has(sale.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter'}${sale.id === saleId ? ' entity-table__row--selected' : ''}`}
-                            style={{ '--row-delay': `${Math.min(index * 40, 240)}ms` }}
-                            onClick={() => onOpenDetail(sale.id)}
-                          >
-                            <td className="ui-table__cell--strong">{sale.number}</td>
-                            <td className="ui-table__cell--muted">
-                              {sale.source === 'ORDER'
-                                ? `Pedido ${sale.orderId ?? '-'}`
-                                : 'Venda direta'}
-                            </td>
-                            <td>{sale.customerSnapshot?.name || 'Cliente avulso'}</td>
-                            <td className="ui-table__cell--numeric">
-                              {formatCurrencyBRL(sale.totals?.total ?? 0)}
-                            </td>
-                            <td className="ui-table__cell--muted">{sale.paymentMethodLabel}</td>
-                            <td>
-                              <span className={`ui-badge ${statusMeta.badgeClass}`}>
-                                {statusMeta.label}
-                              </span>
-                            </td>
-                            <td className="ui-table__cell--muted">
-                              {formatDateTime(sale.createdAtDate ?? sale.createdAt)}
-                            </td>
-                            <td className="orders-domain__action-cell">
-                              <div className="orders-domain__row-actions orders-domain__row-actions--visible">
-                                {canDeleteSale ? (
-                                  <DestructiveIconButton
-                                    className="orders-domain__delete-button"
-                                    label={`Excluir venda ${sale.number}`}
-                                    disabled={deletingSaleId === sale.id}
-                                    onClick={(event) => handleDeleteSale(sale, event)}
-                                  />
-                                ) : actionStateLabel ? (
-                                  <span className="orders-domain__row-complete">
-                                    {actionStateLabel}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                  <Table
+                    columns={salesTableColumns}
+                    data={salesTableRows}
+                    caption="Lista de vendas"
+                    paginate={false}
+                    getRowKey={(row) => row.id}
+                    getRowClassName={(row) =>
+                      `${freshSaleIds.has(row.id) ? 'ui-table__row-fresh' : 'ui-table__row-enter'}${row.id === saleId ? ' entity-table__row--selected' : ''}`
+                    }
+                    getRowStyle={(_, index) => ({
+                      '--row-delay': `${Math.min(index * 40, 240)}ms`,
+                    })}
+                    onRowClick={(row) => onOpenDetail(row.id)}
+                  />
                 </div>
               )}
             </div>

@@ -4,42 +4,31 @@ import SurfaceCard from '../../../components/common/SurfaceCard'
 import FormRow from '../../../components/ui/FormRow'
 import Select from '../../../components/ui/Select'
 import Toggle from '../../../components/ui/Toggle'
+import { Button, Checkbox, Input, Textarea } from '../../../components/ui'
 
 function NativeModuleField({ field, routePath, value, updateField }) {
   if (field.type === 'checkbox') {
     if (routePath === 'delivery-reading') {
       return (
-        <label className="native-module__inline-toggle" htmlFor={`${routePath}-${field.name}`}>
-          <input
-            id={`${routePath}-${field.name}`}
-            className="native-module__inline-toggle-input"
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(event) => updateField(field.name, event.target.checked)}
-          />
-          <span className="native-module__inline-toggle-box" aria-hidden="true" />
-          <span className="native-module__inline-toggle-label">{field.label}</span>
-        </label>
+        <Checkbox
+          id={`${routePath}-${field.name}`}
+          className="native-module__inline-toggle"
+          checked={Boolean(value)}
+          label={field.label}
+          onChange={(event) => updateField(field.name, event.target.checked)}
+        />
       )
     }
 
     return (
-      <label className="native-module__checkbox" htmlFor={`${routePath}-${field.name}`}>
-        <input
-          id={`${routePath}-${field.name}`}
-          className="native-module__checkbox-input"
-          type="checkbox"
-          checked={Boolean(value)}
-          onChange={(event) => updateField(field.name, event.target.checked)}
-        />
-        <span className="native-module__checkbox-box" aria-hidden="true" />
-        <span className="native-module__checkbox-copy">
-          <strong>{field.label}</strong>
-          <small>
-            {field.description ?? 'Marque esta opcao quando ela se aplicar ao registro.'}
-          </small>
-        </span>
-      </label>
+      <Checkbox
+        id={`${routePath}-${field.name}`}
+        className="native-module__checkbox"
+        checked={Boolean(value)}
+        label={<strong>{field.label}</strong>}
+        description={field.description ?? 'Marque esta opcao quando ela se aplicar ao registro.'}
+        onChange={(event) => updateField(field.name, event.target.checked)}
+      />
     )
   }
 
@@ -64,9 +53,8 @@ function NativeModuleField({ field, routePath, value, updateField }) {
     }
 
     return (
-      <input
+      <Input
         id={`${routePath}-${field.name}`}
-        className="ui-input"
         aria-label={field.label}
         type={field.type ?? 'text'}
         value={value ?? ''}
@@ -98,9 +86,8 @@ function NativeModuleField({ field, routePath, value, updateField }) {
           ))}
         </Select>
       ) : field.type === 'textarea' ? (
-        <textarea
+        <Textarea
           id={`${routePath}-${field.name}`}
-          className="ui-textarea"
           value={value ?? ''}
           placeholder={field.placeholder}
           rows={4}
@@ -108,9 +95,8 @@ function NativeModuleField({ field, routePath, value, updateField }) {
           onChange={(event) => updateField(field.name, event.target.value)}
         />
       ) : (
-        <input
+        <Input
           id={`${routePath}-${field.name}`}
-          className="ui-input"
           type={field.type ?? 'text'}
           value={value ?? ''}
           placeholder={field.placeholder}
@@ -206,10 +192,10 @@ function NativeModuleFormCard({
             }}
           >
             <FormRow className="native-module__delivery-form-row">
-              <input
+              <Input
                 ref={deliveryCodeInputRef}
                 id="delivery-reading-deliveryCode"
-                className={`ui-input native-module__delivery-code-input${invalidFieldName === 'deliveryCode' ? ' is-invalid' : ''}`}
+                className={`native-module__delivery-code-input${invalidFieldName === 'deliveryCode' ? ' is-invalid' : ''}`}
                 type="text"
                 inputMode="numeric"
                 aria-label="Codigo"
@@ -253,13 +239,14 @@ function NativeModuleFormCard({
                 onChange={(checked) => updateField('closed', checked)}
               />
 
-              <button
+              <Button
                 type="submit"
-                className="ui-button ui-button--primary native-module__delivery-submit"
+                className="native-module__delivery-submit"
                 disabled={
                   isSubmitting || codeValue.trim().length === 0 || Boolean(submitDisabledReason)
                 }
                 title={submitDisabledReason || undefined}
+                variant="primary"
               >
                 {isSubmitting ? (
                   <>
@@ -269,7 +256,7 @@ function NativeModuleFormCard({
                 ) : (
                   manager.submitLabel
                 )}
-              </button>
+              </Button>
             </FormRow>
           </form>
         </div>
@@ -313,18 +300,18 @@ function NativeModuleFormCard({
             className={`native-module__form-actions${routePath === 'delivery-reading' ? ' native-module__form-actions--inline' : ''}`}
           >
             {routePath === 'advances' ? (
-              <button type="button" className="ui-button ui-button--ghost" onClick={onReset}>
+              <Button type="button" variant="ghost" onClick={onReset}>
                 Cancelar
-              </button>
+              </Button>
             ) : null}
-            <button
+            <Button
               type="submit"
-              className="ui-button ui-button--secondary"
+              variant="secondary"
               disabled={Boolean(submitDisabledReason)}
               title={submitDisabledReason || undefined}
             >
               {manager.submitLabel}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

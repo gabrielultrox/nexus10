@@ -63,10 +63,14 @@ export interface ITableProps<TData extends Record<string, unknown>> {
   columns: Array<ITableColumn<TData>>
   data: TData[]
   pageSize?: number
+  paginate?: boolean
   emptyMessage?: ReactNode
   caption?: ReactNode
   defaultSort?: ITableSortState<TData> | null
   getRowKey?: (row: TData, rowIndex: number) => string | number
+  getRowClassName?: (row: TData, rowIndex: number) => string | undefined
+  getRowStyle?: (row: TData, rowIndex: number) => CSSProperties | undefined
+  onRowClick?: (row: TData, rowIndex: number) => void
   isLoading?: boolean
   loadingRowCount?: number
 }

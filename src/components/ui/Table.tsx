@@ -19,10 +19,14 @@ function Table<TData extends Record<string, unknown>>({
   columns,
   data,
   pageSize = 10,
+  paginate = true,
   emptyMessage = 'Nenhum registro encontrado.',
   caption,
   defaultSort = null,
   getRowKey,
+  getRowClassName,
+  getRowStyle,
+  onRowClick,
   isLoading = false,
   loadingRowCount = 5,
 }: ITableProps<TData>) {
@@ -45,12 +49,16 @@ function Table<TData extends Record<string, unknown>>({
     })
   }, [data, sortState])
 
-  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize))
+  const totalPages = paginate ? Math.max(1, Math.ceil(sortedData.length / pageSize)) : 1
   const safePage = Math.min(page, totalPages)
   const pagedData = useMemo(() => {
+    if (!paginate) {
+      return sortedData
+    }
+
     const start = (safePage - 1) * pageSize
     return sortedData.slice(start, start + pageSize)
-  }, [pageSize, safePage, sortedData])
+  }, [pageSize, paginate, safePage, sortedData])
 
   useEffect(() => {
     if (!pageMotionDirection) {
@@ -153,7 +161,12 @@ function Table<TData extends Record<string, unknown>>({
               ))
             ) : pagedData.length ? (
               pagedData.map((row, rowIndex) => (
-                <tr key={getRowKey ? getRowKey(row, rowIndex) : String(row.id ?? rowIndex)}>
+                <tr
+                  key={getRowKey ? getRowKey(row, rowIndex) : String(row.id ?? rowIndex)}
+                  className={getRowClassName?.(row, rowIndex)}
+                  style={getRowStyle?.(row, rowIndex)}
+                  onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
+                >
                   {columns.map((column) => (
                     <td key={column.key}>
                       {typeof column.render === 'function'
@@ -175,35 +188,37 @@ function Table<TData extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <nav className="ui-table__pagination" aria-label="Paginacao da tabela">
-        <p className="ui-table__pagination-meta">
-          Pagina {safePage} de {totalPages}
-        </p>
-        <div className="ui-table__pagination-actions">
-          <Button
-            variant="ghost"
-            disabled={safePage <= 1}
-            onClick={() => {
-              setPageMotionDirection('backward')
-              setPage((value) => Math.max(1, value - 1))
-            }}
-            aria-label="Ir para a pagina anterior"
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={safePage >= totalPages}
-            onClick={() => {
-              setPageMotionDirection('forward')
-              setPage((value) => Math.min(totalPages, value + 1))
-            }}
-            aria-label="Ir para a proxima pagina"
-          >
-            Proxima
-          </Button>
-        </div>
-      </nav>
+      {paginate ? (
+        <nav className="ui-table__pagination" aria-label="Paginacao da tabela">
+          <p className="ui-table__pagination-meta">
+            Pagina {safePage} de {totalPages}
+          </p>
+          <div className="ui-table__pagination-actions">
+            <Button
+              variant="ghost"
+              disabled={safePage <= 1}
+              onClick={() => {
+                setPageMotionDirection('backward')
+                setPage((value) => Math.max(1, value - 1))
+              }}
+              aria-label="Ir para a pagina anterior"
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={safePage >= totalPages}
+              onClick={() => {
+                setPageMotionDirection('forward')
+                setPage((value) => Math.min(totalPages, value + 1))
+              }}
+              aria-label="Ir para a proxima pagina"
+            >
+              Proxima
+            </Button>
+          </div>
+        </nav>
+      ) : null}
     </div>
   )
 }
