@@ -112,7 +112,7 @@
 
 .machine-operations__view-button.is-active {
   background: var(--accent);
-  color: var(--accent-contrast);
+  color: var(--color-static-white);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
