@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -26,11 +27,32 @@ function getOccurrenceMaloteCollectionRef(storeId) {
     firebaseDb,
     FIRESTORE_COLLECTIONS.stores,
     storeId,
-    FIRESTORE_COLLECTIONS.financialOccurrences,
+    FIRESTORE_COLLECTIONS.occurrences,
   )
 }
 
 function getOccurrenceMaloteDocRef(storeId, entryId) {
+  assertRemoteSyncReady()
+  return doc(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.occurrences,
+    entryId,
+  )
+}
+
+function getLegacyOccurrenceMaloteCollectionRef(storeId) {
+  assertRemoteSyncReady()
+  return collection(
+    firebaseDb,
+    FIRESTORE_COLLECTIONS.stores,
+    storeId,
+    FIRESTORE_COLLECTIONS.financialOccurrences,
+  )
+}
+
+function getLegacyOccurrenceMaloteDocRef(storeId, entryId) {
   assertRemoteSyncReady()
   return doc(
     firebaseDb,
@@ -122,6 +144,64 @@ function getOccurrenceDescription(record) {
   )
 }
 
+async function migrateLegacyOccurrenceEntry(storeId, legacyEntry) {
+  const entryId = String(legacyEntry?.id ?? '').trim()
+
+  if (!entryId) {
+    return
+  }
+
+  const nextPayload = {
+    ...legacyEntry,
+    flow: OCCURRENCE_MALOTE_FLOW,
+    migratedFromCollection: FIRESTORE_COLLECTIONS.financialOccurrences,
+    updatedAt: legacyEntry.updatedAt ?? serverTimestamp(),
+  }
+
+  await setDoc(getOccurrenceMaloteDocRef(storeId, entryId), nextPayload, { merge: true })
+}
+
+async function ensureLegacyMaloteHistoryMigrated(storeId) {
+  if (!storeId || !canUseRemoteSync()) {
+    return
+  }
+
+  const legacySnapshot = await getDocs(
+    query(getLegacyOccurrenceMaloteCollectionRef(storeId), orderBy('updatedAt', 'desc')),
+  )
+
+  const legacyItems = legacySnapshot.docs
+    .map(mapOccurrenceMaloteSnapshot)
+    .filter((item) => item.flow === OCCURRENCE_MALOTE_FLOW)
+
+  if (legacyItems.length === 0) {
+    return
+  }
+
+  await Promise.all(legacyItems.map((item) => migrateLegacyOccurrenceEntry(storeId, item)))
+}
+
+async function readExistingOccurrenceMaloteData(storeId, entryId) {
+  const currentSnapshot = await getDoc(getOccurrenceMaloteDocRef(storeId, entryId))
+
+  if (currentSnapshot.exists()) {
+    return currentSnapshot.data() ?? {}
+  }
+
+  const legacySnapshot = await getDoc(getLegacyOccurrenceMaloteDocRef(storeId, entryId))
+
+  if (legacySnapshot.exists()) {
+    const legacyData = legacySnapshot.data() ?? {}
+    await migrateLegacyOccurrenceEntry(storeId, {
+      id: entryId,
+      ...legacyData,
+    })
+    return legacyData
+  }
+
+  return {}
+}
+
 export function getOccurrenceMaloteDefaultReceivedAt() {
   const now = new Date()
   const year = now.getFullYear()
@@ -137,6 +217,10 @@ export function subscribeToOccurrenceMaloteHistory(storeId, onData, onError) {
     onData([])
     return () => {}
   }
+
+  void ensureLegacyMaloteHistoryMigrated(storeId).catch((error) => {
+    onError?.(error)
+  })
 
   const maloteQuery = query(getOccurrenceMaloteCollectionRef(storeId), orderBy('updatedAt', 'desc'))
 
@@ -194,8 +278,7 @@ export async function upsertOccurrenceMaloteEntry({ storeId, tenantId, record, s
   const sourceRecordId = String(record?.id ?? '').trim()
   const entryId = buildOccurrenceMaloteDocId(sourceRecordId)
   const entryRef = getOccurrenceMaloteDocRef(storeId, entryId)
-  const existingSnapshot = await getDoc(entryRef)
-  const existingData = existingSnapshot.data() ?? {}
+  const existingData = await readExistingOccurrenceMaloteData(storeId, entryId)
   const actorName = getActorName(session)
   const nowIso = new Date().toISOString()
 
@@ -247,7 +330,15 @@ export async function syncOccurrenceMaloteStatus({ storeId, sourceRecordId, stat
     storeId,
     buildOccurrenceMaloteDocId(normalizedSourceRecordId),
   )
-  const existingSnapshot = await getDoc(entryRef)
+  let existingSnapshot = await getDoc(entryRef)
+
+  if (!existingSnapshot.exists()) {
+    await readExistingOccurrenceMaloteData(
+      storeId,
+      buildOccurrenceMaloteDocId(normalizedSourceRecordId),
+    )
+    existingSnapshot = await getDoc(entryRef)
+  }
 
   if (!existingSnapshot.exists()) {
     return
@@ -279,7 +370,12 @@ export async function attachOccurrenceMaloteReceipt({ storeId, entryId, values, 
   assertRemoteSyncReady()
 
   const entryRef = getOccurrenceMaloteDocRef(storeId, entryId)
-  const existingSnapshot = await getDoc(entryRef)
+  let existingSnapshot = await getDoc(entryRef)
+
+  if (!existingSnapshot.exists()) {
+    await readExistingOccurrenceMaloteData(storeId, entryId)
+    existingSnapshot = await getDoc(entryRef)
+  }
 
   if (!existingSnapshot.exists()) {
     throw new Error('Nao foi possivel localizar a ocorrencia do malote.')

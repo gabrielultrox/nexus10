@@ -18,6 +18,17 @@ const orderBy = vi.fn((field, direction) => ({ field, direction }))
 const query = vi.fn((...parts) => parts)
 const onSnapshot = vi.fn()
 const serverTimestamp = vi.fn(() => 'server-timestamp')
+const getDocs = vi.fn(async (queryRef) => {
+  const [path] = queryRef
+  const docs = [...occurrenceDocs.entries()]
+    .filter(([entryPath]) => entryPath.startsWith(`${path}/`))
+    .map(([entryPath, data]) => ({
+      id: entryPath.split('/').pop(),
+      data: () => data,
+    }))
+
+  return { docs }
+})
 const getDoc = vi.fn(async (path) => ({
   exists: () => occurrenceDocs.has(path),
   data: () => occurrenceDocs.get(path) ?? {},
@@ -41,6 +52,7 @@ vi.mock('firebase/firestore', () => ({
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -62,6 +74,7 @@ describe('occurrence malote service', () => {
     collection.mockClear()
     doc.mockClear()
     getDoc.mockClear()
+    getDocs.mockClear()
     setDoc.mockClear()
     updateDoc.mockClear()
     canUseRemoteSync.mockReturnValue(true)
@@ -99,7 +112,7 @@ describe('occurrence malote service', () => {
       session: { operatorName: 'Gabriel' },
     })
 
-    const path = 'stores/store-1/financial_occurrences/malote-occ-1'
+    const path = 'stores/store-1/occurrences/malote-occ-1'
     const remoteEntry = occurrenceDocs.get(path)
 
     expect(remoteEntry).toEqual(
@@ -167,7 +180,7 @@ describe('occurrence malote service', () => {
       session: { operatorName: 'Gabriel' },
     })
 
-    expect(occurrenceDocs.get('stores/store-1/financial_occurrences/malote-occ-2')).toEqual(
+    expect(occurrenceDocs.get('stores/store-1/occurrences/malote-occ-2')).toEqual(
       expect.objectContaining({
         protocolCode: 'MAL-123',
         receivedBy: 'RH',
