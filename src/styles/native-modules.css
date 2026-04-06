@@ -2513,9 +2513,7 @@
 .machine-operations__row {
   display: grid;
   grid-template-columns:
-    auto
-    minmax(72px, auto)
-    minmax(140px, 1fr)
+    minmax(0, 1.6fr)
     minmax(120px, 1fr)
     auto
     auto
@@ -2529,6 +2527,21 @@
   background: color-mix(in srgb, var(--surface-panel-soft-alt) 96%, transparent);
 }
 
+.machine-operations__identity {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.machine-operations__identity-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .machine-operations__row--selected {
   border-color: color-mix(in srgb, var(--color-accent-cyan) 38%, var(--color-border-subtle));
   background: color-mix(in srgb, var(--color-accent-cyan) 10%, var(--surface-panel-soft-alt));
@@ -2538,9 +2551,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
 }
 
 .machine-operations__select input {
@@ -2570,10 +2583,11 @@
 .machine-operations__row-device {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   min-height: 28px;
   padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 28%, var(--color-border-default));
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--color-accent-cyan) 10%, var(--surface-elevated));
   color: var(--color-text-primary);
   font-size: 0.96rem;
@@ -2583,7 +2597,16 @@
   line-height: 1;
 }
 
-.machine-operations__row-meta {
+.machine-operations__row-holder {
+  color: var(--color-text-primary);
+  font-size: 0.84rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.machine-operations__row-model {
   color: var(--color-text-secondary);
   font-size: 0.82rem;
   min-width: 0;
@@ -2691,7 +2714,7 @@
     gap: var(--space-2);
   }
 
-  .machine-operations__row-meta,
+  .machine-operations__row-model,
   .machine-operations__row .ui-badge,
   .machine-operations__row-check {
     grid-column: 1 / -1;

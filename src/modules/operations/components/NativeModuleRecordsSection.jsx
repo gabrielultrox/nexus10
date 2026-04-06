@@ -827,24 +827,28 @@ function NativeModuleMachines({
               className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${isSelected ? ' machine-operations__row--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
             >
               <label
-                className={`machine-operations__select ${isSelected ? 'is-selected' : ''}`}
+                className={`machine-operations__identity ${isSelected ? 'is-selected' : ''}`}
                 htmlFor={`machine-select-${record.id}`}
               >
-                <input
-                  id={`machine-select-${record.id}`}
-                  type="checkbox"
-                  checked={isSelected}
-                  disabled={exitingIds.has(record.id) || isBulkConfirming}
-                  onChange={() => onToggleSelection?.(record.id)}
-                />
-                <span className="machine-operations__select-box" aria-hidden="true" />
+                <span className={`machine-operations__select ${isSelected ? 'is-selected' : ''}`}>
+                  <input
+                    id={`machine-select-${record.id}`}
+                    type="checkbox"
+                    checked={isSelected}
+                    disabled={exitingIds.has(record.id) || isBulkConfirming}
+                    onChange={() => onToggleSelection?.(record.id)}
+                  />
+                  <span className="machine-operations__select-box" aria-hidden="true" />
+                </span>
+                <span className="machine-operations__identity-copy">
+                  <strong className="machine-operations__row-device">{record.device}</strong>
+                  <span className="machine-operations__row-holder">
+                    {record.holder || 'Sem entregador'}
+                  </span>
+                </span>
                 <span className="sr-only">Selecionar {record.device}</span>
               </label>
-              <strong className="machine-operations__row-device">{record.device}</strong>
-              <span className="machine-operations__row-meta">
-                {record.holder || 'Sem entregador'}
-              </span>
-              <span className="machine-operations__row-meta">{record.model}</span>
+              <span className="machine-operations__row-model">{record.model}</span>
               <span className={`ui-badge ${statusClass}`}>{statusLabel}</span>
               <label
                 className={`machine-operations__row-check ${isPresent ? 'is-checked' : ''}`}
