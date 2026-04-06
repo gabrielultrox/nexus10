@@ -758,6 +758,7 @@ function NativeModuleMachines({
   bulkConfirmProgress,
 }) {
   const headerCheckboxRef = useRef(null)
+  const [viewMode, setViewMode] = useState('cards')
 
   useEffect(() => {
     if (!headerCheckboxRef.current) {
@@ -770,17 +771,39 @@ function NativeModuleMachines({
   return (
     <div className="machine-operations">
       <div className="machine-operations__bulk-bar">
-        <label className="machine-operations__bulk-check" htmlFor="machines-select-all">
-          <input
-            ref={headerCheckboxRef}
-            id="machines-select-all"
-            type="checkbox"
-            checked={allVisibleSelected}
-            disabled={totalCount === 0 || isBulkConfirming}
-            onChange={() => onToggleAllSelection?.()}
-          />
-          <span>Selecionar todos visiveis</span>
-        </label>
+        <div className="machine-operations__bulk-primary">
+          <label className="machine-operations__bulk-check" htmlFor="machines-select-all">
+            <input
+              ref={headerCheckboxRef}
+              id="machines-select-all"
+              type="checkbox"
+              checked={allVisibleSelected}
+              disabled={totalCount === 0 || isBulkConfirming}
+              onChange={() => onToggleAllSelection?.()}
+            />
+            <span>Selecionar todos visiveis</span>
+          </label>
+          <div
+            className="machine-operations__view-switch"
+            role="tablist"
+            aria-label="Modo de visualizacao das maquininhas"
+          >
+            <button
+              type="button"
+              className={`machine-operations__view-button${viewMode === 'cards' ? ' is-active' : ''}`}
+              onClick={() => setViewMode('cards')}
+            >
+              Cards
+            </button>
+            <button
+              type="button"
+              className={`machine-operations__view-button${viewMode === 'compact' ? ' is-active' : ''}`}
+              onClick={() => setViewMode('compact')}
+            >
+              Compacto
+            </button>
+          </div>
+        </div>
         <div className="machine-operations__bulk-meta">
           <span className="machine-operations__bulk-count">
             {selectedCount} de {totalCount} selecionadas
@@ -814,7 +837,7 @@ function NativeModuleMachines({
           </Button>
         </div>
       </div>
-      <div className="machine-operations__card-grid">
+      <div className={`machine-operations__card-grid machine-operations__card-grid--${viewMode}`}>
         {records.map((record) => {
           const isPresent = record.status === 'Presente'
           const statusLabel = isPresent ? 'Ativo' : 'Ausente'
@@ -824,7 +847,7 @@ function NativeModuleMachines({
           return (
             <article
               key={record.id}
-              className={`machine-operations__card ${isPresent ? 'machine-operations__card--present' : 'machine-operations__card--absent'}${isSelected ? ' machine-operations__card--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
+              className={`machine-operations__card ${isPresent ? 'machine-operations__card--present' : 'machine-operations__card--absent'}${isSelected ? ' machine-operations__card--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}${viewMode === 'compact' ? ' machine-operations__card--compact' : ''}`}
             >
               <div className="machine-operations__card-top">
                 <label
