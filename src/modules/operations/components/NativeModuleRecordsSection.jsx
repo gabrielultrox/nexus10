@@ -814,7 +814,7 @@ function NativeModuleMachines({
           </Button>
         </div>
       </div>
-      <div className="machine-operations__list">
+      <div className="machine-operations__card-grid">
         {records.map((record) => {
           const isPresent = record.status === 'Presente'
           const statusLabel = isPresent ? 'Ativo' : 'Ausente'
@@ -824,13 +824,13 @@ function NativeModuleMachines({
           return (
             <article
               key={record.id}
-              className={`machine-operations__row ${isPresent ? 'machine-operations__row--present' : 'machine-operations__row--absent'}${isSelected ? ' machine-operations__row--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
+              className={`machine-operations__card ${isPresent ? 'machine-operations__card--present' : 'machine-operations__card--absent'}${isSelected ? ' machine-operations__card--selected' : ''}${exitingIds.has(record.id) ? ' is-exiting' : ''}`}
             >
-              <label
-                className={`machine-operations__identity ${isSelected ? 'is-selected' : ''}`}
-                htmlFor={`machine-select-${record.id}`}
-              >
-                <span className={`machine-operations__select ${isSelected ? 'is-selected' : ''}`}>
+              <div className="machine-operations__card-top">
+                <label
+                  className={`machine-operations__selection-toggle ${isSelected ? 'is-selected' : ''}`}
+                  htmlFor={`machine-select-${record.id}`}
+                >
                   <input
                     id={`machine-select-${record.id}`}
                     type="checkbox"
@@ -838,40 +838,55 @@ function NativeModuleMachines({
                     disabled={exitingIds.has(record.id) || isBulkConfirming}
                     onChange={() => onToggleSelection?.(record.id)}
                   />
-                  <span className="machine-operations__select-box" aria-hidden="true" />
-                </span>
-                <span className="machine-operations__identity-copy">
-                  <strong className="machine-operations__row-device">{record.device}</strong>
-                  <span className="machine-operations__row-holder">
-                    {record.holder || 'Sem entregador'}
+                  <span className="machine-operations__selection-box" aria-hidden="true" />
+                  <span className="machine-operations__selection-label">Selecionada</span>
+                </label>
+                <span className={`ui-badge ${statusClass}`}>{statusLabel}</span>
+              </div>
+
+              <div className="machine-operations__card-identity">
+                <p className="machine-operations__card-eyebrow">Maquininha</p>
+                <strong className="machine-operations__card-device">{record.device}</strong>
+                <p className="machine-operations__card-holder">
+                  {record.holder || 'Sem entregador vinculado'}
+                </p>
+              </div>
+
+              <div className="machine-operations__card-meta">
+                <div className="machine-operations__card-meta-item">
+                  <span>Modelo</span>
+                  <strong>{record.model || 'Nao informado'}</strong>
+                </div>
+                <div className="machine-operations__card-meta-item">
+                  <span>Presenca</span>
+                  <strong>{isPresent ? 'Confirmada' : 'Pendente'}</strong>
+                </div>
+              </div>
+
+              <div className="machine-operations__card-actions">
+                <label
+                  className={`machine-operations__presence-toggle ${isPresent ? 'is-checked' : ''}`}
+                  htmlFor={`machine-check-${record.id}`}
+                >
+                  <input
+                    id={`machine-check-${record.id}`}
+                    type="checkbox"
+                    checked={isPresent}
+                    disabled={exitingIds.has(record.id) || isBulkConfirming}
+                    onChange={() => onToggle(record.id)}
+                  />
+                  <span className="machine-operations__presence-box" aria-hidden="true" />
+                  <span className="machine-operations__presence-label">
+                    {isPresent ? 'Confirmada' : 'Confirmar presenca'}
                   </span>
-                </span>
-                <span className="sr-only">Selecionar {record.device}</span>
-              </label>
-              <span className="machine-operations__row-model">{record.model}</span>
-              <span className={`ui-badge ${statusClass}`}>{statusLabel}</span>
-              <label
-                className={`machine-operations__row-check ${isPresent ? 'is-checked' : ''}`}
-                htmlFor={`machine-check-${record.id}`}
-              >
-                <input
-                  id={`machine-check-${record.id}`}
-                  type="checkbox"
-                  checked={isPresent}
+                </label>
+                <DestructiveIconButton
+                  className="machine-operations__icon-button"
                   disabled={exitingIds.has(record.id) || isBulkConfirming}
-                  onChange={() => onToggle(record.id)}
+                  onClick={() => onDelete(record.id)}
+                  label={`Excluir ${record.device}`}
                 />
-                <span className="machine-operations__row-check-box" aria-hidden="true" />
-                <span className="machine-operations__row-check-label">
-                  {isPresent ? 'Confirmada' : 'Confirmar'}
-                </span>
-              </label>
-              <DestructiveIconButton
-                className="machine-operations__icon-button"
-                disabled={exitingIds.has(record.id) || isBulkConfirming}
-                onClick={() => onDelete(record.id)}
-                label={`Excluir ${record.device}`}
-              />
+              </div>
             </article>
           )
         })}
