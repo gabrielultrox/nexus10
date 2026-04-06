@@ -141,6 +141,7 @@
   --color-text-muted: var(--text-muted);
   --color-text-disabled: var(--token-theme-dark-text-disabled);
   --color-text-inverse: var(--color-static-white);
+  --color-accent-contrast: var(--color-static-white);
 
   --color-border-subtle: color-mix(in srgb, var(--border-subtle) 55%, transparent);
   --color-border-default: color-mix(in srgb, var(--border) 72%, transparent);
@@ -315,6 +316,7 @@
   --color-text-muted: var(--text-muted);
   --color-text-disabled: var(--token-theme-light-text-disabled);
   --color-text-inverse: #f4f8ff;
+  --color-accent-contrast: var(--color-static-white);
 
   --color-border-subtle: color-mix(in srgb, var(--accent) 10%, var(--border-subtle));
   --color-border-default: color-mix(in srgb, var(--accent) 18%, var(--border));
@@ -460,6 +462,7 @@
   --color-text-muted: var(--text-muted);
   --color-text-disabled: var(--token-theme-amber-text-disabled);
   --color-text-inverse: #fff7ea;
+  --color-accent-contrast: var(--color-static-white);
 
   --color-border-subtle: color-mix(in srgb, var(--warning) 14%, var(--border-subtle));
   --color-border-default: color-mix(in srgb, var(--warning) 24%, var(--border));

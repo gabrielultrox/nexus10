@@ -1729,7 +1729,7 @@ body::after {
 .commerce-shell__tab--active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--color-accent-contrast);
 }
 
 @media (max-width: 760px) {

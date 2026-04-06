@@ -3554,7 +3554,7 @@
 .schedule-records__view-button.is-active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--color-accent-contrast);
 }
 
 .schedule-grid {
