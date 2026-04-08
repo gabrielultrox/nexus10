@@ -7,6 +7,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore'
 
 import { requestBackend } from './backendApi'
@@ -269,6 +270,20 @@ function getOrdersCollectionRef(storeId) {
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.orders)
 }
 
+function buildCreatedAtConstraints(options = {}) {
+  const constraints = []
+
+  if (options.startDate) {
+    constraints.push(where('createdAt', '>=', new Date(`${options.startDate}T00:00:00`)))
+  }
+
+  if (options.endDate) {
+    constraints.push(where('createdAt', '<=', new Date(`${options.endDate}T23:59:59`)))
+  }
+
+  return constraints
+}
+
 function normalizeOrderRecord(id, data, { isExternal = false } = {}) {
   const createdAt = asDate(data.createdAt)
   const updatedAt = asDate(data.updatedAt) ?? createdAt
@@ -334,7 +349,7 @@ function normalizeOrder(documentSnapshot) {
   return normalizeOrderRecord(documentSnapshot.id, documentSnapshot.data())
 }
 
-export function subscribeToOrders(storeId, onData, onError) {
+export function subscribeToOrders(storeId, onData, onError, options = {}) {
   if (isE2eMode()) {
     return subscribeE2eOrders(storeId, onData)
   }
@@ -344,7 +359,11 @@ export function subscribeToOrders(storeId, onData, onError) {
     return () => {}
   }
 
-  const ordersQuery = query(getOrdersCollectionRef(storeId), orderBy('createdAt', 'desc'))
+  const ordersQuery = query(
+    getOrdersCollectionRef(storeId),
+    ...buildCreatedAtConstraints(options),
+    orderBy('createdAt', 'desc'),
+  )
 
   return guardRemoteSubscription(
     () =>

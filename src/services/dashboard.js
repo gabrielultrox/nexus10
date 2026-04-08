@@ -323,7 +323,7 @@ export function loadDashboardOperationalSources() {
   }
 }
 
-export function subscribeToDashboardSources(storeId, handlers) {
+export function subscribeToDashboardSources(storeId, handlers, options = {}) {
   if (!firebaseReady || !storeId || !canUseRemoteSync()) {
     handlers.onSales?.([])
     handlers.onOrders?.([])
@@ -334,14 +334,14 @@ export function subscribeToDashboardSources(storeId, handlers) {
 
   const unsubscribers = []
 
-  unsubscribers.push(subscribeToSales(storeId, handlers.onSales, handlers.onError))
+  unsubscribers.push(subscribeToSales(storeId, handlers.onSales, handlers.onError, options))
   unsubscribers.push(
     subscribeToInventoryItems(storeId, handlers.onInventoryItems, handlers.onError),
   )
   unsubscribers.push(
-    subscribeToFinancialEntries(storeId, handlers.onFinancialEntries, handlers.onError),
+    subscribeToFinancialEntries(storeId, handlers.onFinancialEntries, handlers.onError, options),
   )
-  unsubscribers.push(subscribeToOrders(storeId, handlers.onOrders, handlers.onError))
+  unsubscribers.push(subscribeToOrders(storeId, handlers.onOrders, handlers.onError, options))
 
   return () => {
     unsubscribers.forEach((unsubscribe) => unsubscribe?.())

@@ -140,30 +140,37 @@ function DashboardPage() {
       }
     }
 
-    return subscribeToDashboardSources(currentStoreId, {
-      onSales(nextSales) {
-        setSales(nextSales)
-        markLoaded('sales')
+    return subscribeToDashboardSources(
+      currentStoreId,
+      {
+        onSales(nextSales) {
+          setSales(nextSales)
+          markLoaded('sales')
+        },
+        onOrders(nextOrders) {
+          setOrders(nextOrders)
+          markLoaded('orders')
+        },
+        onInventoryItems(nextInventoryItems) {
+          setInventoryItems(nextInventoryItems)
+          markLoaded('inventory')
+        },
+        onFinancialEntries(nextFinancialEntries) {
+          setFinancialEntries(nextFinancialEntries)
+          markLoaded('financial')
+        },
+        onError(error) {
+          setErrorMessage(error.message ?? 'Nao foi possivel carregar o dashboard operacional.')
+          setErrorObject(error)
+          setIsDashboardLoading(false)
+        },
       },
-      onOrders(nextOrders) {
-        setOrders(nextOrders)
-        markLoaded('orders')
+      {
+        startDate: period.startDate,
+        endDate: period.endDate,
       },
-      onInventoryItems(nextInventoryItems) {
-        setInventoryItems(nextInventoryItems)
-        markLoaded('inventory')
-      },
-      onFinancialEntries(nextFinancialEntries) {
-        setFinancialEntries(nextFinancialEntries)
-        markLoaded('financial')
-      },
-      onError(error) {
-        setErrorMessage(error.message ?? 'Nao foi possivel carregar o dashboard operacional.')
-        setErrorObject(error)
-        setIsDashboardLoading(false)
-      },
-    })
-  }, [currentStoreId, isPageVisible])
+    )
+  }, [currentStoreId, isPageVisible, period.endDate, period.startDate])
 
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
 

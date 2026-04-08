@@ -7,6 +7,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore'
 
 import {
@@ -87,7 +88,21 @@ function getFinancialOccurrenceDocRef(storeId, occurrenceId) {
   )
 }
 
-export function subscribeToFinancialEntries(storeId, onData, onError) {
+function buildCreatedAtConstraints(options = {}) {
+  const constraints = []
+
+  if (options.startDate) {
+    constraints.push(where('createdAt', '>=', new Date(`${options.startDate}T00:00:00`)))
+  }
+
+  if (options.endDate) {
+    constraints.push(where('createdAt', '<=', new Date(`${options.endDate}T23:59:59`)))
+  }
+
+  return constraints
+}
+
+export function subscribeToFinancialEntries(storeId, onData, onError, options = {}) {
   if (!storeId || !canUseRemoteSync()) {
     onData([])
     return () => {}
@@ -95,6 +110,7 @@ export function subscribeToFinancialEntries(storeId, onData, onError) {
 
   const entriesQuery = query(
     getFinancialEntriesCollectionRef(storeId),
+    ...buildCreatedAtConstraints(options),
     orderBy('createdAt', 'desc'),
   )
 

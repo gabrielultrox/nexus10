@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 
 import { requestBackend } from './backendApi'
 import {
@@ -163,6 +163,20 @@ function getSalesCollectionRef(storeId) {
   return collection(firebaseDb, FIRESTORE_COLLECTIONS.stores, storeId, FIRESTORE_COLLECTIONS.sales)
 }
 
+function buildCreatedAtConstraints(options = {}) {
+  const constraints = []
+
+  if (options.startDate) {
+    constraints.push(where('createdAt', '>=', new Date(`${options.startDate}T00:00:00`)))
+  }
+
+  if (options.endDate) {
+    constraints.push(where('createdAt', '<=', new Date(`${options.endDate}T23:59:59`)))
+  }
+
+  return constraints
+}
+
 function resolveSaleTotals(data) {
   const totals = data.totals ?? {}
   const subtotal = Number(totals.subtotal ?? data.subtotal ?? 0)
@@ -301,7 +315,7 @@ export function validateSaleInput(values) {
   }
 }
 
-export function subscribeToSales(storeId, onData, onError) {
+export function subscribeToSales(storeId, onData, onError, options = {}) {
   if (isE2eMode()) {
     return subscribeE2eSales(storeId, onData)
   }
@@ -311,7 +325,11 @@ export function subscribeToSales(storeId, onData, onError) {
     return () => {}
   }
 
-  const salesQuery = query(getSalesCollectionRef(storeId), orderBy('createdAt', 'desc'))
+  const salesQuery = query(
+    getSalesCollectionRef(storeId),
+    ...buildCreatedAtConstraints(options),
+    orderBy('createdAt', 'desc'),
+  )
 
   return guardRemoteSubscription(
     () =>
