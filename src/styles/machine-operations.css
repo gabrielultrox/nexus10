@@ -40,17 +40,20 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   margin-bottom: 8px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 18px;
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--accent-soft) 24%, transparent),
-      transparent 74%
+      color-mix(in srgb, var(--accent-soft) 28%, transparent),
+      transparent 68%
     ),
     var(--bg-elevated);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-static-white) 6%, transparent),
+    0 18px 32px color-mix(in srgb, var(--color-shadow-rgb) 8%, transparent);
 }
 
 .machine-operations__bulk-primary,
@@ -79,6 +82,21 @@
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
+}
+
+.machine-operations__bulk-primary::after {
+  content: 'Checklist do hardware';
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 80%, transparent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .machine-operations__bulk-check input {
@@ -128,6 +146,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.machine-operations__bulk-count--soft {
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 38%, transparent);
+  color: var(--text-secondary);
+}
+
 .machine-operations__bulk-count--muted {
   background: transparent;
   border: 1px dashed var(--border);
@@ -168,6 +192,11 @@
   min-width: 0;
   overflow: hidden;
   position: relative;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
 }
 
 .machine-operations__card::before {
@@ -198,6 +227,11 @@
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
     0 16px 30px color-mix(in srgb, var(--accent-soft) 18%, transparent);
+}
+
+.machine-operations__card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--color-border-subtle));
 }
 
 .machine-operations__card--compact {
@@ -325,7 +359,7 @@
 
 .machine-operations__card-meta-item strong {
   color: var(--color-text-primary);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.3;
   min-width: 0;
@@ -472,6 +506,10 @@
   .machine-operations__bulk-bar {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .machine-operations__bulk-primary::after {
+    justify-content: center;
   }
 
   .machine-operations__bulk-primary,

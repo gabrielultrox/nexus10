@@ -11,6 +11,7 @@ import { useConfirm } from '../../../hooks/useConfirm'
 
 const ROW_EXIT_DURATION_MS = 200
 const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
+const MACHINE_VIEW_MODE_STORAGE_KEY = 'nexus-machine-view-mode'
 
 function getStatusBadgeClass(value) {
   const normalized = String(value ?? '')
@@ -761,12 +762,32 @@ function NativeModuleMachines({
   const [viewMode, setViewMode] = useState('cards')
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const savedViewMode = window.localStorage.getItem(MACHINE_VIEW_MODE_STORAGE_KEY)
+
+    if (savedViewMode === 'cards' || savedViewMode === 'compact') {
+      setViewMode(savedViewMode)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!headerCheckboxRef.current) {
       return
     }
 
     headerCheckboxRef.current.indeterminate = someVisibleSelected
   }, [someVisibleSelected])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(MACHINE_VIEW_MODE_STORAGE_KEY, viewMode)
+  }, [viewMode])
 
   return (
     <div className="machine-operations">
@@ -792,6 +813,7 @@ function NativeModuleMachines({
               type="button"
               className={`machine-operations__view-button${viewMode === 'cards' ? ' is-active' : ''}`}
               onClick={() => setViewMode('cards')}
+              aria-pressed={viewMode === 'cards'}
             >
               Cards
             </button>
@@ -799,6 +821,7 @@ function NativeModuleMachines({
               type="button"
               className={`machine-operations__view-button${viewMode === 'compact' ? ' is-active' : ''}`}
               onClick={() => setViewMode('compact')}
+              aria-pressed={viewMode === 'compact'}
             >
               Compacto
             </button>
@@ -810,6 +833,9 @@ function NativeModuleMachines({
           </span>
           <span className="machine-operations__bulk-count machine-operations__bulk-count--muted">
             {confirmedCount} confirmadas no filtro
+          </span>
+          <span className="machine-operations__bulk-count machine-operations__bulk-count--soft">
+            Visualizacao: {viewMode === 'compact' ? 'Compacta' : 'Cards'}
           </span>
           {isBulkConfirming ? (
             <span className="machine-operations__bulk-count machine-operations__bulk-count--processing">

@@ -352,10 +352,17 @@
   gap: var(--space-3);
   flex-wrap: wrap;
   margin-bottom: var(--space-3);
-  padding: var(--space-2-5) var(--space-3-5);
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-section);
-  background: color-mix(in srgb, var(--surface-panel-soft-alt) 97%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 32%, transparent),
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 97%, transparent);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
 }
 
 .native-module__toolbar-primary {
@@ -392,7 +399,7 @@
 .native-module__toolbar-summary-text {
   color: var(--color-text-muted);
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;

@@ -295,6 +295,10 @@ function LoginPage() {
                   <span>Ambiente</span>
                   <strong>ERP operacional da loja</strong>
                 </div>
+                <div className="auth-login__hero-card auth-login__hero-card--accent">
+                  <span>Operadores</span>
+                  <strong>{operatorOptions.length || 0} disponiveis</strong>
+                </div>
               </div>
             </div>
 
@@ -305,6 +309,16 @@ function LoginPage() {
                 <p className="text-body">
                   O PIN ja foi validado. Agora selecione apenas o operador para abrir a sessao.
                 </p>
+                <div className="auth-card__meta-strip" aria-label="Resumo do acesso">
+                  <div className="auth-card__meta-pill">
+                    <span>PIN</span>
+                    <strong>Validado</strong>
+                  </div>
+                  <div className="auth-card__meta-pill">
+                    <span>Operadores</span>
+                    <strong>{operatorOptions.length || 0}</strong>
+                  </div>
+                </div>
               </div>
 
               <div className="ui-field">
