@@ -7,11 +7,24 @@ import DestructiveIconButton from '../../../components/ui/DestructiveIconButton'
 import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 import { Button, Input } from '../../../components/ui'
+import { useAuth } from '../../../contexts/AuthContext'
 import { useConfirm } from '../../../hooks/useConfirm'
 
 const ROW_EXIT_DURATION_MS = 200
 const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
 const MACHINE_VIEW_MODE_STORAGE_KEY = 'nexus-machine-view-mode'
+
+function getMachineViewModeStorageKey(operatorName = '') {
+  const normalizedOperatorName = String(operatorName ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+
+  return normalizedOperatorName
+    ? `${MACHINE_VIEW_MODE_STORAGE_KEY}:${normalizedOperatorName}`
+    : MACHINE_VIEW_MODE_STORAGE_KEY
+}
 
 function getStatusBadgeClass(value) {
   const normalized = String(value ?? '')
@@ -758,20 +771,28 @@ function NativeModuleMachines({
   isBulkConfirming,
   bulkConfirmProgress,
 }) {
+  const { session } = useAuth()
   const headerCheckboxRef = useRef(null)
   const [viewMode, setViewMode] = useState('cards')
+  const machineViewModeStorageKey = useMemo(
+    () => getMachineViewModeStorageKey(session?.operatorName),
+    [session?.operatorName],
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
     }
 
-    const savedViewMode = window.localStorage.getItem(MACHINE_VIEW_MODE_STORAGE_KEY)
+    const savedViewMode =
+      window.localStorage.getItem(machineViewModeStorageKey) ??
+      window.localStorage.getItem(MACHINE_VIEW_MODE_STORAGE_KEY)
 
     if (savedViewMode === 'cards' || savedViewMode === 'compact') {
       setViewMode(savedViewMode)
+      window.localStorage.setItem(machineViewModeStorageKey, savedViewMode)
     }
-  }, [])
+  }, [machineViewModeStorageKey])
 
   useEffect(() => {
     if (!headerCheckboxRef.current) {
@@ -786,8 +807,8 @@ function NativeModuleMachines({
       return
     }
 
-    window.localStorage.setItem(MACHINE_VIEW_MODE_STORAGE_KEY, viewMode)
-  }, [viewMode])
+    window.localStorage.setItem(machineViewModeStorageKey, viewMode)
+  }, [machineViewModeStorageKey, viewMode])
 
   return (
     <div className="machine-operations">
@@ -837,6 +858,11 @@ function NativeModuleMachines({
           <span className="machine-operations__bulk-count machine-operations__bulk-count--soft">
             Visualizacao: {viewMode === 'compact' ? 'Compacta' : 'Cards'}
           </span>
+          {session?.operatorName ? (
+            <span className="machine-operations__bulk-count machine-operations__bulk-count--operator">
+              Operador: {session.operatorName}
+            </span>
+          ) : null}
           {isBulkConfirming ? (
             <span className="machine-operations__bulk-count machine-operations__bulk-count--processing">
               Processando {bulkConfirmProgress.processed} de {bulkConfirmProgress.total}
