@@ -22,6 +22,7 @@ export const FIRESTORE_COLLECTIONS = {
   backupLogs: 'backup_logs',
   backupSnapshots: 'backup_snapshots',
   settings: 'settings',
+  uiPreferences: 'ui_preferences',
   notificationsPreferences: 'notifications_preferences',
   reports: 'reports',
 }
@@ -338,6 +339,10 @@ export const firestoreDataModel = {
   settings: {
     path: 'stores/{storeId}/settings/{settingId}',
     fields: ['storeId', 'tenantId', 'type', 'payload'],
+  },
+  ui_preferences: {
+    path: 'stores/{storeId}/ui_preferences/{operatorKey}',
+    fields: ['operatorName', 'machineViewMode', 'updatedAt', 'updatedAtServer'],
   },
   notifications_preferences: {
     path: 'stores/{storeId}/notifications_preferences/{userId}',

@@ -8,7 +8,12 @@ import Select from '../../../components/ui/Select'
 import EmptyState from '../../../components/ui/EmptyState'
 import { Button, Input } from '../../../components/ui'
 import { useAuth } from '../../../contexts/AuthContext'
+import { useStore } from '../../../contexts/StoreContext'
 import { useConfirm } from '../../../hooks/useConfirm'
+import {
+  loadRemoteUiPreferences,
+  persistRemoteUiPreferences,
+} from '../../../services/uiPreferencesRemote'
 
 const ROW_EXIT_DURATION_MS = 200
 const DEFAULT_SCHEDULE_WINDOWS = ['10:00', '14:00', '18:00']
@@ -772,27 +777,59 @@ function NativeModuleMachines({
   bulkConfirmProgress,
 }) {
   const { session } = useAuth()
+  const { currentStoreId } = useStore()
   const headerCheckboxRef = useRef(null)
   const [viewMode, setViewMode] = useState('cards')
+  const [viewModeHydrated, setViewModeHydrated] = useState(false)
   const machineViewModeStorageKey = useMemo(
     () => getMachineViewModeStorageKey(session?.operatorName),
     [session?.operatorName],
   )
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
+    let isMounted = true
+
+    async function hydrateViewMode() {
+      if (typeof window === 'undefined') {
+        setViewModeHydrated(true)
+        return
+      }
+
+      const savedViewMode =
+        window.localStorage.getItem(machineViewModeStorageKey) ??
+        window.localStorage.getItem(MACHINE_VIEW_MODE_STORAGE_KEY)
+
+      if ((savedViewMode === 'cards' || savedViewMode === 'compact') && isMounted) {
+        setViewMode(savedViewMode)
+        window.localStorage.setItem(machineViewModeStorageKey, savedViewMode)
+      }
+
+      try {
+        const remotePreferences = await loadRemoteUiPreferences({
+          storeId: currentStoreId,
+          operatorName: session?.operatorName,
+        })
+        const remoteViewMode = remotePreferences?.machineViewMode
+
+        if ((remoteViewMode === 'cards' || remoteViewMode === 'compact') && isMounted) {
+          setViewMode(remoteViewMode)
+          window.localStorage.setItem(machineViewModeStorageKey, remoteViewMode)
+        }
+      } catch (error) {
+        console.warn('Nao foi possivel carregar a preferencia remota de visualizacao.', error)
+      } finally {
+        if (isMounted) {
+          setViewModeHydrated(true)
+        }
+      }
     }
 
-    const savedViewMode =
-      window.localStorage.getItem(machineViewModeStorageKey) ??
-      window.localStorage.getItem(MACHINE_VIEW_MODE_STORAGE_KEY)
+    hydrateViewMode()
 
-    if (savedViewMode === 'cards' || savedViewMode === 'compact') {
-      setViewMode(savedViewMode)
-      window.localStorage.setItem(machineViewModeStorageKey, savedViewMode)
+    return () => {
+      isMounted = false
     }
-  }, [machineViewModeStorageKey])
+  }, [currentStoreId, machineViewModeStorageKey, session?.operatorName])
 
   useEffect(() => {
     if (!headerCheckboxRef.current) {
@@ -803,12 +840,19 @@ function NativeModuleMachines({
   }, [someVisibleSelected])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !viewModeHydrated) {
       return
     }
 
     window.localStorage.setItem(machineViewModeStorageKey, viewMode)
-  }, [machineViewModeStorageKey, viewMode])
+    persistRemoteUiPreferences({
+      storeId: currentStoreId,
+      operatorName: session?.operatorName,
+      preferences: { machineViewMode: viewMode },
+    }).catch((error) => {
+      console.warn('Nao foi possivel salvar a preferencia remota de visualizacao.', error)
+    })
+  }, [currentStoreId, machineViewModeStorageKey, session?.operatorName, viewMode, viewModeHydrated])
 
   return (
     <div className="machine-operations">

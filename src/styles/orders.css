@@ -1849,6 +1849,54 @@
   min-height: 34px;
 }
 
+.workspace-shell--orders {
+  gap: var(--space-4);
+}
+
+.workspace-shell--orders .workspace-header {
+  padding: var(--space-4);
+  border-color: color-mix(in srgb, var(--color-border-default) 88%, transparent);
+  border-radius: calc(var(--radius-shell) + 4px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 30%, transparent),
+      transparent 38%
+    ),
+    color-mix(in srgb, var(--surface-panel-strong) 98%, transparent);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--color-shadow-rgb) 7%, transparent);
+}
+
+.workspace-shell--orders .workspace-loading-card,
+.workspace-shell--orders .orders-domain__list-shell,
+.workspace-shell--orders .orders-domain__detail-shell,
+.workspace-shell--orders .orders-domain__summary,
+.workspace-shell--orders .orders-domain__detail-hero-main,
+.workspace-shell--orders .orders-domain__action-rail {
+  border-color: color-mix(in srgb, var(--color-border-default) 88%, transparent);
+  box-shadow: 0 18px 36px color-mix(in srgb, var(--color-shadow-rgb) 6%, transparent);
+}
+
+.workspace-shell--orders .workspace-loading-card {
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-card-gloss) 26%, transparent),
+      transparent 34%
+    ),
+    color-mix(in srgb, var(--surface-panel-soft-alt) 99%, transparent);
+}
+
+.workspace-shell--orders .workspace-loading-card__header {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border-subtle) 92%, transparent);
+}
+
+.workspace-shell--orders .orders-domain__summary-row {
+  min-height: calc(var(--space-5) + var(--space-3));
+}
+
 .orders-domain,
 .sales-domain {
   gap: var(--space-3);
