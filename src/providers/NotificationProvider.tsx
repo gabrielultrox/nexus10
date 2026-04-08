@@ -141,6 +141,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<PreferencesRecord>(() =>
     loadNotificationPreferences({ storeId: currentStoreId, userId: session?.uid, session }),
   )
+  const [isDocumentVisible, setIsDocumentVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState !== 'hidden',
+  )
   const operationalNotificationsEnabled = Boolean(
     currentStoreId && session?.uid && location.pathname !== '/login',
   )
@@ -161,12 +164,52 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const liveLastConnectedAt = liveNotifications.lastConnectedAt
   const subscribeToLiveNotifications = liveNotifications.subscribe
   const reconnectLiveNotifications = liveNotifications.reconnect
+  const shouldWatchOrderFallback =
+    shouldPresentNotification(
+      createNotificationFromLiveEvent({
+        type: 'order.created',
+        metadata: { eventType: 'order.created' },
+      }),
+      preferences,
+    ) ||
+    shouldPresentNotification(
+      createNotificationFromLiveEvent({
+        type: 'delivery.delayed',
+        metadata: { eventType: 'delivery.delayed' },
+      }),
+      preferences,
+    )
+  const shouldWatchSalesFallback = shouldPresentNotification(
+    createNotificationFromLiveEvent({
+      type: 'order.status.changed',
+      metadata: { eventType: 'order.status.changed' },
+    }),
+    preferences,
+  )
+  const shouldWatchInventoryFallback = shouldPresentNotification(
+    createNotificationFromLiveEvent({
+      type: 'integration.alert',
+      metadata: { eventType: 'integration.alert' },
+    }),
+    preferences,
+  )
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.read).length,
     [notifications],
   )
   const shouldUseFirestoreNotificationFallback =
-    deferredNotificationsEnabled && liveConnectionStatus === 'disconnected'
+    deferredNotificationsEnabled && liveConnectionStatus === 'disconnected' && isDocumentVisible
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      setIsDocumentVisible(document.visibilityState !== 'hidden')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   useEffect(() => {
     if (!operationalNotificationsEnabled) {
@@ -510,97 +553,111 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     let unsubscribers: Array<() => void> = []
 
+    if (!shouldWatchOrderFallback && !shouldWatchSalesFallback && !shouldWatchInventoryFallback) {
+      return undefined
+    }
+
     void Promise.all([
-      import('../services/orders'),
-      import('../services/sales'),
-      import('../services/inventory'),
+      shouldWatchOrderFallback ? import('../services/orders') : Promise.resolve(null),
+      shouldWatchSalesFallback ? import('../services/sales') : Promise.resolve(null),
+      shouldWatchInventoryFallback ? import('../services/inventory') : Promise.resolve(null),
     ])
       .then(([ordersModule, salesModule, inventoryModule]) => {
         if (cancelled) {
           return
         }
 
-        const unsubscribeOrders = ordersModule.subscribeToOrders(
-          currentStoreId,
-          (orders: NotificationRecord[]) => {
-            const nextKnownIds = new Set<string>()
+        if (ordersModule) {
+          const unsubscribeOrders = ordersModule.subscribeToOrders(
+            currentStoreId,
+            (orders: NotificationRecord[]) => {
+              const nextKnownIds = new Set<string>()
 
-            if (ordersInitializedRef.current) {
-              orders.forEach((order: NotificationRecord) => {
-                nextKnownIds.add(order.id)
+              if (ordersInitializedRef.current) {
+                orders.forEach((order: NotificationRecord) => {
+                  nextKnownIds.add(order.id)
 
-                if (!knownOrderIdsRef.current.has(order.id)) {
-                  notifyNewOrder(order)
-                  recordAuditLog({
-                    storeId: currentStoreId,
-                    tenantId,
-                    actor: buildAuditActor(),
-                    action: 'order.created',
-                    entityType: 'order',
-                    entityId: order.id,
-                    description: `Pedido ${String(order.number ?? `#${order.id.slice(0, 6).toUpperCase()}`)} entrou na fila operacional.`,
-                  })
-                }
-              })
-            } else {
-              orders.forEach((order: NotificationRecord) => nextKnownIds.add(order.id))
-            }
-
-            orders.forEach((order: NotificationRecord) => {
-              if (isOrderDelayed(order)) {
-                notifyDelayedOrder(order)
+                  if (!knownOrderIdsRef.current.has(order.id)) {
+                    notifyNewOrder(order)
+                    recordAuditLog({
+                      storeId: currentStoreId,
+                      tenantId,
+                      actor: buildAuditActor(),
+                      action: 'order.created',
+                      entityType: 'order',
+                      entityId: order.id,
+                      description: `Pedido ${String(order.number ?? `#${order.id.slice(0, 6).toUpperCase()}`)} entrou na fila operacional.`,
+                    })
+                  }
+                })
+              } else {
+                orders.forEach((order: NotificationRecord) => nextKnownIds.add(order.id))
               }
-            })
 
-            knownOrderIdsRef.current = nextKnownIds
-            ordersInitializedRef.current = true
-          },
-          (error: any) =>
-            notifyImportantError(
-              error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
-            ),
-        )
-
-        const unsubscribeSales = salesModule.subscribeToSales(
-          currentStoreId,
-          (sales: NotificationRecord[]) => {
-            const nextKnownIds = new Set(knownSaleIdsRef.current)
-
-            if (salesInitializedRef.current) {
-              sales.forEach((sale: NotificationRecord) => {
-                if (
-                  !knownSaleIdsRef.current.has(sale.id) &&
-                  isSalePosted(sale.domainStatus ?? sale.status)
-                ) {
-                  notifySaleCompleted(sale)
+              orders.forEach((order: NotificationRecord) => {
+                if (isOrderDelayed(order)) {
+                  notifyDelayedOrder(order)
                 }
-                nextKnownIds.add(sale.id)
               })
-            } else {
-              sales.forEach((sale: NotificationRecord) => nextKnownIds.add(sale.id))
-            }
 
-            knownSaleIdsRef.current = nextKnownIds
-            salesInitializedRef.current = true
-          },
-          (error: any) => notifyImportantError(error.message),
-        )
+              knownOrderIdsRef.current = nextKnownIds
+              ordersInitializedRef.current = true
+            },
+            (error: any) =>
+              notifyImportantError(
+                error.message ?? 'Nao foi possivel acompanhar pedidos para notificacoes.',
+              ),
+          )
 
-        const unsubscribeInventory = inventoryModule.subscribeToInventoryItems(
-          currentStoreId,
-          (items: NotificationRecord[]) => {
-            items
-              .filter(
-                (item: NotificationRecord) =>
-                  Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
-              )
-              .forEach((item: NotificationRecord) => notifyLowStock(item))
-            inventoryInitializedRef.current = true
-          },
-          (error: any) => notifyImportantError(error.message),
-        )
+          unsubscribers.push(unsubscribeOrders)
+        }
 
-        unsubscribers = [unsubscribeOrders, unsubscribeSales, unsubscribeInventory].filter(Boolean)
+        if (salesModule) {
+          const unsubscribeSales = salesModule.subscribeToSales(
+            currentStoreId,
+            (sales: NotificationRecord[]) => {
+              const nextKnownIds = new Set(knownSaleIdsRef.current)
+
+              if (salesInitializedRef.current) {
+                sales.forEach((sale: NotificationRecord) => {
+                  if (
+                    !knownSaleIdsRef.current.has(sale.id) &&
+                    isSalePosted(sale.domainStatus ?? sale.status)
+                  ) {
+                    notifySaleCompleted(sale)
+                  }
+                  nextKnownIds.add(sale.id)
+                })
+              } else {
+                sales.forEach((sale: NotificationRecord) => nextKnownIds.add(sale.id))
+              }
+
+              knownSaleIdsRef.current = nextKnownIds
+              salesInitializedRef.current = true
+            },
+            (error: any) => notifyImportantError(error.message),
+          )
+
+          unsubscribers.push(unsubscribeSales)
+        }
+
+        if (inventoryModule) {
+          const unsubscribeInventory = inventoryModule.subscribeToInventoryItems(
+            currentStoreId,
+            (items: NotificationRecord[]) => {
+              items
+                .filter(
+                  (item: NotificationRecord) =>
+                    Number(item.currentStock ?? 0) <= Number(item.minimumStock ?? 0),
+                )
+                .forEach((item: NotificationRecord) => notifyLowStock(item))
+              inventoryInitializedRef.current = true
+            },
+            (error: any) => notifyImportantError(error.message),
+          )
+
+          unsubscribers.push(unsubscribeInventory)
+        }
       })
       .catch(() => undefined)
 
@@ -608,7 +665,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       cancelled = true
       unsubscribers.forEach((unsubscribe) => unsubscribe())
     }
-  }, [currentStoreId, shouldUseFirestoreNotificationFallback, tenantId])
+  }, [
+    currentStoreId,
+    shouldUseFirestoreNotificationFallback,
+    shouldWatchInventoryFallback,
+    shouldWatchOrderFallback,
+    shouldWatchSalesFallback,
+    tenantId,
+  ])
 
   const value = useMemo(
     () => ({

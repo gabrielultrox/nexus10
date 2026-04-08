@@ -30,6 +30,9 @@ function formatDateInputValue(date) {
 function DashboardPage() {
   const navigate = useNavigate()
   const { currentStoreId, availableStoreIds, setCurrentStoreId } = useStore()
+  const [isPageVisible, setIsPageVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState !== 'hidden',
+  )
   const [period, setPeriod] = useState(() => getDefaultDashboardPeriod())
   const [sales, setSales] = useState([])
   const [orders, setOrders] = useState([])
@@ -42,6 +45,17 @@ function DashboardPage() {
   const [errorObject, setErrorObject] = useState(null)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [showHeavyPanels, setShowHeavyPanels] = useState(false)
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      setIsPageVisible(document.visibilityState !== 'hidden')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   useEffect(() => {
     const relevantStorageKeys = new Set([
@@ -100,6 +114,10 @@ function DashboardPage() {
       return undefined
     }
 
+    if (!isPageVisible) {
+      return undefined
+    }
+
     setErrorMessage('')
     setErrorObject(null)
     setIsDashboardLoading(true)
@@ -145,7 +163,7 @@ function DashboardPage() {
         setIsDashboardLoading(false)
       },
     })
-  }, [currentStoreId])
+  }, [currentStoreId, isPageVisible])
 
   const dashboardErrorModel = errorObject ? getApiErrorDisplayModel(errorObject) : null
 
