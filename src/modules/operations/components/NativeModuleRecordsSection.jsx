@@ -742,6 +742,14 @@ function isCompletedChangeRecord(record) {
   )
 }
 
+function isPaidAdvanceRecord(record) {
+  const normalized = String(record?.status ?? '')
+    .trim()
+    .toLowerCase()
+
+  return normalized.includes('baixad')
+}
+
 function getReturnActionStateLabel(record) {
   const normalized = String(record?.status ?? '')
     .trim()
@@ -1281,10 +1289,12 @@ function NativeModuleRecordsSection(props) {
   const isMachineChecklist = route.path === 'machines'
   const isDeliveryReading = route.path === 'delivery-reading'
   const isChangeModule = route.path === 'change'
+  const isAdvancesModule = route.path === 'advances'
   const confirm = useConfirm()
   const [exitingIds, setExitingIds] = useState(() => new Set())
   const [deliveryReadingTab, setDeliveryReadingTab] = useState('open')
   const [changeTab, setChangeTab] = useState('pending')
+  const [advancesTab, setAdvancesTab] = useState('pending')
   const exitTimeoutsRef = useRef(new Map())
 
   const deliveryReadingCounts = useMemo(() => {
@@ -1347,6 +1357,35 @@ function NativeModuleRecordsSection(props) {
     )
   }, [changeTab, isChangeModule, visibleRecords])
 
+  const advancesCounts = useMemo(() => {
+    if (!isAdvancesModule) {
+      return { pending: 0, paid: 0 }
+    }
+
+    return visibleRecords.reduce(
+      (accumulator, record) => {
+        if (isPaidAdvanceRecord(record)) {
+          accumulator.paid += 1
+        } else {
+          accumulator.pending += 1
+        }
+
+        return accumulator
+      },
+      { pending: 0, paid: 0 },
+    )
+  }, [isAdvancesModule, visibleRecords])
+
+  const advancesVisibleRecords = useMemo(() => {
+    if (!isAdvancesModule) {
+      return visibleRecords
+    }
+
+    return visibleRecords.filter((record) =>
+      advancesTab === 'paid' ? isPaidAdvanceRecord(record) : !isPaidAdvanceRecord(record),
+    )
+  }, [advancesTab, isAdvancesModule, visibleRecords])
+
   useEffect(() => {
     if (!highlightedRecordId) {
       return
@@ -1365,19 +1404,28 @@ function NativeModuleRecordsSection(props) {
 
     if (isChangeModule) {
       setChangeTab(isCompletedChangeRecord(highlightedRecord) ? 'completed' : 'pending')
+      return
     }
-  }, [highlightedRecordId, isChangeModule, isDeliveryReading, visibleRecords])
+
+    if (isAdvancesModule) {
+      setAdvancesTab(isPaidAdvanceRecord(highlightedRecord) ? 'paid' : 'pending')
+    }
+  }, [highlightedRecordId, isAdvancesModule, isChangeModule, isDeliveryReading, visibleRecords])
 
   const displayedRecords = isDeliveryReading
     ? deliveryReadingVisibleRecords
     : isChangeModule
       ? changeVisibleRecords
-      : visibleRecords
+      : isAdvancesModule
+        ? advancesVisibleRecords
+        : visibleRecords
   const displayedVisibleCount = isDeliveryReading
     ? deliveryReadingVisibleRecords.length
     : isChangeModule
       ? changeVisibleRecords.length
-      : visibleCount
+      : isAdvancesModule
+        ? advancesVisibleRecords.length
+        : visibleCount
 
   useEffect(() => {
     const exitTimeouts = exitTimeoutsRef.current
@@ -1528,6 +1576,31 @@ function NativeModuleRecordsSection(props) {
           >
             <span>Concluidos</span>
             <span className="delivery-reading__list-tab-count">{changeCounts.completed}</span>
+          </button>
+        </div>
+      ) : null}
+
+      {isAdvancesModule ? (
+        <div
+          className="delivery-reading__list-tabs"
+          role="tablist"
+          aria-label="Filtrar vales por estado"
+        >
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${advancesTab === 'pending' ? ' is-active' : ''}`}
+            onClick={() => setAdvancesTab('pending')}
+          >
+            <span>Pendentes</span>
+            <span className="delivery-reading__list-tab-count">{advancesCounts.pending}</span>
+          </button>
+          <button
+            type="button"
+            className={`delivery-reading__list-tab${advancesTab === 'paid' ? ' is-active' : ''}`}
+            onClick={() => setAdvancesTab('paid')}
+          >
+            <span>Baixados</span>
+            <span className="delivery-reading__list-tab-count">{advancesCounts.paid}</span>
           </button>
         </div>
       ) : null}
