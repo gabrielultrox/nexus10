@@ -8,7 +8,7 @@ import ThemeToggle from '../theme/ThemeToggle'
 
 function AppHeader() {
   const location = useLocation()
-  const { session, signOut } = useAuth()
+  const { session } = useAuth()
   const { connectionStatus } = useNotificationLiveStatus()
   const route = getRouteByPathname(location.pathname)
   const operatorLabel = session?.operatorName ?? session?.displayName ?? 'Operador local'
@@ -38,9 +38,6 @@ function AppHeader() {
           <span className="ui-badge ui-badge--info">{session?.role ?? 'operador'}</span>
           <span className="app-header__user">{operatorLabel}</span>
           <NotificationCenter />
-          <button type="button" className="ui-button ui-button--ghost" onClick={signOut}>
-            Sair
-          </button>
           <ThemeToggle />
         </div>
       </div>
