@@ -223,8 +223,8 @@ describe('Accessibility audit', () => {
       </ToastProvider>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Confirmar PIN local' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Digito 0' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Selecionar usuario' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Usuario' })).toBeInTheDocument()
 
     expect(await axe(container)).toHaveNoViolations()
   })

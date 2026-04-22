@@ -8,6 +8,7 @@ export const localOperatorProfiles = [
   { operatorName: 'Maria Eduarda', role: roles.gerente },
   { operatorName: 'Rafael', role: roles.operador },
   { operatorName: 'Ana Vitoria', role: roles.atendente },
+  { operatorName: 'Ramaiane', role: roles.operador },
   { operatorName: 'Rosa', role: roles.operador },
 ]
 

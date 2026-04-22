@@ -15,7 +15,6 @@ const AUTH_STORAGE_KEY = 'nexus10.localSession'
 const LAST_OPERATOR_STORAGE_KEY = 'nexus10.lastOperator'
 
 const operatorOptions = getOperatorOptions()
-const DEFAULT_OPERATOR_NAME = operatorOptions[0] ?? 'Gabriel'
 
 function buildLocalSession(profile) {
   return {
@@ -35,20 +34,13 @@ function buildLocalSession(profile) {
   }
 }
 
-function resolvePreferredOperatorName(savedSession = null) {
-  if (typeof window === 'undefined') {
-    return savedSession?.operatorName ?? DEFAULT_OPERATOR_NAME
+async function buildLocalOperatorSession(operatorName = '') {
+  const resolvedOperatorName = operatorName?.trim()
+
+  if (!resolvedOperatorName) {
+    throw new Error('Selecione um operador.')
   }
 
-  return (
-    savedSession?.operatorName ??
-    window.localStorage.getItem(LAST_OPERATOR_STORAGE_KEY) ??
-    DEFAULT_OPERATOR_NAME
-  )
-}
-
-async function buildAutomaticSession(operatorName = '') {
-  const resolvedOperatorName = operatorName?.trim() || DEFAULT_OPERATOR_NAME
   const profile = await resolveUserProfileByOperator(resolvedOperatorName).catch(() =>
     getDefaultUserProfile(resolvedOperatorName),
   )
@@ -64,33 +56,20 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
       try {
-        if (typeof window === 'undefined') {
-          const nextSession = await buildAutomaticSession(DEFAULT_OPERATOR_NAME)
-          setSession(nextSession)
+        if (typeof window === 'undefined' || !isE2eMode()) {
+          setSession(null)
+          setAuthError('')
           return
         }
 
         const savedSession = window.localStorage.getItem(AUTH_STORAGE_KEY)
         const parsedSavedSession = savedSession ? JSON.parse(savedSession) : null
-        const nextSession = isE2eMode()
-          ? parsedSavedSession
-          : await buildAutomaticSession(resolvePreferredOperatorName(parsedSavedSession))
-
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-        if (nextSession.operatorName) {
-          window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, nextSession.operatorName)
-        }
         setAuthError('')
-        setSession(nextSession)
+        setSession(parsedSavedSession)
       } catch (error) {
-        console.error('Nao foi possivel restaurar a sessao automatica.', error)
-        if (typeof window !== 'undefined') {
-          const fallbackSession = buildLocalSession(getDefaultUserProfile(DEFAULT_OPERATOR_NAME))
-          window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(fallbackSession))
-          window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, fallbackSession.operatorName)
-          setSession(fallbackSession)
-        }
+        console.error('Nao foi possivel restaurar a sessao.', error)
         setAuthError('')
+        setSession(null)
       } finally {
         setLoading(false)
       }
@@ -115,17 +94,15 @@ export function AuthProvider({ children }) {
           throw new Error('Selecione um operador.')
         }
 
-        const nextSession = await buildAutomaticSession(operatorName)
+        const nextSession = await buildLocalOperatorSession(operatorName)
 
         window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
         window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, operatorName)
         setSession(nextSession)
       },
       async signOut() {
-        const nextSession = await buildAutomaticSession(resolvePreferredOperatorName())
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
-        window.localStorage.setItem(LAST_OPERATOR_STORAGE_KEY, nextSession.operatorName)
-        setSession(nextSession)
+        window.localStorage.removeItem(AUTH_STORAGE_KEY)
+        setSession(null)
       },
       hasRole(requiredRoles = []) {
         return userHasRequiredRole(session, requiredRoles)

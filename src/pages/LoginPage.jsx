@@ -2,35 +2,21 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import ThemeToggle from '../components/theme/ThemeToggle'
+import Select from '../components/ui/Select'
 import Button from '../components/ui/Button'
 import ErrorDisplay from '../components/ui/ErrorDisplay'
-import { useError } from '../hooks'
 import { useAuth } from '../contexts/AuthContext'
-import { DEFAULT_REMOTE_ACCESS_PIN_MASK, verifyRemoteAccessPin } from '../services/accessPinService'
+import { useError } from '../hooks'
 import { playError, playSuccess } from '../services/soundManager'
-import Select from '../components/ui/Select'
-
-const PIN_VERIFY_DELAY_MS = 80
-const PIN_UNLOCK_DELAY_MS = 140
 
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn, authError, operatorOptions, getLastOperator } = useAuth()
-  const [formState, setFormState] = useState({
-    operatorName: '',
-  })
+  const [operatorName, setOperatorName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [fieldErrors, setFieldErrors] = useState({
-    operatorName: '',
-  })
-  const [stage, setStage] = useState('pin')
-  const [pinValue, setPinValue] = useState('')
-  const [pinError, setPinError] = useState('')
-  const [pinUnlocked, setPinUnlocked] = useState(false)
-  const [verifyingPin, setVerifyingPin] = useState(false)
-  const pinErrorId = 'login-pin-error'
+  const [fieldError, setFieldError] = useState('')
   const authErrorId = 'login-auth-error'
   const operatorErrorId = 'login-operator-error'
   const { captureError, errorModel, clearError } = useError({
@@ -44,113 +30,30 @@ function LoginPage() {
   const redirectPath = location.state?.from?.pathname ?? '/dashboard'
 
   useEffect(() => {
-    setFormState((current) => ({
-      ...current,
-      operatorName: getLastOperator(),
-    }))
+    setOperatorName(getLastOperator())
   }, [getLastOperator])
 
-  useEffect(() => {
-    if (stage !== 'pin') {
-      return undefined
-    }
-
-    function handleKeyDown(event) {
-      if (/^\d$/.test(event.key)) {
-        setPinError('')
-        setPinValue((current) => (current.length < 4 ? `${current}${event.key}` : current))
-      }
-
-      if (event.key === 'Backspace') {
-        setPinError('')
-        setPinValue((current) => current.slice(0, -1))
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [stage])
-
-  useEffect(() => {
-    if (stage !== 'pin' || pinValue.length !== 4) {
-      return undefined
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setVerifyingPin(true)
-
-      verifyRemoteAccessPin(pinValue)
-        .then(() => {
-          setPinUnlocked(true)
-          setPinError('')
-          playSuccess()
-          window.setTimeout(() => {
-            setStage('login')
-          }, PIN_UNLOCK_DELAY_MS)
-        })
-        .catch((error) => {
-          setPinError(error?.message ?? 'PIN invalido. Tente novamente.')
-          playError()
-          setPinValue('')
-        })
-        .finally(() => {
-          setVerifyingPin(false)
-        })
-    }, PIN_VERIFY_DELAY_MS)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [pinValue, stage])
-
-  function handleChange(field, value) {
+  function handleOperatorChange(value) {
     clearError()
     setErrorMessage('')
-    setFieldErrors((current) => ({
-      ...current,
-      [field]: '',
-    }))
-    setFormState((current) => ({
-      ...current,
-      [field]: value,
-    }))
-  }
-
-  function handlePinDigit(digit) {
-    setPinError('')
-    setPinValue((current) => (current.length < 4 ? `${current}${digit}` : current))
-  }
-
-  function handlePinBackspace() {
-    setPinError('')
-    setPinValue((current) => current.slice(0, -1))
+    setFieldError('')
+    setOperatorName(value)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setSubmitting(true)
     setErrorMessage('')
-    setFieldErrors({
-      operatorName: '',
-    })
+    setFieldError('')
 
-    const nextFieldErrors = {
-      operatorName: formState.operatorName ? '' : 'Selecione um operador.',
-    }
-
-    if (nextFieldErrors.operatorName) {
-      setFieldErrors(nextFieldErrors)
+    if (!operatorName) {
+      setFieldError('Selecione um usuario.')
       setSubmitting(false)
       return
     }
 
     try {
-      await signIn({
-        operatorName: formState.operatorName,
-        pin: pinValue,
-      })
+      await signIn({ operatorName })
       playSuccess()
       navigate(redirectPath, { replace: true })
     } catch (error) {
@@ -180,206 +83,99 @@ function LoginPage() {
         <span className="auth-sequence__orb auth-sequence__orb--red" />
       </div>
 
-      {stage === 'pin' ? (
-        <section className={`auth-stage auth-pin${pinUnlocked ? ' auth-pin--unlocked' : ''}`}>
-          <div className="auth-pin__shell">
-            <div className="auth-pin__hero">
-              <p className="text-overline">Acesso local</p>
-              <h1 id="login-page-title" className="text-display">
-                Confirmar PIN local
-              </h1>
-              <p className="text-body">
-                Confirme o PIN da loja para liberar o acesso rapido ao ambiente operacional.
-              </p>
+      <section className="auth-stage auth-login">
+        <div className="auth-login__shell">
+          <div className="auth-login__hero">
+            <p className="text-overline">Acesso operacional</p>
+            <h1 id="login-page-title" className="text-display">
+              Selecionar usuario
+            </h1>
+            <p className="text-body">
+              Escolha o usuario para entrar no ERP. Nao ha senha nem PIN neste fluxo.
+            </p>
 
-              <div className="auth-pin__signal">
-                <div className="auth-pin__signal-mark">
-                  <img src="/brand-bolt-red.svg" alt="" className="auth-pin__signal-bolt" />
-                </div>
-                <div>
-                  <strong>Seguranca local ativa</strong>
-                  <span>Digite o PIN para seguir para a identificacao do operador.</span>
-                </div>
+            <div className="auth-login__hero-panels">
+              <div className="auth-login__hero-card">
+                <span>Entrada</span>
+                <strong>Selecao de usuario</strong>
               </div>
-
-              <div className="auth-pin__intel-grid">
-                <div className="auth-pin__intel-card">
-                  <span>Modo de acesso</span>
-                  <strong>PIN remoto</strong>
-                </div>
-                <div className="auth-pin__intel-card">
-                  <span>Proxima etapa</span>
-                  <strong>{verifyingPin ? 'Validando PIN' : 'Aguardando validacao'}</strong>
-                </div>
+              <div className="auth-login__hero-card">
+                <span>Ambiente</span>
+                <strong>ERP operacional da loja</strong>
               </div>
-
-              <div className="auth-pin__fallback">
-                <span>PIN remoto compartilhado</span>
-                <strong>{DEFAULT_REMOTE_ACCESS_PIN_MASK}</strong>
-                <p>Se a loja tiver PIN customizado, o backend valida automaticamente.</p>
-              </div>
-            </div>
-
-            <div className="auth-pin__panel">
-              <div className="auth-pin__panel-head">
-                <span>Entrada segura</span>
-                <strong>{pinUnlocked ? 'Acesso liberado' : 'Aguardando PIN'}</strong>
-              </div>
-
-              <div
-                className="auth-pin__dots"
-                aria-label={`PIN com ${pinValue.length} digitos preenchidos`}
-                role="status"
-                aria-live="polite"
-              >
-                {[0, 1, 2, 3].map((index) => (
-                  <span
-                    key={index}
-                    className={`auth-pin__dot${pinValue[index] ? ' auth-pin__dot--filled' : ''}`}
-                  />
-                ))}
-              </div>
-
-              {pinError ? (
-                <div id={pinErrorId} className="auth-error" role="alert" aria-live="assertive">
-                  {pinError}
-                </div>
-              ) : null}
-
-              <div className="auth-pin__keypad">
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].map((digit) => (
-                  <button
-                    key={digit}
-                    type="button"
-                    className="auth-pin__key"
-                    onClick={() => handlePinDigit(digit)}
-                    disabled={pinValue.length >= 4 || verifyingPin}
-                    aria-label={`Digito ${digit}`}
-                    aria-describedby={pinError ? pinErrorId : undefined}
-                  >
-                    {digit}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="auth-pin__key auth-pin__key--wide"
-                  onClick={handlePinBackspace}
-                  disabled={verifyingPin}
-                  aria-label="Apagar ultimo digito"
-                  aria-describedby={pinError ? pinErrorId : undefined}
-                >
-                  Backspace
-                </button>
+              <div className="auth-login__hero-card auth-login__hero-card--accent">
+                <span>Usuarios</span>
+                <strong>{operatorOptions.length || 0} disponiveis</strong>
               </div>
             </div>
           </div>
-        </section>
-      ) : null}
 
-      {stage === 'login' ? (
-        <section className="auth-stage auth-login">
-          <div className="auth-login__shell">
-            <div className="auth-login__hero">
-              <p className="text-overline">Acesso operacional</p>
-              <h1 className="text-display">Identificacao operacional</h1>
-              <p className="text-body">
-                Entre com o operador para acessar pedidos, vendas, entregas e a operacao da loja.
-              </p>
-
-              <div className="auth-login__hero-panels">
-                <div className="auth-login__hero-card">
-                  <span>Entrada</span>
-                  <strong>PIN + operador</strong>
+          <form className="auth-card auth-card--immersive auth-form" onSubmit={handleSubmit}>
+            <div className="auth-card__hero">
+              <p className="text-overline">Entrada do operador</p>
+              <h2 className="text-display">Entrar no ERP</h2>
+              <p className="text-body">Selecione apenas o usuario que vai operar o terminal.</p>
+              <div className="auth-card__meta-strip" aria-label="Resumo do acesso">
+                <div className="auth-card__meta-pill">
+                  <span>Senha</span>
+                  <strong>Desativada</strong>
                 </div>
-                <div className="auth-login__hero-card">
-                  <span>Ambiente</span>
-                  <strong>ERP operacional da loja</strong>
+                <div className="auth-card__meta-pill">
+                  <span>PIN</span>
+                  <strong>Desativado</strong>
                 </div>
-                <div className="auth-login__hero-card auth-login__hero-card--accent">
-                  <span>Operadores</span>
-                  <strong>{operatorOptions.length || 0} disponiveis</strong>
+                <div className="auth-card__meta-pill">
+                  <span>Usuarios</span>
+                  <strong>{operatorOptions.length || 0}</strong>
                 </div>
               </div>
             </div>
 
-            <form className="auth-card auth-card--immersive auth-form" onSubmit={handleSubmit}>
-              <div className="auth-card__hero">
-                <p className="text-overline">Login do operador</p>
-                <h2 className="text-display">Entrar no ERP</h2>
-                <p className="text-body">
-                  O PIN ja foi validado. Agora selecione apenas o operador para abrir a sessao.
+            <div className="ui-field">
+              <label className="ui-label" htmlFor="login-operator">
+                Usuario
+              </label>
+              <Select
+                id="login-operator"
+                className={`ui-input${fieldError ? ' is-error' : ''}`}
+                value={operatorName}
+                onChange={(event) => handleOperatorChange(event.target.value)}
+                aria-invalid={Boolean(fieldError || errorMessage || authError)}
+                aria-describedby={
+                  fieldError ? operatorErrorId : errorMessage || authError ? authErrorId : undefined
+                }
+              >
+                <option value="">Selecione</option>
+                {operatorOptions.map((currentOperatorName) => (
+                  <option key={currentOperatorName} value={currentOperatorName}>
+                    {currentOperatorName}
+                  </option>
+                ))}
+              </Select>
+              {fieldError ? (
+                <p id={operatorErrorId} className="ui-field__error" role="alert">
+                  {fieldError}
                 </p>
-                <div className="auth-card__meta-strip" aria-label="Resumo do acesso">
-                  <div className="auth-card__meta-pill">
-                    <span>PIN</span>
-                    <strong>Validado</strong>
-                  </div>
-                  <div className="auth-card__meta-pill">
-                    <span>Operadores</span>
-                    <strong>{operatorOptions.length || 0}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="ui-field">
-                <label className="ui-label" htmlFor="login-operator">
-                  Operador
-                </label>
-                <Select
-                  id="login-operator"
-                  className={`ui-input${fieldErrors.operatorName ? ' is-error' : ''}`}
-                  value={formState.operatorName}
-                  onChange={(event) => handleChange('operatorName', event.target.value)}
-                  aria-invalid={Boolean(fieldErrors.operatorName || errorMessage || authError)}
-                  aria-describedby={
-                    fieldErrors.operatorName
-                      ? operatorErrorId
-                      : errorMessage || authError
-                        ? authErrorId
-                        : undefined
-                  }
-                >
-                  <option value="">Selecione</option>
-                  {operatorOptions.map((operatorName) => (
-                    <option key={operatorName} value={operatorName}>
-                      {operatorName}
-                    </option>
-                  ))}
-                </Select>
-                {fieldErrors.operatorName ? (
-                  <p id={operatorErrorId} className="ui-field__error" role="alert">
-                    {fieldErrors.operatorName}
-                  </p>
-                ) : null}
-              </div>
-
-              {errorMessage || authError ? (
-                <div id={authErrorId}>
-                  <ErrorDisplay
-                    code={errorModel?.code}
-                    title={errorModel?.title ?? 'Falha na autenticacao'}
-                    message={errorMessage || authError}
-                    suggestion={errorModel?.suggestion ?? 'Revise os dados e tente novamente.'}
-                  />
-                </div>
               ) : null}
+            </div>
 
-              <Button
-                type="submit"
-                variant="secondary"
-                className="auth-submit"
-                loading={submitting}
-              >
-                Entrar
-              </Button>
-              <p className="text-caption">
-                A autenticacao operacional agora usa apenas o PIN do terminal e a selecao do
-                operador.
-              </p>
-            </form>
-          </div>
-        </section>
-      ) : null}
+            {errorMessage || authError ? (
+              <div id={authErrorId}>
+                <ErrorDisplay
+                  code={errorModel?.code}
+                  title={errorModel?.title ?? 'Falha ao abrir sessao'}
+                  message={errorMessage || authError}
+                  suggestion={errorModel?.suggestion ?? 'Revise a selecao e tente novamente.'}
+                />
+              </div>
+            ) : null}
+
+            <Button type="submit" variant="secondary" className="auth-submit" loading={submitting}>
+              Entrar
+            </Button>
+          </form>
+        </div>
+      </section>
     </main>
   )
 }
